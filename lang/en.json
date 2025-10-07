@@ -1,0 +1,19 @@
+{
+  "EM_PUZZLE_TRAP_TILES": {
+    "Name": "EM Puzzle and Trap Tiles",
+    "Actions": {
+      "SequenceStep": {
+        "Name": "Switch: Sequence Step",
+        "Help": "Check if this switch is being activated in the correct order"
+      },
+      "CheckSequence": {
+        "Name": "Switch: Check Sequence Complete",
+        "Help": "Check if the entire switch sequence has been completed"
+      },
+      "ResetSequence": {
+        "Name": "Switch: Reset Sequence",
+        "Help": "Reset the switch puzzle to the beginning"
+      }
+    }
+  }
+}

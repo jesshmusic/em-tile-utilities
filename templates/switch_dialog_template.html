@@ -1,0 +1,91 @@
+<form class="switch-puzzle-form">
+  <p class="hint">This will create a sequence of switch tiles that must be activated in order.</p>
+  
+  <div class="form-group">
+    <label for="puzzleId">Puzzle ID:</label>
+    <input type="text" name="puzzleId" value="{{puzzleId}}" placeholder="e.g., throne_room_switches" />
+    <p class="notes">A unique identifier for this puzzle group</p>
+  </div>
+
+  <div class="form-group">
+    <label for="numSwitches">Number of Switches:</label>
+    <input type="number" name="numSwitches" value="3" min="2" max="10" />
+    <p class="notes">How many switches in the sequence (2-10)</p>
+  </div>
+
+  <div class="form-group">
+    <label for="resetOnFail">Reset on Wrong Switch:</label>
+    <input type="checkbox" name="resetOnFail" checked />
+    <p class="notes">If checked, pulling the wrong switch resets the puzzle</p>
+  </div>
+
+  <hr />
+
+  <div class="form-group">
+    <p class="hint">
+      <strong>Note:</strong> Switches will be created in a horizontal row. 
+      You can move them after creation. Double-click each switch to configure 
+      which doors/tiles it should control.
+    </p>
+  </div>
+
+  <footer class="sheet-footer flexrow">
+    <button type="submit" name="submit">
+      <i class="fas fa-check"></i> Create Switches
+    </button>
+    <button type="button" name="cancel" onclick="this.closest('.app').querySelector('.close').click()">
+      <i class="fas fa-times"></i> Cancel
+    </button>
+  </footer>
+</form>
+
+<style>
+.switch-puzzle-form {
+  padding: 10px;
+}
+
+.switch-puzzle-form .hint {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--color-border-highlight);
+  font-size: 0.9em;
+}
+
+.switch-puzzle-form .form-group {
+  margin-bottom: 15px;
+}
+
+.switch-puzzle-form .form-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.switch-puzzle-form .form-group input[type="text"],
+.switch-puzzle-form .form-group input[type="number"] {
+  width: 100%;
+  padding: 5px;
+}
+
+.switch-puzzle-form .form-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.switch-puzzle-form .notes {
+  font-size: 0.85em;
+  color: var(--color-text-dark-secondary);
+  margin: 3px 0 0 0;
+  font-style: italic;
+}
+
+.switch-puzzle-form footer {
+  margin-top: 15px;
+  gap: 10px;
+}
+
+.switch-puzzle-form button {
+  flex: 1;
+  padding: 8px;
+}
+</style>
