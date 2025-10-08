@@ -74,6 +74,16 @@ Hooks.on('getSceneControlButtons', (controls) => {
     onClick: () => showSwitchDialog(),
     order: 1000
   };
+
+  // Add scene variables viewer tool
+  tools['em-puzzles-view-variables'] = {
+    name: 'em-puzzles-view-variables',
+    title: 'View Scene Variables',
+    icon: 'fas fa-list',
+    button: true,
+    onClick: () => showSceneVariablesDialog(),
+    order: 1001
+  };
 });
 
 /**
@@ -186,6 +196,105 @@ function showSwitchDialog() {
     }
   }, {
     width: 800
+  });
+
+  dialog.render(true);
+}
+
+/**
+ * Dialog for viewing scene variables
+ */
+function showSceneVariablesDialog() {
+  const scene = canvas.scene;
+  if (!scene) {
+    ui.notifications.error('No active scene!');
+    return;
+  }
+
+  let dialogElement = null;
+
+  function buildContent() {
+    // Get all tiles with Monk's Active Tiles variables
+    const tiles = scene.tiles.filter(t => t.flags['monks-active-tiles']?.variables);
+
+    // Collect all variables
+    const variables = {};
+    tiles.forEach(tile => {
+      const tileVars = tile.flags['monks-active-tiles'].variables;
+      if (tileVars) {
+        Object.entries(tileVars).forEach(([key, value]) => {
+          if (!variables[key]) {
+            variables[key] = {
+              value: value,
+              tiles: []
+            };
+          }
+          variables[key].tiles.push({
+            name: tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile',
+            id: tile.id
+          });
+        });
+      }
+    });
+
+    // Build content HTML with embedded refresh button
+    let content = '<div>';
+    content += '<button type="button" class="refresh-variables" style="margin-bottom: 10px;"><i class="fas fa-sync"></i> Refresh</button>';
+    content += '<div style="max-height: 500px; overflow-y: auto;">';
+
+    if (Object.keys(variables).length === 0) {
+      content += '<p><em>No variables found in this scene.</em></p>';
+    } else {
+      content += '<table style="width: 100%; border-collapse: collapse;">';
+      content += '<thead><tr><th style="text-align: left; padding: 5px; border-bottom: 1px solid #999;">Variable</th><th style="text-align: left; padding: 5px; border-bottom: 1px solid #999;">Value</th><th style="text-align: left; padding: 5px; border-bottom: 1px solid #999;">Used By</th></tr></thead>';
+      content += '<tbody>';
+
+      Object.entries(variables).sort((a, b) => a[0].localeCompare(b[0])).forEach(([varName, varData]) => {
+        const valueDisplay = typeof varData.value === 'boolean'
+          ? `<span style="color: ${varData.value ? 'green' : 'red'}; font-weight: bold;">${varData.value}</span>`
+          : varData.value;
+
+        const tilesDisplay = varData.tiles.map(t => t.name).join(', ');
+
+        content += `<tr>
+          <td style="padding: 5px; border-bottom: 1px solid #555;"><code>${varName}</code></td>
+          <td style="padding: 5px; border-bottom: 1px solid #555;">${valueDisplay}</td>
+          <td style="padding: 5px; border-bottom: 1px solid #555; font-size: 0.9em;">${tilesDisplay}</td>
+        </tr>`;
+      });
+
+      content += '</tbody></table>';
+    }
+
+    content += '</div></div>';
+    return content;
+  }
+
+  function refreshContent() {
+    if (dialogElement) {
+      const contentDiv = dialogElement.find('.window-content');
+      contentDiv.html(buildContent());
+      // Re-attach the refresh button handler
+      contentDiv.find('.refresh-variables').on('click', refreshContent);
+    }
+  }
+
+  const dialog = new Dialog({
+    title: `Scene Variables: ${scene.name}`,
+    content: buildContent(),
+    buttons: {
+      close: {
+        icon: '<i class="fas fa-times"></i>',
+        label: 'Close'
+      }
+    },
+    render: (html) => {
+      dialogElement = html;
+      // Attach refresh button handler
+      html.find('.refresh-variables').on('click', refreshContent);
+    }
+  }, {
+    width: 700
   });
 
   dialog.render(true);
@@ -324,7 +433,9 @@ async function createSwitchTile(scene, config) {
           { id: foundry.utils.randomID(), name: config.onImage },
           { id: foundry.utils.randomID(), name: config.offImage }
         ],
-        variables: {}
+        variables: {
+          [config.variableName]: false
+        }
       }
     },
     visible: true,
