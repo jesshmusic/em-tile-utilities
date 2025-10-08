@@ -5,6 +5,45 @@
 
 Hooks.once('init', () => {
   console.log('EM Puzzle and Trap Tiles | Initializing');
+
+  // Register settings
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultOnImage', {
+    name: 'Default ON Image',
+    hint: 'Default image path for the ON state of switches',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/d20-highlight.svg',
+    filePicker: 'imagevideo'
+  });
+
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultOffImage', {
+    name: 'Default OFF Image',
+    hint: 'Default image path for the OFF state of switches',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/d20.svg',
+    filePicker: 'imagevideo'
+  });
+
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultSound', {
+    name: 'Default Sound',
+    hint: 'Default sound for switch activation',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'sounds/doors/industrial/unlock.ogg',
+    filePicker: 'audio'
+  });
+
+  // Register counter for switch IDs
+  game.settings.register('em-puzzles-and-trap-tiles', 'switchCounter', {
+    scope: 'world',
+    config: false,
+    type: Number,
+    default: 1
+  });
 });
 
 Hooks.once('ready', () => {
@@ -41,17 +80,26 @@ Hooks.on('getSceneControlButtons', (controls) => {
  * Dialog for creating a switch tile
  */
 function showSwitchDialog() {
+  // Get default values from settings
+  const defaultOnImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultOnImage');
+  const defaultOffImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultOffImage');
+  const defaultSound = game.settings.get('em-puzzles-and-trap-tiles', 'defaultSound');
+
+  // Get and increment the switch counter
+  const switchCounter = game.settings.get('em-puzzles-and-trap-tiles', 'switchCounter');
+  const nextSwitchId = `switch_${switchCounter}`;
+
   const dialog = new Dialog({
     title: 'Create Switch',
     content: `
       <form>
         <div class="form-group">
           <label>Switch Name:</label>
-          <input type="text" name="switchName" value="Switch" />
+          <input type="text" name="switchName" value="Switch ${switchCounter}" />
         </div>
         <div class="form-group">
           <label>Variable Name:</label>
-          <input type="text" name="variableName" value="switch_${foundry.utils.randomID()}" />
+          <input type="text" name="variableName" value="${nextSwitchId}" />
           <p class="notes">Unique identifier for tracking this switch state</p>
         </div>
         <div class="form-group">
@@ -60,7 +108,7 @@ function showSwitchDialog() {
             <button type="button" class="file-picker" data-type="imagevideo" data-target="onImage" title="Browse Files" tabindex="-1">
               <i class="fas fa-file-import fa-fw"></i>
             </button>
-            <input type="text" name="onImage" value="icons/svg/d20-highlight.svg" />
+            <input type="text" name="onImage" value="${defaultOnImage}" />
           </div>
         </div>
         <div class="form-group">
@@ -69,7 +117,7 @@ function showSwitchDialog() {
             <button type="button" class="file-picker" data-type="imagevideo" data-target="offImage" title="Browse Files" tabindex="-1">
               <i class="fas fa-file-import fa-fw"></i>
             </button>
-            <input type="text" name="offImage" value="icons/svg/d20.svg" />
+            <input type="text" name="offImage" value="${defaultOffImage}" />
           </div>
         </div>
         <div class="form-group">
@@ -78,7 +126,7 @@ function showSwitchDialog() {
             <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
               <i class="fas fa-file-import fa-fw"></i>
             </button>
-            <input type="text" name="sound" value="sounds/doors/industrial/unlock.ogg" />
+            <input type="text" name="sound" value="${defaultSound}" />
           </div>
         </div>
       </form>
@@ -104,6 +152,9 @@ function showSwitchDialog() {
             offImage: formData.offImage,
             sound: formData.sound
           });
+
+          // Increment the counter for next switch
+          await game.settings.set('em-puzzles-and-trap-tiles', 'switchCounter', switchCounter + 1);
 
           ui.notifications.info('Switch tile created!');
         }
