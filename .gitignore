@@ -19,3 +19,6 @@ Thumbs.db
 # Build files
 dist/
 build/
+
+# Keep original JS for reference
+scripts/main.js.bak

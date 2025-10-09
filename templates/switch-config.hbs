@@ -1,0 +1,36 @@
+<form>
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.SwitchName"}}</label>
+    <input type="text" name="switchName" value="{{switchName}}" />
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.VariableName"}}</label>
+    <input type="text" name="variableName" value="{{variableName}}" />
+    <p class="hint">{{localize "EMPUZZLES.VariableNameHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.OnImage"}}</label>
+    <div class="form-fields">
+      <input type="text" name="onImage" value="{{onImage}}" />
+      <file-picker type="imagevideo" name="onImage"></file-picker>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.OffImage"}}</label>
+    <div class="form-fields">
+      <input type="text" name="offImage" value="{{offImage}}" />
+      <file-picker type="imagevideo" name="offImage"></file-picker>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.Sound"}}</label>
+    <div class="form-fields">
+      <input type="text" name="sound" value="{{sound}}" />
+      <file-picker type="audio" name="sound"></file-picker>
+    </div>
+  </div>
+</form>

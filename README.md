@@ -1,135 +1,134 @@
 # EM Puzzle and Trap Tiles
 
-A FoundryVTT module that adds switch sequence puzzle functionality to Monk's Active Tiles.
+A FoundryVTT module that adds switch puzzle actions to Monk's Active Tiles for creating sequence-based puzzles.
+
+## Features
+
+- **Create Switch Tiles**: Easily create interactive ON/OFF switches with custom images and sounds
+- **Scene Variables Viewer**: View all tile variables in the current scene at a glance
+- **Reset Tiles**: Create tiles that reset multiple other tiles to specific states
+  - Reverse tile actions to undo their last sequence
+  - Reset position, rotation, visibility, and active state
+  - Configure variable values for reset
 
 ## Requirements
 
-- Foundry VTT v11 or higher
-- Monk's Active Tiles module
+- FoundryVTT v11 or higher
+- [Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles) module
 
 ## Installation
 
-1. Download the module zip file
-2. Extract to your Foundry `Data/modules/em-puzzle-and-trap-tiles` folder
-3. Create a `templates` folder inside and place `switch-puzzle-dialog.html` there
-4. Enable both "Monk's Active Tiles" and "EM Puzzle and Trap Tiles" in your world
+1. Download the module from the Foundry module browser, or
+2. Install manually by placing this folder in `Data/modules/`
+3. Enable both "Monk's Active Tiles" and "EM Puzzle and Trap Tiles" in your world
 
-## Quick Start - Create a Puzzle in 30 Seconds
+## Usage
 
-1. Open your scene
-2. Click the **Tiles** layer
-3. Click the new **Toggle On** button (Create Switch Puzzle)
-4. In the dialog:
-   - Enter a unique Puzzle ID (e.g., "throne_room")
-   - Choose number of switches (2-10)
-   - Check "Reset on Wrong Switch" if you want mistakes to restart the puzzle
-5. Click **Create Switches**
-6. Three (or more) switch tiles appear on your map - move them into position!
+### Creating a Switch
 
-The switches are automatically configured to work in sequence order (left to right).
+1. Select the Tiles layer
+2. Click the "Create Switch" button in the toolbar
+3. Configure your switch settings:
+   - Switch Name
+   - Variable Name (unique identifier)
+   - ON/OFF Images
+   - Sound file
+4. Click Create
 
-## Customization After Creation
+The switch will be placed at the center of your scene and can be activated by double-clicking.
 
-After creating switches, double-click each one to:
-- Add the statue/tile that should toggle when pulled
-- Change the door that opens when the puzzle completes
-- Adjust sound effects or chat messages
-- Link to other puzzle elements
+### Viewing Scene Variables
 
-The sequence logic is already set up - you just connect the visual elements!
+1. Select the Tiles layer
+2. Click the "View Scene Variables" button
+3. See all variables in the current scene with their values and associated tiles
+4. Click "Refresh" to update the view
 
-This module adds three new actions to Monk's Active Tiles for creating sequence-based switch puzzles where players must activate switches in a specific order.
+### Creating a Reset Tile
 
-### Actions Added
+1. Select the Tiles layer
+2. Click the "Create Reset Tile" button
+3. Click "Add Tile" and select tiles from the canvas
+4. For each tile, configure:
+   - **Reverse Actions**: Undo the tile's last action sequence
+   - Visibility, Active state, Rotation
+   - Position (Start position for reset)
+   - Image state
+   - Variable values
+5. Click Create
 
-#### 1. Switch: Sequence Step
-Check if a switch is being activated at the correct step in the sequence.
+The reset tile will restore all selected tiles to their configured states when double-clicked.
 
-**Parameters:**
-- **Puzzle ID**: Unique identifier for your puzzle (e.g., "throne_room")
-- **Expected Step**: What step should the puzzle be at? (0 = start)
-- **Next Step**: What step to advance to if correct
-- **Reset on Failure**: Reset to step 0 if wrong switch pulled
+## Development
 
-**Landings:**
-- `success` - This switch was pulled at the correct time
-- `failure` - Wrong switch or wrong order
+This module is built with TypeScript for better code organization and type safety.
 
-#### 2. Switch: Check Sequence Complete
-Check if the entire puzzle sequence has been completed.
+### Project Structure
 
-**Parameters:**
-- **Puzzle ID**: Same ID used in Sequence Step actions
-- **Completed Step**: What step number means the puzzle is solved
+```
+em-puzzles-and-trap-tiles/
+├── src/                    # TypeScript source files
+│   ├── dialogs/           # Dialog components
+│   │   ├── switch-dialog.ts
+│   │   ├── reset-dialog.ts
+│   │   └── variables-viewer.ts
+│   ├── utils/             # Utility functions
+│   │   └── tile-helpers.ts
+│   ├── types/             # TypeScript type definitions
+│   │   ├── foundry.d.ts
+│   │   └── module.ts
+│   └── main.ts            # Main entry point
+├── dist/                  # Compiled JavaScript (generated)
+├── scripts/               # Original JS backup
+├── rollup.config.mjs      # Build configuration
+├── tsconfig.json          # TypeScript configuration
+└── package.json           # NPM dependencies and scripts
+```
 
-**Landings:**
-- `complete` - Puzzle is solved
-- `incomplete` - Still in progress
+### Setup
 
-#### 3. Switch: Reset Sequence
-Manually reset a puzzle back to step 0.
+1. Install dependencies:
+```bash
+npm install
+```
 
-**Parameters:**
-- **Puzzle ID**: Which puzzle to reset
+2. Build the project:
+```bash
+npm run build
+```
 
-## Example Setup
+### Available Scripts
 
-Create a puzzle where switches must be pulled in order: 2 → 1 → 3
+- `npm run build` - Build the project once
+- `npm run watch` - Watch for changes and rebuild automatically
+- `npm run dev` - Development mode with hot reload (port 30001)
+- `npm run clean` - Clean the dist folder
 
-### Switch 2 Tile (First in sequence)
-1. **Toggle** This Tile (visual feedback)
-2. **Play Sound** "Lever.ogg"
-3. **Switch: Sequence Step**
-   - Puzzle ID: `myPuzzle`
-   - Expected Step: `0`
-   - Next Step: `1`
-   - Reset on Failure: ✓
-4. **Landing: success** → **Chat Message** "You hear a click..."
-5. **Landing: failure** → **Chat Message** "Something resets with a grinding sound"
+### Development Workflow
 
-### Switch 1 Tile (Second in sequence)
-1. **Toggle** This Tile
-2. **Play Sound** "Lever.ogg"
-3. **Switch: Sequence Step**
-   - Puzzle ID: `myPuzzle`
-   - Expected Step: `1`
-   - Next Step: `2`
-   - Reset on Failure: ✓
-4. **Landing: success** → **Chat Message** "Another click echoes..."
-5. **Landing: failure** → **Chat Message** "Something resets..."
+#### Option 1: Standard Build (Recommended)
+```bash
+npm run watch
+```
+This watches for file changes and rebuilds automatically. Refresh Foundry to see changes.
 
-### Switch 3 Tile (Final in sequence)
-1. **Toggle** This Tile
-2. **Play Sound** "Lever.ogg"
-3. **Switch: Sequence Step**
-   - Puzzle ID: `myPuzzle`
-   - Expected Step: `2`
-   - Next Step: `3`
-   - Reset on Failure: ✓
-4. **Landing: success** → **Chat Message** "CLUNK! The door unlocks!"
-5. **Landing: success** → **Change Wall/Door** [Your reward door] OPEN
+#### Option 2: Hot Reload (Experimental)
+```bash
+npm run dev
+```
+This starts a development server with live reload. When you save files, changes will be rebuilt and the browser will automatically refresh. Note: This may require additional configuration depending on your Foundry setup.
 
-## How It Works
+### Making Changes
 
-The module tracks puzzle progress using Foundry flags on the tile. Each puzzle is identified by a unique ID you provide, allowing multiple independent switch puzzles in the same scene.
+1. Edit TypeScript files in the `src/` directory
+2. Run `npm run watch` or `npm run dev`
+3. Changes will be compiled to `dist/main.js`
+4. Refresh Foundry VTT to see your changes
 
-When a switch is activated:
-1. Check current step against expected step
-2. If correct: advance to next step, trigger "success" landing
-3. If wrong: optionally reset to step 0, trigger "failure" landing
+### Type Definitions
 
-## Tips
-
-- Use the same **Puzzle ID** for all switches in one puzzle
-- Start with Expected Step 0 for the first switch
-- Each subsequent switch expects the previous step number
-- Players can toggle switches freely for visual feedback - only the sequence matters
-- Use Chat Messages or sounds on success/failure landings for feedback
-
-## Norse Campaign Use
-
-Perfect for Norrundar-style puzzles! Set up rune stones, statue levers, or ancient mechanisms that must be activated in the correct order to open vault doors, reveal hidden passages, or disable magical wards.
+Basic Foundry VTT type definitions are included in `src/types/foundry.d.ts`. These provide autocomplete and type checking for common Foundry APIs.
 
 ## License
 
-GNU GPLv3.0, supplemented by Commons Clause
+ISC

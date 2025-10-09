@@ -1,0 +1,1030 @@
+/**
+ * EM Puzzle and Trap Tiles
+ * Adds switch tile creation helpers for Monk's Active Tiles
+ */
+
+Hooks.once('init', () => {
+  console.log('EM Puzzle and Trap Tiles | Initializing');
+
+  // Register settings
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultOnImage', {
+    name: 'Default ON Image',
+    hint: 'Default image path for the ON state of switches',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/d20-highlight.svg',
+    filePicker: 'imagevideo'
+  });
+
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultOffImage', {
+    name: 'Default OFF Image',
+    hint: 'Default image path for the OFF state of switches',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/d20.svg',
+    filePicker: 'imagevideo'
+  });
+
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultSound', {
+    name: 'Default Sound',
+    hint: 'Default sound for switch activation',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'sounds/doors/industrial/unlock.ogg',
+    filePicker: 'audio'
+  });
+
+  // Register counter for switch IDs
+  game.settings.register('em-puzzles-and-trap-tiles', 'switchCounter', {
+    scope: 'world',
+    config: false,
+    type: Number,
+    default: 1
+  });
+});
+
+Hooks.once('ready', () => {
+  if (!game.modules.get('monks-active-tiles')?.active) {
+    ui.notifications.error('EM Puzzle and Trap Tiles requires Monk\'s Active Tiles to be installed and active.');
+    return;
+  }
+
+  console.log('EM Puzzle and Trap Tiles | Ready');
+});
+
+/**
+ * Add button to tiles toolbar
+ */
+Hooks.on('getSceneControlButtons', (controls) => {
+  const tilesControl = controls.tiles;
+  if (!tilesControl) return;
+
+  const tools = tilesControl.tools;
+  if (!tools) return;
+
+  // Add our switch creator tool
+  tools['em-puzzles-create-switch'] = {
+    name: 'em-puzzles-create-switch',
+    title: 'Create Switch',
+    icon: 'fas fa-toggle-on',
+    button: true,
+    onClick: () => showSwitchDialog(),
+    order: 1000
+  };
+
+  // Add scene variables viewer tool
+  tools['em-puzzles-view-variables'] = {
+    name: 'em-puzzles-view-variables',
+    title: 'View Scene Variables',
+    icon: 'fas fa-list',
+    button: true,
+    onClick: () => showSceneVariablesDialog(),
+    order: 1001
+  };
+
+  // Add reset tile creator tool
+  tools['em-puzzles-create-reset'] = {
+    name: 'em-puzzles-create-reset',
+    title: 'Create Reset Tile',
+    icon: 'fas fa-undo',
+    button: true,
+    onClick: () => showResetTileDialog(),
+    order: 1002
+  };
+});
+
+/**
+ * Dialog for creating a switch tile
+ */
+function showSwitchDialog() {
+  // Get default values from settings
+  const defaultOnImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultOnImage');
+  const defaultOffImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultOffImage');
+  const defaultSound = game.settings.get('em-puzzles-and-trap-tiles', 'defaultSound');
+
+  // Get and increment the switch counter
+  const switchCounter = game.settings.get('em-puzzles-and-trap-tiles', 'switchCounter');
+  const nextSwitchId = `switch_${switchCounter}`;
+
+  const dialog = new Dialog({
+    title: 'Create Switch',
+    content: `
+      <form>
+        <div class="form-group">
+          <label>Switch Name:</label>
+          <input type="text" name="switchName" value="Switch ${switchCounter}" />
+        </div>
+        <div class="form-group">
+          <label>Variable Name:</label>
+          <input type="text" name="variableName" value="${nextSwitchId}" />
+          <p class="notes">Unique identifier for tracking this switch state</p>
+        </div>
+        <div class="form-group">
+          <label>ON Image:</label>
+          <div class="form-fields">
+            <button type="button" class="file-picker" data-type="imagevideo" data-target="onImage" title="Browse Files" tabindex="-1">
+              <i class="fas fa-file-import fa-fw"></i>
+            </button>
+            <input type="text" name="onImage" value="${defaultOnImage}" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>OFF Image:</label>
+          <div class="form-fields">
+            <button type="button" class="file-picker" data-type="imagevideo" data-target="offImage" title="Browse Files" tabindex="-1">
+              <i class="fas fa-file-import fa-fw"></i>
+            </button>
+            <input type="text" name="offImage" value="${defaultOffImage}" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Sound:</label>
+          <div class="form-fields">
+            <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
+              <i class="fas fa-file-import fa-fw"></i>
+            </button>
+            <input type="text" name="sound" value="${defaultSound}" />
+          </div>
+        </div>
+      </form>
+    `,
+    buttons: {
+      create: {
+        icon: '<i class="fas fa-check"></i>',
+        label: 'Create',
+        callback: async (html) => {
+          const scene = canvas.scene;
+          if (!scene) {
+            ui.notifications.error('No active scene!');
+            return;
+          }
+
+          const form = html[0].querySelector('form');
+          const formData = new FormDataExtended(form).object;
+
+          await createSwitchTile(scene, {
+            name: formData.switchName || 'Switch',
+            variableName: formData.variableName,
+            onImage: formData.onImage,
+            offImage: formData.offImage,
+            sound: formData.sound
+          });
+
+          // Increment the counter for next switch
+          await game.settings.set('em-puzzles-and-trap-tiles', 'switchCounter', switchCounter + 1);
+
+          ui.notifications.info('Switch tile created!');
+        }
+      },
+      cancel: {
+        icon: '<i class="fas fa-times"></i>',
+        label: 'Cancel'
+      }
+    },
+    default: 'create',
+    render: (html) => {
+      // Activate file pickers
+      html.find('.file-picker').each((i, button) => {
+        button.onclick = async () => {
+          const type = button.dataset.type;
+          const target = button.dataset.target;
+          const input = html.find(`input[name="${target}"]`)[0];
+
+          const fp = new FilePicker({
+            type: type,
+            current: input.value,
+            callback: (path) => {
+              input.value = path;
+            }
+          });
+          fp.browse();
+        };
+      });
+    }
+  }, {
+    width: 800
+  });
+
+  dialog.render(true);
+}
+
+/**
+ * Dialog for creating a reset tile
+ */
+function showResetTileDialog() {
+  const scene = canvas.scene;
+  if (!scene) {
+    ui.notifications.error('No active scene!');
+    return;
+  }
+
+  let dialogElement = null;
+  const selectedTiles = new Map(); // tileId -> tile data
+
+  function buildTileList() {
+    if (selectedTiles.size === 0) {
+      return '<p><em>No tiles selected. Click "Add Tile" to select tiles from the canvas.</em></p>';
+    }
+
+    let html = '<div style="max-height: 500px; overflow-y: auto;">';
+    selectedTiles.forEach((tileData, tileId) => {
+      // Build variable inputs
+      let variableInputs = '';
+      Object.entries(tileData.variables).forEach(([varName, varValue]) => {
+        // Try to guess the type
+        const isBoolean = typeof varValue === 'boolean' ||
+                         varValue === 'true' ||
+                         varValue === 'false' ||
+                         varValue === true ||
+                         varValue === false;
+
+        if (isBoolean) {
+          const boolValue = varValue === true || varValue === 'true';
+          variableInputs += `
+            <div style="margin: 5px 0; padding-left: 10px;">
+              <label style="display: block; margin-bottom: 3px; font-size: 0.9em;">${varName}:</label>
+              <label style="margin-right: 15px;">
+                <input type="radio" name="var_${tileId}_${varName}" value="true" ${boolValue ? 'checked' : ''} />
+                True
+              </label>
+              <label>
+                <input type="radio" name="var_${tileId}_${varName}" value="false" ${!boolValue ? 'checked' : ''} />
+                False
+              </label>
+            </div>`;
+        } else {
+          const displayValue = typeof varValue === 'string' ? varValue : JSON.stringify(varValue);
+          variableInputs += `
+            <div style="margin: 5px 0; padding-left: 10px;">
+              <label style="display: inline-block; width: 150px; font-size: 0.9em;">${varName}:</label>
+              <input type="text" name="var_${tileId}_${varName}" value="${displayValue}" style="width: 150px;" />
+            </div>`;
+        }
+      });
+
+      // Build image radio buttons
+      let imageRadios = '';
+      if (tileData.files && tileData.files.length > 0) {
+        tileData.files.forEach((file, index) => {
+          const fileName = file.name.split('/').pop(); // Get just the filename
+          imageRadios += `
+            <div style="margin: 3px 0;">
+              <label>
+                <input type="radio" name="fileindex_${tileId}" value="${index}" ${tileData.fileindex === index ? 'checked' : ''} />
+                ${index}: ${fileName}
+              </label>
+            </div>`;
+        });
+      } else {
+        imageRadios = `<input type="number" name="fileindex_${tileId}" value="${tileData.fileindex}" min="0" style="width: 100px;" />`;
+      }
+
+      html += `
+        <div class="tile-entry" data-tile-id="${tileId}" style="margin-bottom: 15px; padding: 10px; background: rgba(100,100,100,0.3); border-radius: 4px; border: 1px solid #666;">
+          <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <strong style="flex: 1; font-size: 1.1em;">${tileData.tileName}</strong>
+            <button type="button" class="remove-tile" data-tile-id="${tileId}">
+              <i class="fas fa-times"></i> Remove
+            </button>
+          </div>
+
+          <div style="margin-bottom: 10px;">
+            <label style="display: flex; align-items: center; font-size: 0.95em; margin-bottom: 8px;">
+              <input type="checkbox" name="reverse_${tileId}" ${tileData.reverseActions ? 'checked' : ''} style="margin-right: 8px;" />
+              <strong>Reverse Actions</strong>
+              <span style="margin-left: 8px; color: #999; font-size: 0.85em; font-weight: normal;">(Undo tile's last action sequence)</span>
+            </label>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="display: block; margin-bottom: 3px; font-size: 0.9em;">Visibility:</label>
+              <select name="visibility_${tileId}" style="width: 100%;">
+                <option value="show" ${!tileData.hidden ? 'selected' : ''}>Visible</option>
+                <option value="hide" ${tileData.hidden ? 'selected' : ''}>Hidden</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; margin-bottom: 3px; font-size: 0.9em;">Active:</label>
+              <select name="active_${tileId}" style="width: 100%;">
+                <option value="true" ${tileData.active ? 'selected' : ''}>Active</option>
+                <option value="false" ${!tileData.active ? 'selected' : ''}>Inactive</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; margin-bottom: 3px; font-size: 0.9em;">Rotation:</label>
+              <input type="number" name="rotation_${tileId}" value="${tileData.rotation}" step="1" style="width: 100%;" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="display: block; margin-bottom: 3px; font-size: 0.9em;">X Position (Start):</label>
+              <input type="number" name="x_${tileId}" value="${tileData.x}" step="1" style="width: 100%; margin-bottom: 3px;" />
+              <div style="font-size: 0.85em; color: #999;">End: ${tileData.currentX}</div>
+            </div>
+
+            <div>
+              <label style="display: block; margin-bottom: 3px; font-size: 0.9em;">Y Position (Start):</label>
+              <input type="number" name="y_${tileId}" value="${tileData.y}" step="1" style="width: 100%; margin-bottom: 3px;" />
+              <div style="font-size: 0.85em; color: #999;">End: ${tileData.currentY}</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 10px;">
+            <label style="display: block; margin-bottom: 5px; font-size: 0.9em;">Image:</label>
+            ${imageRadios}
+          </div>
+
+          ${Object.keys(tileData.variables).length > 0 ? `
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">Variables:</label>
+            ${variableInputs}
+          </div>` : ''}
+        </div>`;
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function refreshTileList() {
+    if (dialogElement) {
+      const listContainer = dialogElement.find('.tile-list-container');
+      listContainer.html(buildTileList());
+
+      // Re-attach remove button handlers
+      listContainer.find('.remove-tile').on('click', function() {
+        const tileId = this.dataset.tileId;
+        selectedTiles.delete(tileId);
+        refreshTileList();
+      });
+    }
+  }
+
+  function startTileSelection() {
+    ui.notifications.info('Click on a tile to add it to the reset list...');
+
+    const handler = async (event) => {
+      const tile = event.interactionData?.object?.document;
+
+      if (!tile) {
+        ui.notifications.warn('No tile selected!');
+        return;
+      }
+
+      const tileVars = tile.flags['monks-active-tiles']?.variables || {};
+      const varsToReset = {};
+
+      // Capture all variables with their current values
+      Object.entries(tileVars).forEach(([varName, value]) => {
+        varsToReset[varName] = value;
+      });
+
+      // Calculate starting position by analyzing movement actions
+      const actions = tile.flags['monks-active-tiles']?.actions || [];
+      let startX = tile.x;
+      let startY = tile.y;
+      let startRotation = tile.rotation || 0;
+
+      // Find the last movement action to determine starting position
+      // We need to reverse the movement to find where it started
+      for (let i = actions.length - 1; i >= 0; i--) {
+        const action = actions[i];
+        if (action.action === 'movement') {
+          const data = action.data;
+
+          // If there's an X movement, calculate start position
+          if (data.x !== undefined && data.x !== '') {
+            const xVal = data.x.toString();
+            if (xVal.startsWith('+')) {
+              startX = tile.x - parseFloat(xVal.substring(1));
+            } else if (xVal.startsWith('-')) {
+              startX = tile.x + parseFloat(xVal.substring(1));
+            }
+            // If it's absolute, we can't determine start, use current
+          }
+
+          // If there's a Y movement, calculate start position
+          if (data.y !== undefined && data.y !== '') {
+            const yVal = data.y.toString();
+            if (yVal.startsWith('+')) {
+              startY = tile.y - parseFloat(yVal.substring(1));
+            } else if (yVal.startsWith('-')) {
+              startY = tile.y + parseFloat(yVal.substring(1));
+            }
+          }
+
+          // If there's a rotation movement, calculate start rotation
+          if (data.rotation !== undefined && data.rotation !== '') {
+            const rotVal = data.rotation.toString();
+            if (rotVal.startsWith('+')) {
+              startRotation = (tile.rotation || 0) - parseFloat(rotVal.substring(1));
+            } else if (rotVal.startsWith('-')) {
+              startRotation = (tile.rotation || 0) + parseFloat(rotVal.substring(1));
+            }
+          }
+
+          break; // Only look at the most recent movement
+        }
+      }
+
+      selectedTiles.set(tile.id, {
+        tileId: tile.id,
+        tileName: tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile',
+        hidden: tile.hidden,
+        image: tile.texture.src,
+        fileindex: tile.flags['monks-active-tiles']?.fileindex || 0,
+        active: tile.flags['monks-active-tiles']?.active !== false,
+        files: tile.flags['monks-active-tiles']?.files || [],
+        variables: varsToReset,
+        rotation: startRotation,
+        x: startX,
+        y: startY,
+        currentRotation: tile.rotation || 0,
+        currentX: tile.x,
+        currentY: tile.y,
+        reverseActions: true // Default to reversing actions
+      });
+
+      refreshTileList();
+      ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
+
+      // Remove the handler after selection
+      canvas.stage.off('click', handler);
+    };
+
+    canvas.stage.on('click', handler);
+  }
+
+  const dialog = new Dialog({
+    title: 'Create Reset Tile',
+    content: `
+      <form>
+        <div class="form-group">
+          <label>Reset Tile Name:</label>
+          <input type="text" name="resetName" value="Reset Tile" />
+        </div>
+        <div class="form-group">
+          <label>Reset Tile Image:</label>
+          <div class="form-fields">
+            <button type="button" class="file-picker" data-type="imagevideo" data-target="resetTileImage" title="Browse Files" tabindex="-1">
+              <i class="fas fa-file-import fa-fw"></i>
+            </button>
+            <input type="text" name="resetTileImage" value="icons/svg/clockwork.svg" />
+          </div>
+        </div>
+        <div class="form-group">
+          <button type="button" class="add-tile-btn" style="margin: 10px 0; width: 100%;">
+            <i class="fas fa-plus"></i> Add Tile
+          </button>
+        </div>
+        <div class="tile-list-container" style="border: 1px solid #999; padding: 10px; margin-top: 5px;">
+          ${buildTileList()}
+        </div>
+      </form>
+    `,
+    buttons: {
+      create: {
+        icon: '<i class="fas fa-check"></i>',
+        label: 'Create',
+        callback: async (html) => {
+          const form = html[0].querySelector('form');
+          const formData = new FormDataExtended(form).object;
+
+          if (selectedTiles.size === 0) {
+            ui.notifications.warn('No tiles selected!');
+            return;
+          }
+
+          // Collect all variables and tile states from form
+          const varsToReset = {};
+          const tilesToReset = [];
+
+          selectedTiles.forEach((tileData, tileId) => {
+            // Get updated values from form inputs
+            const variables = {};
+            Object.keys(tileData.variables).forEach((varName) => {
+              let value = formData[`var_${tileId}_${varName}`];
+              // Parse JSON values
+              try {
+                value = JSON.parse(value);
+              } catch (e) {
+                // Keep as string if not valid JSON
+              }
+              variables[varName] = value;
+            });
+
+            Object.assign(varsToReset, variables);
+
+            tilesToReset.push({
+              tileId: tileId,
+              hidden: formData[`visibility_${tileId}`] === 'hide',
+              fileindex: parseInt(formData[`fileindex_${tileId}`]) || 0,
+              active: formData[`active_${tileId}`] === 'true',
+              reverseActions: formData[`reverse_${tileId}`] === true || formData[`reverse_${tileId}`] === 'on',
+              rotation: parseFloat(formData[`rotation_${tileId}`]) || 0,
+              x: parseFloat(formData[`x_${tileId}`]) || tileData.x,
+              y: parseFloat(formData[`y_${tileId}`]) || tileData.y
+            });
+          });
+
+          await createResetTile(scene, {
+            name: formData.resetName || 'Reset Tile',
+            image: formData.resetTileImage || 'icons/svg/clockwork.svg',
+            varsToReset: varsToReset,
+            tilesToReset: tilesToReset
+          });
+
+          ui.notifications.info('Reset tile created!');
+        }
+      },
+      cancel: {
+        icon: '<i class="fas fa-times"></i>',
+        label: 'Cancel'
+      }
+    },
+    default: 'create',
+    render: (html) => {
+      dialogElement = html;
+
+      // Activate file picker for reset tile image
+      html.find('.file-picker').on('click', async function() {
+        const type = this.dataset.type;
+        const target = this.dataset.target;
+        const input = html.find(`input[name="${target}"]`)[0];
+
+        const fp = new FilePicker({
+          type: type,
+          current: input.value,
+          callback: (path) => {
+            input.value = path;
+          }
+        });
+        fp.browse();
+      });
+
+      // Attach add tile button handler
+      html.find('.add-tile-btn').on('click', () => {
+        startTileSelection();
+      });
+
+      // Attach remove button handlers
+      html.find('.remove-tile').on('click', function() {
+        const tileId = this.dataset.tileId;
+        selectedTiles.delete(tileId);
+        refreshTileList();
+      });
+    },
+    close: () => {
+      // Clean up any pending click handlers
+      canvas.stage.off('click');
+    }
+  }, {
+    width: 800,
+    height: 700
+  });
+
+  dialog.render(true);
+}
+
+/**
+ * Dialog for viewing scene variables
+ */
+function showSceneVariablesDialog() {
+  const scene = canvas.scene;
+  if (!scene) {
+    ui.notifications.error('No active scene!');
+    return;
+  }
+
+  let dialogElement = null;
+
+  function buildContent() {
+    // Get all tiles with Monk's Active Tiles variables
+    const tiles = scene.tiles.filter(t => t.flags['monks-active-tiles']?.variables);
+
+    // Collect all variables
+    const variables = {};
+    tiles.forEach(tile => {
+      const tileVars = tile.flags['monks-active-tiles'].variables;
+      if (tileVars) {
+        Object.entries(tileVars).forEach(([key, value]) => {
+          if (!variables[key]) {
+            variables[key] = {
+              value: value,
+              tiles: []
+            };
+          }
+          variables[key].tiles.push({
+            name: tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile',
+            id: tile.id
+          });
+        });
+      }
+    });
+
+    // Build content HTML with embedded refresh button
+    let content = '<div>';
+    content += '<button type="button" class="refresh-variables" style="margin-bottom: 10px;"><i class="fas fa-sync"></i> Refresh</button>';
+    content += '<div style="max-height: 500px; overflow-y: auto;">';
+
+    if (Object.keys(variables).length === 0) {
+      content += '<p><em>No variables found in this scene.</em></p>';
+    } else {
+      content += '<table style="width: 100%; border-collapse: collapse;">';
+      content += '<thead><tr><th style="text-align: left; padding: 5px; border-bottom: 1px solid #999;">Variable</th><th style="text-align: left; padding: 5px; border-bottom: 1px solid #999;">Value</th><th style="text-align: left; padding: 5px; border-bottom: 1px solid #999;">Used By</th></tr></thead>';
+      content += '<tbody>';
+
+      Object.entries(variables).sort((a, b) => a[0].localeCompare(b[0])).forEach(([varName, varData]) => {
+        const valueDisplay = typeof varData.value === 'boolean'
+          ? `<span style="color: ${varData.value ? 'green' : 'red'}; font-weight: bold;">${varData.value}</span>`
+          : varData.value;
+
+        const tilesDisplay = varData.tiles.map(t => t.name).join(', ');
+
+        content += `<tr>
+          <td style="padding: 5px; border-bottom: 1px solid #555;"><code>${varName}</code></td>
+          <td style="padding: 5px; border-bottom: 1px solid #555;">${valueDisplay}</td>
+          <td style="padding: 5px; border-bottom: 1px solid #555; font-size: 0.9em;">${tilesDisplay}</td>
+        </tr>`;
+      });
+
+      content += '</tbody></table>';
+    }
+
+    content += '</div></div>';
+    return content;
+  }
+
+  function refreshContent() {
+    if (dialogElement) {
+      const contentDiv = dialogElement.find('.window-content');
+      contentDiv.html(buildContent());
+      // Re-attach the refresh button handler
+      contentDiv.find('.refresh-variables').on('click', refreshContent);
+    }
+  }
+
+  const dialog = new Dialog({
+    title: `Scene Variables: ${scene.name}`,
+    content: buildContent(),
+    buttons: {
+      close: {
+        icon: '<i class="fas fa-times"></i>',
+        label: 'Close'
+      }
+    },
+    render: (html) => {
+      dialogElement = html;
+      // Attach refresh button handler
+      html.find('.refresh-variables').on('click', refreshContent);
+    }
+  }, {
+    width: 700
+  });
+
+  dialog.render(true);
+}
+
+/**
+ * Create a switch tile
+ */
+async function createSwitchTile(scene, config) {
+  const tileData = {
+    texture: {
+      src: config.offImage,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: "fill",
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: "#ffffff",
+      alphaThreshold: 0.75
+    },
+    width: 100,
+    height: 100,
+    x: canvas.scene.dimensions.sceneWidth / 2,
+    y: canvas.scene.dimensions.sceneHeight / 2,
+    elevation: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: false,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      "monks-active-tiles": {
+        name: config.name,
+        active: true,
+        record: false,
+        restriction: "all",
+        controlled: "all",
+        trigger: ["dblclick"],
+        allowpaused: false,
+        usealpha: false,
+        pointer: true,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: [
+          // Play sound
+          {
+            action: "playsound",
+            data: {
+              audiofile: config.sound,
+              audiofor: "everyone",
+              volume: 1,
+              loop: false,
+              fade: 0.25,
+              scenerestrict: false,
+              prevent: false,
+              delay: false,
+              playlist: true
+            },
+            id: foundry.utils.randomID()
+          },
+          // Toggle variable
+          {
+            action: "setvariable",
+            data: {
+              name: config.variableName,
+              value: `{{not variable.${config.variableName}}}`,
+              scope: "scene"
+            },
+            id: foundry.utils.randomID()
+          },
+          // Send chat message with current state
+          {
+            action: "chatmessage",
+            data: {
+              text: `${config.name}: {{#if (eq variable.${config.variableName} true)}}ON{{else}}OFF{{/if}}`,
+              flavor: "",
+              whisper: "gm",
+              language: ""
+            },
+            id: foundry.utils.randomID()
+          },
+          // Check if ON - if true continue, if false goto "off"
+          {
+            action: "checkvalue",
+            data: {
+              name: `variable.${config.variableName}`,
+              value: "true",
+              fail: "off"
+            },
+            id: foundry.utils.randomID()
+          },
+          // Change to ON image (fileindex 0)
+          {
+            action: "tileimage",
+            data: {
+              entity: { id: "tile", name: "This Tile" },
+              select: "previous",
+              transition: "none"
+            },
+            id: foundry.utils.randomID()
+          },
+          // Stop
+          {
+            action: "stop",
+            data: {},
+            id: foundry.utils.randomID()
+          },
+          // OFF anchor
+          {
+            action: "anchor",
+            data: {
+              tag: "off",
+              stop: false
+            },
+            id: foundry.utils.randomID()
+          },
+          // Change to OFF image (fileindex 1)
+          {
+            action: "tileimage",
+            data: {
+              entity: { id: "tile", name: "This Tile" },
+              select: "next",
+              transition: "none"
+            },
+            id: foundry.utils.randomID()
+          }
+        ],
+        files: [
+          { id: foundry.utils.randomID(), name: config.onImage },
+          { id: foundry.utils.randomID(), name: config.offImage }
+        ],
+        variables: {
+          [config.variableName]: false
+        }
+      }
+    },
+    visible: true,
+    img: config.offImage
+  };
+
+  await scene.createEmbeddedDocuments('Tile', [tileData]);
+}
+
+/**
+ * Create a reset tile that resets multiple variables to specified values
+ */
+async function createResetTile(scene, config) {
+  // Build actions array - one setvariable action for each variable to reset
+  const actions = [];
+
+  // Add playsound action first
+  actions.push({
+    action: "playsound",
+    data: {
+      audiofile: game.settings.get('em-puzzles-and-trap-tiles', 'defaultSound'),
+      audiofor: "everyone",
+      volume: 1,
+      loop: false,
+      fade: 0.25,
+      scenerestrict: false,
+      prevent: false,
+      delay: false,
+      playlist: true
+    },
+    id: foundry.utils.randomID()
+  });
+
+  // Add setvariable actions for each variable
+  Object.entries(config.varsToReset).forEach(([varName, resetValue]) => {
+    actions.push({
+      action: "setvariable",
+      data: {
+        name: varName,
+        value: typeof resetValue === 'string' ? `"${resetValue}"` : resetValue.toString(),
+        scope: "scene"
+      },
+      id: foundry.utils.randomID()
+    });
+  });
+
+  // Reset each tile's state
+  config.tilesToReset.forEach(tileState => {
+    if (tileState.reverseActions) {
+      // Use runaction to reverse the tile's last action sequence
+      actions.push({
+        action: "runaction",
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+            name: `Tile: ${tileState.tileId}`
+          },
+          for: "previous"
+        },
+        id: foundry.utils.randomID()
+      });
+    }
+
+    // Reset visibility
+    actions.push({
+      action: "showhide",
+      data: {
+        entity: {
+          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+          name: `Tile: ${tileState.tileId}`
+        },
+        collection: "tiles",
+        hidden: tileState.hidden ? "hide" : "show",
+        fade: 0
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // Reset tile image to saved fileindex
+    actions.push({
+      action: "tileimage",
+      data: {
+        entity: {
+          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+          name: `Tile: ${tileState.tileId}`
+        },
+        select: tileState.fileindex.toString(),
+        transition: "none"
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // Reset active state
+    actions.push({
+      action: "activate",
+      data: {
+        entity: {
+          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+          name: `Tile: ${tileState.tileId}`
+        },
+        activate: tileState.active
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // Reset rotation if different from 0
+    if (tileState.rotation !== 0) {
+      actions.push({
+        action: "movement",
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+            name: `Tile: ${tileState.tileId}`
+          },
+          rotation: tileState.rotation.toString(),
+          duration: 0
+        },
+        id: foundry.utils.randomID()
+      });
+    }
+
+    // Reset position
+    actions.push({
+      action: "movement",
+      data: {
+        entity: {
+          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+          name: `Tile: ${tileState.tileId}`
+        },
+        x: tileState.x.toString(),
+        y: tileState.y.toString(),
+        duration: 0
+      },
+      id: foundry.utils.randomID()
+    });
+  });
+
+  // Add chat message to confirm reset
+  actions.push({
+    action: "chatmessage",
+    data: {
+      text: `${config.name}: Variables reset`,
+      flavor: "",
+      whisper: "gm",
+      language: ""
+    },
+    id: foundry.utils.randomID()
+  });
+
+  const tileData = {
+    texture: {
+      src: config.image,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: "fill",
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: "#ffffff",
+      alphaThreshold: 0.75
+    },
+    width: 100,
+    height: 100,
+    x: canvas.scene.dimensions.sceneWidth / 2,
+    y: canvas.scene.dimensions.sceneHeight / 2,
+    elevation: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: false,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      "monks-active-tiles": {
+        name: config.name,
+        active: true,
+        record: false,
+        restriction: "all",
+        controlled: "all",
+        trigger: ["dblclick"],
+        allowpaused: false,
+        usealpha: false,
+        pointer: true,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: [],
+        variables: {}
+      }
+    },
+    visible: true,
+    img: config.image
+  };
+
+  await scene.createEmbeddedDocuments('Tile', [tileData]);
+}

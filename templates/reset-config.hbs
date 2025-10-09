@@ -1,0 +1,126 @@
+<form>
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.ResetTileName"}}</label>
+    <input type="text" name="resetName" value="{{resetName}}" />
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.ResetTileImage"}}</label>
+    <div class="form-fields">
+      <input type="text" name="resetTileImage" value="{{resetTileImage}}" />
+      <file-picker type="imagevideo" name="resetTileImage"></file-picker>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <button type="button" class="add-tile-btn" data-action="addTile">
+      <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
+    </button>
+  </div>
+
+  <div class="tile-list-container">
+    {{#if hasTiles}}
+      <div class="tile-list-scroll">
+        {{#each tiles as |tile|}}
+          <div class="tile-entry" data-tile-id="{{tile.tileId}}">
+            <div class="tile-header">
+              <strong class="tile-name">{{tile.tileName}}</strong>
+              <button type="button" class="remove-tile" data-action="removeTile" data-tile-id="{{tile.tileId}}">
+                <i class="fas fa-times"></i> {{localize "EMPUZZLES.Remove"}}
+              </button>
+            </div>
+
+            <div class="reverse-section">
+              <label class="reverse-label">
+                <input type="checkbox" name="reverse_{{tile.tileId}}" {{#if tile.reverseActions}}checked{{/if}} />
+                <strong>{{localize "EMPUZZLES.ReverseActions"}}</strong>
+                <span class="reverse-hint">{{localize "EMPUZZLES.ReverseActionsHint"}}</span>
+              </label>
+            </div>
+
+            <div class="settings-grid-3">
+              <div class="field-group">
+                <label class="field-label">{{localize "EMPUZZLES.Visibility"}}:</label>
+                <select name="visibility_{{tile.tileId}}" class="field-select">
+                  <option value="show" {{#unless tile.hidden}}selected{{/unless}}>{{localize "EMPUZZLES.Visible"}}</option>
+                  <option value="hide" {{#if tile.hidden}}selected{{/if}}>{{localize "EMPUZZLES.Hidden"}}</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">{{localize "EMPUZZLES.Active"}}:</label>
+                <select name="active_{{tile.tileId}}" class="field-select">
+                  <option value="true" {{#if tile.active}}selected{{/if}}>{{localize "EMPUZZLES.Active"}}</option>
+                  <option value="false" {{#unless tile.active}}selected{{/unless}}>{{localize "EMPUZZLES.Inactive"}}</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">{{localize "EMPUZZLES.Rotation"}}:</label>
+                <input type="number" name="rotation_{{tile.tileId}}" value="{{tile.rotation}}" step="1" class="field-input" />
+              </div>
+            </div>
+
+            <div class="settings-grid-2">
+              <div class="field-group">
+                <label class="field-label">{{localize "EMPUZZLES.XPositionStart"}}:</label>
+                <input type="number" name="x_{{tile.tileId}}" value="{{tile.x}}" step="1" class="field-input" />
+                <div class="position-hint">{{localize "EMPUZZLES.End"}}: {{tile.currentX}}</div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">{{localize "EMPUZZLES.YPositionStart"}}:</label>
+                <input type="number" name="y_{{tile.tileId}}" value="{{tile.y}}" step="1" class="field-input" />
+                <div class="position-hint">{{localize "EMPUZZLES.End"}}: {{tile.currentY}}</div>
+              </div>
+            </div>
+
+            <div class="image-section">
+              <label class="section-label">{{localize "EMPUZZLES.Image"}}:</label>
+              {{#if tile.files}}
+                {{#each tile.files as |file index|}}
+                  <div class="image-option">
+                    <label>
+                      <input type="radio" name="fileindex_{{../tile.tileId}}" value="{{index}}" {{#if (eq ../tile.fileindex index)}}checked{{/if}} />
+                      {{index}}: {{file.name}}
+                    </label>
+                  </div>
+                {{/each}}
+              {{else}}
+                <input type="number" name="fileindex_{{tile.tileId}}" value="{{tile.fileindex}}" min="0" class="fileindex-input" />
+              {{/if}}
+            </div>
+
+            {{#if tile.hasVariables}}
+            <div class="variables-section">
+              <label class="section-label">{{localize "EMPUZZLES.Variables"}}:</label>
+              {{#each tile.variablesList as |variable|}}
+                {{#if variable.isBoolean}}
+                  <div class="variable-field">
+                    <label class="variable-label">{{variable.name}}:</label>
+                    <label class="radio-option">
+                      <input type="radio" name="var_{{../tile.tileId}}_{{variable.name}}" value="true" {{#if variable.boolValue}}checked{{/if}} />
+                      {{localize "EMPUZZLES.True"}}
+                    </label>
+                    <label class="radio-option">
+                      <input type="radio" name="var_{{../tile.tileId}}_{{variable.name}}" value="false" {{#unless variable.boolValue}}checked{{/unless}} />
+                      {{localize "EMPUZZLES.False"}}
+                    </label>
+                  </div>
+                {{else}}
+                  <div class="variable-field">
+                    <label class="variable-label">{{variable.name}}:</label>
+                    <input type="text" name="var_{{../tile.tileId}}_{{variable.name}}" value="{{variable.displayValue}}" class="variable-input" />
+                  </div>
+                {{/if}}
+              {{/each}}
+            </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <p><em>{{localize "EMPUZZLES.NoTilesSelected"}}</em></p>
+    {{/if}}
+  </div>
+</form>

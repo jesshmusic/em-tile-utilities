@@ -1,0 +1,205 @@
+{
+  "texture": {
+    "src": "FA_Mapmaking_Pack/Decor/Levers/Track_Lever_Gray_B_1x1.png",
+    "anchorX": 0.5,
+    "anchorY": 0.5,
+    "offsetX": 0,
+    "offsetY": 0,
+    "fit": "fill",
+    "scaleX": 1,
+    "scaleY": 1,
+    "rotation": 0,
+    "tint": "#ffffff",
+    "alphaThreshold": 0.75
+  },
+  "x": 3240,
+  "y": 2808,
+  "width": 72,
+  "height": 72,
+  "elevation": 0,
+  "sort": 25,
+  "occlusion": {
+    "mode": 0,
+    "alpha": 0
+  },
+  "rotation": 0,
+  "alpha": 1,
+  "hidden": true,
+  "locked": false,
+  "restrictions": {
+    "light": false,
+    "weather": false
+  },
+  "video": {
+    "loop": true,
+    "autoplay": true,
+    "volume": 0
+  },
+  "flags": {
+    "monks-active-tiles": {
+      "name": "",
+      "active": true,
+      "record": false,
+      "restriction": "all",
+      "controlled": "all",
+      "trigger": [
+        "dblclick"
+      ],
+      "allowpaused": false,
+      "usealpha": false,
+      "pointer": true,
+      "vision": true,
+      "pertoken": false,
+      "minrequired": null,
+      "cooldown": null,
+      "chance": 100,
+      "fileindex": 0,
+      "actions": [
+        {
+          "action": "showhide",
+          "data": {
+            "entity": {
+              "id": "tile",
+              "name": "This Tile"
+            },
+            "collection": "tokens",
+            "hidden": "toggle",
+            "fade": 0
+          },
+          "id": "MPOmcS1gzWPDMxCC"
+        },
+        {
+          "action": "playsound",
+          "data": {
+            "audiofile": "fa_battlemaps/Audio/Lever.ogg",
+            "audiofor": "everyone",
+            "volume": 1,
+            "loop": false,
+            "fade": 0.25,
+            "scenerestrict": false,
+            "prevent": false,
+            "delay": false,
+            "playlist": false
+          },
+          "id": "WniwpPldtNFllBSO"
+        },
+        {
+          "action": "showhide",
+          "data": {
+            "entity": {
+              "id": "Scene.4kskRFdfOHXUfNO8.Tile.N76UL5wNVmZUXLz9",
+              "name": "Tile: N76UL5wNVmZUXLz9"
+            },
+            "collection": "tokens",
+            "hidden": "toggle",
+            "fade": 0,
+            "rotation": "+180",
+            "duration": 0
+          },
+          "id": "c1Ljrh7aXbTzIguT"
+        },
+        {
+          "action": "checkvariable",
+          "data": {
+            "entity": {
+              "id": "tile",
+              "name": "This Tile"
+            },
+            "type": "all",
+            "name": "switchStatus2",
+            "value": "\"ON\"",
+            "fail": "SwitchON"
+          },
+          "id": "lfJSmagez09pCCAj"
+        },
+        {
+          "action": "changedoor",
+          "data": {
+            "entity": {
+              "id": "Scene.4kskRFdfOHXUfNO8.Wall.A3TcppBywz5tHydr",
+              "name": "Wall: A3TcppBywz5tHydr"
+            },
+            "type": "nothing",
+            "state": "CLOSED",
+            "movement": "nothing",
+            "light": "nothing",
+            "sight": "nothing",
+            "sound": "nothing"
+          },
+          "id": "crv7UdimXHbo9jQ5"
+        },
+        {
+          "action": "setvariable",
+          "data": {
+            "entity": {
+              "id": "tile",
+              "name": "This Tile"
+            },
+            "name": "switchStatus2",
+            "value": "\"OFF\""
+          },
+          "id": "2yqZui0REHjqof02"
+        },
+        {
+          "action": "anchor",
+          "data": {
+            "tag": "SwitchON",
+            "stop": true
+          },
+          "id": "uwZhUI3AXAoCZkPB"
+        },
+        {
+          "action": "setvariable",
+          "data": {
+            "entity": {
+              "id": "tile",
+              "name": "This Tile"
+            },
+            "name": "switchStatus2",
+            "value": "\"ON\""
+          },
+          "id": "GTpUxBrFGUXjJk5c"
+        }
+      ],
+      "files": [],
+      "variables": {
+        "switchOne": "@variable.switchOne===\"on\" ? \"off\" : \"on\"",
+        "switchStatus": "Switched ON",
+        "switchStatus1": "OFF",
+        "switchStatus2": "ON"
+      }
+    },
+    "tile-scroll": {
+      "enableScroll": false,
+      "scrollDirection": 0,
+      "enableRotate": false,
+      "scrollSpeed": 1,
+      "repeatx": 1,
+      "repeaty": 1,
+      "pivotx": 0.5,
+      "pivoty": 0.5,
+      "offsetx": 0,
+      "offsety": 0,
+      "parallax": 0
+    },
+    "tagger": {},
+    "betterroofs": {
+      "brMode": false,
+      "occlusionLinkId": "",
+      "occlusionLinkSource": false
+    },
+    "levels": {
+      "rangeTop": null,
+      "showIfAbove": false,
+      "showAboveRange": null,
+      "noCollision": false,
+      "noFogHide": false,
+      "isBasement": false,
+      "allWallBlockSight": true
+    },
+    "multiface-tiles": {
+      "originalImage": "FA_Mapmaking_Pack/Decor/Levers/Track_Lever_Gray_B_1x1.png"
+    }
+  },
+  "_id": "utAwpN9BwVn3VGrL"
+}

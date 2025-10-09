@@ -1,0 +1,30 @@
+<div class="em-puzzles-variables-dialog">
+  <button type="button" class="refresh-variables" data-action="refresh">
+    <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
+  </button>
+
+  <div style="max-height: 500px; overflow-y: auto;">
+    {{#if hasVariables}}
+      <table>
+        <thead>
+          <tr>
+            <th>{{localize "EMPUZZLES.Variable"}}</th>
+            <th>{{localize "EMPUZZLES.Value"}}</th>
+            <th>{{localize "EMPUZZLES.UsedBy"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each variables as |varData varName|}}
+            <tr>
+              <td><code>{{varName}}</code></td>
+              <td>{{{varData.valueDisplay}}}</td>
+              <td style="font-size: 0.9em;">{{varData.tilesDisplay}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p><em>{{localize "EMPUZZLES.NoVariablesFound"}}</em></p>
+    {{/if}}
+  </div>
+</div>

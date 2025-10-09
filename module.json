@@ -24,9 +24,11 @@
     ]
   },
   "scripts": [
-    "scripts/main.js"
+    "dist/main.js"
   ],
-  "styles": [],
+  "styles": [
+    "styles/dialogs.css"
+  ],
   "languages": [
     {
       "lang": "en",
