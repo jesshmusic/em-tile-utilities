@@ -7,8 +7,10 @@
   <div class="form-group">
     <label>{{localize "EMPUZZLES.ResetTileImage"}}</label>
     <div class="form-fields">
-      <input type="text" id="resetTileImage" name="resetTileImage" value="{{resetTileImage}}" data-dtype="String" />
-      <file-picker type="imagevideo" target="resetTileImage"></file-picker>
+      <input type="text" name="resetTileImage" value="{{resetTileImage}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="resetTileImage" title="Browse Files" tabindex="-1">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
     </div>
   </div>
 

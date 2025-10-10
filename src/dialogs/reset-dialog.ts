@@ -265,15 +265,68 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
   /* -------------------------------------------- */
 
+  /** @inheritDoc */
+  _onRender(context: any, options: any): void {
+    super._onRender(context, options);
+
+    // Activate file picker buttons
+    const filePickerButtons = this.element.querySelectorAll('.file-picker');
+    filePickerButtons.forEach((button: Element) => {
+      (button as HTMLElement).onclick = this._onFilePicker.bind(this);
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle file picker button clicks
+   */
+  async _onFilePicker(event: Event): Promise<void> {
+    event.preventDefault();
+    const button = event.currentTarget as HTMLElement;
+    const target = button.dataset.target;
+    const type = button.dataset.type;
+
+    if (!target) return;
+
+    const input = this.element.querySelector(`input[name="${target}"]`) as HTMLInputElement;
+    if (!input) return;
+
+    const current = input.value;
+
+    const fp = new (FilePicker as any)({
+      type: type,
+      current: current,
+      callback: (path: string) => {
+        input.value = path;
+        // Trigger change event so the value is recognized
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    return fp.browse();
+  }
+
+  /* -------------------------------------------- */
+
   /**
    * Capture current form values before re-rendering
    */
   captureFormValues(): void {
-    const form = this.element?.querySelector('form');
+    // The element itself IS the form in ApplicationV2
+    const form = this.element?.tagName === 'FORM' ? this.element : this.element?.querySelector('form');
     if (form) {
-      const formData = new FormData(form);
-      this.resetName = (formData.get('resetName') as string) || this.resetName;
-      this.resetTileImage = (formData.get('resetTileImage') as string) || this.resetTileImage;
+      // Get resetName from input
+      const nameInput = form.querySelector('input[name="resetName"]') as HTMLInputElement;
+      if (nameInput?.value) {
+        this.resetName = nameInput.value;
+      }
+
+      // Get resetTileImage from input field
+      const imageInput = form.querySelector('input[name="resetTileImage"]') as HTMLInputElement;
+      if (imageInput?.value) {
+        this.resetTileImage = imageInput.value;
+      }
     }
   }
 
@@ -447,8 +500,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         hasFiles: tileData.files && tileData.files.length > 0
       });
     });
-
-    console.log('EM Puzzles', data);
 
     // Validate reset tile image
     const resetTileImageRaw = data.resetTileImage;
