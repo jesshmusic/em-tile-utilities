@@ -514,24 +514,35 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       return;
     }
 
-    await createResetTile(scene, {
-      name: data.resetName || 'Reset Tile',
-      image: resetTileImage,
-      varsToReset: varsToReset,
-      tilesToReset: tilesToReset
-    });
+    // Show notification to click on canvas
+    ui.notifications.info('Click on the canvas to place the reset tile...');
 
-    ui.notifications.info('Reset tile created!');
+    // Set up click handler for placement
+    const handler = async (clickEvent: any) => {
+      // Get the click position
+      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+
+      // Snap to grid
+      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+      // Create the reset tile at the clicked position
+      await createResetTile(scene, {
+        name: data.resetName || 'Reset Tile',
+        image: resetTileImage,
+        varsToReset: varsToReset,
+        tilesToReset: tilesToReset
+      }, snapped.x, snapped.y);
+
+      ui.notifications.info('Reset tile created!');
+
+      // Remove the handler after placement
+      (canvas as any).stage.off('click', handler);
+    };
+
+    // Add the click handler
+    (canvas as any).stage.on('click', handler);
   }
 
-  /* -------------------------------------------- */
-
-  /** @inheritDoc */
-  _onClose(_options: any): void {
-    super._onClose(_options);
-    // Clean up any pending click handlers
-    (canvas as any).stage.off('click');
-  }
 }
 
 /**

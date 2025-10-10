@@ -3,7 +3,14 @@ import type { SwitchConfig, ResetTileConfig } from '../types/module';
 /**
  * Create a switch tile with ON/OFF states
  */
-export async function createSwitchTile(scene: Scene, config: SwitchConfig): Promise<void> {
+export async function createSwitchTile(scene: Scene, config: SwitchConfig, x?: number, y?: number): Promise<void> {
+  // Get grid size from scene (1 grid space for switch)
+  const gridSize = (canvas as any).grid.size;
+
+  // Default to center if no position provided
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
   const tileData = {
     texture: {
       src: config.offImage,
@@ -16,10 +23,10 @@ export async function createSwitchTile(scene: Scene, config: SwitchConfig): Prom
       tint: "#ffffff",
       alphaThreshold: 0.75
     },
-    width: 100,
-    height: 100,
-    x: canvas.scene.dimensions.sceneWidth / 2,
-    y: canvas.scene.dimensions.sceneHeight / 2,
+    width: gridSize,
+    height: gridSize,
+    x: tileX,
+    y: tileY,
     elevation: 0,
     occlusion: { mode: 0, alpha: 0 },
     rotation: 0,
@@ -148,7 +155,7 @@ export async function createSwitchTile(scene: Scene, config: SwitchConfig): Prom
 /**
  * Create a reset tile that resets multiple variables and tile states
  */
-export async function createResetTile(scene: Scene, config: ResetTileConfig): Promise<void> {
+export async function createResetTile(scene: Scene, config: ResetTileConfig, x?: number, y?: number): Promise<void> {
   const actions: any[] = [];
 
   // Add setvariable actions for each variable
@@ -315,6 +322,13 @@ export async function createResetTile(scene: Scene, config: ResetTileConfig): Pr
     id: foundry.utils.randomID()
   });
 
+  // Get grid size from scene (2x2 grid spaces for reset tile)
+  const gridSize = (canvas as any).grid.size * 2;
+
+  // Default to center if no position provided
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
   const tileData = {
     texture: {
       src: config.image,
@@ -327,10 +341,10 @@ export async function createResetTile(scene: Scene, config: ResetTileConfig): Pr
       tint: "#ffffff",
       alphaThreshold: 0.75
     },
-    width: 100,
-    height: 100,
-    x: canvas.scene.dimensions.sceneWidth / 2,
-    y: canvas.scene.dimensions.sceneHeight / 2,
+    width: gridSize,
+    height: gridSize,
+    x: tileX,
+    y: tileY,
     elevation: 0,
     occlusion: { mode: 0, alpha: 0 },
     rotation: 0,

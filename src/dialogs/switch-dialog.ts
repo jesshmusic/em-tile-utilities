@@ -73,6 +73,50 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
 
   /* -------------------------------------------- */
 
+  /** @inheritDoc */
+  _onRender(context: any, options: any): void {
+    super._onRender(context, options);
+
+    // Activate file picker buttons
+    const filePickerButtons = this.element.querySelectorAll('.file-picker');
+    filePickerButtons.forEach((button: Element) => {
+      (button as HTMLElement).onclick = this._onFilePicker.bind(this);
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle file picker button clicks
+   */
+  async _onFilePicker(event: Event): Promise<void> {
+    event.preventDefault();
+    const button = event.currentTarget as HTMLElement;
+    const target = button.dataset.target;
+    const type = button.dataset.type;
+
+    if (!target) return;
+
+    const input = this.element.querySelector(`input[name="${target}"]`) as HTMLInputElement;
+    if (!input) return;
+
+    const current = input.value;
+
+    const fp = new (FilePicker as any)({
+      type: type,
+      current: current,
+      callback: (path: string) => {
+        input.value = path;
+        // Trigger change event so the value is recognized
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    return fp.browse();
+  }
+
+  /* -------------------------------------------- */
+
   /**
    * Handle form submission
    * @param {SubmitEvent} event - The form submit event
@@ -92,19 +136,38 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
 
     const data = formData.object;
 
-    await createSwitchTile(scene, {
-      name: data.switchName || 'Switch',
-      variableName: data.variableName,
-      onImage: data.onImage,
-      offImage: data.offImage,
-      sound: data.sound
-    });
+    // Show notification to click on canvas
+    ui.notifications.info('Click on the canvas to place the switch tile...');
 
-    // Increment the counter for next switch
-    const switchCounter = game.settings.get('em-puzzles-and-trap-tiles', 'switchCounter') as number;
-    await game.settings.set('em-puzzles-and-trap-tiles', 'switchCounter', switchCounter + 1);
+    // Set up click handler for placement
+    const handler = async (clickEvent: any) => {
+      // Get the click position
+      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
 
-    ui.notifications.info('Switch tile created!');
+      // Snap to grid
+      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+      // Create the switch at the clicked position
+      await createSwitchTile(scene, {
+        name: data.switchName || 'Switch',
+        variableName: data.variableName,
+        onImage: data.onImage,
+        offImage: data.offImage,
+        sound: data.sound
+      }, snapped.x, snapped.y);
+
+      // Increment the counter for next switch
+      const switchCounter = game.settings.get('em-puzzles-and-trap-tiles', 'switchCounter') as number;
+      await game.settings.set('em-puzzles-and-trap-tiles', 'switchCounter', switchCounter + 1);
+
+      ui.notifications.info('Switch tile created!');
+
+      // Remove the handler after placement
+      (canvas as any).stage.off('click', handler);
+    };
+
+    // Add the click handler
+    (canvas as any).stage.on('click', handler);
   }
 }
 
