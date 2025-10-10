@@ -151,31 +151,27 @@ export async function createSwitchTile(scene: Scene, config: SwitchConfig): Prom
 export async function createResetTile(scene: Scene, config: ResetTileConfig): Promise<void> {
   const actions: any[] = [];
 
-  // Add playsound action first
-  actions.push({
-    action: "playsound",
-    data: {
-      audiofile: game.settings.get('em-puzzles-and-trap-tiles', 'defaultSound'),
-      audiofor: "everyone",
-      volume: 1,
-      loop: false,
-      fade: 0.25,
-      scenerestrict: false,
-      prevent: false,
-      delay: false,
-      playlist: true
-    },
-    id: foundry.utils.randomID()
-  });
-
   // Add setvariable actions for each variable
   Object.entries(config.varsToReset).forEach(([varName, resetValue]) => {
+    // Handle different value types
+    let valueString: string;
+    if (resetValue === null || resetValue === undefined) {
+      valueString = 'null';
+    } else if (typeof resetValue === 'string') {
+      valueString = `"${resetValue}"`;
+    } else if (typeof resetValue === 'boolean') {
+      valueString = resetValue.toString();
+    } else {
+      valueString = String(resetValue);
+    }
+
     actions.push({
       action: "setvariable",
       data: {
         name: varName,
-        value: typeof resetValue === 'string' ? `"${resetValue}"` : resetValue.toString(),
-        scope: "scene"
+        value: valueString,
+        scope: "scene",
+        entity: "tile"
       },
       id: foundry.utils.randomID()
     });
@@ -183,93 +179,124 @@ export async function createResetTile(scene: Scene, config: ResetTileConfig): Pr
 
   // Reset each tile's state
   config.tilesToReset.forEach(tileState => {
-    if (tileState.reverseActions) {
-      // Use runaction to reverse the tile's last action sequence
+    // Reset visibility if tile has showhide action or no actions
+    if (tileState.hasShowHideAction || (!tileState.hasActivateAction && !tileState.hasMovementAction && !tileState.hasTileImageAction && !tileState.hasShowHideAction)) {
       actions.push({
-        action: "runaction",
+        action: "showhide",
         data: {
           entity: {
             id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
             name: `Tile: ${tileState.tileId}`
           },
-          for: "previous"
+          collection: "tiles",
+          hidden: tileState.hidden ? "hide" : "show",
+          fade: 0
         },
         id: foundry.utils.randomID()
       });
     }
 
-    // Reset visibility
-    actions.push({
-      action: "showhide",
-      data: {
-        entity: {
-          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
-          name: `Tile: ${tileState.tileId}`
-        },
-        collection: "tiles",
-        hidden: tileState.hidden ? "hide" : "show",
-        fade: 0
-      },
-      id: foundry.utils.randomID()
-    });
-
-    // Reset tile image to saved fileindex
-    actions.push({
-      action: "tileimage",
-      data: {
-        entity: {
-          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
-          name: `Tile: ${tileState.tileId}`
-        },
-        select: tileState.fileindex.toString(),
-        transition: "none"
-      },
-      id: foundry.utils.randomID()
-    });
-
-    // Reset active state
-    actions.push({
-      action: "activate",
-      data: {
-        entity: {
-          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
-          name: `Tile: ${tileState.tileId}`
-        },
-        activate: tileState.active
-      },
-      id: foundry.utils.randomID()
-    });
-
-    // Reset rotation if different from 0
-    if (tileState.rotation !== 0) {
+    // Reset tile image to saved fileindex (only if tile has files and tileimage action)
+    if (tileState.hasFiles && (tileState.hasTileImageAction || (!tileState.hasActivateAction && !tileState.hasMovementAction && !tileState.hasTileImageAction && !tileState.hasShowHideAction))) {
       actions.push({
-        action: "movement",
+        action: "tileimage",
         data: {
           entity: {
             id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
             name: `Tile: ${tileState.tileId}`
           },
-          rotation: tileState.rotation.toString(),
-          duration: 0
+          select: tileState.fileindex.toString(),
+          transition: "none"
         },
         id: foundry.utils.randomID()
       });
     }
 
-    // Reset position
-    actions.push({
-      action: "movement",
-      data: {
-        entity: {
-          id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
-          name: `Tile: ${tileState.tileId}`
+    // Reset active state if tile has activate action
+    if (tileState.hasActivateAction) {
+      actions.push({
+        action: "activate",
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+            name: `Tile: ${tileState.tileId}`
+          },
+          activate: tileState.active ? "activate" : "deactivate",
+          collection: "tiles"
         },
-        x: tileState.x.toString(),
-        y: tileState.y.toString(),
-        duration: 0
-      },
-      id: foundry.utils.randomID()
-    });
+        id: foundry.utils.randomID()
+      });
+    }
+
+    // Reset position and rotation if tile has movement action or no actions
+    if (tileState.hasMovementAction || (!tileState.hasActivateAction && !tileState.hasMovementAction && !tileState.hasTileImageAction && !tileState.hasShowHideAction)) {
+      const xPos = tileState.x ?? 0;
+      const yPos = tileState.y ?? 0;
+
+      actions.push({
+        action: "movetoken",
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+            name: `Tile: ${tileState.tileId}`
+          },
+          duration: 0,
+          x: xPos.toString(),
+          y: yPos.toString(),
+          location: {
+            id: "",
+            x: xPos,
+            y: yPos,
+            name: `[x:${xPos} y:${yPos}]`
+          },
+          position: "random",
+          snap: true,
+          speed: 6,
+          trigger: false
+        },
+        id: foundry.utils.randomID()
+      });
+
+      // Add rotation as a separate action if needed
+      if (tileState.rotation !== undefined && tileState.rotation !== 0) {
+        actions.push({
+          action: "rotation",
+          data: {
+            entity: {
+              id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+              name: `Tile: ${tileState.tileId}`
+            },
+            duration: 0,
+            x: tileState.x?.toString() ?? "0",
+            y: tileState.y?.toString() ?? "0",
+            rotation: tileState.rotation.toString()
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+    }
+
+    // Reset wall/door states
+    if (tileState.wallDoorStates && tileState.wallDoorStates.length > 0) {
+      tileState.wallDoorStates.forEach(wallDoorState => {
+        actions.push({
+          action: "changedoor",
+          data: {
+            entity: {
+              id: wallDoorState.entityId,
+              name: wallDoorState.entityName
+            },
+            type: "nothing",
+            state: wallDoorState.state,
+            movement: "nothing",
+            light: "nothing",
+            sight: "nothing",
+            sound: "nothing"
+          },
+          id: foundry.utils.randomID()
+        });
+      });
+    }
   });
 
   // Add chat message to confirm reset
@@ -279,7 +306,11 @@ export async function createResetTile(scene: Scene, config: ResetTileConfig): Pr
       text: `${config.name}: Variables reset`,
       flavor: "",
       whisper: "gm",
-      language: ""
+      language: "",
+      entity: "",
+      incharacter: false,
+      chatbubble: "true",
+      showto: "gm"
     },
     id: foundry.utils.randomID()
   });

@@ -1,8 +1,97 @@
-import type { SelectedTileData, TileFile } from '../types/module';
+import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
 import { createResetTile } from '../utils/tile-helpers';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
+
+/**
+ * Extract wall/door state actions from a tile
+ */
+function extractWallDoorActions(tile: Tile): WallDoorAction[] {
+  const actions = tile.flags['monks-active-tiles']?.actions || [];
+  const wallDoorActions: WallDoorAction[] = [];
+
+  actions.forEach((action: any) => {
+    // Look for changedoor actions (Monk's Active Tiles)
+    if (action.action === 'changedoor') {
+      const data = action.data || {};
+      const entityId = data.entity?.id;
+      const entityName = data.entity?.name;
+      const currentState = data.state || 'CLOSED';
+
+      if (entityId) {
+        wallDoorActions.push({
+          entityId: entityId,
+          entityName: entityName || entityId,
+          state: currentState
+        });
+      }
+    }
+  });
+
+  return wallDoorActions;
+}
+
+/**
+ * Check if tile has activate action that affects itself
+ */
+function hasActivateAction(tile: Tile): boolean {
+  const actions = tile.flags['monks-active-tiles']?.actions || [];
+
+  return actions.some((action: any) => {
+    if (action.action === 'activate') {
+      const entityId = action.data?.entity?.id;
+      // Check if it's targeting "this tile" (entity.id === "tile")
+      return entityId === 'tile';
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if tile has movement action that affects itself
+ */
+function hasMovementAction(tile: Tile): boolean {
+  const actions = tile.flags['monks-active-tiles']?.actions || [];
+
+  return actions.some((action: any) => {
+    if (action.action === 'movement') {
+      const entityId = action.data?.entity?.id;
+      return entityId === 'tile';
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if tile has tileimage action that affects itself
+ */
+function hasTileImageAction(tile: Tile): boolean {
+  const actions = tile.flags['monks-active-tiles']?.actions || [];
+
+  return actions.some((action: any) => {
+    if (action.action === 'tileimage') {
+      const entityId = action.data?.entity?.id;
+      return entityId === 'tile';
+    }
+    return false;
+  });
+}
+
+/**
+ * Check if tile has showhide action that affects itself
+ */
+function hasShowHideAction(tile: Tile): boolean {
+  const actions = tile.flags['monks-active-tiles']?.actions || [];
+
+  return actions.some((action: any) => {
+    if (action.action === 'showhide') {
+      const entityId = action.data?.entity?.id;
+      return entityId === 'tile';
+    }
+    return false;
+  });
+}
 
 /**
  * Calculate starting position by analyzing movement actions
@@ -63,6 +152,8 @@ function calculateStartingPosition(tile: Tile): { x: number; y: number; rotation
  */
 export class ResetTileConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   selectedTiles: Map<string, SelectedTileData> = new Map();
+  resetName: string = 'Reset Tile';
+  resetTileImage: string = 'icons/svg/clockwork.svg';
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -115,7 +206,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
                          varValue === 'true' ||
                          varValue === 'false' ||
                          varValue === true ||
-                         varValue === false;
+                         varValue === false ||
+                         varValue === null ||
+                         varValue === undefined;
 
         if (isBoolean) {
           const boolValue = varValue === true || varValue === 'true';
@@ -144,14 +237,20 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         ...tileData,
         variablesList: variablesList,
         hasVariables: variablesList.length > 0,
-        files: files.length > 0 ? files : null
+        files: files.length > 0 ? files : null,
+        hasWallDoorActions: tileData.wallDoorActions.length > 0,
+        hasActivateAction: tileData.hasActivateAction,
+        hasMovementAction: tileData.hasMovementAction,
+        hasTileImageAction: tileData.hasTileImageAction,
+        hasShowHideAction: tileData.hasShowHideAction,
+        hasAnyActions: tileData.hasAnyActions
       });
     });
 
     return {
       ...context,
-      resetName: 'Reset Tile',
-      resetTileImage: 'icons/svg/clockwork.svg',
+      resetName: this.resetName,
+      resetTileImage: this.resetTileImage,
       tiles: tiles,
       hasTiles: tiles.length > 0,
       buttons: [
@@ -162,6 +261,20 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         }
       ]
     };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Capture current form values before re-rendering
+   */
+  captureFormValues(): void {
+    const form = this.element?.querySelector('form');
+    if (form) {
+      const formData = new FormData(form);
+      this.resetName = (formData.get('resetName') as string) || this.resetName;
+      this.resetTileImage = (formData.get('resetTileImage') as string) || this.resetTileImage;
+    }
   }
 
   /* -------------------------------------------- */
@@ -191,6 +304,19 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       // Calculate starting position
       const startPos = calculateStartingPosition(tile);
 
+      // Extract wall/door state actions
+      const wallDoorActions = extractWallDoorActions(tile);
+
+      // Check if tile has actions affecting itself
+      const hasActivate = hasActivateAction(tile);
+      const hasMovement = hasMovementAction(tile);
+      const hasTileImage = hasTileImageAction(tile);
+      const hasShowHide = hasShowHideAction(tile);
+
+      // Check if tile has ANY actions
+      const allActions = tile.flags['monks-active-tiles']?.actions || [];
+      const hasAnyActions = allActions.length > 0;
+
       this.selectedTiles.set(tile.id, {
         tileId: tile.id,
         tileName: tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile',
@@ -206,9 +332,16 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         currentRotation: tile.rotation || 0,
         currentX: tile.x,
         currentY: tile.y,
-        reverseActions: true
+        wallDoorActions: wallDoorActions,
+        hasActivateAction: hasActivate,
+        hasMovementAction: hasMovement,
+        hasTileImageAction: hasTileImage,
+        hasShowHideAction: hasShowHide,
+        hasAnyActions: hasAnyActions
       });
 
+      // Capture form values before re-rendering
+      this.captureFormValues();
       await this.render();
       ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
 
@@ -225,10 +358,18 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
    * Handle removing a tile
    */
   static async #onRemoveTile(this: ResetTileConfigDialog, event: PointerEvent): Promise<void> {
-    const button = event.currentTarget as HTMLElement;
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Find the button element (in case the icon was clicked)
+    const button = (event.target as HTMLElement).closest('[data-tile-id]') as HTMLElement;
+    if (!button) return;
+
     const tileId = button.dataset.tileId;
     if (tileId) {
       this.selectedTiles.delete(tileId);
+      // Capture form values before re-rendering
+      this.captureFormValues();
       await this.render();
     }
   }
@@ -276,21 +417,55 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
       Object.assign(varsToReset, variables);
 
+      // Collect wall/door states from form
+      const wallDoorStates: any[] = [];
+      tileData.wallDoorActions.forEach((action, index) => {
+
+        if (action.entityId && action.state) {
+          wallDoorStates.push({
+            entityId: action.entityId,
+            entityName: action.entityName,
+            state: data[`walldoor__${index}`],
+          });
+        }
+      });
+      console.log('EM Puzzles', wallDoorStates);
+
       tilesToReset.push({
         tileId: tileId,
         hidden: data[`visibility_${tileId}`] === 'hide',
         fileindex: parseInt(data[`fileindex_${tileId}`]) || 0,
         active: data[`active_${tileId}`] === 'true',
-        reverseActions: data[`reverse_${tileId}`] === true || data[`reverse_${tileId}`] === 'on',
         rotation: parseFloat(data[`rotation_${tileId}`]) || 0,
         x: parseFloat(data[`x_${tileId}`]) || tileData.x,
-        y: parseFloat(data[`y_${tileId}`]) || tileData.y
+        y: parseFloat(data[`y_${tileId}`]) || tileData.y,
+        wallDoorStates: wallDoorStates,
+        hasActivateAction: tileData.hasActivateAction,
+        hasMovementAction: tileData.hasMovementAction,
+        hasTileImageAction: tileData.hasTileImageAction,
+        hasShowHideAction: tileData.hasShowHideAction,
+        hasFiles: tileData.files && tileData.files.length > 0
       });
     });
 
+    console.log('EM Puzzles', data);
+
+    // Validate reset tile image
+    const resetTileImageRaw = data.resetTileImage;
+    const resetTileImage = (typeof resetTileImageRaw === 'string' ? resetTileImageRaw.trim() : '') || 'icons/svg/clockwork.svg';
+
+    // Check if the image has a valid file extension
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.webm', '.mp4'];
+    const hasValidExtension = validExtensions.some(ext => resetTileImage.toLowerCase().endsWith(ext));
+
+    if (!hasValidExtension) {
+      ui.notifications.error(`Invalid image file: ${resetTileImage}. Please use a valid image file.`);
+      return;
+    }
+
     await createResetTile(scene, {
       name: data.resetName || 'Reset Tile',
-      image: data.resetTileImage || 'icons/svg/clockwork.svg',
+      image: resetTileImage,
       varsToReset: varsToReset,
       tilesToReset: tilesToReset
     });

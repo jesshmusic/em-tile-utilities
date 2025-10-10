@@ -6,10 +6,11 @@
 import { showSwitchDialog } from './dialogs/switch-dialog';
 import { showResetTileDialog } from './dialogs/reset-dialog';
 import { showSceneVariablesDialog } from './dialogs/variables-viewer';
+import buildInfo from '../build-info.json';
 
 // Module initialization
 Hooks.once('init', () => {
-  console.log('EM Puzzle and Trap Tiles | Initializing | Typescript');
+  console.log(`EM Puzzle and Trap Tiles | Initializing | version 1.0.1 | build #${buildInfo.buildNumber}`);
 
   // Register settings
   game.settings.register('em-puzzles-and-trap-tiles', 'defaultOnImage', {

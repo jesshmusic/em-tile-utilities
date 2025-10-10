@@ -13,15 +13,32 @@ export interface ResetTileConfig {
   tilesToReset: TileResetState[];
 }
 
+export interface WallDoorState {
+  entityId: string;
+  entityName: string;
+  state: string; // "CLOSED", "OPEN", "LOCKED"
+}
+
 export interface TileResetState {
   tileId: string;
   hidden: boolean;
   fileindex: number;
   active: boolean;
-  reverseActions: boolean;
   rotation: number;
   x: number;
   y: number;
+  wallDoorStates: WallDoorState[];
+  hasActivateAction: boolean;
+  hasMovementAction: boolean;
+  hasTileImageAction: boolean;
+  hasShowHideAction: boolean;
+  hasFiles: boolean;
+}
+
+export interface WallDoorAction {
+  entityId: string;
+  entityName: string;
+  state: string; // "CLOSED", "OPEN", "LOCKED"
 }
 
 export interface SelectedTileData {
@@ -39,7 +56,12 @@ export interface SelectedTileData {
   currentRotation: number;
   currentX: number;
   currentY: number;
-  reverseActions: boolean;
+  wallDoorActions: WallDoorAction[];
+  hasActivateAction: boolean;
+  hasMovementAction: boolean;
+  hasTileImageAction: boolean;
+  hasShowHideAction: boolean;
+  hasAnyActions: boolean;
 }
 
 export interface TileFile {

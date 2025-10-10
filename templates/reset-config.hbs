@@ -7,8 +7,8 @@
   <div class="form-group">
     <label>{{localize "EMPUZZLES.ResetTileImage"}}</label>
     <div class="form-fields">
-      <input type="text" name="resetTileImage" value="{{resetTileImage}}" />
-      <file-picker type="imagevideo" name="resetTileImage"></file-picker>
+      <input type="text" id="resetTileImage" name="resetTileImage" value="{{resetTileImage}}" data-dtype="String" />
+      <file-picker type="imagevideo" target="resetTileImage"></file-picker>
     </div>
   </div>
 
@@ -30,23 +30,26 @@
               </button>
             </div>
 
-            <div class="reverse-section">
-              <label class="reverse-label">
-                <input type="checkbox" name="reverse_{{tile.tileId}}" {{#if tile.reverseActions}}checked{{/if}} />
-                <strong>{{localize "EMPUZZLES.ReverseActions"}}</strong>
-                <span class="reverse-hint">{{localize "EMPUZZLES.ReverseActionsHint"}}</span>
-              </label>
+            {{#if tile.hasWallDoorActions}}
+            <div class="wall-door-section">
+              <label class="section-label">{{localize "EMPUZZLES.WallDoorStates"}}:</label>
+              {{#each tile.wallDoorActions as |action|}}
+                <div class="wall-door-field">
+                  <label class="wall-door-label">{{{action.entityName}}}:</label>
+                  <select name="walldoor_{{../tile.tileId}}_{{@index}}" class="wall-door-select">
+                    <option value="CLOSED" {{#if (eq action.state "CLOSED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorClosed"}}</option>
+                    <option value="OPEN" {{#if (eq action.state "OPEN")}}selected{{/if}}>{{localize "EMPUZZLES.DoorOpen"}}</option>
+                    <option value="LOCKED" {{#if (eq action.state "LOCKED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorLocked"}}</option>
+                  </select>
+                  <input type="hidden" name="walldoor_id_{{../tile.tileId}}_{{@index}}" value="{{action.entityId}}" />
+                  <input type="hidden" name="walldoor_name_{{../tile.tileId}}_{{@index}}" value="{{action.entityName}}" />
+                </div>
+              {{/each}}
             </div>
+            {{/if}}
 
-            <div class="settings-grid-3">
-              <div class="field-group">
-                <label class="field-label">{{localize "EMPUZZLES.Visibility"}}:</label>
-                <select name="visibility_{{tile.tileId}}" class="field-select">
-                  <option value="show" {{#unless tile.hidden}}selected{{/unless}}>{{localize "EMPUZZLES.Visible"}}</option>
-                  <option value="hide" {{#if tile.hidden}}selected{{/if}}>{{localize "EMPUZZLES.Hidden"}}</option>
-                </select>
-              </div>
-
+            {{#if tile.hasActivateAction}}
+            <div class="settings-grid-1">
               <div class="field-group">
                 <label class="field-label">{{localize "EMPUZZLES.Active"}}:</label>
                 <select name="active_{{tile.tileId}}" class="field-select">
@@ -54,14 +57,42 @@
                   <option value="false" {{#unless tile.active}}selected{{/unless}}>{{localize "EMPUZZLES.Inactive"}}</option>
                 </select>
               </div>
+            </div>
+            {{/if}}
 
+            {{#if (or tile.hasShowHideAction (not tile.hasAnyActions))}}
+            <div class="settings-grid-1">
+              <div class="field-group">
+                <label class="field-label">{{localize "EMPUZZLES.Visibility"}}:</label>
+                <select name="visibility_{{tile.tileId}}" class="field-select">
+                  <option value="show" {{#unless tile.hidden}}selected{{/unless}}>{{localize "EMPUZZLES.Visible"}}</option>
+                  <option value="hide" {{#if tile.hidden}}selected{{/if}}>{{localize "EMPUZZLES.Hidden"}}</option>
+                </select>
+              </div>
+            </div>
+            {{/if}}
+
+            {{#if (or (and tile.hasTileImageAction tile.files) (and (not tile.hasAnyActions) tile.files))}}
+            <div class="image-section">
+              <label class="section-label">{{localize "EMPUZZLES.Image"}}:</label>
+              {{#each tile.files as |file index|}}
+                <div class="image-option">
+                  <label>
+                    <input type="radio" name="fileindex_{{../tile.tileId}}" value="{{@index}}" {{#if (or (eq ../tile.fileindex @index) (and (eq @index 0) (not ../tile.fileindex)))}}checked{{/if}} />
+                    {{@index}}: {{file.name}}
+                  </label>
+                </div>
+              {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if (or tile.hasMovementAction (not tile.hasAnyActions))}}
+            <div class="settings-grid-3">
               <div class="field-group">
                 <label class="field-label">{{localize "EMPUZZLES.Rotation"}}:</label>
                 <input type="number" name="rotation_{{tile.tileId}}" value="{{tile.rotation}}" step="1" class="field-input" />
               </div>
-            </div>
 
-            <div class="settings-grid-2">
               <div class="field-group">
                 <label class="field-label">{{localize "EMPUZZLES.XPositionStart"}}:</label>
                 <input type="number" name="x_{{tile.tileId}}" value="{{tile.x}}" step="1" class="field-input" />
@@ -74,22 +105,7 @@
                 <div class="position-hint">{{localize "EMPUZZLES.End"}}: {{tile.currentY}}</div>
               </div>
             </div>
-
-            <div class="image-section">
-              <label class="section-label">{{localize "EMPUZZLES.Image"}}:</label>
-              {{#if tile.files}}
-                {{#each tile.files as |file index|}}
-                  <div class="image-option">
-                    <label>
-                      <input type="radio" name="fileindex_{{../tile.tileId}}" value="{{index}}" {{#if (eq ../tile.fileindex index)}}checked{{/if}} />
-                      {{index}}: {{file.name}}
-                    </label>
-                  </div>
-                {{/each}}
-              {{else}}
-                <input type="number" name="fileindex_{{tile.tileId}}" value="{{tile.fileindex}}" min="0" class="fileindex-input" />
-              {{/if}}
-            </div>
+            {{/if}}
 
             {{#if tile.hasVariables}}
             <div class="variables-section">

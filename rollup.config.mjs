@@ -1,9 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
-import livereload from 'rollup-plugin-livereload';
-import serve from 'rollup-plugin-serve';
-
-const isDevelopment = process.env.NODE_ENV === 'development';
+import json from '@rollup/plugin-json';
+import incrementBuild from './rollup-plugin-increment-build.mjs';
 
 export default {
   input: 'src/main.ts',
@@ -14,26 +12,14 @@ export default {
     name: 'EMPuzzlesAndTrapTiles'
   },
   plugins: [
+    incrementBuild(),
+    json(),
     resolve(),
     typescript({
       tsconfig: './tsconfig.json',
       sourceMap: true,
       inlineSources: true
-    }),
-    ...(isDevelopment ? [
-      serve({
-        open: false,
-        contentBase: ['dist'],
-        port: 30001,
-        headers: {
-          'Access-Control-Allow-Origin': '*'
-        }
-      }),
-      livereload({
-        watch: 'dist',
-        verbose: true
-      })
-    ] : [])
+    })
   ],
   watch: {
     include: 'src/**',
