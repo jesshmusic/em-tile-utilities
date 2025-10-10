@@ -1,0 +1,82 @@
+<div class="tile-manager-container">
+  <div class="tile-manager-header">
+    {{#if hasTiles}}
+      <div class="tile-count-info">
+        <strong>{{localize "EMPUZZLES.TotalTiles"}}:</strong> {{tileCount}}
+      </div>
+    {{/if}}
+    <button type="button" class="refresh-tiles-btn" data-action="refreshTiles" title="{{localize 'EMPUZZLES.Refresh'}}">
+      <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
+    </button>
+  </div>
+
+  {{#if hasTiles}}
+
+    <div class="tile-list-scroll">
+      {{#each tiles as |tile|}}
+        <div class="tile-entry" data-tile-id="{{tile.id}}">
+          <div class="tile-header">
+            <div class="tile-info">
+              <img src="{{tile.image}}" class="tile-thumbnail" />
+              <div class="tile-details">
+                <strong class="tile-name">{{tile.name}}</strong>
+                <div class="tile-meta">
+                  <span class="tile-position">{{localize "EMPUZZLES.Position"}}: ({{tile.x}}, {{tile.y}})</span>
+                  <span class="tile-size">{{localize "EMPUZZLES.Size"}}: {{tile.width}}x{{tile.height}}</span>
+                </div>
+              </div>
+            </div>
+            <div class="tile-actions">
+              <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}">
+                <i class="fas fa-crosshairs"></i>
+              </button>
+              <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditTile'}}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="tile-status">
+            {{#if tile.hasMonksData}}
+              <span class="status-badge monks-active">
+                <i class="fas fa-puzzle-piece"></i> {{localize "EMPUZZLES.MonksActiveTile"}}
+              </span>
+              {{#if tile.actionCount}}
+                <span class="status-badge">
+                  <i class="fas fa-bolt"></i> {{tile.actionCount}} {{localize "EMPUZZLES.Actions"}}
+                </span>
+              {{/if}}
+              {{#if tile.variableCount}}
+                <span class="status-badge">
+                  <i class="fas fa-code"></i> {{tile.variableCount}} {{localize "EMPUZZLES.Variables"}}
+                </span>
+              {{/if}}
+              {{#unless tile.active}}
+                <span class="status-badge inactive">
+                  <i class="fas fa-pause"></i> {{localize "EMPUZZLES.Inactive"}}
+                </span>
+              {{/unless}}
+            {{/if}}
+            {{#if tile.hidden}}
+              <span class="status-badge hidden">
+                <i class="fas fa-eye-slash"></i> {{localize "EMPUZZLES.Hidden"}}
+              </span>
+            {{/if}}
+            {{#if tile.locked}}
+              <span class="status-badge locked">
+                <i class="fas fa-lock"></i> {{localize "EMPUZZLES.Locked"}}
+              </span>
+            {{/if}}
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <p class="no-tiles-message">
+      <em>{{localize "EMPUZZLES.NoTilesOnScene"}}</em>
+    </p>
+  {{/if}}
+</div>

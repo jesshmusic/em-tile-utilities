@@ -6,6 +6,7 @@
 import { showSwitchDialog } from './dialogs/switch-dialog';
 import { showResetTileDialog } from './dialogs/reset-dialog';
 import { showSceneVariablesDialog } from './dialogs/variables-viewer';
+import { showTileManagerDialog } from './dialogs/tile-manager';
 import buildInfo from '../build-info.json';
 
 // Module initialization
@@ -118,5 +119,15 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     button: true,
     onClick: () => showResetTileDialog(),
     order: 1002
+  };
+
+  // Add tile manager tool
+  tools['em-puzzles-tile-manager'] = {
+    name: 'em-puzzles-tile-manager',
+    title: 'Tile Manager',
+    icon: 'fas fa-layer-group',
+    button: true,
+    onClick: () => showTileManagerDialog(),
+    order: 1003
   };
 });

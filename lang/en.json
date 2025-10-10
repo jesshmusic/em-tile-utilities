@@ -55,6 +55,19 @@
     "Refresh": "Refresh",
     "Create": "Create",
     "Cancel": "Cancel",
-    "Close": "Close"
+    "Close": "Close",
+    "TileManager": "Tile Manager",
+    "TotalTiles": "Total Tiles",
+    "Position": "Position",
+    "Size": "Size",
+    "SelectTile": "Select Tile",
+    "EditTile": "Edit Tile",
+    "MonksActiveTile": "Monk's Active Tile",
+    "Actions": "Actions",
+    "Locked": "Locked",
+    "NoTilesOnScene": "No tiles on this scene.",
+    "DeleteTile": "Delete Tile",
+    "DeleteTileConfirmTitle": "Delete Tile?",
+    "DeleteTileConfirmMessage": "Are you sure you want to delete '{name}'? This action cannot be undone."
   }
 }

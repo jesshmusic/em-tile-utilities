@@ -193,3 +193,181 @@
   border-radius: 3px;
   font-family: monospace;
 }
+
+/* Tile Manager styles */
+.tile-manager-container {
+  padding: 0.5rem;
+}
+
+.tile-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.tile-count-info {
+  flex: 1;
+}
+
+.refresh-tiles-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.refresh-tiles-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-border-light-highlight);
+}
+
+.refresh-tiles-btn i {
+  font-size: 0.9em;
+}
+
+.tile-manager-container .tile-list-scroll {
+  max-height: 550px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tile-manager-container .tile-entry {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.tile-manager-container .tile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+}
+
+.tile-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.tile-thumbnail {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--color-border-light-tertiary);
+}
+
+.tile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.tile-manager-container .tile-name {
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.tile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85em;
+  color: var(--color-text-dark-secondary);
+}
+
+.tile-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tile-action-btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 1em;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.tile-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-border-light-highlight);
+}
+
+.tile-action-btn.delete-btn {
+  background: rgba(200, 50, 50, 0.2);
+  border-color: rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+}
+
+.tile-action-btn.delete-btn:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+
+.tile-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85em;
+  border-radius: 3px;
+  background: rgba(100, 150, 200, 0.2);
+  border: 1px solid rgba(100, 150, 200, 0.4);
+}
+
+.status-badge.monks-active {
+  background: rgba(100, 200, 100, 0.2);
+  border-color: rgba(100, 200, 100, 0.4);
+}
+
+.status-badge.inactive {
+  background: rgba(200, 150, 100, 0.2);
+  border-color: rgba(200, 150, 100, 0.4);
+}
+
+.status-badge.hidden {
+  background: rgba(150, 100, 200, 0.2);
+  border-color: rgba(150, 100, 200, 0.4);
+}
+
+.status-badge.locked {
+  background: rgba(200, 100, 100, 0.2);
+  border-color: rgba(200, 100, 100, 0.4);
+}
+
+.no-tiles-message {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-dark-secondary);
+  font-style: italic;
+}
