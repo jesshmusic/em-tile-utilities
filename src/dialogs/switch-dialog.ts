@@ -31,11 +31,11 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   /** @override */
   static PARTS = {
     form: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/switch-config.hbs',
+      template: 'modules/em-tile-utilities/templates/switch-config.hbs',
       root: true
     },
     footer: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/form-footer.hbs'
+      template: 'modules/em-tile-utilities/templates/form-footer.hbs'
     }
   };
 
@@ -46,12 +46,12 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     const context = await super._prepareContext(_options);
 
     // Get default values from settings
-    const defaultOnImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultOnImage') as string;
-    const defaultOffImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultOffImage') as string;
-    const defaultSound = game.settings.get('em-puzzles-and-trap-tiles', 'defaultSound') as string;
+    const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultOnImage') as string;
+    const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultOffImage') as string;
+    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
 
     // Get and increment the switch counter
-    const switchCounter = game.settings.get('em-puzzles-and-trap-tiles', 'switchCounter') as number;
+    const switchCounter = game.settings.get('em-tile-utilities', 'switchCounter') as number;
     const nextSwitchId = `switch_${switchCounter}`;
 
     return {
@@ -157,8 +157,8 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       }, snapped.x, snapped.y);
 
       // Increment the counter for next switch
-      const switchCounter = game.settings.get('em-puzzles-and-trap-tiles', 'switchCounter') as number;
-      await game.settings.set('em-puzzles-and-trap-tiles', 'switchCounter', switchCounter + 1);
+      const switchCounter = game.settings.get('em-tile-utilities', 'switchCounter') as number;
+      await game.settings.set('em-tile-utilities', 'switchCounter', switchCounter + 1);
 
       ui.notifications.info('Switch tile created!');
 

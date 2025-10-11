@@ -28,10 +28,10 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
   /** @override */
   static PARTS = {
     content: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/variables-viewer.hbs'
+      template: 'modules/em-tile-utilities/templates/variables-viewer.hbs'
     },
     footer: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/form-footer.hbs'
+      template: 'modules/em-tile-utilities/templates/form-footer.hbs'
     }
   };
 

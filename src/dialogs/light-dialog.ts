@@ -31,11 +31,11 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /** @override */
   static PARTS = {
     form: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/light-config.hbs',
+      template: 'modules/em-tile-utilities/templates/light-config.hbs',
       root: true
     },
     footer: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/form-footer.hbs'
+      template: 'modules/em-tile-utilities/templates/form-footer.hbs'
     }
   };
 
@@ -46,8 +46,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     const context = await super._prepareContext(_options);
 
     // Get default images from settings
-    const defaultOffImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultLightOffImage');
-    const defaultOnImage = game.settings.get('em-puzzles-and-trap-tiles', 'defaultLightOnImage');
+    const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultLightOffImage');
+    const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultLightOnImage');
 
     return {
       ...context,

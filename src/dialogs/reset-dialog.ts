@@ -182,11 +182,11 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   /** @override */
   static PARTS = {
     form: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/reset-config.hbs',
+      template: 'modules/em-tile-utilities/templates/reset-config.hbs',
       root: true
     },
     footer: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/form-footer.hbs'
+      template: 'modules/em-tile-utilities/templates/form-footer.hbs'
     }
   };
 

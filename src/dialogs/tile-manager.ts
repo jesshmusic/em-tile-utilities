@@ -31,7 +31,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /** @override */
   static PARTS = {
     content: {
-      template: 'modules/em-puzzles-and-trap-tiles/templates/tile-manager.hbs'
+      template: 'modules/em-tile-utilities/templates/tile-manager.hbs'
     }
   };
 

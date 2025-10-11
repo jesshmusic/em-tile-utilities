@@ -1,6 +1,6 @@
 /**
- * EM Puzzle and Trap Tiles
- * Adds switch tile creation helpers for Monk's Active Tiles
+ * EM Tile Utilities
+ * Utility tile creation tools for Monk's Active Tiles
  */
 
 import { showSwitchDialog } from './dialogs/switch-dialog';
@@ -9,6 +9,7 @@ import { showLightDialog } from './dialogs/light-dialog';
 import { showSceneVariablesDialog } from './dialogs/variables-viewer';
 import { showTileManagerDialog } from './dialogs/tile-manager';
 import buildInfo from '../build-info.json';
+import packageInfo from '../package.json';
 
 // Module initialization
 Hooks.once('init', () => {
@@ -17,14 +18,14 @@ Hooks.once('init', () => {
     `%c
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ███████╗███╗   ███╗    ██████╗ ██╗   ██╗███████╗███████╗    ║
-║   ██╔════╝████╗ ████║    ██╔══██╗██║   ██║╚══███╔╝╚══███╔╝    ║
-║   █████╗  ██╔████╔██║    ██████╔╝██║   ██║  ███╔╝   ███╔╝     ║
-║   ██╔══╝  ██║╚██╔╝██║    ██╔═══╝ ██║   ██║ ███╔╝   ███╔╝      ║
-║   ███████╗██║ ╚═╝ ██║    ██║     ╚██████╔╝███████╗███████╗    ║
-║   ╚══════╝╚═╝     ╚═╝    ╚═╝      ╚═════╝ ╚══════╝╚══════╝    ║
+║   ███████╗███╗   ███╗    ████████╗██╗██╗     ███████╗███████╗ ║
+║   ██╔════╝████╗ ████║    ╚══██╔══╝██║██║     ██╔════╝██╔════╝ ║
+║   █████╗  ██╔████╔██║       ██║   ██║██║     █████╗  ███████╗ ║
+║   ██╔══╝  ██║╚██╔╝██║       ██║   ██║██║     ██╔══╝  ╚════██║ ║
+║   ███████╗██║ ╚═╝ ██║       ██║   ██║███████╗███████╗███████║ ║
+║   ╚══════╝╚═╝     ╚═╝       ╚═╝   ╚═╝╚══════╝╚══════╝╚══════╝ ║
 ║                                                               ║
-║              🧩EM Puzzles & Trap Tiles v1.0.1 🎯              ║
+║                 🧩 EM Tile Utilities v${packageInfo.version}                 ║
 ║                      Build #${buildInfo.buildNumber}          ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -33,7 +34,7 @@ Hooks.once('init', () => {
   );
 
   // Register settings
-  game.settings.register('em-puzzles-and-trap-tiles', 'defaultOnImage', {
+  game.settings.register('em-tile-utilities', 'defaultOnImage', {
     name: 'Default ON Image',
     hint: 'Default image path for the ON state of switches',
     scope: 'world',
@@ -43,7 +44,7 @@ Hooks.once('init', () => {
     filePicker: 'imagevideo'
   });
 
-  game.settings.register('em-puzzles-and-trap-tiles', 'defaultOffImage', {
+  game.settings.register('em-tile-utilities', 'defaultOffImage', {
     name: 'Default OFF Image',
     hint: 'Default image path for the OFF state of switches',
     scope: 'world',
@@ -53,7 +54,7 @@ Hooks.once('init', () => {
     filePicker: 'imagevideo'
   });
 
-  game.settings.register('em-puzzles-and-trap-tiles', 'defaultSound', {
+  game.settings.register('em-tile-utilities', 'defaultSound', {
     name: 'Default Sound',
     hint: 'Default sound for switch activation',
     scope: 'world',
@@ -63,7 +64,7 @@ Hooks.once('init', () => {
     filePicker: 'audio'
   });
 
-  game.settings.register('em-puzzles-and-trap-tiles', 'defaultLightOnImage', {
+  game.settings.register('em-tile-utilities', 'defaultLightOnImage', {
     name: 'Default Light ON Image',
     hint: 'Default image path for the ON state of light tiles',
     scope: 'world',
@@ -73,7 +74,7 @@ Hooks.once('init', () => {
     filePicker: 'imagevideo'
   });
 
-  game.settings.register('em-puzzles-and-trap-tiles', 'defaultLightOffImage', {
+  game.settings.register('em-tile-utilities', 'defaultLightOffImage', {
     name: 'Default Light OFF Image',
     hint: 'Default image path for the OFF state of light tiles',
     scope: 'world',
@@ -84,7 +85,7 @@ Hooks.once('init', () => {
   });
 
   // Register counter for switch IDs
-  game.settings.register('em-puzzles-and-trap-tiles', 'switchCounter', {
+  game.settings.register('em-tile-utilities', 'switchCounter', {
     scope: 'world',
     config: false,
     type: Number,
@@ -95,11 +96,11 @@ Hooks.once('init', () => {
 // Check for dependencies
 Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
-    ui.notifications.error('EM Puzzle and Trap Tiles requires Monk\'s Active Tiles to be installed and active.');
+    ui.notifications.error('EM Tile Utilities requires Monk\'s Active Tiles to be installed and active.');
     return;
   }
 
-  console.log('%c🧩 EM Puzzles & Trap Tiles %c✓ Ready!', 'color: #ff6b35; font-weight: bold; font-size: 14px;', 'color: #4caf50; font-weight: bold; font-size: 14px;');
+  console.log('%c🧩 EM Tile Utilities %c✓ Ready!', 'color: #ff6b35; font-weight: bold; font-size: 14px;', 'color: #4caf50; font-weight: bold; font-size: 14px;');
 });
 
 /**
