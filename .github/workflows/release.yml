@@ -43,9 +43,27 @@ jobs:
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Update module.json URLs
+        uses: cschleiden/replace-tokens@v1
+        with:
+          files: 'module.json'
+        env:
+          URL: https://github.com/${{github.repository}}
+          MANIFEST: https://github.com/${{github.repository}}/releases/latest/download/module.json
+          DOWNLOAD: https://github.com/${{github.repository}}/releases/download/v${{ steps.version.outputs.new_version }}/module.zip
+
+      - name: Create module archive
+        run: zip -r ./module.zip module.json README.md LICENSE styles/ templates/ lang/ dist/
+
       - name: Commit changes
         run: |
-          git add package.json module.json CHANGELOG.md
+          git add package.json module.json CHANGELOG.md build-info.json
           git commit -m "chore: release v${{ steps.version.outputs.new_version }}"
           git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
 
@@ -54,13 +72,21 @@ jobs:
           git push origin main
           git push origin "v${{ steps.version.outputs.new_version }}"
 
+      - name: Extract latest changelog entry
+        id: changelog
+        run: |
+          CHANGELOG=$(awk '/^## \[/{if(++n==1) flag=1; else flag=0} flag' CHANGELOG.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ steps.version.outputs.new_version }}
-          release_name: Release v${{ steps.version.outputs.new_version }}
-          body_path: ./RELEASE_NOTES.md
+          tag: v${{ steps.version.outputs.new_version }}
+          name: Release v${{ steps.version.outputs.new_version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          artifacts: './module.json,./module.zip'
+          token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
