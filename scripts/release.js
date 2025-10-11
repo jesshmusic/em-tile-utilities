@@ -158,12 +158,7 @@ if (headerEndIndex > 0) {
 changelog = lines.join('\n');
 fs.writeFileSync(changelogPath, changelog);
 
-// Create release notes file for GitHub
-const releaseNotes = newEntry;
-fs.writeFileSync(path.join(__dirname, '../RELEASE_NOTES.md'), releaseNotes);
-
 console.log('✓ Updated package.json');
 console.log('✓ Updated module.json');
 console.log('✓ Updated CHANGELOG.md');
-console.log('✓ Created RELEASE_NOTES.md');
 console.log(`\nNew version: ${newVersion}`);
