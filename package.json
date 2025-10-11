@@ -1,6 +1,6 @@
 {
   "name": "em-puzzles-and-trap-tiles",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A FoundryVTT module that adds switch sequence puzzle functionality to Monk's Active Tiles.",
   "main": "dist/main.js",
   "scripts": {

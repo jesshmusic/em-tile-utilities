@@ -2,7 +2,7 @@
   "id": "em-puzzles-and-trap-tiles",
   "title": "EM Puzzle and Trap Tiles",
   "description": "Adds switch puzzle actions to Monk's Active Tiles for creating sequence-based puzzles",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "compatibility": {
     "minimum": "11",
     "verified": "13"
