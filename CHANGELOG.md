@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2025-10-11
+
+### Changed
+- updates the minimum version and name
+- updates the minimum version and name
+
+
 ## [1.1.1] - 2025-10-11
 
 ### Changed
