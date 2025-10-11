@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2025-10-11
+
+### Added
+- add light tiles and some automation
+- adds a tile browser for the scene
+- styles the dialogs with Application V2
+- sets the switch variable and adds a variable display dialog
+- improves token settings
+
+### Fixed
+- custom tiles can be clicked onto the map now.
+- the custom tile image selection persists
+- door changes now set properly
+
+### Other
+- Initial commit: EM Puzzles and Trap Tiles module
+
+
 ## [1.0.1] - 2025-01-XX
 
 ### Added
