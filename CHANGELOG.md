@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-10-11
+
+### Added
+- fix: removes script to add release notes file
+- fix: removes script to add release notes file
+
+
 ## [1.1.2] - 2025-10-11
 
 ### Changed
