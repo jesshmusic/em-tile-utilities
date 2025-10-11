@@ -5,6 +5,7 @@
 
 import { showSwitchDialog } from './dialogs/switch-dialog';
 import { showResetTileDialog } from './dialogs/reset-dialog';
+import { showLightDialog } from './dialogs/light-dialog';
 import { showSceneVariablesDialog } from './dialogs/variables-viewer';
 import { showTileManagerDialog } from './dialogs/tile-manager';
 import buildInfo from '../build-info.json';
@@ -16,15 +17,15 @@ Hooks.once('init', () => {
     `%c
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ███████╗███╗   ███╗    ██████╗ ██╗   ██╗███████╗███████╗   ║
-║   ██╔════╝████╗ ████║    ██╔══██╗██║   ██║╚══███╔╝╚══███╔╝   ║
-║   █████╗  ██╔████╔██║    ██████╔╝██║   ██║  ███╔╝   ███╔╝    ║
-║   ██╔══╝  ██║╚██╔╝██║    ██╔═══╝ ██║   ██║ ███╔╝   ███╔╝     ║
-║   ███████╗██║ ╚═╝ ██║    ██║     ╚██████╔╝███████╗███████╗   ║
-║   ╚══════╝╚═╝     ╚═╝    ╚═╝      ╚═════╝ ╚══════╝╚══════╝   ║
+║   ███████╗███╗   ███╗    ██████╗ ██╗   ██╗███████╗███████╗    ║
+║   ██╔════╝████╗ ████║    ██╔══██╗██║   ██║╚══███╔╝╚══███╔╝    ║
+║   █████╗  ██╔████╔██║    ██████╔╝██║   ██║  ███╔╝   ███╔╝     ║
+║   ██╔══╝  ██║╚██╔╝██║    ██╔═══╝ ██║   ██║ ███╔╝   ███╔╝      ║
+║   ███████╗██║ ╚═╝ ██║    ██║     ╚██████╔╝███████╗███████╗    ║
+║   ╚══════╝╚═╝     ╚═╝    ╚═╝      ╚═════╝ ╚══════╝╚══════╝    ║
 ║                                                               ║
-║              🧩 Puzzles & Trap Tiles v1.0.1 🎯               ║
-║                      Build #${buildInfo.buildNumber}                               ║
+║              🧩EM Puzzles & Trap Tiles v1.0.1 🎯              ║
+║                      Build #${buildInfo.buildNumber}          ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
     `,
@@ -62,6 +63,26 @@ Hooks.once('init', () => {
     filePicker: 'audio'
   });
 
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultLightOnImage', {
+    name: 'Default Light ON Image',
+    hint: 'Default image path for the ON state of light tiles',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/light.svg',
+    filePicker: 'imagevideo'
+  });
+
+  game.settings.register('em-puzzles-and-trap-tiles', 'defaultLightOffImage', {
+    name: 'Default Light OFF Image',
+    hint: 'Default image path for the OFF state of light tiles',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/light-off.svg',
+    filePicker: 'imagevideo'
+  });
+
   // Register counter for switch IDs
   game.settings.register('em-puzzles-and-trap-tiles', 'switchCounter', {
     scope: 'world',
@@ -94,40 +115,50 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
   // Add our switch creator tool
   tools['em-puzzles-create-switch'] = {
     name: 'em-puzzles-create-switch',
-    title: 'Create Switch',
+    title: 'EMPUZZLES.CreateSwitch',
     icon: 'fas fa-toggle-on',
     button: true,
     onClick: () => showSwitchDialog(),
     order: 1000
   };
 
-  // Add scene variables viewer tool
-  tools['em-puzzles-view-variables'] = {
-    name: 'em-puzzles-view-variables',
-    title: 'View Scene Variables',
-    icon: 'fas fa-list',
-    button: true,
-    onClick: () => showSceneVariablesDialog(),
-    order: 1001
-  };
-
   // Add reset tile creator tool
   tools['em-puzzles-create-reset'] = {
     name: 'em-puzzles-create-reset',
-    title: 'Create Reset Tile',
+    title: 'EMPUZZLES.CreateResetTile',
     icon: 'fas fa-undo',
     button: true,
     onClick: () => showResetTileDialog(),
+    order: 1001
+  };
+
+  // Add light tile creator tool
+  tools['em-puzzles-create-light'] = {
+    name: 'em-puzzles-create-light',
+    title: 'EMPUZZLES.CreateLightTile',
+    icon: 'fas fa-lightbulb',
+    button: true,
+    onClick: () => showLightDialog(),
     order: 1002
+  };
+
+  // Add scene variables viewer tool
+  tools['em-puzzles-view-variables'] = {
+    name: 'em-puzzles-view-variables',
+    title: 'EMPUZZLES.SceneVariables',
+    icon: 'fas fa-list',
+    button: true,
+    onClick: () => showSceneVariablesDialog(),
+    order: 1003
   };
 
   // Add tile manager tool
   tools['em-puzzles-tile-manager'] = {
     name: 'em-puzzles-tile-manager',
-    title: 'Tile Manager',
+    title: 'EMPUZZLES.TileManager',
     icon: 'fas fa-layer-group',
     button: true,
     onClick: () => showTileManagerDialog(),
-    order: 1003
+    order: 1004
   };
 });

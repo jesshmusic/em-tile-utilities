@@ -66,6 +66,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         y: Math.round(tile.y),
         width: tile.width,
         height: tile.height,
+        elevation: tile.elevation || 0,
         hidden: tile.hidden,
         locked: tile.locked,
         active: isActive,

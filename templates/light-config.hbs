@@ -1,0 +1,69 @@
+<form>
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.LightName"}}</label>
+    <input type="text" name="lightName" value="{{lightName}}" />
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.OffImage"}}</label>
+    <div class="form-fields">
+      <input type="text" name="offImage" value="{{offImage}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="offImage" title="Browse Files" tabindex="-1">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.OnImage"}}</label>
+    <div class="form-fields">
+      <input type="text" name="onImage" value="{{onImage}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="onImage" title="Browse Files" tabindex="-1">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="checkbox-label">
+      <input type="checkbox" name="useDarkness" {{#if useDarkness}}checked{{/if}} />
+      {{localize "EMPUZZLES.UseDarknessTrigger"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.UseDarknessTriggerHint"}}</p>
+  </div>
+
+  <div class="darkness-settings" style="display: {{#if useDarkness}}block{{else}}none{{/if}};">
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.DarknessMinimum"}}</label>
+      <input type="range" name="darknessMin" value="{{darknessMin}}" min="0" max="1" step="0.1" data-update-display="darknessMinValue" />
+      <span class="range-value" id="darknessMinValue">{{darknessMin}}</span>
+      <p class="hint">{{localize "EMPUZZLES.DarknessMinimumHint"}}</p>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.DimLight"}}</label>
+    <input type="number" name="dimLight" value="{{dimLight}}" min="0" step="1" />
+    <p class="hint">{{localize "EMPUZZLES.DimLightHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.BrightLight"}}</label>
+    <input type="number" name="brightLight" value="{{brightLight}}" min="0" step="1" />
+    <p class="hint">{{localize "EMPUZZLES.BrightLightHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.LightColor"}}</label>
+    <input type="text" name="lightColor" value="{{lightColor}}" data-dtype="String" class="color" />
+    <input type="color" value="{{lightColor}}" data-edit="lightColor" />
+    <p class="hint">{{localize "EMPUZZLES.LightColorHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.ColorIntensity"}}</label>
+    <input type="range" name="colorIntensity" value="{{colorIntensity}}" min="0" max="1" step="0.05" data-update-display="colorIntensityValue" />
+    <span class="range-value" id="colorIntensityValue">{{colorIntensity}}</span>
+    <p class="hint">{{localize "EMPUZZLES.ColorIntensityHint"}}</p>
+  </div>
+</form>

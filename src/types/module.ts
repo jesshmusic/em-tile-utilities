@@ -6,6 +6,18 @@ export interface SwitchConfig {
   sound: string;
 }
 
+export interface LightConfig {
+  name: string;
+  offImage: string;
+  onImage: string;
+  useDarkness: boolean;
+  darknessMin: number;
+  dimLight: number;
+  brightLight: number;
+  lightColor: string;
+  colorIntensity: number;
+}
+
 export interface ResetTileConfig {
   name: string;
   image: string;

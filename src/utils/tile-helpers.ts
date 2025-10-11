@@ -1,4 +1,4 @@
-import type { SwitchConfig, ResetTileConfig } from '../types/module';
+import type { SwitchConfig, ResetTileConfig, LightConfig } from '../types/module';
 
 /**
  * Create a switch tile with ON/OFF states
@@ -377,6 +377,143 @@ export async function createResetTile(scene: Scene, config: ResetTileConfig, x?:
     },
     visible: true,
     img: config.image
+  };
+
+  await scene.createEmbeddedDocuments('Tile', [tileData]);
+}
+
+/**
+ * Create a light tile with ON/OFF states and a separate light source
+ */
+export async function createLightTile(scene: Scene, config: LightConfig, x?: number, y?: number): Promise<void> {
+  // Get grid size from scene (1 grid space for light)
+  const gridSize = (canvas as any).grid.size;
+
+  // Default to center if no position provided
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
+  // First, create the light source (centered on the tile)
+  const lightData = {
+    x: tileX + (gridSize / 2),
+    y: tileY + (gridSize / 2),
+    rotation: 0,
+    elevation: 0,
+    walls: true,
+    vision: false,
+    config: {
+      angle: 360,
+      color: config.lightColor || null,
+      dim: config.dimLight,
+      bright: config.brightLight,
+      alpha: config.colorIntensity || 0.5,
+      negative: false,
+      priority: 0,
+      coloration: 1,
+      attenuation: 0.5,
+      luminosity: 0.5,
+      saturation: 0,
+      contrast: 0,
+      shadows: 0,
+      animation: {
+        type: null,
+        speed: 5,
+        intensity: 5,
+        reverse: false
+      },
+      darkness: {
+        min: config.useDarkness ? config.darknessMin : 0,
+        max: 1
+      }
+    },
+    hidden: config.useDarkness ? false : true // Start hidden for click-based, visible for darkness-based
+  };
+
+  const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
+  const lightId = (light as any).id;
+
+  // Determine trigger type based on darkness setting
+  const trigger = config.useDarkness ? ["darkness"] : ["dblclick"];
+
+  // Build actions array - only add manual toggle actions if not using darkness trigger
+  const actions: any[] = [];
+
+  if (!config.useDarkness) {
+    // Toggle tile image
+    actions.push({
+      action: "tileimage",
+      data: {
+        entity: { id: "tile", name: "This Tile" },
+        select: "next",
+        transition: "none"
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // Toggle the light
+    actions.push({
+      action: "activate",
+      data: {
+        entity: {
+          id: `Scene.${scene.id}.AmbientLight.${lightId}`
+        },
+        activate: "toggle"
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  const tileData = {
+    texture: {
+      src: config.offImage,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: "fill",
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: "#ffffff",
+      alphaThreshold: 0.75
+    },
+    width: gridSize,
+    height: gridSize,
+    x: tileX,
+    y: tileY,
+    elevation: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: false,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      "monks-active-tiles": {
+        name: config.name,
+        active: true,
+        record: false,
+        restriction: "all",
+        controlled: "all",
+        trigger: trigger,
+        allowpaused: false,
+        usealpha: false,
+        pointer: !config.useDarkness,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: [
+          { id: foundry.utils.randomID(), name: config.offImage },
+          { id: foundry.utils.randomID(), name: config.onImage }
+        ],
+        variables: {}
+      }
+    },
+    visible: true,
+    img: config.offImage
   };
 
   await scene.createEmbeddedDocuments('Tile', [tileData]);
