@@ -10,6 +10,27 @@
     </button>
   </div>
 
+  <div class="tile-manager-controls">
+    <div class="search-group">
+      <div class="search-input-wrapper">
+        <input type="text" class="tile-search-input" id="tile-search" value="{{searchQuery}}" placeholder="{{localize 'EMPUZZLES.SearchPlaceholder'}}" />
+        <button type="button" class="search-clear-btn" title="{{localize 'EMPUZZLES.ClearSearch'}}" style="{{#if searchQuery}}display: block;{{else}}display: none;{{/if}}">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div class="sort-group">
+      <label for="tile-sort">{{localize "EMPUZZLES.SortBy"}}:</label>
+      <select class="tile-sort-select" id="tile-sort">
+        <option value="name" {{#if (eq sortBy "name")}}selected{{/if}}>{{localize "EMPUZZLES.Name"}}</option>
+        <option value="x" {{#if (eq sortBy "x")}}selected{{/if}}>{{localize "EMPUZZLES.PositionX"}}</option>
+        <option value="y" {{#if (eq sortBy "y")}}selected{{/if}}>{{localize "EMPUZZLES.PositionY"}}</option>
+        <option value="elevation" {{#if (eq sortBy "elevation")}}selected{{/if}}>{{localize "EMPUZZLES.Elevation"}}</option>
+        <option value="sort" {{#if (eq sortBy "sort")}}selected{{/if}}>{{localize "EMPUZZLES.SortOrder"}}</option>
+      </select>
+    </div>
+  </div>
+
   {{#if hasTiles}}
 
     <div class="tile-list-scroll">
@@ -17,17 +38,42 @@
         <div class="tile-entry" data-tile-id="{{tile.id}}">
           <div class="tile-header">
             <div class="tile-info">
-              <img src="{{tile.image}}" class="tile-thumbnail" />
+              {{#if tile.image}}
+                {{#if tile.isVideo}}
+                  <video src="{{tile.image}}" class="tile-thumbnail" autoplay loop muted></video>
+                {{else}}
+                  <img src="{{tile.image}}" class="tile-thumbnail" />
+                {{/if}}
+              {{else}}
+                <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" />
+              {{/if}}
               <div class="tile-details">
                 <strong class="tile-name">{{tile.name}}</strong>
                 <div class="tile-meta">
                   <span class="tile-position">{{localize "EMPUZZLES.Position"}}: ({{tile.x}}, {{tile.y}})</span>
                   <span class="tile-size">{{localize "EMPUZZLES.Size"}}: {{tile.width}}x{{tile.height}}</span>
                   <span class="tile-elevation">Elevation: {{tile.elevation}}</span>
+                  <span class="tile-sort">Sort: {{tile.sort}}</span>
                 </div>
               </div>
             </div>
             <div class="tile-actions">
+              <button type="button" class="tile-action-btn toggle-btn {{#unless tile.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}">
+                {{#if tile.hidden}}
+                  <i class="fas fa-eye-slash"></i>
+                {{else}}
+                  <i class="fas fa-eye"></i>
+                {{/if}}
+              </button>
+              {{#if tile.hasMonksData}}
+                <button type="button" class="tile-action-btn toggle-btn {{#if tile.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}">
+                  {{#if tile.active}}
+                    <i class="fas fa-check-circle"></i>
+                  {{else}}
+                    <i class="fas fa-times-circle"></i>
+                  {{/if}}
+                </button>
+              {{/if}}
               <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}">
                 <i class="fas fa-crosshairs"></i>
               </button>

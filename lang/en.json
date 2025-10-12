@@ -83,6 +83,17 @@
     "NoTilesOnScene": "No tiles on this scene.",
     "DeleteTile": "Delete Tile",
     "DeleteTileConfirmTitle": "Delete Tile?",
-    "DeleteTileConfirmMessage": "Are you sure you want to delete '{name}'? This action cannot be undone."
+    "DeleteTileConfirmMessage": "Are you sure you want to delete '{name}'? This action cannot be undone.",
+    "ToggleVisibility": "Toggle Visibility",
+    "ToggleActive": "Toggle Active State",
+    "Search": "Search",
+    "SearchPlaceholder": "Filter tiles by name...",
+    "ClearSearch": "Clear search",
+    "SortBy": "Sort By",
+    "Name": "Name",
+    "PositionX": "Position X",
+    "PositionY": "Position Y",
+    "Elevation": "Elevation",
+    "SortOrder": "Sort Order"
   }
 }

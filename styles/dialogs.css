@@ -196,6 +196,9 @@
 
 /* Tile Manager styles */
 .tile-manager-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 0.5rem;
 }
 
@@ -208,6 +211,7 @@
   margin-bottom: 1rem;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
+  flex-shrink: 0;
 }
 
 .tile-count-info {
@@ -236,12 +240,68 @@
   font-size: 0.9em;
 }
 
+.tile-manager-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.search-group,
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-group {
+  flex: 1;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.tile-search-input {
+  flex: 1;
+  padding: 0.4rem 2rem 0.4rem 0.4rem;
+  width: 100%;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-dark-secondary);
+  font-size: 0.9em;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.search-clear-btn:hover {
+  opacity: 1;
+  color: var(--color-text-dark-primary);
+}
+
+.tile-sort-select {
+  padding: 0.4rem;
+}
+
 .tile-manager-container .tile-list-scroll {
-  max-height: 550px;
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
 }
 
 .tile-manager-container .tile-entry {
@@ -274,6 +334,7 @@
   object-fit: cover;
   border-radius: 3px;
   border: 1px solid var(--color-border-light-tertiary);
+  display: block;
 }
 
 .tile-details {
@@ -326,6 +387,36 @@
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
+}
+
+.tile-action-btn.toggle-btn {
+  background: rgba(150, 150, 150, 0.2);
+  border-color: rgba(150, 150, 150, 0.4);
+  color: #999;
+}
+
+.tile-action-btn.toggle-btn.active {
+  background: rgba(100, 200, 100, 0.2);
+  border-color: rgba(100, 200, 100, 0.4);
+  color: #4caf50;
+}
+
+.tile-action-btn.toggle-btn:hover {
+  background: rgba(150, 150, 150, 0.3);
+  border-color: rgba(150, 150, 150, 0.5);
+}
+
+.tile-action-btn.toggle-btn.active:hover {
+  background: rgba(100, 200, 100, 0.3);
+  border-color: rgba(100, 200, 100, 0.5);
+}
+
+.tile-thumbnail-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--color-text-dark-secondary);
 }
 
 .tile-status {

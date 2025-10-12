@@ -7,7 +7,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
 /**
  * Extract wall/door state actions from a tile
  */
-function extractWallDoorActions(tile: Tile): WallDoorAction[] {
+function extractWallDoorActions(tile: any): WallDoorAction[] {
   const actions = tile.flags['monks-active-tiles']?.actions || [];
   const wallDoorActions: WallDoorAction[] = [];
 
@@ -35,7 +35,7 @@ function extractWallDoorActions(tile: Tile): WallDoorAction[] {
 /**
  * Check if tile has activate action that affects itself
  */
-function hasActivateAction(tile: Tile): boolean {
+function hasActivateAction(tile: any): boolean {
   const actions = tile.flags['monks-active-tiles']?.actions || [];
 
   return actions.some((action: any) => {
@@ -51,7 +51,7 @@ function hasActivateAction(tile: Tile): boolean {
 /**
  * Check if tile has movement action that affects itself
  */
-function hasMovementAction(tile: Tile): boolean {
+function hasMovementAction(tile: any): boolean {
   const actions = tile.flags['monks-active-tiles']?.actions || [];
 
   return actions.some((action: any) => {
@@ -66,7 +66,7 @@ function hasMovementAction(tile: Tile): boolean {
 /**
  * Check if tile has tileimage action that affects itself
  */
-function hasTileImageAction(tile: Tile): boolean {
+function hasTileImageAction(tile: any): boolean {
   const actions = tile.flags['monks-active-tiles']?.actions || [];
 
   return actions.some((action: any) => {
@@ -81,7 +81,7 @@ function hasTileImageAction(tile: Tile): boolean {
 /**
  * Check if tile has showhide action that affects itself
  */
-function hasShowHideAction(tile: Tile): boolean {
+function hasShowHideAction(tile: any): boolean {
   const actions = tile.flags['monks-active-tiles']?.actions || [];
 
   return actions.some((action: any) => {
@@ -96,7 +96,7 @@ function hasShowHideAction(tile: Tile): boolean {
 /**
  * Calculate starting position by analyzing movement actions
  */
-function calculateStartingPosition(tile: Tile): { x: number; y: number; rotation: number } {
+function calculateStartingPosition(tile: any): { x: number; y: number; rotation: number } {
   const actions = tile.flags['monks-active-tiles']?.actions || [];
   let startX = tile.x;
   let startY = tile.y;

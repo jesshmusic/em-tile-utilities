@@ -7,6 +7,9 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  * @mixes HandlebarsApplication
  */
 export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+  sortBy: string = 'name';
+  searchQuery: string = '';
+
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     id: 'em-puzzles-tile-manager',
@@ -14,7 +17,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     window: {
       contentClasses: ['standard-form'],
       icon: 'fa-solid fa-layer-group',
-      title: 'EMPUZZLES.TileManager'
+      title: 'EMPUZZLES.TileManager',
+      resizable: true
     },
     position: {
       width: 600,
@@ -24,7 +28,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
       refreshTiles: TileManagerDialog.#onRefreshTiles,
-      deleteTile: TileManagerDialog.#onDeleteTile
+      deleteTile: TileManagerDialog.#onDeleteTile,
+      toggleVisibility: TileManagerDialog.#onToggleVisibility,
+      toggleActive: TileManagerDialog.#onToggleActive
     }
   };
 
@@ -46,7 +52,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       return {
         ...context,
         tiles: [],
-        hasTiles: false
+        hasTiles: false,
+        sortBy: this.sortBy,
+        searchQuery: this.searchQuery
       };
     }
 
@@ -58,15 +66,22 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       const actionCount = monksData?.actions?.length || 0;
       const variableCount = Object.keys(monksData?.variables || {}).length;
 
+      // Check if the texture is a video file
+      const imageSrc = tile.texture.src || '';
+      const videoExtensions = ['.webm', '.mp4', '.ogg', '.ogv'];
+      const isVideo = videoExtensions.some(ext => imageSrc.toLowerCase().endsWith(ext));
+
       return {
         id: tile.id,
         name: tileName,
-        image: tile.texture.src,
+        image: imageSrc,
+        isVideo: isVideo,
         x: Math.round(tile.x),
         y: Math.round(tile.y),
         width: tile.width,
         height: tile.height,
         elevation: tile.elevation || 0,
+        sort: tile.sort || 0,
         hidden: tile.hidden,
         locked: tile.locked,
         active: isActive,
@@ -76,14 +91,32 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       };
     });
 
-    // Sort by name
-    tiles.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    // Apply sort
+    switch (this.sortBy) {
+      case 'name':
+        tiles.sort((a: any, b: any) => a.name.localeCompare(b.name));
+        break;
+      case 'x':
+        tiles.sort((a: any, b: any) => a.x - b.x);
+        break;
+      case 'y':
+        tiles.sort((a: any, b: any) => a.y - b.y);
+        break;
+      case 'elevation':
+        tiles.sort((a: any, b: any) => a.elevation - b.elevation);
+        break;
+      case 'sort':
+        tiles.sort((a: any, b: any) => a.sort - b.sort);
+        break;
+    }
 
     return {
       ...context,
       tiles: tiles,
       hasTiles: tiles.length > 0,
-      tileCount: tiles.length
+      tileCount: tiles.length,
+      sortBy: this.sortBy,
+      searchQuery: this.searchQuery
     };
   }
 
@@ -92,6 +125,70 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /** @inheritDoc */
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
+
+    // Set up search input listener - filter without re-rendering
+    const searchInput = this.element.querySelector('.tile-search-input') as HTMLInputElement;
+    const clearBtn = this.element.querySelector('.search-clear-btn') as HTMLButtonElement;
+
+    if (searchInput && clearBtn) {
+      // Function to toggle clear button visibility
+      const updateClearButton = () => {
+        if (searchInput.value.length > 0) {
+          clearBtn.style.display = '';
+        } else {
+          clearBtn.style.display = 'none';
+        }
+      };
+
+      // Function to filter tiles
+      const filterTiles = (query: string) => {
+        const tileEntries = this.element.querySelectorAll('.tile-entry');
+        tileEntries.forEach((entry: Element) => {
+          const nameElement = entry.querySelector('.tile-name');
+          if (nameElement) {
+            const tileName = nameElement.textContent?.toLowerCase() || '';
+            if (query === '' || tileName.includes(query)) {
+              (entry as HTMLElement).style.display = '';
+            } else {
+              (entry as HTMLElement).style.display = 'none';
+            }
+          }
+        });
+      };
+
+      // Apply existing search filter after render
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filterTiles(query);
+        updateClearButton();
+      }
+
+      // Listen for input changes
+      searchInput.addEventListener('input', (event: Event) => {
+        const value = (event.target as HTMLInputElement).value.toLowerCase();
+        this.searchQuery = value;
+        filterTiles(value);
+        updateClearButton();
+      });
+
+      // Handle clear button click
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        this.searchQuery = '';
+        filterTiles('');
+        updateClearButton();
+        searchInput.focus();
+      });
+    }
+
+    // Set up sort select listener
+    const sortSelect = this.element.querySelector('.tile-sort-select') as HTMLSelectElement;
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (event: Event) => {
+        this.sortBy = (event.target as HTMLSelectElement).value;
+        this.render();
+      });
+    }
 
     // Set up hooks to auto-refresh when tiles change (only once)
     if (!(this as any)._hooksRegistered) {
@@ -134,7 +231,12 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   _onTileChange(tile: any, data: any, options: any, userId: string): void {
     // Only refresh if the tile is from the current scene
     if (tile.parent?.id === canvas.scene?.id) {
-      this.render();
+      // Defer render to next tick to avoid conflicts with other hooks
+      setTimeout(() => {
+        if (this.rendered) {
+          this.render();
+        }
+      }, 0);
     }
   }
 
@@ -224,6 +326,63 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     // Delete the tile
     await (tile as any).delete();
     ui.notifications.info(`Deleted: ${tileName}`);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle toggling tile visibility
+   */
+  static async #onToggleVisibility(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+    event.preventDefault();
+    const tileId = target.dataset.tileId;
+
+    if (!tileId) return;
+
+    const tile = canvas.scene?.tiles.get(tileId);
+    if (!tile) {
+      ui.notifications.warn('Tile not found!');
+      return;
+    }
+
+    // Toggle hidden state
+    await (tile as any).update({ hidden: !(tile as any).hidden });
+
+    const state = (tile as any).hidden ? 'hidden' : 'visible';
+    ui.notifications.info(`Tile is now ${state}`);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle toggling tile active state
+   */
+  static async #onToggleActive(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+    event.preventDefault();
+    const tileId = target.dataset.tileId;
+
+    if (!tileId) return;
+
+    const tile = canvas.scene?.tiles.get(tileId);
+    if (!tile) {
+      ui.notifications.warn('Tile not found!');
+      return;
+    }
+
+    const monksData = (tile as any).flags['monks-active-tiles'];
+    if (!monksData) {
+      ui.notifications.warn('This tile is not a Monk\'s Active Tile!');
+      return;
+    }
+
+    // Toggle active state
+    const newActiveState = !monksData.active;
+    await (tile as any).update({
+      'flags.monks-active-tiles.active': newActiveState
+    });
+
+    const state = newActiveState ? 'active' : 'inactive';
+    ui.notifications.info(`Tile is now ${state}`);
   }
 }
 

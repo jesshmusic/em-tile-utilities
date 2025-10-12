@@ -67,11 +67,11 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
     }
 
     // Get all tiles with Monk's Active Tiles variables
-    const tiles = scene.tiles.filter((t: Tile) => t.flags['monks-active-tiles']?.variables);
+    const tiles = scene.tiles.filter((t: any) => t.flags['monks-active-tiles']?.variables);
 
     // Collect all variables
     const variables: Record<string, VariableData & { valueDisplay: string; tilesDisplay: string }> = {};
-    tiles.forEach((tile: Tile) => {
+    tiles.forEach((tile: any) => {
       const tileVars = tile.flags['monks-active-tiles'].variables;
       if (tileVars) {
         Object.entries(tileVars).forEach(([key, value]) => {
