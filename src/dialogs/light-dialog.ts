@@ -16,7 +16,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-lightbulb',
+      icon: 'gi-candle-flame',
       title: 'EMPUZZLES.CreateLightTile'
     },
     position: {

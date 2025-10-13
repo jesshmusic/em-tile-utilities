@@ -26,7 +26,7 @@ describe('SwitchConfigDialog', () => {
 
       expect(options.id).toBe('em-puzzles-switch-config');
       expect(options.tag).toBe('form');
-      expect(options.window.icon).toBe('fa-solid fa-toggle-on');
+      expect(options.window.icon).toBe('gi-lever');
       expect(options.window.title).toBe('EMPUZZLES.CreateSwitch');
       expect(options.position.width).toBe(480);
     });

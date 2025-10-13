@@ -692,6 +692,12 @@ export interface LightConfig {
 }
 ```
 
+## Style and Best Practices
+
+- When you make changes to the module, please run `npm run lint` and `npm run format` to check for style and best practices. Change any issues that are reported.
+- When you create a new file, add it to the VSC.
+- Add JSDoc comments to all public methods and properties.
+
 ## Version Management
 
 The module uses a custom build increment system:

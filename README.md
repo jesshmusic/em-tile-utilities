@@ -254,6 +254,16 @@ The module uses automated versioning and changelog generation:
 
 Basic Foundry VTT type definitions are included in `src/types/foundry.d.ts`. These provide autocomplete and type checking for common Foundry APIs.
 
+## Attribution
+
+Icons from [game-icons.net](https://game-icons.net) by various authors, licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
+
+- [Lever](https://game-icons.net/1x1/lorc/lever.html) by [Lorc](https://lorcblog.blogspot.com/)
+- [Candle Flame](https://game-icons.net/1x1/lorc/candle-flame.html) by [Lorc](https://lorcblog.blogspot.com/)
+- [Clockwise Rotation](https://game-icons.net/1x1/delapouite/clockwise-rotation.html) by [Delapouite](https://delapouite.com/)
+- [Scroll Unfurled](https://game-icons.net/1x1/lorc/scroll-unfurled.html) by [Lorc](https://lorcblog.blogspot.com/)
+- [Stack](https://game-icons.net/1x1/delapouite/stack.html) by [Delapouite](https://delapouite.com/)
+
 ## License
 
 ISC

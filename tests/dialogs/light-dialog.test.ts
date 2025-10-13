@@ -26,7 +26,7 @@ describe('LightConfigDialog', () => {
 
       expect(options.id).toBe('em-puzzles-light-config');
       expect(options.tag).toBe('form');
-      expect(options.window.icon).toBe('fa-solid fa-lightbulb');
+      expect(options.window.icon).toBe('gi-candle-flame');
       expect(options.window.title).toBe('EMPUZZLES.CreateLightTile');
       expect(options.position.width).toBe(480);
     });

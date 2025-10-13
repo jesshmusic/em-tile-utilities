@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [1.3.0] - 2025-10-12
 
 ### Other
-- enhancement: updates the tile manager with more functionality - added sorting - added search - made resizable - added active and visibility toggles - fixed webm display
 
+- enhancement: updates the tile manager with more functionality - added sorting - added search - made resizable - added active and visibility toggles - fixed webm display
 
 ## [1.2.0] - 2025-10-11
 

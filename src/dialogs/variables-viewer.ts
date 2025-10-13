@@ -14,7 +14,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
     id: 'em-puzzles-variables-viewer',
     classes: ['variables-viewer', 'em-puzzles'],
     window: {
-      icon: 'fa-solid fa-list',
+      icon: 'gi-scroll-unfurled',
       title: 'EMPUZZLES.SceneVariables'
     },
     position: {

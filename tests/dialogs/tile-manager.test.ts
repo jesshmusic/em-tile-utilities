@@ -8,7 +8,7 @@ import { mockFoundry, createMockScene, createMockTile } from '../mocks/foundry';
 // Mock foundry before importing TileManagerDialog
 mockFoundry();
 
-import { TileManagerDialog } from '../../src/dialogs/tile-manager';
+import { TileManagerDialog, showTileManagerDialog } from '../../src/dialogs/tile-manager';
 
 describe('TileManagerDialog', () => {
   let dialog: TileManagerDialog;
@@ -735,8 +735,6 @@ describe('TileManagerDialog', () => {
 
   describe('showTileManagerDialog', () => {
     it('should create and render a new dialog', () => {
-      const { showTileManagerDialog } = require('../../src/dialogs/tile-manager');
-
       showTileManagerDialog();
 
       // Function executes without error

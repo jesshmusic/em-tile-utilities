@@ -1,3 +1,7 @@
+import { showSwitchDialog } from './switch-dialog';
+import { showLightDialog } from './light-dialog';
+import { showResetTileDialog } from './reset-dialog';
+
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
 
@@ -16,7 +20,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     classes: ['tile-manager', 'em-puzzles'],
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-layer-group',
+      icon: 'gi-card-pile',
       title: 'EMPUZZLES.TileManager',
       resizable: true
     },
@@ -25,6 +29,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       height: 700
     },
     actions: {
+      createSwitch: TileManagerDialog.#onCreateSwitch,
+      createLight: TileManagerDialog.#onCreateLight,
+      createReset: TileManagerDialog.#onCreateReset,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
       refreshTiles: TileManagerDialog.#onRefreshTiles,
@@ -239,6 +246,48 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         }
       }, 0);
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create switch button click
+   */
+  static async #onCreateSwitch(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showSwitchDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create light button click
+   */
+  static async #onCreateLight(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showLightDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create reset tile button click
+   */
+  static async #onCreateReset(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showResetTileDialog();
   }
 
   /* -------------------------------------------- */

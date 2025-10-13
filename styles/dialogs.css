@@ -240,6 +240,60 @@
   font-size: 0.9em;
 }
 
+.tile-creation-buttons {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.create-tile-btn {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: all 0.2s;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.create-tile-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-border-light-highlight);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.create-tile-btn i {
+  font-size: 1.1em;
+}
+
+.create-switch-btn:hover {
+  background: rgba(100, 200, 255, 0.2);
+  border-color: rgba(100, 200, 255, 0.5);
+}
+
+.create-light-btn:hover {
+  background: rgba(255, 220, 100, 0.2);
+  border-color: rgba(255, 220, 100, 0.5);
+}
+
+.create-reset-btn:hover {
+  background: rgba(255, 150, 100, 0.2);
+  border-color: rgba(255, 150, 100, 0.5);
+}
+
 .tile-manager-controls {
   display: flex;
   gap: 1rem;
@@ -461,4 +515,103 @@
   padding: 2rem;
   color: var(--color-text-dark-secondary);
   font-style: italic;
+}
+/* Custom Icons from game-icons.net */
+/* Icons are licensed under CC BY 3.0 - see icons/README.md for attribution */
+
+/* Base icon class for game-icons.net SVGs */
+.game-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Font Awesome compatibility classes */
+/* These allow using game-icons with minimal code changes */
+.gi-lever::before,
+.gi-candle-flame::before,
+.gi-clockwise-rotation::before,
+.gi-scroll-unfurled::before,
+.gi-card-pile::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.gi-lever::before {
+  background-image: url('../icons/lever.svg');
+}
+
+.gi-candle-flame::before {
+  background-image: url('../icons/candle-flame.svg');
+}
+
+.gi-clockwise-rotation::before {
+  background-image: url('../icons/clockwise-rotation.svg');
+}
+
+.gi-scroll-unfurled::before {
+  background-image: url('../icons/scroll-unfurled.svg');
+}
+
+.gi-card-pile::before {
+  background-image: url('../icons/card-pile.svg');
+}
+
+/* Specific icons */
+.game-icon-lever {
+  background-image: url('../icons/lever.svg');
+}
+
+.game-icon-candle-flame {
+  background-image: url('../icons/candle-flame.svg');
+}
+
+.game-icon-clockwise-rotation {
+  background-image: url('../icons/clockwise-rotation.svg');
+}
+
+.game-icon-scroll-unfurled {
+  background-image: url('../icons/scroll-unfurled.svg');
+}
+
+.game-icon-card-pile {
+  background-image: url('../icons/card-pile.svg');
+}
+
+/* Icon sizing variants */
+.game-icon-sm {
+  width: 0.875em;
+  height: 0.875em;
+}
+
+.game-icon-lg {
+  width: 1.33em;
+  height: 1.33em;
+}
+
+.game-icon-xl {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.game-icon-2x {
+  width: 2em;
+  height: 2em;
+}
+
+/* Icons are already white on black background, no filters needed */
+
+/* Icon in buttons */
+button .game-icon,
+.button .game-icon {
+  margin-right: 0.25em;
 }

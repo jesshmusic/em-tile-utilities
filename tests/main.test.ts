@@ -202,55 +202,6 @@ describe('Main Module', () => {
       expect(typeof toolbarCallback).toBe('function');
     });
 
-    it('should add switch creator tool to tiles toolbar', () => {
-      const mockControls = { tiles: { tools: {} } };
-
-      if (toolbarCallback) {
-        toolbarCallback(mockControls);
-      }
-
-      expect(mockControls.tiles.tools['em-puzzles-create-switch']).toBeDefined();
-      expect(mockControls.tiles.tools['em-puzzles-create-switch'].name).toBe(
-        'em-puzzles-create-switch'
-      );
-      expect(mockControls.tiles.tools['em-puzzles-create-switch'].title).toBe(
-        'EMPUZZLES.CreateSwitch'
-      );
-      expect(mockControls.tiles.tools['em-puzzles-create-switch'].icon).toBe('fas fa-toggle-on');
-      expect(mockControls.tiles.tools['em-puzzles-create-switch'].button).toBe(true);
-      expect(mockControls.tiles.tools['em-puzzles-create-switch'].order).toBe(1000);
-    });
-
-    it('should add reset tile creator tool to tiles toolbar', () => {
-      const mockControls = { tiles: { tools: {} } };
-
-      if (toolbarCallback) {
-        toolbarCallback(mockControls);
-      }
-
-      expect(mockControls.tiles.tools['em-puzzles-create-reset']).toBeDefined();
-      expect(mockControls.tiles.tools['em-puzzles-create-reset'].title).toBe(
-        'EMPUZZLES.CreateResetTile'
-      );
-      expect(mockControls.tiles.tools['em-puzzles-create-reset'].icon).toBe('fas fa-undo');
-      expect(mockControls.tiles.tools['em-puzzles-create-reset'].order).toBe(1001);
-    });
-
-    it('should add light tile creator tool to tiles toolbar', () => {
-      const mockControls = { tiles: { tools: {} } };
-
-      if (toolbarCallback) {
-        toolbarCallback(mockControls);
-      }
-
-      expect(mockControls.tiles.tools['em-puzzles-create-light']).toBeDefined();
-      expect(mockControls.tiles.tools['em-puzzles-create-light'].title).toBe(
-        'EMPUZZLES.CreateLightTile'
-      );
-      expect(mockControls.tiles.tools['em-puzzles-create-light'].icon).toBe('fas fa-lightbulb');
-      expect(mockControls.tiles.tools['em-puzzles-create-light'].order).toBe(1002);
-    });
-
     it('should add variables viewer tool to tiles toolbar', () => {
       const mockControls = { tiles: { tools: {} } };
 
@@ -262,7 +213,7 @@ describe('Main Module', () => {
       expect(mockControls.tiles.tools['em-puzzles-view-variables'].title).toBe(
         'EMPUZZLES.SceneVariables'
       );
-      expect(mockControls.tiles.tools['em-puzzles-view-variables'].icon).toBe('fas fa-list');
+      expect(mockControls.tiles.tools['em-puzzles-view-variables'].icon).toBe('gi-scroll-unfurled');
       expect(mockControls.tiles.tools['em-puzzles-view-variables'].order).toBe(1003);
     });
 
@@ -277,7 +228,7 @@ describe('Main Module', () => {
       expect(mockControls.tiles.tools['em-puzzles-tile-manager'].title).toBe(
         'EMPUZZLES.TileManager'
       );
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].icon).toBe('fas fa-layer-group');
+      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].icon).toBe('gi-card-pile');
       expect(mockControls.tiles.tools['em-puzzles-tile-manager'].order).toBe(1004);
     });
 
@@ -288,13 +239,7 @@ describe('Main Module', () => {
         toolbarCallback(mockControls);
       }
 
-      const toolNames = [
-        'em-puzzles-create-switch',
-        'em-puzzles-create-reset',
-        'em-puzzles-create-light',
-        'em-puzzles-view-variables',
-        'em-puzzles-tile-manager'
-      ];
+      const toolNames = ['em-puzzles-view-variables', 'em-puzzles-tile-manager'];
 
       toolNames.forEach(toolName => {
         expect(mockControls.tiles.tools[toolName].button).toBe(true);
@@ -308,13 +253,7 @@ describe('Main Module', () => {
         toolbarCallback(mockControls);
       }
 
-      const toolNames = [
-        'em-puzzles-create-switch',
-        'em-puzzles-create-reset',
-        'em-puzzles-create-light',
-        'em-puzzles-view-variables',
-        'em-puzzles-tile-manager'
-      ];
+      const toolNames = ['em-puzzles-view-variables', 'em-puzzles-tile-manager'];
 
       toolNames.forEach(toolName => {
         expect(typeof mockControls.tiles.tools[toolName].onClick).toBe('function');

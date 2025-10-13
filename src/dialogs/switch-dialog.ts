@@ -16,7 +16,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-toggle-on',
+      icon: 'gi-lever',
       title: 'EMPUZZLES.CreateSwitch'
     },
     position: {

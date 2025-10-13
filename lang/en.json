@@ -20,6 +20,7 @@
     "CreateTile": "Create Tile",
     "CreateSwitch": "Create Switch",
     "CreateResetTile": "Create Reset Tile",
+    "CreateLight": "Create Light",
     "CreateLightTile": "Create Light Tile",
     "SceneVariables": "Scene Variables",
     "SwitchName": "Switch Name",

@@ -162,7 +162,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-arrow-rotate-left',
+      icon: 'gi-clockwise-rotation',
       title: 'EMPUZZLES.CreateResetTile'
     },
     position: {

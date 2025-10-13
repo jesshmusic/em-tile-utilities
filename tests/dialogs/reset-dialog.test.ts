@@ -26,7 +26,7 @@ describe('ResetTileConfigDialog', () => {
 
       expect(options.id).toBe('em-puzzles-reset-config');
       expect(options.tag).toBe('form');
-      expect(options.window.icon).toBe('fa-solid fa-arrow-rotate-left');
+      expect(options.window.icon).toBe('gi-clockwise-rotation');
       expect(options.window.title).toBe('EMPUZZLES.CreateResetTile');
       expect(options.position.width).toBe(800);
       expect(options.position.height).toBe(700);
@@ -410,9 +410,6 @@ describe('ResetTileConfigDialog', () => {
 import type { ResetTileConfigDialog as ResetTileConfigDialogType } from '../../src/dialogs/reset-dialog';
 
 describe('ResetDialog Utility Functions', () => {
-  // Access private utility functions through the module
-  const resetDialogModule = require('../../src/dialogs/reset-dialog');
-  
   describe('extractWallDoorActions', () => {
     it('should extract wall/door actions from tile', () => {
       const mockTile = {
@@ -430,7 +427,7 @@ describe('ResetDialog Utility Functions', () => {
           }
         }
       };
-      
+
       // Since utility functions are not exported, test them indirectly through dialog behavior
       expect(mockTile.flags['monks-active-tiles'].actions.length).toBe(1);
     });

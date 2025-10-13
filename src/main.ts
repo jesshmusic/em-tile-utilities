@@ -2,10 +2,6 @@
  * EM Tile Utilities
  * Utility tile creation tools for Monk's Active Tiles
  */
-
-import { showSwitchDialog } from './dialogs/switch-dialog';
-import { showResetTileDialog } from './dialogs/reset-dialog';
-import { showLightDialog } from './dialogs/light-dialog';
 import { showSceneVariablesDialog } from './dialogs/variables-viewer';
 import { showTileManagerDialog } from './dialogs/tile-manager';
 import buildInfo from '../build-info.json';
@@ -119,51 +115,21 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
   const tools = tilesControl.tools;
   if (!tools) return;
 
-  // Add our switch creator tool
-  tools['em-puzzles-create-switch'] = {
-    name: 'em-puzzles-create-switch',
-    title: 'EMPUZZLES.CreateSwitch',
-    icon: 'fas fa-toggle-on',
-    button: true,
-    onClick: () => showSwitchDialog(),
-    order: 1000
-  };
-
-  // Add reset tile creator tool
-  tools['em-puzzles-create-reset'] = {
-    name: 'em-puzzles-create-reset',
-    title: 'EMPUZZLES.CreateResetTile',
-    icon: 'fas fa-undo',
-    button: true,
-    onClick: () => showResetTileDialog(),
-    order: 1001
-  };
-
-  // Add light tile creator tool
-  tools['em-puzzles-create-light'] = {
-    name: 'em-puzzles-create-light',
-    title: 'EMPUZZLES.CreateLightTile',
-    icon: 'fas fa-lightbulb',
-    button: true,
-    onClick: () => showLightDialog(),
-    order: 1002
-  };
-
   // Add scene variables viewer tool
   tools['em-puzzles-view-variables'] = {
     name: 'em-puzzles-view-variables',
     title: 'EMPUZZLES.SceneVariables',
-    icon: 'fas fa-list',
+    icon: 'gi-scroll-unfurled',
     button: true,
     onClick: () => showSceneVariablesDialog(),
     order: 1003
   };
 
-  // Add tile manager tool
+  // Add tile manager tool (primary UI for the module)
   tools['em-puzzles-tile-manager'] = {
     name: 'em-puzzles-tile-manager',
     title: 'EMPUZZLES.TileManager',
-    icon: 'fas fa-layer-group',
+    icon: 'gi-card-pile',
     button: true,
     onClick: () => showTileManagerDialog(),
     order: 1004

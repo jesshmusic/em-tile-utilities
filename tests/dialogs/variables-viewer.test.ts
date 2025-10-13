@@ -25,7 +25,7 @@ describe('SceneVariablesViewer', () => {
       const options = (SceneVariablesViewer as any).DEFAULT_OPTIONS;
 
       expect(options.id).toBe('em-puzzles-variables-viewer');
-      expect(options.window.icon).toBe('fa-solid fa-list');
+      expect(options.window.icon).toBe('gi-scroll-unfurled');
       expect(options.window.title).toBe('EMPUZZLES.SceneVariables');
       expect(options.position.width).toBe(700);
     });
