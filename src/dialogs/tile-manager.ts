@@ -1,6 +1,7 @@
 import { showSwitchDialog } from './switch-dialog';
 import { showLightDialog } from './light-dialog';
 import { showResetTileDialog } from './reset-dialog';
+import { showTrapDialog } from './trap-dialog';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -32,6 +33,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createSwitch: TileManagerDialog.#onCreateSwitch,
       createLight: TileManagerDialog.#onCreateLight,
       createReset: TileManagerDialog.#onCreateReset,
+      createTrap: TileManagerDialog.#onCreateTrap,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
       refreshTiles: TileManagerDialog.#onRefreshTiles,
@@ -288,6 +290,20 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   ): Promise<void> {
     event.preventDefault();
     showResetTileDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create trap button click
+   */
+  static async #onCreateTrap(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showTrapDialog();
   }
 
   /* -------------------------------------------- */

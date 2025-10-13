@@ -18,6 +18,19 @@ export interface LightConfig {
   colorIntensity: number;
 }
 
+export interface TrapConfig {
+  name: string;
+  startingImage: string;
+  triggeredImage: string;
+  hideTrapOnTrigger: boolean;
+  sound: string;
+  minRequired: number | null;
+  savingThrow: string;
+  dc: number;
+  damageOnFail: string;
+  flavorText: string;
+}
+
 export interface ResetTileConfig {
   name: string;
   image: string;

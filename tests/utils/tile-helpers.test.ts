@@ -3,9 +3,14 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { createSwitchTile, createLightTile, createResetTile } from '../../src/utils/tile-helpers';
+import {
+  createSwitchTile,
+  createLightTile,
+  createResetTile,
+  createTrapTile
+} from '../../src/utils/tile-helpers';
 import { createMockScene } from '../mocks/foundry';
-import type { SwitchConfig, LightConfig, ResetTileConfig } from '../../src/types/module';
+import type { SwitchConfig, LightConfig, ResetTileConfig, TrapConfig } from '../../src/types/module';
 
 describe('tile-helpers', () => {
   describe('createSwitchTile', () => {
@@ -382,6 +387,223 @@ describe('tile-helpers', () => {
       const doorAction = actions.find((a: any) => a.action === 'changedoor');
       expect(doorAction).toBeDefined();
       expect(doorAction.data.state).toBe('locked');
+    });
+  });
+
+  describe('createTrapTile', () => {
+    let mockScene: any;
+    let trapConfig: TrapConfig;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+
+      trapConfig = {
+        name: 'Test Trap',
+        startingImage: 'path/to/trap.png',
+        triggeredImage: 'path/to/trap_triggered.png',
+        hideTrapOnTrigger: false,
+        sound: 'path/to/trap-sound.ogg',
+        minRequired: 1,
+        savingThrow: 'ability:dex',
+        dc: 14,
+        damageOnFail: '2d6',
+        flavorText: 'You triggered a trap!'
+      };
+    });
+
+    it('should create a trap tile with correct data structure', async () => {
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith(
+        'Tile',
+        expect.arrayContaining([
+          expect.objectContaining({
+            x: 500,
+            y: 500,
+            width: 100, // gridSize
+            height: 100,
+            texture: expect.objectContaining({
+              src: trapConfig.startingImage
+            })
+          })
+        ])
+      );
+    });
+
+    it("should include Monk's Active Tiles configuration", async () => {
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+
+      expect(tileData.flags['monks-active-tiles']).toBeDefined();
+      expect(tileData.flags['monks-active-tiles'].name).toBe('Test Trap');
+      expect(tileData.flags['monks-active-tiles'].active).toBe(true);
+      expect(tileData.flags['monks-active-tiles'].trigger).toEqual(['enter']);
+      expect(tileData.flags['monks-active-tiles'].restriction).toBe('all');
+    });
+
+    it('should use minRequired value from config', async () => {
+      trapConfig.minRequired = 3;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+
+      expect(tileData.flags['monks-active-tiles'].minrequired).toBe(3);
+    });
+
+    it('should show triggered image when hideTrapOnTrigger is false', async () => {
+      trapConfig.hideTrapOnTrigger = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have tileimage action to show triggered image
+      const tileImageAction = actions.find((a: any) => a.action === 'tileimage');
+      expect(tileImageAction).toBeDefined();
+      expect(tileImageAction.data.select).toBe('next');
+    });
+
+    it('should hide trap when hideTrapOnTrigger is true', async () => {
+      trapConfig.hideTrapOnTrigger = true;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have showhide action instead of tileimage
+      const showHideAction = actions.find((a: any) => a.action === 'showhide');
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('hide');
+    });
+
+    it('should include play sound action', async () => {
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const playSoundAction = actions.find((a: any) => a.action === 'playsound');
+      expect(playSoundAction).toBeDefined();
+      expect(playSoundAction.data.audiofile).toBe(trapConfig.sound);
+      expect(playSoundAction.data.audiofor).toBe('everyone');
+    });
+
+    it('should include request saving throw action', async () => {
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const savingThrowAction = actions.find(
+        (a: any) => a.action === 'monks-tokenbar.requestroll'
+      );
+      expect(savingThrowAction).toBeDefined();
+      expect(savingThrowAction.data.request).toBe(trapConfig.savingThrow);
+      expect(savingThrowAction.data.dc).toBe(trapConfig.dc.toString());
+    });
+
+    it('should include hurt/heal action for damage', async () => {
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const hurtHealAction = actions.find((a: any) => a.action === 'hurtheal');
+      expect(hurtHealAction).toBeDefined();
+      expect(hurtHealAction.data.value).toBe(`-[[${trapConfig.damageOnFail}]]`);
+      expect(hurtHealAction.data.rollmode).toBe('roll');
+    });
+
+    it('should include files array with starting and triggered images', async () => {
+      trapConfig.hideTrapOnTrigger = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const files = tileData.flags['monks-active-tiles'].files;
+
+      expect(files).toHaveLength(2);
+      expect(files[0].name).toBe(trapConfig.startingImage);
+      expect(files[1].name).toBe(trapConfig.triggeredImage);
+    });
+
+    it('should only include starting image when hiding trap', async () => {
+      trapConfig.hideTrapOnTrigger = true;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const files = tileData.flags['monks-active-tiles'].files;
+
+      expect(files).toHaveLength(1);
+      expect(files[0].name).toBe(trapConfig.startingImage);
+    });
+
+    it('should use default position when not provided', async () => {
+      mockScene.dimensions = { sceneWidth: 2000, sceneHeight: 1500 };
+
+      await createTrapTile(mockScene, trapConfig);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+
+      expect(tileData.x).toBe(1000); // sceneWidth / 2
+      expect(tileData.y).toBe(750); // sceneHeight / 2
+    });
+
+    it('should handle different saving throw types', async () => {
+      const savingThrows = [
+        'ability:str',
+        'ability:dex',
+        'ability:con',
+        'ability:int',
+        'ability:wis',
+        'ability:cha'
+      ];
+
+      for (const savingThrow of savingThrows) {
+        mockScene.createEmbeddedDocuments.mockClear();
+        trapConfig.savingThrow = savingThrow;
+
+        await createTrapTile(mockScene, trapConfig, 500, 500);
+
+        const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+        const tileData = callArgs[1][0];
+        const actions = tileData.flags['monks-active-tiles'].actions;
+
+        const savingThrowAction = actions.find(
+          (a: any) => a.action === 'monks-tokenbar.requestroll'
+        );
+        expect(savingThrowAction.data.request).toBe(savingThrow);
+      }
+    });
+
+    it('should include flavor text in saving throw request', async () => {
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const savingThrowAction = actions.find(
+        (a: any) => a.action === 'monks-tokenbar.requestroll'
+      );
+      expect(savingThrowAction.data.flavor).toBe(trapConfig.flavorText);
     });
   });
 });

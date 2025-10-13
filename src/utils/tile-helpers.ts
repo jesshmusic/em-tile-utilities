@@ -1,4 +1,4 @@
-import type { SwitchConfig, ResetTileConfig, LightConfig } from '../types/module';
+import type { SwitchConfig, ResetTileConfig, LightConfig, TrapConfig } from '../types/module';
 
 /**
  * Create a switch tile with ON/OFF states
@@ -566,6 +566,169 @@ export async function createLightTile(
     },
     visible: true,
     img: config.offImage
+  };
+
+  await scene.createEmbeddedDocuments('Tile', [tileData]);
+}
+
+/**
+ * Create a trap tile with enter trigger, saving throw, and damage
+ */
+export async function createTrapTile(
+  scene: Scene,
+  config: TrapConfig,
+  x?: number,
+  y?: number
+): Promise<void> {
+  // Get grid size from scene (use actual tile dimensions from image)
+  const gridSize = (canvas as any).grid.size;
+
+  // Default to center if no position provided
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
+  // Build actions array
+  const actions: any[] = [];
+
+  // Action 1: Show/hide trap (or show triggered image)
+  if (config.hideTrapOnTrigger) {
+    actions.push({
+      action: 'showhide',
+      data: {
+        entity: {
+          id: 'tile',
+          name: 'This Tile'
+        },
+        collection: 'tokens',
+        hidden: 'hide',
+        fade: 0
+      },
+      id: foundry.utils.randomID()
+    });
+  } else if (config.triggeredImage) {
+    // Change to triggered image
+    actions.push({
+      action: 'tileimage',
+      data: {
+        entity: { id: 'tile', name: 'This Tile' },
+        select: 'next',
+        transition: 'none'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Action 2: Play sound if provided
+  if (config.sound) {
+    actions.push({
+      action: 'playsound',
+      data: {
+        audiofile: config.sound,
+        audiofor: 'everyone',
+        volume: 1,
+        loop: false,
+        fade: 0.25,
+        scenerestrict: false,
+        prevent: false,
+        delay: false,
+        playlist: true
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Action 3: Request saving throw (Monk's Token Bar)
+  actions.push({
+    action: 'monks-tokenbar.requestroll',
+    data: {
+      entity: {
+        id: 'within',
+        name: 'Tokens within Tile'
+      },
+      request: config.savingThrow,
+      dc: config.dc.toString(),
+      flavor: config.flavorText,
+      rollmode: 'roll',
+      silent: false,
+      fastforward: false,
+      usetokens: 'fail',
+      continue: 'failed'
+    },
+    id: foundry.utils.randomID()
+  });
+
+  // Action 4: Deal damage to tokens that failed
+  if (config.damageOnFail) {
+    actions.push({
+      action: 'hurtheal',
+      data: {
+        entity: {
+          id: 'previous',
+          name: 'Current tokens'
+        },
+        value: `-[[${config.damageOnFail}]]`,
+        chatMessage: true,
+        rollmode: 'roll',
+        showdice: true
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Prepare files array (starting image and optionally triggered image)
+  const files: any[] = [{ id: foundry.utils.randomID(), name: config.startingImage }];
+  if (!config.hideTrapOnTrigger && config.triggeredImage) {
+    files.push({ id: foundry.utils.randomID(), name: config.triggeredImage });
+  }
+
+  const tileData = {
+    texture: {
+      src: config.startingImage,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: 'fill',
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: '#ffffff',
+      alphaThreshold: 0.75
+    },
+    width: gridSize,
+    height: gridSize,
+    x: tileX,
+    y: tileY,
+    elevation: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: false,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      'monks-active-tiles': {
+        name: config.name,
+        active: true,
+        record: true,
+        restriction: 'all',
+        controlled: 'all',
+        trigger: ['enter'],
+        allowpaused: false,
+        usealpha: false,
+        pointer: false,
+        vision: true,
+        pertoken: false,
+        minrequired: config.minRequired,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: files,
+        variables: {}
+      }
+    },
+    visible: true,
+    img: config.startingImage
   };
 
   await scene.createEmbeddedDocuments('Tile', [tileData]);

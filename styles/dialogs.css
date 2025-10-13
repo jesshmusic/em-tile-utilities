@@ -356,6 +356,16 @@
   border-color: rgba(255, 150, 100, 0.5);
 }
 
+.create-trap-card:hover {
+  background: rgba(200, 100, 150, 0.2);
+  border-color: rgba(200, 100, 150, 0.5);
+}
+
+.create-trap-card:hover .card-icon {
+  background: rgba(200, 100, 150, 0.3);
+  border-color: rgba(200, 100, 150, 0.5);
+}
+
 .tile-manager-controls {
   display: flex;
   gap: 1rem;
@@ -598,7 +608,8 @@
 .gi-candle-flame::before,
 .gi-clockwise-rotation::before,
 .gi-scroll-unfurled::before,
-.gi-card-pile::before {
+.gi-card-pile::before,
+.gi-spikes::before {
   content: "";
   display: inline-block;
   width: 1em;
@@ -626,6 +637,10 @@
 
 .gi-card-pile::before {
   background-image: url('../icons/card-pile.svg');
+}
+
+.gi-spikes::before {
+  background-image: url('../icons/spikes.svg');
 }
 
 /* Specific icons */
