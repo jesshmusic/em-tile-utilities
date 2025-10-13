@@ -333,6 +333,24 @@ export async function createResetTile(
         });
       });
     }
+
+    // Reset trigger history if requested
+    if (tileState.resetTriggerHistory) {
+      actions.push({
+        action: 'resethistory',
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${tileState.tileId}`,
+            name: `Tile: ${tileState.tileId}`,
+            match: 'any',
+            scene: '_active'
+          },
+          resettype: 'all',
+          token: ''
+        },
+        id: foundry.utils.randomID()
+      });
+    }
   });
 
   // Add chat message to confirm reset

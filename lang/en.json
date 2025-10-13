@@ -63,6 +63,7 @@
     "Variables": "Variables",
     "True": "True",
     "False": "False",
+    "ResetTriggerHistory": "Reset Trigger History",
     "NoTilesSelected": "No tiles selected. Click \"Add Tile\" to select tiles from the canvas.",
     "Variable": "Variable",
     "Value": "Value",

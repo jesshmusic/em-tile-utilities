@@ -45,6 +45,7 @@ export interface TileResetState {
   hasTileImageAction: boolean;
   hasShowHideAction: boolean;
   hasFiles: boolean;
+  resetTriggerHistory: boolean;
 }
 
 export interface WallDoorAction {
@@ -74,6 +75,7 @@ export interface SelectedTileData {
   hasTileImageAction: boolean;
   hasShowHideAction: boolean;
   hasAnyActions: boolean;
+  resetTriggerHistory: boolean;
 }
 
 export interface TileFile {

@@ -134,6 +134,15 @@
               {{/each}}
             </div>
             {{/if}}
+
+            <div class="settings-grid-1">
+              <div class="field-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="resetTriggerHistory_{{tile.tileId}}" value="true" {{#if tile.resetTriggerHistory}}checked{{/if}} />
+                  {{localize "EMPUZZLES.ResetTriggerHistory"}}
+                </label>
+              </div>
+            </div>
           </div>
         {{/each}}
       </div>

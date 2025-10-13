@@ -245,7 +245,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         hasMovementAction: tileData.hasMovementAction,
         hasTileImageAction: tileData.hasTileImageAction,
         hasShowHideAction: tileData.hasShowHideAction,
-        hasAnyActions: tileData.hasAnyActions
+        hasAnyActions: tileData.hasAnyActions,
+        resetTriggerHistory: tileData.resetTriggerHistory
       });
     });
 
@@ -393,7 +394,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         hasMovementAction: hasMovement,
         hasTileImageAction: hasTileImage,
         hasShowHideAction: hasShowHide,
-        hasAnyActions: hasAnyActions
+        hasAnyActions: hasAnyActions,
+        resetTriggerHistory: false
       });
 
       // Capture form values before re-rendering
@@ -495,7 +497,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         hasMovementAction: tileData.hasMovementAction,
         hasTileImageAction: tileData.hasTileImageAction,
         hasShowHideAction: tileData.hasShowHideAction,
-        hasFiles: tileData.files && tileData.files.length > 0
+        hasFiles: tileData.files && tileData.files.length > 0,
+        resetTriggerHistory: data[`resetTriggerHistory_${tileId}`] === 'true'
       });
     });
 
