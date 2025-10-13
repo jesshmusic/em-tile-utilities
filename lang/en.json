@@ -19,8 +19,11 @@
   "EMPUZZLES": {
     "CreateTile": "Create Tile",
     "CreateSwitch": "Create Switch",
+    "CreateSwitchDesc": "Interactive switch with ON/OFF states and variable tracking",
     "CreateResetTile": "Create Reset Tile",
+    "CreateResetTileDesc": "Reset tiles, variables, and states back to their initial values",
     "CreateLight": "Create Light",
+    "CreateLightDesc": "Toggleable light source with click or darkness trigger",
     "CreateLightTile": "Create Light Tile",
     "SceneVariables": "Scene Variables",
     "SwitchName": "Switch Name",

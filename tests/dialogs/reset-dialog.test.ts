@@ -119,7 +119,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: true
+        hasAnyActions: true,
+        resetTriggerHistory: false
       });
 
       const context = await dialog._prepareContext({});
@@ -151,7 +152,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: true
+        hasAnyActions: true,
+        resetTriggerHistory: false
       });
 
       const context = await dialog._prepareContext({});
@@ -183,7 +185,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: true
+        hasAnyActions: true,
+        resetTriggerHistory: false
       });
 
       const context = await dialog._prepareContext({});
@@ -216,7 +219,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: true
+        hasAnyActions: true,
+        resetTriggerHistory: false
       });
 
       const context = await dialog._prepareContext({});
@@ -247,7 +251,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: true
+        hasAnyActions: true,
+        resetTriggerHistory: false
       });
 
       const context = await dialog._prepareContext({});
@@ -276,7 +281,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: true,
         hasTileImageAction: true,
         hasShowHideAction: true,
-        hasAnyActions: true
+        hasAnyActions: true,
+        resetTriggerHistory: false
       });
 
       const context = await dialog._prepareContext({});
@@ -357,7 +363,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: false
+        hasAnyActions: false,
+        resetTriggerHistory: false
       });
 
       expect(dialog.selectedTiles.size).toBe(1);
@@ -385,7 +392,8 @@ describe('ResetTileConfigDialog', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: false
+        hasAnyActions: false,
+        resetTriggerHistory: false
       });
 
       dialog.selectedTiles.delete('tile-1');
@@ -570,7 +578,8 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: false
+        hasAnyActions: false,
+        resetTriggerHistory: false
       });
 
       const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
@@ -603,7 +612,8 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: false
+        hasAnyActions: false,
+        resetTriggerHistory: false
       });
 
       const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
@@ -970,7 +980,8 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         hasMovementAction: false,
         hasTileImageAction: false,
         hasShowHideAction: false,
-        hasAnyActions: false
+        hasAnyActions: false,
+        resetTriggerHistory: false
       });
     });
 

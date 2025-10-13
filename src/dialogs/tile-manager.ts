@@ -25,8 +25,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       resizable: true
     },
     position: {
-      width: 600,
-      height: 700
+      width: 900,
+      height: 1000
     },
     actions: {
       createSwitch: TileManagerDialog.#onCreateSwitch,

@@ -278,7 +278,8 @@ describe('tile-helpers', () => {
             hasMovementAction: false,
             hasTileImageAction: true,
             hasShowHideAction: false,
-            hasFiles: true
+            hasFiles: true,
+            resetTriggerHistory: false
           }
         ]
       };
