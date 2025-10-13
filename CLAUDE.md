@@ -7,12 +7,14 @@ This document contains technical notes, patterns, and conventions for working on
 **EM Tile Utilities** is a FoundryVTT v13 module that provides UI tools for creating interactive tiles using Monk's Active Tiles. Built with TypeScript, uses Foundry's ApplicationV2 API.
 
 **Key Dependencies:**
+
 - FoundryVTT v13+ (uses ApplicationV2 API)
 - Monk's Active Tiles v11.0+ (required module)
 
 ## Architecture
 
 ### File Structure
+
 ```
 src/
 ├── main.ts                    # Module entry point, hooks, toolbar registration
@@ -35,6 +37,7 @@ dist/main.js                  # Build output (IIFE bundle)
 ```
 
 ### Build System
+
 - **Rollup** bundles TypeScript → single IIFE at `dist/main.js`
 - Custom plugin `rollup-plugin-increment-build.mjs` increments build number
 - `build-info.json` tracks build number (auto-generated)
@@ -44,6 +47,7 @@ dist/main.js                  # Build output (IIFE bundle)
 ## Foundry VTT v13 Patterns
 
 ### ApplicationV2 Dialogs
+
 All dialogs extend `HandlebarsApplicationMixin(ApplicationV2)`:
 
 ```typescript
@@ -61,10 +65,10 @@ export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     position: { width: 480 },
     form: {
       closeOnSubmit: true,
-      handler: MyDialog.#onSubmit  // Private static method
+      handler: MyDialog.#onSubmit // Private static method
     },
     actions: {
-      actionName: MyDialog.#onActionName  // For data-action buttons
+      actionName: MyDialog.#onActionName // For data-action buttons
     }
   };
 
@@ -96,12 +100,14 @@ export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 ```
 
 **Key Points:**
+
 - Use private static methods (`#methodName`) for form handlers and actions
 - Always call `super._prepareContext()` and spread the result
 - `_onRender` is where you set up DOM event listeners
 - `formData.object` contains form field values as an object
 
 ### File Pickers
+
 Standard pattern for file picker buttons:
 
 ```typescript
@@ -134,6 +140,7 @@ async _onFilePicker(event: Event): Promise<void> {
 ```
 
 ### Canvas Click Placement Pattern
+
 For placing tiles on canvas after dialog submission:
 
 ```typescript
@@ -159,6 +166,7 @@ static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any)
 ## Monk's Active Tiles Integration
 
 ### Tile Data Structure
+
 All created tiles include `flags['monks-active-tiles']` with this structure:
 
 ```typescript
@@ -189,6 +197,7 @@ flags: {
 ### Common Actions
 
 **Play Sound:**
+
 ```typescript
 {
   action: "playsound",
@@ -204,6 +213,7 @@ flags: {
 ```
 
 **Set Variable:**
+
 ```typescript
 {
   action: "setvariable",
@@ -217,6 +227,7 @@ flags: {
 ```
 
 **Check Value (Conditional):**
+
 ```typescript
 {
   action: "checkvalue",
@@ -230,6 +241,7 @@ flags: {
 ```
 
 **Anchor (Jump Target):**
+
 ```typescript
 {
   action: "anchor",
@@ -242,6 +254,7 @@ flags: {
 ```
 
 **Change Tile Image:**
+
 ```typescript
 {
   action: "tileimage",
@@ -255,6 +268,7 @@ flags: {
 ```
 
 **Toggle Entity Active State:**
+
 ```typescript
 {
   action: "activate",
@@ -271,6 +285,7 @@ flags: {
 ```
 
 **Move Token/Tile:**
+
 ```typescript
 {
   action: "movetoken",
@@ -289,6 +304,7 @@ flags: {
 ```
 
 **Show/Hide Entity:**
+
 ```typescript
 {
   action: "showhide",
@@ -303,6 +319,7 @@ flags: {
 ```
 
 **Change Door State:**
+
 ```typescript
 {
   action: "changedoor",
@@ -320,6 +337,7 @@ flags: {
 ```
 
 **Chat Message:**
+
 ```typescript
 {
   action: "chatmessage",
@@ -334,7 +352,9 @@ flags: {
 ```
 
 ### Entity ID Format
+
 When referencing entities in actions:
+
 - Current tile: `{ id: "tile", name: "This Tile" }`
 - Other tile: `{ id: "Scene.{sceneId}.Tile.{tileId}", name: "Tile: {tileId}" }`
 - Light: `{ id: "Scene.{sceneId}.AmbientLight.{lightId}" }`
@@ -343,17 +363,18 @@ When referencing entities in actions:
 ## Tile Creation Patterns
 
 ### Standard Tile Data Template
+
 ```typescript
 const tileData = {
   texture: {
     src: imagePath,
     anchorX: 0.5,
     anchorY: 0.5,
-    fit: "fill",
+    fit: 'fill',
     scaleX: 1,
     scaleY: 1,
     rotation: 0,
-    tint: "#ffffff",
+    tint: '#ffffff',
     alphaThreshold: 0.75
   },
   width: gridSize,
@@ -361,7 +382,7 @@ const tileData = {
   x: tileX,
   y: tileY,
   elevation: 0,
-  sort: 0,                           // Z-order for rendering
+  sort: 0, // Z-order for rendering
   occlusion: { mode: 0, alpha: 0 },
   rotation: 0,
   alpha: 1,
@@ -369,7 +390,11 @@ const tileData = {
   locked: false,
   restrictions: { light: false, weather: false },
   video: { loop: true, autoplay: true, volume: 0 },
-  flags: { "monks-active-tiles": { /* ... */ } },
+  flags: {
+    'monks-active-tiles': {
+      /* ... */
+    }
+  },
   visible: true,
   img: imagePath
 };
@@ -378,12 +403,14 @@ await scene.createEmbeddedDocuments('Tile', [tileData]);
 ```
 
 ### Grid Sizing
+
 ```typescript
-const gridSize = (canvas as any).grid.size;  // 1 grid square
-const largeSize = gridSize * 2;              // 2x2 grid squares
+const gridSize = (canvas as any).grid.size; // 1 grid square
+const largeSize = gridSize * 2; // 2x2 grid squares
 ```
 
 ### Creating Lights
+
 ```typescript
 const lightData = {
   x: centerX,
@@ -394,10 +421,10 @@ const lightData = {
   vision: false,
   config: {
     angle: 360,
-    color: "#ffffff",      // null for no color
-    dim: 40,              // Dim light radius
-    bright: 20,           // Bright light radius
-    alpha: 0.5,           // Color intensity
+    color: '#ffffff', // null for no color
+    dim: 40, // Dim light radius
+    bright: 20, // Bright light radius
+    alpha: 0.5, // Color intensity
     negative: false,
     priority: 0,
     coloration: 1,
@@ -407,7 +434,7 @@ const lightData = {
     contrast: 0,
     shadows: 0,
     animation: { type: null, speed: 5, intensity: 5, reverse: false },
-    darkness: { min: 0, max: 1 }  // Darkness range for activation
+    darkness: { min: 0, max: 1 } // Darkness range for activation
   },
   hidden: false
 };
@@ -419,51 +446,56 @@ const lightId = (light as any).id;
 ## Handlebars Template Patterns
 
 ### Standard Form Structure
+
 ```handlebars
-<div class="form-group">
-  <label for="fieldName">{{localize "EMPUZZLES.Label"}}</label>
-  <input type="text" name="fieldName" value="{{defaultValue}}" />
-  <p class="hint">{{localize "EMPUZZLES.Hint"}}</p>
+<div class='form-group'>
+  <label for='fieldName'>{{localize 'EMPUZZLES.Label'}}</label>
+  <input type='text' name='fieldName' value='{{defaultValue}}' />
+  <p class='hint'>{{localize 'EMPUZZLES.Hint'}}</p>
 </div>
 ```
 
 ### File Picker Button
+
 ```handlebars
-<div class="form-group">
-  <label for="imagePath">{{localize "EMPUZZLES.Image"}}</label>
-  <div class="file-picker-group">
-    <input type="text" name="imagePath" value="{{imagePath}}" />
-    <button type="button" class="file-picker" data-target="imagePath" data-type="imagevideo">
-      <i class="fas fa-file-image"></i>
+<div class='form-group'>
+  <label for='imagePath'>{{localize 'EMPUZZLES.Image'}}</label>
+  <div class='file-picker-group'>
+    <input type='text' name='imagePath' value='{{imagePath}}' />
+    <button type='button' class='file-picker' data-target='imagePath' data-type='imagevideo'>
+      <i class='fas fa-file-image'></i>
     </button>
   </div>
 </div>
 ```
 
 ### Conditional Content
+
 ```handlebars
 {{#if hasTiles}}
-  <div class="tile-list">
+  <div class='tile-list'>
     {{#each tiles as |tile|}}
-      <div class="tile-entry" data-tile-id="{{tile.id}}">
+      <div class='tile-entry' data-tile-id='{{tile.id}}'>
         {{#if tile.image}}
-          <img src="{{tile.image}}" class="tile-thumbnail" />
+          <img src='{{tile.image}}' class='tile-thumbnail' />
         {{else}}
-          <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" />
+          <img src='icons/svg/hazard.svg' class='tile-thumbnail tile-thumbnail-placeholder' />
         {{/if}}
         <span>{{tile.name}}</span>
       </div>
     {{/each}}
   </div>
 {{else}}
-  <p class="no-content">{{localize "EMPUZZLES.NoTiles"}}</p>
+  <p class='no-content'>{{localize 'EMPUZZLES.NoTiles'}}</p>
 {{/if}}
 ```
 
 ### Action Buttons (ApplicationV2)
+
 ```handlebars
-<button type="button" data-action="actionName" data-tile-id="{{tile.id}}">
-  <i class="fas fa-icon"></i> {{localize "EMPUZZLES.ButtonLabel"}}
+<button type='button' data-action='actionName' data-tile-id='{{tile.id}}'>
+  <i class='fas fa-icon'></i>
+  {{localize 'EMPUZZLES.ButtonLabel'}}
 </button>
 ```
 
@@ -486,21 +518,23 @@ Access in code: `game.i18n.localize('EMPUZZLES.KeyName')`
 ## Settings Management
 
 ### Registering Settings
+
 In `main.ts` during `init` hook:
 
 ```typescript
 game.settings.register('em-tile-utilities', 'settingName', {
   name: 'Display Name',
   hint: 'Help text',
-  scope: 'world',          // 'world' or 'client'
-  config: true,            // Show in module settings UI
-  type: String,            // String, Number, Boolean
+  scope: 'world', // 'world' or 'client'
+  config: true, // Show in module settings UI
+  type: String, // String, Number, Boolean
   default: 'default value',
   filePicker: 'imagevideo' // Optional: adds file picker button
 });
 ```
 
 ### Accessing Settings
+
 ```typescript
 const value = game.settings.get('em-tile-utilities', 'settingName') as string;
 await game.settings.set('em-tile-utilities', 'settingName', newValue);
@@ -521,7 +555,7 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     icon: 'fas fa-icon',
     button: true,
     onClick: () => showDialog(),
-    order: 1000  // Higher = appears later in toolbar
+    order: 1000 // Higher = appears later in toolbar
   };
 });
 ```
@@ -529,6 +563,7 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
 ## Common Patterns
 
 ### Auto-Incrementing IDs
+
 ```typescript
 // In _prepareContext:
 const counter = game.settings.get('em-tile-utilities', 'switchCounter') as number;
@@ -539,6 +574,7 @@ await game.settings.set('em-tile-utilities', 'switchCounter', counter + 1);
 ```
 
 ### Hook Registration with Cleanup
+
 ```typescript
 _onRender(context: any, options: any): void {
   super._onRender(context, options);
@@ -561,6 +597,7 @@ _onClose(options: any): void {
 ```
 
 ### Scene Access
+
 ```typescript
 const scene = canvas.scene;
 if (!scene) {
@@ -570,44 +607,48 @@ if (!scene) {
 ```
 
 ### Tile Property Access
+
 ```typescript
 // Get all tiles
 const tiles = Array.from((scene.tiles as any).values());
 
 // Tile properties
-tile.id
-tile.name
-tile.texture.src
-tile.x, tile.y
-tile.width, tile.height
-tile.elevation
-tile.sort
-tile.hidden
-tile.locked
-tile.flags['monks-active-tiles']
+tile.id;
+tile.name;
+tile.texture.src;
+(tile.x, tile.y);
+(tile.width, tile.height);
+tile.elevation;
+tile.sort;
+tile.hidden;
+tile.locked;
+tile.flags['monks-active-tiles'];
 
 // Monks data
 const monksData = tile.flags['monks-active-tiles'];
-monksData.active
-monksData.actions
-monksData.variables
-monksData.files
+monksData.active;
+monksData.actions;
+monksData.variables;
+monksData.files;
 ```
 
 ## Testing & Development
 
 ### Watch Mode
+
 ```bash
 npm run watch  # Auto-rebuild on file changes
 ```
 
 ### Testing Workflow
+
 1. Run `npm run watch`
 2. Make changes in `src/`
 3. Refresh FoundryVTT (F5)
 4. Test in Tiles layer with Monk's Active Tiles enabled
 
 ### Console Debugging
+
 ```typescript
 console.log('%c🧩 Debug:', 'color: #ff6b35;', data);
 ```
@@ -654,11 +695,13 @@ export interface LightConfig {
 ## Version Management
 
 The module uses a custom build increment system:
+
 - `build-info.json` contains `buildNumber`
 - `rollup-plugin-increment-build.mjs` increments on each build
 - Version displayed in console banner on init
 
 Release process:
+
 ```bash
 npm run release:patch  # 1.1.2 → 1.1.3
 npm run release:minor  # 1.1.2 → 1.2.0

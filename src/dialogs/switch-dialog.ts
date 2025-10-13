@@ -123,11 +123,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
    * @param {HTMLFormElement} form - The form element
    * @param {FormDataExtended} formData - The form data
    */
-  static async #onSubmit(
-    event: SubmitEvent,
-    form: HTMLFormElement,
-    formData: any
-  ): Promise<void> {
+  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
       ui.notifications.error('No active scene!');
@@ -148,13 +144,18 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
 
       // Create the switch at the clicked position
-      await createSwitchTile(scene, {
-        name: data.switchName || 'Switch',
-        variableName: data.variableName,
-        onImage: data.onImage,
-        offImage: data.offImage,
-        sound: data.sound
-      }, snapped.x, snapped.y);
+      await createSwitchTile(
+        scene,
+        {
+          name: data.switchName || 'Switch',
+          variableName: data.variableName,
+          onImage: data.onImage,
+          offImage: data.offImage,
+          sound: data.sound
+        },
+        snapped.x,
+        snapped.y
+      );
 
       // Increment the counter for next switch
       const switchCounter = game.settings.get('em-tile-utilities', 'switchCounter') as number;

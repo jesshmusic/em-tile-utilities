@@ -11,26 +11,27 @@ All notable changes to this project will be documented in this file.
 ## [1.2.0] - 2025-10-11
 
 ### Added
-- fix: removes script to add release notes file
-- fix: removes script to add release notes file
 
+- fix: removes script to add release notes file
+- fix: removes script to add release notes file
 
 ## [1.1.2] - 2025-10-11
 
 ### Changed
-- updates the minimum version and name
-- updates the minimum version and name
 
+- updates the minimum version and name
+- updates the minimum version and name
 
 ## [1.1.1] - 2025-10-11
 
 ### Changed
-- updates the minimum version and name
 
+- updates the minimum version and name
 
 ## [1.1.0] - 2025-10-11
 
 ### Added
+
 - add light tiles and some automation
 - adds a tile browser for the scene
 - styles the dialogs with Application V2
@@ -38,17 +39,19 @@ All notable changes to this project will be documented in this file.
 - improves token settings
 
 ### Fixed
+
 - custom tiles can be clicked onto the map now.
 - the custom tile image selection persists
 - door changes now set properly
 
 ### Other
-- Initial commit: EM Puzzles and Trap Tiles module
 
+- Initial commit: EM Puzzles and Trap Tiles module
 
 ## [1.0.1] - 2025-01-XX
 
 ### Added
+
 - Create Switch Tile: Double-click activated switches with ON/OFF states and variable tracking
 - Create Reset Tile: Tiles that reset multiple variables and tile states to initial values
 - Create Light Tile: Tiles with embedded light sources (click or darkness-triggered)
@@ -65,6 +68,7 @@ All notable changes to this project will be documented in this file.
 - Localization support (English)
 
 ### Features
+
 - Click-to-place functionality for all tile types
 - Grid snapping for precise placement
 - Integration with Monk's Active Tiles module
@@ -72,6 +76,7 @@ All notable changes to this project will be documented in this file.
 - Confirmation dialogs for destructive actions
 
 ### Technical
+
 - Built with TypeScript and Rollup
 - Foundry VTT v13 ApplicationV2 API
 - Automatic build numbering system

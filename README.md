@@ -140,6 +140,7 @@ The reset tile will restore all selected tiles to their configured states when d
 ### Module Settings
 
 Configure defaults in **Game Settings → Module Settings → EM Tile Utilities**:
+
 - Default ON Image (for switches)
 - Default OFF Image (for switches)
 - Default Sound (for switches)
@@ -193,11 +194,13 @@ em-tile-utilities/
 ### Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Build the project:
+
 ```bash
 npm run build
 ```
@@ -236,6 +239,7 @@ The module uses automated versioning and changelog generation:
    - `chore: update dependencies` → Changed section
 
 2. Run the release script locally:
+
    ```bash
    npm run release:minor  # or patch/major
    ```

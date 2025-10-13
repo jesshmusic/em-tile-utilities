@@ -96,11 +96,17 @@ Hooks.once('init', () => {
 // Check for dependencies
 Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
-    ui.notifications.error('EM Tile Utilities requires Monk\'s Active Tiles to be installed and active.');
+    ui.notifications.error(
+      "EM Tile Utilities requires Monk's Active Tiles to be installed and active."
+    );
     return;
   }
 
-  console.log('%c🧩 EM Tile Utilities %c✓ Ready!', 'color: #ff6b35; font-weight: bold; font-size: 14px;', 'color: #4caf50; font-weight: bold; font-size: 14px;');
+  console.log(
+    '%c🧩 EM Tile Utilities %c✓ Ready!',
+    'color: #ff6b35; font-weight: bold; font-size: 14px;',
+    'color: #4caf50; font-weight: bold; font-size: 14px;'
+  );
 });
 
 /**

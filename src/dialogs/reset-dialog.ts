@@ -198,17 +198,18 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
     // Prepare tiles data for template
     const tiles: any[] = [];
-    this.selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
+    this.selectedTiles.forEach((tileData: SelectedTileData, _tileId: string) => {
       // Prepare variables list
       const variablesList: any[] = [];
       Object.entries(tileData.variables).forEach(([varName, varValue]) => {
-        const isBoolean = typeof varValue === 'boolean' ||
-                         varValue === 'true' ||
-                         varValue === 'false' ||
-                         varValue === true ||
-                         varValue === false ||
-                         varValue === null ||
-                         varValue === undefined;
+        const isBoolean =
+          typeof varValue === 'boolean' ||
+          varValue === 'true' ||
+          varValue === 'false' ||
+          varValue === true ||
+          varValue === false ||
+          varValue === null ||
+          varValue === undefined;
 
         if (isBoolean) {
           const boolValue = varValue === true || varValue === 'true';
@@ -228,10 +229,11 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       });
 
       // Prepare files with extracted filenames
-      const files = tileData.files?.map((file: TileFile) => ({
-        name: file.name.split('/').pop() || file.name,
-        fullPath: file.name
-      })) || [];
+      const files =
+        tileData.files?.map((file: TileFile) => ({
+          name: file.name.split('/').pop() || file.name,
+          fullPath: file.name
+        })) || [];
 
       tiles.push({
         ...tileData,
@@ -314,7 +316,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
    */
   captureFormValues(): void {
     // The element itself IS the form in ApplicationV2
-    const form = this.element?.tagName === 'FORM' ? this.element : this.element?.querySelector('form');
+    const form =
+      this.element?.tagName === 'FORM' ? this.element : this.element?.querySelector('form');
     if (form) {
       // Get resetName from input
       const nameInput = form.querySelector('input[name="resetName"]') as HTMLInputElement;
@@ -335,7 +338,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   /**
    * Handle adding a tile
    */
-  static async #onAddTile(this: ResetTileConfigDialog, event: PointerEvent): Promise<void> {
+  static async #onAddTile(this: ResetTileConfigDialog, _event: PointerEvent): Promise<void> {
     ui.notifications.info('Click on a tile to add it to the reset list...');
 
     const handler = async (clickEvent: any) => {
@@ -432,11 +435,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   /**
    * Handle form submission
    */
-  static async #onSubmit(
-    event: SubmitEvent,
-    form: HTMLFormElement,
-    formData: any
-  ): Promise<void> {
+  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
       ui.notifications.error('No active scene!');
@@ -457,12 +456,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     (this as any).selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
       // Get updated values from form inputs
       const variables: Record<string, any> = {};
-      Object.keys(tileData.variables).forEach((varName) => {
+      Object.keys(tileData.variables).forEach(varName => {
         let value = data[`var_${tileId}_${varName}`];
         // Parse JSON values
         try {
           value = JSON.parse(value);
-        } catch (e) {
+        } catch {
           // Keep as string if not valid JSON
         }
         variables[varName] = value;
@@ -473,12 +472,11 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       // Collect wall/door states from form
       const wallDoorStates: any[] = [];
       tileData.wallDoorActions.forEach((action, index) => {
-
         if (action.entityId && action.state) {
           wallDoorStates.push({
             entityId: action.entityId,
             entityName: action.entityName,
-            state: data[`walldoor__${index}`],
+            state: data[`walldoor__${index}`]
           });
         }
       });
@@ -503,14 +501,31 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
     // Validate reset tile image
     const resetTileImageRaw = data.resetTileImage;
-    const resetTileImage = (typeof resetTileImageRaw === 'string' ? resetTileImageRaw.trim() : '') || 'icons/svg/clockwork.svg';
+    const resetTileImage =
+      (typeof resetTileImageRaw === 'string' ? resetTileImageRaw.trim() : '') ||
+      'icons/svg/clockwork.svg';
 
     // Check if the image has a valid file extension
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.bmp', '.tiff', '.webm', '.mp4'];
-    const hasValidExtension = validExtensions.some(ext => resetTileImage.toLowerCase().endsWith(ext));
+    const validExtensions = [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.gif',
+      '.svg',
+      '.webp',
+      '.bmp',
+      '.tiff',
+      '.webm',
+      '.mp4'
+    ];
+    const hasValidExtension = validExtensions.some(ext =>
+      resetTileImage.toLowerCase().endsWith(ext)
+    );
 
     if (!hasValidExtension) {
-      ui.notifications.error(`Invalid image file: ${resetTileImage}. Please use a valid image file.`);
+      ui.notifications.error(
+        `Invalid image file: ${resetTileImage}. Please use a valid image file.`
+      );
       return;
     }
 
@@ -526,12 +541,17 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
 
       // Create the reset tile at the clicked position
-      await createResetTile(scene, {
-        name: data.resetName || 'Reset Tile',
-        image: resetTileImage,
-        varsToReset: varsToReset,
-        tilesToReset: tilesToReset
-      }, snapped.x, snapped.y);
+      await createResetTile(
+        scene,
+        {
+          name: data.resetName || 'Reset Tile',
+          image: resetTileImage,
+          varsToReset: varsToReset,
+          tilesToReset: tilesToReset
+        },
+        snapped.x,
+        snapped.y
+      );
 
       ui.notifications.info('Reset tile created!');
 
@@ -542,7 +562,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     // Add the click handler
     (canvas as any).stage.on('click', handler);
   }
-
 }
 
 /**

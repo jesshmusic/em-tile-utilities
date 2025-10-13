@@ -70,16 +70,18 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
     const tiles = scene.tiles.filter((t: any) => t.flags['monks-active-tiles']?.variables);
 
     // Collect all variables
-    const variables: Record<string, VariableData & { valueDisplay: string; tilesDisplay: string }> = {};
+    const variables: Record<string, VariableData & { valueDisplay: string; tilesDisplay: string }> =
+      {};
     tiles.forEach((tile: any) => {
       const tileVars = tile.flags['monks-active-tiles'].variables;
       if (tileVars) {
         Object.entries(tileVars).forEach(([key, value]) => {
           if (!variables[key]) {
             // Create value display with color for booleans
-            const valueDisplay = typeof value === 'boolean'
-              ? `<span style="color: ${value ? 'green' : 'red'}; font-weight: bold;">${value}</span>`
-              : String(value);
+            const valueDisplay =
+              typeof value === 'boolean'
+                ? `<span style="color: ${value ? 'green' : 'red'}; font-weight: bold;">${value}</span>`
+                : String(value);
 
             variables[key] = {
               value: value,
@@ -98,13 +100,15 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
 
     // Sort variables and create tiles display
     const sortedVariables: Record<string, any> = {};
-    Object.keys(variables).sort().forEach(varName => {
-      const varData = variables[varName];
-      sortedVariables[varName] = {
-        ...varData,
-        tilesDisplay: varData.tiles.map(t => t.name).join(', ')
-      };
-    });
+    Object.keys(variables)
+      .sort()
+      .forEach(varName => {
+        const varData = variables[varName];
+        sortedVariables[varName] = {
+          ...varData,
+          tilesDisplay: varData.tiles.map(t => t.name).join(', ')
+        };
+      });
 
     return {
       ...context,

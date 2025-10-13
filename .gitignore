@@ -19,6 +19,15 @@ Thumbs.db
 # Build files
 dist/
 build/
+build-info.json
+
+# Test coverage
+coverage/
+*.lcov
 
 # Keep original JS for reference
 scripts/main.js.bak
+
+# Environment
+.env
+.env.local

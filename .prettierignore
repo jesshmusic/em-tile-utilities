@@ -1,0 +1,19 @@
+# Build outputs
+dist/
+*.js
+*.mjs
+
+# Dependencies
+node_modules/
+
+# Coverage
+coverage/
+
+# Build info
+build-info.json
+
+# Lock files
+package-lock.json
+
+# Logs
+*.log

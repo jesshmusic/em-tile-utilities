@@ -192,12 +192,13 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Set up hooks to auto-refresh when tiles change (only once)
     if (!(this as any)._hooksRegistered) {
-      const hookId = `tile-manager-${this.id}`;
-
       // Store bound functions for cleanup
-      (this as any)._createHook = (tile: any, data: any, options: any, userId: string) => this._onTileChange(tile, data, options, userId);
-      (this as any)._updateHook = (tile: any, data: any, options: any, userId: string) => this._onTileChange(tile, data, options, userId);
-      (this as any)._deleteHook = (tile: any, data: any, options: any, userId: string) => this._onTileChange(tile, data, options, userId);
+      (this as any)._createHook = (tile: any, data: any, options: any, userId: string) =>
+        this._onTileChange(tile, data, options, userId);
+      (this as any)._updateHook = (tile: any, data: any, options: any, userId: string) =>
+        this._onTileChange(tile, data, options, userId);
+      (this as any)._deleteHook = (tile: any, data: any, options: any, userId: string) =>
+        this._onTileChange(tile, data, options, userId);
 
       Hooks.on('createTile', (this as any)._createHook);
       Hooks.on('updateTile', (this as any)._updateHook);
@@ -228,7 +229,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle tile changes (create, update, delete)
    */
-  _onTileChange(tile: any, data: any, options: any, userId: string): void {
+  _onTileChange(tile: any, _data: any, _options: any, _userId: string): void {
     // Only refresh if the tile is from the current scene
     if (tile.parent?.id === canvas.scene?.id) {
       // Defer render to next tick to avoid conflicts with other hooks
@@ -245,7 +246,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle refresh button click
    */
-  static async #onRefreshTiles(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+  static async #onRefreshTiles(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
     event.preventDefault();
     this.render();
     ui.notifications.info('Tile list refreshed!');
@@ -256,7 +261,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle editing a tile
    */
-  static async #onEditTile(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+  static async #onEditTile(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
     event.preventDefault();
     const tileId = target.dataset.tileId;
 
@@ -277,7 +286,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle selecting a tile on the canvas
    */
-  static async #onSelectTile(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+  static async #onSelectTile(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
     event.preventDefault();
     const tileId = target.dataset.tileId;
 
@@ -299,7 +312,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle deleting a tile
    */
-  static async #onDeleteTile(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+  static async #onDeleteTile(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
     event.preventDefault();
     const tileId = target.dataset.tileId;
     const tileName = target.dataset.tileName || 'this tile';
@@ -333,7 +350,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle toggling tile visibility
    */
-  static async #onToggleVisibility(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+  static async #onToggleVisibility(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
     event.preventDefault();
     const tileId = target.dataset.tileId;
 
@@ -357,7 +378,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle toggling tile active state
    */
-  static async #onToggleActive(this: TileManagerDialog, event: PointerEvent, target: HTMLElement): Promise<void> {
+  static async #onToggleActive(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
     event.preventDefault();
     const tileId = target.dataset.tileId;
 
@@ -371,7 +396,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const monksData = (tile as any).flags['monks-active-tiles'];
     if (!monksData) {
-      ui.notifications.warn('This tile is not a Monk\'s Active Tile!');
+      ui.notifications.warn("This tile is not a Monk's Active Tile!");
       return;
     }
 

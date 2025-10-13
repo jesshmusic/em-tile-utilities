@@ -83,7 +83,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     });
 
     // Handle darkness toggle
-    const darknessToggle = this.element.querySelector('input[name="useDarkness"]') as HTMLInputElement;
+    const darknessToggle = this.element.querySelector(
+      'input[name="useDarkness"]'
+    ) as HTMLInputElement;
     const darknessSettings = this.element.querySelector('.darkness-settings') as HTMLElement;
 
     if (darknessToggle && darknessSettings) {
@@ -115,8 +117,12 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     });
 
     // Handle color picker synchronization
-    const colorTextInput = this.element.querySelector('input[name="lightColor"]') as HTMLInputElement;
-    const colorPicker = this.element.querySelector('input[type="color"][data-edit="lightColor"]') as HTMLInputElement;
+    const colorTextInput = this.element.querySelector(
+      'input[name="lightColor"]'
+    ) as HTMLInputElement;
+    const colorPicker = this.element.querySelector(
+      'input[type="color"][data-edit="lightColor"]'
+    ) as HTMLInputElement;
 
     if (colorTextInput && colorPicker) {
       // Update color picker when text input changes
@@ -167,11 +173,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle form submission
    */
-  static async #onSubmit(
-    event: SubmitEvent,
-    form: HTMLFormElement,
-    formData: any
-  ): Promise<void> {
+  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
       ui.notifications.error('No active scene!');
@@ -192,17 +194,22 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
 
       // Create the light tile at the clicked position
-      await createLightTile(scene, {
-        name: data.lightName || 'Light',
-        offImage: data.offImage,
-        onImage: data.onImage,
-        useDarkness: data.useDarkness === true,
-        darknessMin: parseFloat(data.darknessMin) || 0.5,
-        dimLight: parseInt(data.dimLight) || 40,
-        brightLight: parseInt(data.brightLight) || 20,
-        lightColor: data.lightColor || '#ffffff',
-        colorIntensity: parseFloat(data.colorIntensity) || 0.5
-      }, snapped.x, snapped.y);
+      await createLightTile(
+        scene,
+        {
+          name: data.lightName || 'Light',
+          offImage: data.offImage,
+          onImage: data.onImage,
+          useDarkness: data.useDarkness === true,
+          darknessMin: parseFloat(data.darknessMin) || 0.5,
+          dimLight: parseInt(data.dimLight) || 40,
+          brightLight: parseInt(data.brightLight) || 20,
+          lightColor: data.lightColor || '#ffffff',
+          colorIntensity: parseFloat(data.colorIntensity) || 0.5
+        },
+        snapped.x,
+        snapped.y
+      );
 
       ui.notifications.info('Light tile created!');
 

@@ -23,12 +23,8 @@
       }
     ]
   },
-  "scripts": [
-    "dist/main.js"
-  ],
-  "styles": [
-    "styles/dialogs.css"
-  ],
+  "scripts": ["dist/main.js"],
+  "styles": ["styles/dialogs.css"],
   "languages": [
     {
       "lang": "en",

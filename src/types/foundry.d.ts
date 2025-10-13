@@ -40,8 +40,8 @@ declare global {
   }
 
   interface HooksManager {
-    once(hook: string, fn: Function): void;
-    on(hook: string, fn: Function): void;
+    once(hook: string, fn: (...args: any[]) => void): void;
+    on(hook: string, fn: (...args: any[]) => void): void;
   }
 
   interface Module {

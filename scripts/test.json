@@ -42,9 +42,7 @@
       "record": false,
       "restriction": "all",
       "controlled": "all",
-      "trigger": [
-        "dblclick"
-      ],
+      "trigger": ["dblclick"],
       "allowpaused": false,
       "usealpha": false,
       "pointer": true,
