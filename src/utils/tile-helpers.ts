@@ -478,7 +478,7 @@ export async function createLightTile(
         max: 1
       }
     },
-    hidden: config.useDarkness ? false : true // Start hidden for click-based, visible for darkness-based
+    hidden: !config.useDarkness // Start hidden for click-based, visible for darkness-based
   };
 
   const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
@@ -578,7 +578,9 @@ export async function createTrapTile(
   scene: Scene,
   config: TrapConfig,
   x?: number,
-  y?: number
+  y?: number,
+  width?: number,
+  height?: number
 ): Promise<void> {
   // Get grid size from scene (use actual tile dimensions from image)
   const gridSize = (canvas as any).grid.size;
@@ -586,6 +588,10 @@ export async function createTrapTile(
   // Default to center if no position provided
   const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
   const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
+  // Use provided dimensions or default to grid size
+  const tileWidth = width ?? gridSize;
+  const tileHeight = height ?? gridSize;
 
   // Build actions array
   const actions: any[] = [];
@@ -693,8 +699,8 @@ export async function createTrapTile(
       tint: '#ffffff',
       alphaThreshold: 0.75
     },
-    width: gridSize,
-    height: gridSize,
+    width: tileWidth,
+    height: tileHeight,
     x: tileX,
     y: tileY,
     elevation: 0,

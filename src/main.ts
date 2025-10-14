@@ -80,8 +80,36 @@ Hooks.once('init', () => {
     filePicker: 'imagevideo'
   });
 
+  game.settings.register('em-tile-utilities', 'defaultTrapImage', {
+    name: 'Default Trap Image',
+    hint: 'Default image path for trap tiles (starting state)',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'icons/svg/trap.svg',
+    filePicker: 'imagevideo'
+  });
+
+  game.settings.register('em-tile-utilities', 'defaultTrapTriggeredImage', {
+    name: 'Default Trap Triggered Image',
+    hint: 'Default image path for triggered trap tiles',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'modules/em-tile-utilities/icons/broken-trap.svg',
+    filePicker: 'imagevideo'
+  });
+
   // Register counter for switch IDs
   game.settings.register('em-tile-utilities', 'switchCounter', {
+    scope: 'world',
+    config: false,
+    type: Number,
+    default: 1
+  });
+
+  // Register counter for trap IDs
+  game.settings.register('em-tile-utilities', 'trapCounter', {
     scope: 'world',
     config: false,
     type: Number,

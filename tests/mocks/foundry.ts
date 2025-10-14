@@ -20,7 +20,7 @@ export function mockFoundry() {
 
           constructor() {}
 
-          async render(force?: boolean) {
+          async render(_force?: boolean) {
             this.rendered = true;
             return this;
           }
@@ -29,12 +29,12 @@ export function mockFoundry() {
             this.rendered = false;
           }
 
-          async _prepareContext(options: any) {
+          async _prepareContext(_options: any) {
             return {};
           }
 
-          _onRender(context: any, options: any) {}
-          _onClose(options: any) {}
+          _onRender(_context: any, _options: any) {}
+          _onClose(_options: any) {}
         },
         HandlebarsApplicationMixin: (Base: any) => {
           return class extends Base {
@@ -61,7 +61,10 @@ export function mockFoundry() {
           defaultSound: 'sounds/doors/industrial/unlock.ogg',
           defaultLightOnImage: 'icons/svg/light.svg',
           defaultLightOffImage: 'icons/svg/light-off.svg',
-          switchCounter: 1
+          defaultTrapImage: 'icons/svg/trap.svg',
+          defaultTrapTriggeredImage: 'modules/em-tile-utilities/icons/broken-trap.svg',
+          switchCounter: 1,
+          trapCounter: 1
         };
         return defaults[key] || null;
       }),
@@ -71,6 +74,15 @@ export function mockFoundry() {
       localize: jest.fn((key: string) => key)
     },
     scenes: new Map()
+  };
+
+  // Mock PIXI.Graphics
+  (global as any).PIXI = {
+    Graphics: class MockGraphics {
+      clear = jest.fn(() => this);
+      lineStyle = jest.fn(() => this);
+      drawRect = jest.fn(() => this);
+    }
   };
 
   // Mock canvas object
@@ -85,7 +97,9 @@ export function mockFoundry() {
       getSnappedPosition: jest.fn((x: number, y: number) => ({ x, y }))
     },
     tiles: {
-      getLocalPosition: jest.fn((point: any) => point)
+      getLocalPosition: jest.fn((point: any) => point),
+      addChild: jest.fn(),
+      removeChild: jest.fn()
     }
   };
 
@@ -113,7 +127,7 @@ export function mockFoundry() {
   };
 
   // Mock FilePicker
-  (global as any).FilePicker = jest.fn().mockImplementation((options: any) => ({
+  (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
     browse: jest.fn()
   }));
 }

@@ -7,7 +7,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
 /**
  * Configuration dialog for creating a trap tile
  * @extends ApplicationV2
- * @mixes HandlebarsApplication
+ * @mixes HandlebarsApplicationMixin
  */
 export class TrapConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @inheritDoc */
@@ -47,10 +47,18 @@ export class TrapConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // Get default values from settings
     const defaultSound = (game.settings.get('em-tile-utilities', 'defaultSound') as string) || '';
+    const defaultTrapImage =
+      (game.settings.get('em-tile-utilities', 'defaultTrapImage') as string) || '';
+    const defaultTrapTriggeredImage =
+      (game.settings.get('em-tile-utilities', 'defaultTrapTriggeredImage') as string) || '';
+    const trapCounter = (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
 
     return {
       ...context,
+      trapName: `Trap ${trapCounter}`,
       defaultSound: defaultSound,
+      defaultTrapImage: defaultTrapImage,
+      defaultTrapTriggeredImage: defaultTrapTriggeredImage,
       savingThrowOptions: [
         { value: 'ability:str', label: 'EMPUZZLES.StrengthSave' },
         { value: 'ability:dex', label: 'EMPUZZLES.DexteritySave' },
@@ -85,9 +93,7 @@ export class TrapConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const hideTrapCheckbox = this.element.querySelector(
       'input[name="hideTrapOnTrigger"]'
     ) as HTMLInputElement;
-    const triggeredImageGroup = this.element.querySelector(
-      '.triggered-image-group'
-    ) as HTMLElement;
+    const triggeredImageGroup = this.element.querySelector('.triggered-image-group') as HTMLElement;
 
     if (hideTrapCheckbox && triggeredImageGroup) {
       const toggleTriggeredImage = () => {
@@ -141,9 +147,9 @@ export class TrapConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) 
    */
   static async #onSubmit(
     this: TrapConfigDialog,
-    event: SubmitEvent,
+    _event: SubmitEvent,
     form: HTMLFormElement,
-    formData: any
+    _formData: any
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
@@ -199,28 +205,88 @@ export class TrapConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     // Close the dialog
     this.close();
 
-    // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the trap tile...');
+    // Show notification to drag on canvas
+    ui.notifications.info('Drag on the canvas to place and size the trap tile...');
 
-    // Set up click handler for placement
-    const handler = async (clickEvent: any) => {
-      // Get the click position
-      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+    // Set up drag-to-place handlers
+    let startPos: { x: number; y: number } | null = null;
+    let previewGraphics: any = null;
 
-      // Snap to grid
+    const onMouseDown = (event: any) => {
+      const position = event.data.getLocalPosition((canvas as any).tiles);
       const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      startPos = { x: snapped.x, y: snapped.y };
 
-      // Create the trap tile at the clicked position
-      await createTrapTile(scene, trapConfig, snapped.x, snapped.y);
-
-      ui.notifications.info('Trap tile created!');
-
-      // Remove the handler after placement
-      (canvas as any).stage.off('click', handler);
+      // Create preview graphics
+      previewGraphics = new PIXI.Graphics();
+      (canvas as any).tiles.addChild(previewGraphics);
     };
 
-    // Add the click handler
-    (canvas as any).stage.on('click', handler);
+    const onMouseMove = (event: any) => {
+      if (!startPos || !previewGraphics) return;
+
+      const position = event.data.getLocalPosition((canvas as any).tiles);
+      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+      // Calculate width and height
+      const width = Math.abs(snapped.x - startPos.x);
+      const height = Math.abs(snapped.y - startPos.y);
+
+      // Calculate top-left corner
+      const x = Math.min(startPos.x, snapped.x);
+      const y = Math.min(startPos.y, snapped.y);
+
+      // Draw preview rectangle
+      previewGraphics.clear();
+      previewGraphics.lineStyle(2, 0xff0000, 0.8);
+      previewGraphics.drawRect(x, y, width, height);
+    };
+
+    const onMouseUp = async (event: any) => {
+      if (!startPos) return;
+
+      const position = event.data.getLocalPosition((canvas as any).tiles);
+      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+      // Calculate dimensions
+      const width = Math.abs(snapped.x - startPos.x);
+      const height = Math.abs(snapped.y - startPos.y);
+
+      // Calculate top-left corner
+      const x = Math.min(startPos.x, snapped.x);
+      const y = Math.min(startPos.y, snapped.y);
+
+      // Only create if there's a valid size
+      if (width > 0 && height > 0) {
+        // Create the trap tile at the dragged position with dragged size
+        await createTrapTile(scene, trapConfig, x, y, width, height);
+
+        // Increment trap counter
+        const currentCounter =
+          (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
+        await game.settings.set('em-tile-utilities', 'trapCounter', currentCounter + 1);
+
+        ui.notifications.info('Trap tile created!');
+      }
+
+      // Clean up
+      if (previewGraphics) {
+        previewGraphics.clear();
+        (canvas as any).tiles.removeChild(previewGraphics);
+        previewGraphics = null;
+      }
+      startPos = null;
+
+      // Remove all handlers
+      (canvas as any).stage.off('mousedown', onMouseDown);
+      (canvas as any).stage.off('mousemove', onMouseMove);
+      (canvas as any).stage.off('mouseup', onMouseUp);
+    };
+
+    // Add the handlers
+    (canvas as any).stage.on('mousedown', onMouseDown);
+    (canvas as any).stage.on('mousemove', onMouseMove);
+    (canvas as any).stage.on('mouseup', onMouseUp);
   }
 }
 

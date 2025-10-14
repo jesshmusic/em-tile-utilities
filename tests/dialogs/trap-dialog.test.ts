@@ -54,6 +54,21 @@ describe('TrapConfigDialog', () => {
       expect(context.defaultSound).toBe('sounds/doors/industrial/unlock.ogg');
     });
 
+    it('should return context with default trap images from settings', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.defaultTrapImage).toBe('icons/svg/trap.svg');
+      expect(context.defaultTrapTriggeredImage).toBe(
+        'modules/em-tile-utilities/icons/broken-trap.svg'
+      );
+    });
+
+    it('should auto-generate trap name with counter', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.trapName).toBe('Trap 1');
+    });
+
     it('should include saving throw options', async () => {
       const context = await dialog._prepareContext({});
 
@@ -77,21 +92,27 @@ describe('TrapConfigDialog', () => {
       expect(context.buttons[0].label).toBe('EMPUZZLES.Create');
     });
 
-    it('should use custom default sound from settings', async () => {
+    it('should use custom default values from settings', async () => {
       (global as any).game.settings.get = (module: string, key: string) => {
         if (key === 'defaultSound') return 'custom/trap.ogg';
+        if (key === 'defaultTrapImage') return 'custom/trap.png';
+        if (key === 'defaultTrapTriggeredImage') return 'custom/trap-triggered.png';
+        if (key === 'trapCounter') return 5;
         return null;
       };
 
       const context = await dialog._prepareContext({});
 
       expect(context.defaultSound).toBe('custom/trap.ogg');
+      expect(context.defaultTrapImage).toBe('custom/trap.png');
+      expect(context.defaultTrapTriggeredImage).toBe('custom/trap-triggered.png');
+      expect(context.trapName).toBe('Trap 5');
     });
   });
 
   describe('showTrapDialog', () => {
     it('should create and render a new dialog', () => {
-      const dialog = showTrapDialog();
+      showTrapDialog();
 
       // Dialog should be created (function doesn't return anything but creates instance)
       expect(true).toBe(true); // Function executes without error
@@ -265,7 +286,7 @@ describe('TrapConfigDialog', () => {
       } as any;
 
       const mockBrowse = jest.fn();
-      (global as any).FilePicker = jest.fn().mockImplementation((options: any) => ({
+      (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
         browse: mockBrowse
       }));
 
@@ -433,11 +454,11 @@ describe('TrapConfigDialog', () => {
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
       expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
-        'Click on the canvas to place the trap tile...'
+        'Drag on the canvas to place and size the trap tile...'
       );
     });
 
-    it('should set up canvas click handler', async () => {
+    it('should set up canvas drag handlers', async () => {
       (global as any).canvas.scene = mockScene;
       dialog.close = jest.fn();
 
@@ -459,10 +480,18 @@ describe('TrapConfigDialog', () => {
       const handler = (TrapConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      expect((global as any).canvas.stage.on).toHaveBeenCalledWith('click', expect.any(Function));
+      expect((global as any).canvas.stage.on).toHaveBeenCalledWith(
+        'mousedown',
+        expect.any(Function)
+      );
+      expect((global as any).canvas.stage.on).toHaveBeenCalledWith(
+        'mousemove',
+        expect.any(Function)
+      );
+      expect((global as any).canvas.stage.on).toHaveBeenCalledWith('mouseup', expect.any(Function));
     });
 
-    it('should create trap tile on canvas click', async () => {
+    it('should create trap tile on canvas drag', async () => {
       (global as any).canvas.scene = mockScene;
       dialog.close = jest.fn();
 
@@ -484,22 +513,30 @@ describe('TrapConfigDialog', () => {
       const handler = (TrapConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      // Get the click handler that was registered
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Get the handlers that were registered
+      const calls = ((global as any).canvas.stage.on as any).mock.calls;
+      const mouseDownHandler = calls.find((c: any) => c[0] === 'mousedown')[1];
+      const mouseUpHandler = calls.find((c: any) => c[0] === 'mouseup')[1];
 
-      // Simulate canvas click
-      const mockClickEvent = {
+      // Simulate canvas drag (mousedown at 100,100, mouseup at 300,300)
+      const mockMouseDownEvent = {
         data: {
-          getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
+          getLocalPosition: jest.fn().mockReturnValue({ x: 100, y: 100 })
+        }
+      };
+      const mockMouseUpEvent = {
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 300, y: 300 })
         }
       };
 
-      await clickHandler(mockClickEvent);
+      await mouseDownHandler(mockMouseDownEvent);
+      await mouseUpHandler(mockMouseUpEvent);
 
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
     });
 
-    it('should remove click handler after tile creation', async () => {
+    it('should remove drag handlers after tile creation', async () => {
       (global as any).canvas.scene = mockScene;
       dialog.close = jest.fn();
 
@@ -521,17 +558,30 @@ describe('TrapConfigDialog', () => {
       const handler = (TrapConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      // Get the click handler and simulate click
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
-      const mockClickEvent = {
+      // Get the handlers that were registered
+      const calls = ((global as any).canvas.stage.on as any).mock.calls;
+      const mouseDownHandler = calls.find((c: any) => c[0] === 'mousedown')[1];
+      const mouseMoveHandler = calls.find((c: any) => c[0] === 'mousemove')[1];
+      const mouseUpHandler = calls.find((c: any) => c[0] === 'mouseup')[1];
+
+      // Simulate canvas drag
+      const mockMouseDownEvent = {
         data: {
-          getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
+          getLocalPosition: jest.fn().mockReturnValue({ x: 100, y: 100 })
+        }
+      };
+      const mockMouseUpEvent = {
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 300, y: 300 })
         }
       };
 
-      await clickHandler(mockClickEvent);
+      await mouseDownHandler(mockMouseDownEvent);
+      await mouseUpHandler(mockMouseUpEvent);
 
-      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', clickHandler);
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('mousedown', mouseDownHandler);
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('mousemove', mouseMoveHandler);
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('mouseup', mouseUpHandler);
     });
 
     it('should accept hideTrapOnTrigger as boolean true', async () => {
@@ -556,7 +606,7 @@ describe('TrapConfigDialog', () => {
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
       expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
-        'Click on the canvas to place the trap tile...'
+        'Drag on the canvas to place and size the trap tile...'
       );
     });
 
@@ -582,7 +632,7 @@ describe('TrapConfigDialog', () => {
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
       expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
-        'Click on the canvas to place the trap tile...'
+        'Drag on the canvas to place and size the trap tile...'
       );
     });
 
@@ -601,15 +651,24 @@ describe('TrapConfigDialog', () => {
       const handler = (TrapConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      // Get the click handler and simulate click
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
-      const mockClickEvent = {
+      // Get the drag handlers and simulate drag
+      const calls = ((global as any).canvas.stage.on as any).mock.calls;
+      const mouseDownHandler = calls.find((c: any) => c[0] === 'mousedown')[1];
+      const mouseUpHandler = calls.find((c: any) => c[0] === 'mouseup')[1];
+
+      const mockMouseDownEvent = {
         data: {
-          getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
+          getLocalPosition: jest.fn().mockReturnValue({ x: 100, y: 100 })
+        }
+      };
+      const mockMouseUpEvent = {
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 200, y: 200 })
         }
       };
 
-      await clickHandler(mockClickEvent);
+      await mouseDownHandler(mockMouseDownEvent);
+      await mouseUpHandler(mockMouseUpEvent);
 
       // Check that defaults were used
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -621,6 +680,51 @@ describe('TrapConfigDialog', () => {
       // savingThrow should default to 'ability:dex'
       // dc should default to 10
       // damageOnFail should default to '1d6'
+    });
+
+    it('should increment trap counter after creation', async () => {
+      (global as any).canvas.scene = mockScene;
+      dialog.close = jest.fn();
+
+      // Get current counter value before creating trap
+      const currentCounter = (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
+
+      const mockEvent = {} as SubmitEvent;
+      const mockForm = createMockForm({
+        trapName: 'Test Trap',
+        startingImage: 'trap.png',
+        hideTrapOnTrigger: true
+      });
+      const mockFormData = {};
+
+      const handler = (TrapConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, mockEvent, mockForm, mockFormData);
+
+      // Get the drag handlers and simulate drag
+      const calls = ((global as any).canvas.stage.on as any).mock.calls;
+      const mouseDownHandler = calls.find((c: any) => c[0] === 'mousedown')[1];
+      const mouseUpHandler = calls.find((c: any) => c[0] === 'mouseup')[1];
+
+      const mockMouseDownEvent = {
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 100, y: 100 })
+        }
+      };
+      const mockMouseUpEvent = {
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 200, y: 200 })
+        }
+      };
+
+      await mouseDownHandler(mockMouseDownEvent);
+      await mouseUpHandler(mockMouseUpEvent);
+
+      // Check that counter was incremented
+      expect((global as any).game.settings.set).toHaveBeenCalledWith(
+        'em-tile-utilities',
+        'trapCounter',
+        currentCounter + 1
+      );
     });
   });
 });

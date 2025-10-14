@@ -8,6 +8,7 @@ declare global {
   const Dialog: typeof DialogClass;
   const FormDataExtended: typeof FormDataExtendedClass;
   const FilePicker: typeof FilePickerClass;
+  const PIXI: typeof PIXINamespace;
 
   interface Game {
     modules: Collection<Module>;
@@ -119,6 +120,15 @@ declare global {
     type: string;
     current?: string;
     callback: (path: string) => void;
+  }
+
+  // PIXI types
+  namespace PIXINamespace {
+    class Graphics {
+      clear(): this;
+      lineStyle(width: number, color: number, alpha?: number): this;
+      drawRect(x: number, y: number, width: number, height: number): this;
+    }
   }
 
   type JQuery = any;

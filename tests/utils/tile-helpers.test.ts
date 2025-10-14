@@ -10,7 +10,12 @@ import {
   createTrapTile
 } from '../../src/utils/tile-helpers';
 import { createMockScene } from '../mocks/foundry';
-import type { SwitchConfig, LightConfig, ResetTileConfig, TrapConfig } from '../../src/types/module';
+import type {
+  SwitchConfig,
+  LightConfig,
+  ResetTileConfig,
+  TrapConfig
+} from '../../src/types/module';
 
 describe('tile-helpers', () => {
   describe('createSwitchTile', () => {
@@ -506,9 +511,7 @@ describe('tile-helpers', () => {
       const tileData = callArgs[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      const savingThrowAction = actions.find(
-        (a: any) => a.action === 'monks-tokenbar.requestroll'
-      );
+      const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
       expect(savingThrowAction).toBeDefined();
       expect(savingThrowAction.data.request).toBe(trapConfig.savingThrow);
       expect(savingThrowAction.data.dc).toBe(trapConfig.dc.toString());
@@ -600,9 +603,7 @@ describe('tile-helpers', () => {
       const tileData = callArgs[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      const savingThrowAction = actions.find(
-        (a: any) => a.action === 'monks-tokenbar.requestroll'
-      );
+      const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
       expect(savingThrowAction.data.flavor).toBe(trapConfig.flavorText);
     });
   });
