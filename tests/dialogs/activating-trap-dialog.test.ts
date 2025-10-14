@@ -85,8 +85,34 @@ describe('ActivatingTrapDialog', () => {
     });
 
     it('should add selected tiles to context', async () => {
-      dialog.selectedTiles.set('tile1', { name: 'Tile 1', image: 'tile1.png' });
-      dialog.selectedTiles.set('tile2', { name: 'Tile 2', image: 'tile2.png' });
+      dialog.selectedTiles.set('tile1', {
+        name: 'Tile 1',
+        image: 'tile1.png',
+        isVideo: false,
+        hasMonksData: false,
+        active: true,
+        actionCount: 0,
+        variableCount: 0,
+        actionType: 'activate',
+        activateMode: 'toggle',
+        showHideMode: 'toggle',
+        moveX: '',
+        moveY: ''
+      });
+      dialog.selectedTiles.set('tile2', {
+        name: 'Tile 2',
+        image: 'tile2.png',
+        isVideo: false,
+        hasMonksData: false,
+        active: true,
+        actionCount: 0,
+        variableCount: 0,
+        actionType: 'activate',
+        activateMode: 'toggle',
+        showHideMode: 'toggle',
+        moveX: '',
+        moveY: ''
+      });
 
       const baseContext = {
         trapName: 'Trap 1',
@@ -99,10 +125,21 @@ describe('ActivatingTrapDialog', () => {
       const context = await (dialog as any)._prepareTypeSpecificContext(baseContext);
 
       expect(context.tiles).toHaveLength(2);
-      expect(context.tiles).toEqual([
-        { id: 'tile1', name: 'Tile 1', image: 'tile1.png' },
-        { id: 'tile2', name: 'Tile 2', image: 'tile2.png' }
-      ]);
+      expect(context.tiles[0]).toMatchObject({
+        id: 'tile1',
+        name: 'Tile 1',
+        image: 'tile1.png',
+        isVideo: false,
+        hasMonksData: false,
+        active: true,
+        actionCount: 0,
+        variableCount: 0,
+        actionType: 'activate',
+        activateMode: 'toggle',
+        showHideMode: 'toggle',
+        moveX: '',
+        moveY: ''
+      });
       expect(context.hasTiles).toBe(true);
     });
   });
@@ -128,23 +165,64 @@ describe('ActivatingTrapDialog', () => {
   });
 
   describe('_extractTypeSpecificConfig', () => {
-    it('should return config with tilesToActivate array', () => {
-      dialog.selectedTiles.set('tile1', { name: 'Tile 1', image: 'tile1.png' });
-      dialog.selectedTiles.set('tile2', { name: 'Tile 2', image: 'tile2.png' });
+    it('should return config with tileActions array', () => {
+      dialog.selectedTiles.set('tile1', {
+        name: 'Tile 1',
+        image: 'tile1.png',
+        actionType: 'activate',
+        activateMode: 'toggle',
+        moveX: '',
+        moveY: ''
+      });
+      dialog.selectedTiles.set('tile2', {
+        name: 'Tile 2',
+        image: 'tile2.png',
+        actionType: 'showhide',
+        showHideMode: 'hide',
+        moveX: '',
+        moveY: ''
+      });
 
-      const mockForm = {} as HTMLFormElement;
+      const mockForm = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector.includes('action-tile1')) {
+            return { value: 'activate' };
+          } else if (selector.includes('activateMode-tile1')) {
+            return { value: 'toggle' };
+          } else if (selector.includes('action-tile2')) {
+            return { value: 'showhide' };
+          } else if (selector.includes('showHideMode-tile2')) {
+            return { value: 'hide' };
+          }
+          return null;
+        })
+      } as any;
+
       const config = (dialog as any)._extractTypeSpecificConfig(mockForm);
 
       expect(config.hideTrapOnTrigger).toBe(false);
       expect(config.triggeredImage).toBe('');
-      expect(config.tilesToActivate).toEqual(['tile1', 'tile2']);
+      expect(config.tileActions).toHaveLength(2);
+      expect(config.tileActions[0]).toMatchObject({
+        tileId: 'tile1',
+        actionType: 'activate',
+        mode: 'toggle'
+      });
+      expect(config.tileActions[1]).toMatchObject({
+        tileId: 'tile2',
+        actionType: 'showhide',
+        mode: 'hide'
+      });
     });
 
     it('should return empty array if no tiles selected', () => {
-      const mockForm = {} as HTMLFormElement;
+      const mockForm = {
+        querySelector: jest.fn().mockReturnValue(null)
+      } as any;
+
       const config = (dialog as any)._extractTypeSpecificConfig(mockForm);
 
-      expect(config.tilesToActivate).toEqual([]);
+      expect(config.tileActions).toEqual([]);
     });
   });
 
@@ -156,11 +234,7 @@ describe('ActivatingTrapDialog', () => {
             'input[name="trapName"]': { value: 'Test Trap' },
             'input[name="startingImage"]': { value: 'trap.png' },
             'input[name="sound"]': { value: 'sound.ogg' },
-            'input[name="minRequired"]': { value: '2' },
-            'select[name="savingThrow"]': { value: 'ability:dex' },
-            'input[name="dc"]': { value: '15' },
-            'input[name="damageOnFail"]': { value: '3d6' },
-            'textarea[name="flavorText"]': { value: 'A trap!' }
+            'input[name="minRequired"]': { value: '2' }
           };
           return fieldMap[selector] || null;
         })
@@ -181,10 +255,6 @@ describe('ActivatingTrapDialog', () => {
       expect(values.startingImage).toBe('trap.png');
       expect(values.sound).toBe('sound.ogg');
       expect(values.minRequired).toBe('2');
-      expect(values.savingThrow).toBe('ability:dex');
-      expect(values.dc).toBe('15');
-      expect(values.damageOnFail).toBe('3d6');
-      expect(values.flavorText).toBe('A trap!');
     });
   });
 
@@ -194,11 +264,7 @@ describe('ActivatingTrapDialog', () => {
         trapName: { name: 'trapName', value: '' },
         startingImage: { name: 'startingImage', value: '' },
         sound: { name: 'sound', value: '' },
-        minRequired: { name: 'minRequired', value: '' },
-        savingThrow: { name: 'savingThrow', value: '' },
-        dc: { name: 'dc', value: '' },
-        damageOnFail: { name: 'damageOnFail', value: '' },
-        flavorText: { name: 'flavorText', value: '' }
+        minRequired: { name: 'minRequired', value: '' }
       };
 
       const mockForm = {
@@ -221,11 +287,7 @@ describe('ActivatingTrapDialog', () => {
         trapName: 'Test Trap',
         startingImage: 'trap.png',
         sound: 'sound.ogg',
-        minRequired: '2',
-        savingThrow: 'ability:dex',
-        dc: '15',
-        damageOnFail: '3d6',
-        flavorText: 'A trap!'
+        minRequired: '2'
       };
 
       dialog.restoreFormValues(values);
@@ -234,10 +296,6 @@ describe('ActivatingTrapDialog', () => {
       expect(mockInputs.startingImage.value).toBe('trap.png');
       expect(mockInputs.sound.value).toBe('sound.ogg');
       expect(mockInputs.minRequired.value).toBe('2');
-      expect(mockInputs.savingThrow.value).toBe('ability:dex');
-      expect(mockInputs.dc.value).toBe('15');
-      expect(mockInputs.damageOnFail.value).toBe('3d6');
-      expect(mockInputs.flavorText.value).toBe('A trap!');
     });
   });
 
@@ -259,7 +317,14 @@ describe('ActivatingTrapDialog', () => {
       const mockDocument = {
         id: 'tile123',
         name: 'Test Tile',
-        flags: { 'monks-active-tiles': { name: 'MAT Tile' } },
+        flags: {
+          'monks-active-tiles': {
+            name: 'MAT Tile',
+            active: true,
+            actions: [{ action: 'test' }],
+            variables: { var1: true }
+          }
+        },
         texture: { src: 'tile.png' }
       };
 
@@ -288,9 +353,19 @@ describe('ActivatingTrapDialog', () => {
       // Verify tile was added
       expect(dialog.selectedTiles.size).toBe(1);
       expect(dialog.selectedTiles.has('tile123')).toBe(true);
-      expect(dialog.selectedTiles.get('tile123')).toEqual({
+      expect(dialog.selectedTiles.get('tile123')).toMatchObject({
         name: 'MAT Tile',
-        image: 'tile.png'
+        image: 'tile.png',
+        isVideo: false,
+        hasMonksData: true,
+        active: true,
+        actionCount: 1,
+        variableCount: 1,
+        actionType: 'activate',
+        activateMode: 'toggle',
+        showHideMode: 'toggle',
+        moveX: '',
+        moveY: ''
       });
 
       // Verify re-render was called
@@ -476,23 +551,60 @@ describe('ActivatingTrapDialog', () => {
 
     it('should create activating trap tile on canvas drag', async () => {
       (global as any).canvas.scene = mockScene;
+
+      // Ensure canvas.tiles has all required methods
+      if (!(global as any).canvas.tiles.addChild) {
+        (global as any).canvas.tiles.addChild = jest.fn();
+      }
+      if (!(global as any).canvas.tiles.removeChild) {
+        (global as any).canvas.tiles.removeChild = jest.fn();
+      }
+
       dialog.close = jest.fn();
 
-      // Add some selected tiles
-      dialog.selectedTiles.set('tile1', { name: 'Door', image: 'door.png' });
-      dialog.selectedTiles.set('tile2', { name: 'Light', image: 'light.png' });
+      // Add some selected tiles with action configurations
+      dialog.selectedTiles.set('tile1', {
+        name: 'Door',
+        image: 'door.png',
+        actionType: 'activate',
+        activateMode: 'toggle',
+        moveX: '',
+        moveY: ''
+      });
+      dialog.selectedTiles.set('tile2', {
+        name: 'Light',
+        image: 'light.png',
+        actionType: 'activate',
+        activateMode: 'toggle',
+        moveX: '',
+        moveY: ''
+      });
 
-      const mockEvent = {} as SubmitEvent;
       const mockForm = createMockForm({
         trapName: 'Activating Trap',
         startingImage: 'trap.png',
         sound: 'sound.ogg',
-        minRequired: '1',
-        savingThrow: 'ability:dex',
-        dc: '14',
-        damageOnFail: '2d6',
-        flavorText: 'You activated something!'
+        minRequired: '1'
       });
+
+      // Add mock querySelector for action selects
+      mockForm.querySelector = jest.fn((selector: string) => {
+        if (selector.includes('action-tile1') || selector.includes('action-tile2')) {
+          return { value: 'activate' };
+        } else if (selector.includes('activateMode')) {
+          return { value: 'toggle' };
+        }
+        const name = selector.match(/name="([^"]+)"/)?.[1];
+        const formData: Record<string, string> = {
+          trapName: 'Activating Trap',
+          startingImage: 'trap.png',
+          sound: 'sound.ogg',
+          minRequired: '1'
+        };
+        return name && formData[name] ? { value: formData[name] } : null;
+      });
+
+      const mockEvent = {} as SubmitEvent;
       const mockFormData = {};
 
       const handler = (ActivatingTrapDialog as any).DEFAULT_OPTIONS.form.handler;

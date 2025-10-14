@@ -16,6 +16,7 @@ import type {
   ResetTileConfig,
   TrapConfig
 } from '../../src/types/module';
+import { TrapResultType, TrapTargetType } from '../../src/types/module';
 
 describe('tile-helpers', () => {
   describe('createSwitchTile', () => {
@@ -409,6 +410,9 @@ describe('tile-helpers', () => {
         triggeredImage: 'path/to/trap_triggered.png',
         hideTrapOnTrigger: false,
         sound: 'path/to/trap-sound.ogg',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: true,
         minRequired: 1,
         savingThrow: 'ability:dex',
         dc: 14,
