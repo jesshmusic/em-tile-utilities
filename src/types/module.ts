@@ -54,6 +54,17 @@ export interface ActiveEffectConfig {
 }
 
 /**
+ * Configuration for tile actions in activating traps
+ */
+export interface TileAction {
+  tileId: string;
+  actionType: 'activate' | 'showhide' | 'moveto';
+  mode?: string; // For activate: 'activate', 'deactivate', 'toggle'. For showhide: 'show', 'hide', 'toggle'
+  x?: number; // For moveto
+  y?: number; // For moveto
+}
+
+/**
  * Configuration for trap tiles
  */
 export interface TrapConfig {
@@ -77,7 +88,8 @@ export interface TrapConfig {
   // For active effect result type
   activeEffectConfig?: ActiveEffectConfig; // Optional: active effect to apply
   // For activating trap type
-  tilesToActivate?: string[]; // Optional: IDs of tiles to activate (for activating trap type)
+  tilesToActivate?: string[]; // Optional: IDs of tiles to activate (deprecated, use tileActions)
+  tileActions?: TileAction[]; // Optional: tile actions with configurations
 }
 
 export interface ResetTileConfig {

@@ -598,21 +598,64 @@ export async function createTrapTile(
   const actions: any[] = [];
 
   // Action 1: Handle trap visual response based on type
-  if (config.tilesToActivate && config.tilesToActivate.length > 0) {
-    // Activating trap: activate other tiles
-    config.tilesToActivate.forEach(tileId => {
-      actions.push({
-        action: 'activate',
-        data: {
-          entity: {
-            id: `Scene.${scene.id}.Tile.${tileId}`,
-            name: `Tile: ${tileId}`
+  if (config.tileActions && config.tileActions.length > 0) {
+    // Activating trap: perform actions on other tiles
+    config.tileActions.forEach(tileAction => {
+      if (tileAction.actionType === 'activate') {
+        // Activate/deactivate/toggle tile
+        actions.push({
+          action: 'activate',
+          data: {
+            entity: {
+              id: `Scene.${scene.id}.Tile.${tileAction.tileId}`,
+              name: `Tile: ${tileAction.tileId}`
+            },
+            activate: tileAction.mode || 'toggle',
+            collection: 'tiles'
           },
-          activate: 'activate',
-          collection: 'tiles'
-        },
-        id: foundry.utils.randomID()
-      });
+          id: foundry.utils.randomID()
+        });
+      } else if (tileAction.actionType === 'showhide') {
+        // Show/hide/toggle tile
+        actions.push({
+          action: 'showhide',
+          data: {
+            entity: {
+              id: `Scene.${scene.id}.Tile.${tileAction.tileId}`,
+              name: `Tile: ${tileAction.tileId}`
+            },
+            collection: 'tiles',
+            hidden: tileAction.mode || 'toggle',
+            fade: 0
+          },
+          id: foundry.utils.randomID()
+        });
+      } else if (tileAction.actionType === 'moveto') {
+        // Move tile to position
+        actions.push({
+          action: 'movetoken',
+          data: {
+            entity: {
+              id: `Scene.${scene.id}.Tile.${tileAction.tileId}`,
+              name: `Tile: ${tileAction.tileId}`
+            },
+            duration: 0,
+            x: tileAction.x.toString(),
+            y: tileAction.y.toString(),
+            location: {
+              id: '',
+              x: tileAction.x,
+              y: tileAction.y,
+              name: `[x:${tileAction.x} y:${tileAction.y}]`
+            },
+            position: 'random',
+            snap: true,
+            speed: 6,
+            trigger: false
+          },
+          id: foundry.utils.randomID()
+        });
+      }
     });
   } else if (config.hideTrapOnTrigger) {
     // Disappearing trap: hide the trap tile

@@ -17,34 +17,6 @@
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
-    <button type="button" data-action="addTile" class="add-tile-button">
-      <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
-    </button>
-    <p class="hint">{{localize "EMPUZZLES.ActivatingTrapTilesHint"}}</p>
-  </div>
-
-  {{#if hasTiles}}
-    <div class="tile-list">
-      {{#each tiles as |tile|}}
-        <div class="tile-entry" data-tile-id="{{tile.id}}">
-          {{#if tile.image}}
-            <img src="{{tile.image}}" class="tile-thumbnail" alt="" />
-          {{else}}
-            <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" alt="" />
-          {{/if}}
-          <span class="tile-name">{{tile.name}}</span>
-          <button type="button" data-action="removeTile" data-tile-id="{{tile.id}}" class="remove-tile-button" title="{{localize 'EMPUZZLES.RemoveTile'}}">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      {{/each}}
-    </div>
-  {{else}}
-    <p class="no-tiles">{{localize "EMPUZZLES.NoTilesSelected"}}</p>
-  {{/if}}
-
-  <div class="form-group">
     <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
     <div class="form-fields">
       <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
@@ -81,18 +53,6 @@
     <p class="hint">{{localize "EMPUZZLES.HasSavingThrowHint"}}</p>
   </div>
 
-  <div class="form-group">
-    <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
-    <select id="resultType" name="resultType" data-result-type-select>
-      {{#each resultTypeOptions as |option|}}
-        <option value="{{option.value}}" {{#if (eq option.value ../defaultResultType)}}selected{{/if}}>
-          {{localize option.label}}
-        </option>
-      {{/each}}
-    </select>
-    <p class="hint">{{localize "EMPUZZLES.ResultTypeHint"}}</p>
-  </div>
-
   <div class="saving-throw-fields" style="display: none;">
     <div class="form-group">
       <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
@@ -113,57 +73,112 @@
     </div>
   </div>
 
-  <div class="result-type-fields" data-result-type="damage">
-    <div class="form-group">
-      <label for="damageOnFail">{{localize "EMPUZZLES.DamageOnFail"}}</label>
-      <input type="text" id="damageOnFail" name="damageOnFail" value="2d6" placeholder="2d6" />
-      <p class="hint">{{localize "EMPUZZLES.DamageOnFailHint"}}</p>
-    </div>
-
-    <div class="form-group">
-      <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
-      <textarea id="flavorText" name="flavorText" rows="3" placeholder="{{localize 'EMPUZZLES.FlavorTextPlaceholder'}}"></textarea>
-      <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
-    </div>
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
+    <button type="button" data-action="addTile" class="add-tile-button">
+      <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
+    </button>
+    <p class="hint">{{localize "EMPUZZLES.ActivatingTrapTilesHint"}}</p>
   </div>
 
-  <div class="result-type-fields" data-result-type="teleport" style="display: none;">
-    <div class="form-group">
-      <label>{{localize "EMPUZZLES.TeleportDestination"}}</label>
-      <button type="button" class="select-position-button" data-action="selectTeleportPosition">
-        <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
-      </button>
-      <input type="hidden" name="teleportX" value="{{teleportX}}" />
-      <input type="hidden" name="teleportY" value="{{teleportY}}" />
-      <p class="hint teleport-position-display">
-        {{#if teleportX}}
-          {{localize "EMPUZZLES.SelectedPosition"}}: ({{teleportX}}, {{teleportY}})
-        {{else}}
-          {{localize "EMPUZZLES.NoPositionSelected"}}
-        {{/if}}
-      </p>
-    </div>
-  </div>
+  {{#if hasTiles}}
+    <div class="activating-tile-list">
+      {{#each tiles as |tile|}}
+        <div class="tile-entry activating-tile-config" data-tile-id="{{tile.id}}">
+          <div class="tile-header">
+            <div class="tile-info">
+              {{#if tile.image}}
+                {{#if tile.isVideo}}
+                  <video src="{{tile.image}}" class="tile-thumbnail" autoplay loop muted></video>
+                {{else}}
+                  <img src="{{tile.image}}" class="tile-thumbnail" alt="" />
+                {{/if}}
+              {{else}}
+                <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" alt="" />
+              {{/if}}
+              <div class="tile-details">
+                <strong class="tile-name">{{tile.name}}</strong>
+                <div class="tile-status">
+                  {{#if tile.hasMonksData}}
+                    <span class="status-badge monks-active">
+                      <i class="fas fa-puzzle-piece"></i> {{localize "EMPUZZLES.MonksActiveTile"}}
+                    </span>
+                    {{#if tile.actionCount}}
+                      <span class="status-badge">
+                        <i class="fas fa-bolt"></i> {{tile.actionCount}} {{localize "EMPUZZLES.Actions"}}
+                      </span>
+                    {{/if}}
+                    {{#if tile.variableCount}}
+                      <span class="status-badge">
+                        <i class="fas fa-code"></i> {{tile.variableCount}} {{localize "EMPUZZLES.Variables"}}
+                      </span>
+                    {{/if}}
+                    {{#unless tile.active}}
+                      <span class="status-badge inactive">
+                        <i class="fas fa-pause"></i> {{localize "EMPUZZLES.Inactive"}}
+                      </span>
+                    {{/unless}}
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+            <button type="button" data-action="removeTile" data-tile-id="{{tile.id}}" class="remove-tile-button" title="{{localize 'EMPUZZLES.RemoveTile'}}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-  <div class="result-type-fields" data-result-type="activeeffect" style="display: none;">
-    <div class="form-group">
-      <label for="effectId">{{localize "EMPUZZLES.EffectSelect"}}</label>
-      <select id="effectId" name="effectId">
-        {{#each effectOptions as |option|}}
-          <option value="{{option.value}}">{{option.label}}</option>
-        {{/each}}
-      </select>
-      <p class="hint">{{localize "EMPUZZLES.EffectSelectHint"}}</p>
-    </div>
+          <div class="tile-action-config">
+            <div class="form-group compact">
+              <label for="action-{{tile.id}}">{{localize "EMPUZZLES.Action"}}</label>
+              <select id="action-{{tile.id}}" name="action-{{tile.id}}" data-action-select data-tile-id="{{tile.id}}">
+                <option value="activate" {{#if (eq tile.actionType "activate")}}selected{{/if}}>{{localize "EMPUZZLES.ActionActivate"}}</option>
+                <option value="showhide" {{#if (eq tile.actionType "showhide")}}selected{{/if}}>{{localize "EMPUZZLES.ActionShowHide"}}</option>
+                <option value="moveto" {{#if (eq tile.actionType "moveto")}}selected{{/if}}>{{localize "EMPUZZLES.ActionMoveTo"}}</option>
+              </select>
+            </div>
 
-    <div class="form-group">
-      <label for="addEffect">{{localize "EMPUZZLES.EffectAction"}}</label>
-      <select id="addEffect" name="addEffect">
-        <option value="add">{{localize "EMPUZZLES.EffectAdd"}}</option>
-        <option value="remove">{{localize "EMPUZZLES.EffectRemove"}}</option>
-        <option value="toggle">{{localize "EMPUZZLES.EffectToggle"}}</option>
-      </select>
-      <p class="hint">{{localize "EMPUZZLES.EffectActionHint"}}</p>
+            <div class="activate-options action-options" style="{{#unless (eq tile.actionType "activate")}}display: none;{{/unless}}">
+              <div class="form-group compact">
+                <label for="activateMode-{{tile.id}}">{{localize "EMPUZZLES.Mode"}}</label>
+                <select id="activateMode-{{tile.id}}" name="activateMode-{{tile.id}}" data-mode-select data-mode-type="activate" data-tile-id="{{tile.id}}">
+                  <option value="activate" {{#if (eq tile.activateMode "activate")}}selected{{/if}}>{{localize "EMPUZZLES.Activate"}}</option>
+                  <option value="deactivate" {{#if (eq tile.activateMode "deactivate")}}selected{{/if}}>{{localize "EMPUZZLES.Deactivate"}}</option>
+                  <option value="toggle" {{#if (eq tile.activateMode "toggle")}}selected{{/if}}>{{localize "EMPUZZLES.Toggle"}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="showhide-options action-options" style="{{#unless (eq tile.actionType "showhide")}}display: none;{{/unless}}">
+              <div class="form-group compact">
+                <label for="showHideMode-{{tile.id}}">{{localize "EMPUZZLES.Mode"}}</label>
+                <select id="showHideMode-{{tile.id}}" name="showHideMode-{{tile.id}}" data-mode-select data-mode-type="showhide" data-tile-id="{{tile.id}}">
+                  <option value="show" {{#if (eq tile.showHideMode "show")}}selected{{/if}}>{{localize "EMPUZZLES.Show"}}</option>
+                  <option value="hide" {{#if (eq tile.showHideMode "hide")}}selected{{/if}}>{{localize "EMPUZZLES.Hide"}}</option>
+                  <option value="toggle" {{#if (eq tile.showHideMode "toggle")}}selected{{/if}}>{{localize "EMPUZZLES.Toggle"}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="move-options action-options" style="{{#unless (eq tile.actionType "moveto")}}display: none;{{/unless}}">
+              <div class="form-group compact">
+                <label>{{localize "EMPUZZLES.MoveDestination"}}</label>
+                <button type="button" class="select-position-button" data-action="selectMovePosition" data-tile-id="{{tile.id}}">
+                  <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+                </button>
+                <p class="hint move-position-display">
+                  {{#if tile.moveX}}
+                    {{localize "EMPUZZLES.SelectedPosition"}}: ({{tile.moveX}}, {{tile.moveY}})
+                  {{else}}
+                    {{localize "EMPUZZLES.NoPositionSelected"}}
+                  {{/if}}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
     </div>
-  </div>
+  {{else}}
+    <p class="no-tiles">{{localize "EMPUZZLES.NoTilesSelected"}}</p>
+  {{/if}}
 </form>
