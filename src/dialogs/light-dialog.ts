@@ -20,7 +20,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       title: 'EMPUZZLES.CreateLightTile'
     },
     position: {
-      width: 480
+      width: 576
     },
     form: {
       closeOnSubmit: true,
@@ -173,7 +173,11 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle form submission
    */
-  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
+  static async #onSubmit(
+    _event: SubmitEvent,
+    _form: HTMLFormElement,
+    formData: any
+  ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
       ui.notifications.error('No active scene!');

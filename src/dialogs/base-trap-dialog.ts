@@ -69,7 +69,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       icon: 'fa-solid fa-skull-crossbones'
     },
     position: {
-      width: 480
+      width: 576
     },
     form: {
       closeOnSubmit: false,

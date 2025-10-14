@@ -20,7 +20,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       title: 'EMPUZZLES.CreateSwitch'
     },
     position: {
-      width: 480
+      width: 576
     },
     form: {
       closeOnSubmit: true,
@@ -119,11 +119,15 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
 
   /**
    * Handle form submission
-   * @param {SubmitEvent} event - The form submit event
-   * @param {HTMLFormElement} form - The form element
+   * @param {SubmitEvent} _event - The form submit event
+   * @param {HTMLFormElement} _form - The form element
    * @param {FormDataExtended} formData - The form data
    */
-  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
+  static async #onSubmit(
+    _event: SubmitEvent,
+    _form: HTMLFormElement,
+    formData: any
+  ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
       ui.notifications.error('No active scene!');

@@ -65,6 +65,14 @@ export interface TileAction {
 }
 
 /**
+ * Configuration for wall/door actions in activating traps
+ */
+export interface WallAction {
+  wallId: string;
+  state: string; // 'OPEN', 'CLOSED', 'LOCKED'
+}
+
+/**
  * Configuration for trap tiles
  */
 export interface TrapConfig {
@@ -90,6 +98,7 @@ export interface TrapConfig {
   // For activating trap type
   tilesToActivate?: string[]; // Optional: IDs of tiles to activate (deprecated, use tileActions)
   tileActions?: TileAction[]; // Optional: tile actions with configurations
+  wallActions?: WallAction[]; // Optional: wall/door actions
 }
 
 export interface ResetTileConfig {

@@ -12,6 +12,11 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
    */
   selectedTiles: Map<string, any> = new Map();
 
+  /**
+   * Array of selected walls/doors with their target states
+   */
+  selectedWalls: Array<{ wallId: string; state: string }> = [];
+
   /** @override */
   protected getTrapType(): string {
     return 'activating';
@@ -33,7 +38,9 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
     actions: {
       addTile: ActivatingTrapDialog.prototype._onAddTile,
       removeTile: ActivatingTrapDialog.prototype._onRemoveTile,
-      selectMovePosition: ActivatingTrapDialog.prototype._onSelectMovePosition
+      selectMovePosition: ActivatingTrapDialog.prototype._onSelectMovePosition,
+      addWall: ActivatingTrapDialog.prototype._onAddWall,
+      removeWall: ActivatingTrapDialog.prototype._onRemoveWall
     }
   };
 
@@ -74,7 +81,9 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
     return {
       ...context,
       hasTiles: tiles.length > 0,
-      tiles: tiles
+      tiles: tiles,
+      hasWalls: this.selectedWalls.length > 0,
+      walls: this.selectedWalls
     };
   }
 
@@ -132,10 +141,25 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
       tileActions.push(action);
     });
 
+    // Extract wall/door states from form
+    const wallActions: any[] = [];
+    this.selectedWalls.forEach((wall, index) => {
+      const stateSelect = _form.querySelector(
+        `select[name="wall-state-${index}"]`
+      ) as HTMLSelectElement;
+      if (stateSelect) {
+        wallActions.push({
+          wallId: wall.wallId,
+          state: stateSelect.value
+        });
+      }
+    });
+
     return {
       hideTrapOnTrigger: false,
       triggeredImage: '',
-      tileActions: tileActions
+      tileActions: tileActions,
+      wallActions: wallActions
     };
   }
 
@@ -174,6 +198,14 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
       if (actionSelect) values[`action-${tileId}`] = actionSelect.value;
       if (activateModeSelect) values[`activateMode-${tileId}`] = activateModeSelect.value;
       if (showHideModeSelect) values[`showHideMode-${tileId}`] = showHideModeSelect.value;
+    });
+
+    // Capture wall/door state selections
+    this.selectedWalls.forEach((_wall, index) => {
+      const stateSelect = form.querySelector(
+        `select[name="wall-state-${index}"]`
+      ) as HTMLSelectElement;
+      if (stateSelect) values[`wall-state-${index}`] = stateSelect.value;
     });
 
     return values;
@@ -325,6 +357,89 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
     };
 
     (canvas as any).stage.on('click', handler);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle adding a wall/door to the action list
+   */
+  async _onAddWall(_event: Event, _target: HTMLElement): Promise<void> {
+    // Capture form values before minimizing
+    const formValues = this.captureFormValues();
+
+    // Minimize this dialog
+    await this.minimize();
+
+    // Activate the walls layer
+    if ((canvas as any).walls) {
+      (canvas as any).walls.activate();
+    }
+
+    ui.notifications.info('Select a wall or door, then it will be added to the list.');
+
+    // Store that we're waiting for wall selection
+    (this as any)._waitingForWall = true;
+    (this as any)._wallFormValues = formValues;
+
+    // Set up a one-time hook to capture wall selection
+    Hooks.once('controlWall', (wall: any, controlled: boolean) => {
+      if (!controlled || !(this as any)._waitingForWall) return;
+
+      // Clean up waiting state
+      delete (this as any)._waitingForWall;
+
+      // Check if already added
+      if (this.selectedWalls.some(w => w.wallId === wall.id)) {
+        ui.notifications.warn('This wall/door is already in the list!');
+        this.maximize();
+        return;
+      }
+
+      // Add wall to selection
+      this.selectedWalls.push({
+        wallId: wall.id,
+        state: wall.document.ds === 1 ? 'OPEN' : 'CLOSED' // Default to current state
+      });
+
+      // Switch back to tiles layer
+      if ((canvas as any).tiles) {
+        (canvas as any).tiles.activate();
+      }
+
+      // Restore and re-render
+      this.maximize().then(() => {
+        this.render(true).then(() => {
+          const savedFormValues = (this as any)._wallFormValues;
+          delete (this as any)._wallFormValues;
+          this.restoreFormValues(savedFormValues);
+        });
+      });
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle removing a wall/door from the action list
+   */
+  async _onRemoveWall(event: Event, target: HTMLElement): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const index = parseInt(target.dataset.wallIndex || '');
+    if (isNaN(index)) return;
+
+    // Capture form values
+    const formValues = this.captureFormValues();
+
+    // Remove wall from selection
+    this.selectedWalls.splice(index, 1);
+
+    // Re-render to show updated list, then restore form values
+    this.render(true).then(() => {
+      this.restoreFormValues(formValues);
+    });
   }
 
   /* -------------------------------------------- */

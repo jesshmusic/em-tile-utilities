@@ -181,4 +181,38 @@
   {{else}}
     <p class="no-tiles">{{localize "EMPUZZLES.NoTilesSelected"}}</p>
   {{/if}}
+
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.WallDoorActions"}}</label>
+    <button type="button" data-action="addWall" class="add-tile-button">
+      <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddWall"}}
+    </button>
+    <p class="hint">{{localize "EMPUZZLES.WallDoorActionsHint"}}</p>
+  </div>
+
+  {{#if hasWalls}}
+    <div class="wall-list">
+      {{#each walls as |wall index|}}
+        <div class="wall-entry" data-wall-index="{{@index}}">
+          <div class="wall-info">
+            <i class="fas fa-door-open"></i>
+            <span class="wall-id">{{wall.wallId}}</span>
+          </div>
+          <div class="wall-state-selector">
+            <label for="wall-state-{{@index}}">{{localize "EMPUZZLES.State"}}:</label>
+            <select id="wall-state-{{@index}}" name="wall-state-{{@index}}">
+              <option value="OPEN" {{#if (eq wall.state "OPEN")}}selected{{/if}}>{{localize "EMPUZZLES.DoorOpen"}}</option>
+              <option value="CLOSED" {{#if (eq wall.state "CLOSED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorClosed"}}</option>
+              <option value="LOCKED" {{#if (eq wall.state "LOCKED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorLocked"}}</option>
+            </select>
+          </div>
+          <button type="button" data-action="removeWall" data-wall-index="{{@index}}" class="remove-wall-button" title="{{localize 'EMPUZZLES.RemoveWall'}}">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <p class="no-tiles">{{localize "EMPUZZLES.NoWallsSelected"}}</p>
+  {{/if}}
 </form>
