@@ -104,13 +104,6 @@ describe('LightConfigDialog', () => {
   });
 
   describe('showLightDialog', () => {
-    it('should create and render a new dialog', () => {
-      const dialog = showLightDialog();
-
-      // Dialog should be created (function doesn't return anything but creates instance)
-      expect(true).toBe(true); // Function executes without error
-    });
-
     it('should work without active scene', () => {
       (global as any).canvas.scene = null;
 
@@ -340,7 +333,7 @@ describe('LightConfigDialog', () => {
       } as any;
 
       const mockBrowse = jest.fn();
-      (global as any).FilePicker = jest.fn().mockImplementation((options: any) => ({
+      (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
         browse: mockBrowse
       }));
 
