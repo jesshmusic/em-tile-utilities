@@ -248,7 +248,31 @@ The module uses automated versioning and changelog generation:
    - Go to **Actions** → **Release Version**
    - Click **Run workflow**
    - Select version type
-   - The workflow will automatically bump version, update changelog, commit, tag, and create a GitHub release
+   - The workflow will automatically:
+     - Bump version and update changelog
+     - Build the project
+     - Commit changes and create a git tag
+     - Create a GitHub release with artifacts
+     - **Notify FoundryVTT Package Release API** (registers the release on FoundryVTT.com)
+
+#### GitHub Secret Setup
+
+To enable automatic FoundryVTT release notifications, you need to add your package API token as a GitHub secret:
+
+1. Get your package API token from [FoundryVTT.com](https://foundryvtt.com):
+   - Log in to your FoundryVTT account
+   - Go to your [Packages page](https://foundryvtt.com/me/packages)
+   - Select your package (em-tile-utilities)
+   - Find the **API Token** section and copy your token (starts with `fvttp_`)
+
+2. Add the token as a GitHub secret:
+   - Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**
+   - Click **New repository secret**
+   - Name: `FOUNDRY_PACKAGE_TOKEN`
+   - Value: Paste your package API token
+   - Click **Add secret**
+
+The release workflow will automatically notify FoundryVTT when a new version is published, making it immediately available to users through the package manager.
 
 ### Type Definitions
 

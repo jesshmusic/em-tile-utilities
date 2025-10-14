@@ -90,3 +90,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
+
+      - name: Notify FoundryVTT Package Release API
+        run: |
+          curl -X POST https://foundryvtt.com/_api/packages/release_version/ \
+            -H "Content-Type: application/json" \
+            -H "Authorization: ${{ secrets.FOUNDRY_PACKAGE_TOKEN }}" \
+            -d '{
+              "id": "em-tile-utilities",
+              "dry-run": false,
+              "release": {
+                "version": "${{ steps.version.outputs.new_version }}",
+                "manifest": "https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.new_version }}/module.json",
+                "notes": "https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}",
+                "compatibility": {
+                  "minimum": "13",
+                  "verified": "13"
+                }
+              }
+            }'
