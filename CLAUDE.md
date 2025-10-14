@@ -2,6 +2,10 @@
 
 This document contains technical notes, patterns, and conventions for working on the EM Tile Utilities project.
 
+> **Note**: This is the **developer documentation**. The README.md is written for end users and contains no implementation details. Keep them separate:
+> - **README.md**: User-focused, benefits-oriented, no technical jargon
+> - **CLAUDE.md**: Developer-focused, implementation details, code patterns
+
 ## Project Overview
 
 **EM Tile Utilities** is a FoundryVTT v13 module that provides UI tools for creating interactive tiles using Monk's Active Tiles. Built with TypeScript, uses Foundry's ApplicationV2 API.

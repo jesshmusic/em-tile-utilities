@@ -1,293 +1,203 @@
 # EM Tile Utilities
 
-A FoundryVTT module that provides utility tile creation tools for Monk's Active Tiles.
+**Transform your maps into interactive adventures.** Create puzzles, traps, and dynamic lighting in seconds with intuitive point-and-click tools—no complex configuration needed.
 
-## Features
+Built as a companion to [Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles), EM Tile Utilities gives you ready-to-use templates for the most common interactive elements game masters need.
 
-- **Create Switch Tiles**: Interactive ON/OFF switches with custom images and sounds
-  - Double-click activation
-  - Variable tracking for puzzle logic
-  - Custom sound effects
-  - Configurable images for ON/OFF states
+---
 
-- **Create Light Tiles**: Dynamic light sources that can be toggled or darkness-activated
-  - Manual toggle (double-click) or automatic darkness-based activation
-  - Configurable bright/dim light radii (default: torch 20/40)
-  - Custom light color with intensity control (default: warm torch #ffa726)
-  - Separate AmbientLight creation for proper lighting
-  - OFF/ON image states
+## 🎯 What Can You Create?
 
-- **Create Reset Tiles**: Reset multiple tiles and variables to their initial states
-  - Reverse tile actions to undo their last sequence
-  - Reset position, rotation, visibility, and active state
-  - Configure variable values for reset
-  - Reset wall/door states
-  - Tile image state restoration
+### Interactive Switches & Levers
+Place toggleable switches that control doors, traps, lights, or any other element in your scene. Perfect for puzzle rooms where players must flip switches in the right sequence, or simple levers that open secret passages.
 
-- **Scene Variables Viewer**: View and manage all tile variables in the current scene
-  - See variable names, values, and which tiles use them
-  - Real-time updates
-  - Refresh on demand
+- **Visual feedback**: Switches change appearance when activated
+- **Sound effects**: Add satisfying clicks, cranks, or magical chimes
+- **Track state**: Each switch remembers if it's ON or OFF
+- **Link to anything**: Connect switches to doors, lights, traps, or other tiles
 
-- **Tile Manager**: Comprehensive tile management interface
-  - View all tiles on the scene with thumbnails
-  - See tile position, size, and elevation
-  - Quick select, edit, or delete tiles
-  - Shows Monk's Active Tiles status and action count
-  - Auto-refresh when tiles are created/updated/deleted
+### Dynamic Lighting
+Create torches, lanterns, candles, and magical lights that players can interact with—or that respond automatically to darkness.
 
-- **Module Settings**: Customizable defaults
-  - Default switch ON/OFF images
-  - Default light ON/OFF images
-  - Default sound effects
+- **Manual control**: Double-click to toggle lights on/off
+- **Automatic activation**: Lights turn on when darkness falls, off at dawn
+- **Customizable glow**: Choose colors, brightness, and light radius
+- **Realistic behavior**: Each light creates an actual light source with proper shadows
 
-## Requirements
+### Pressure Plate Traps
+Design dangerous floors, tripwires, and hidden hazards that trigger when tokens enter their space.
 
-- FoundryVTT v13 or higher (uses ApplicationV2 API)
-- [Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles) module
+**Choose your trap style:**
+- **Disappearing**: Trap vanishes after triggering (pit traps, collapsing floors)
+- **Switching**: Trap changes appearance when activated (pressure plate depresses, tripwire breaks)
+- **Activating**: Trap triggers other elements (fires arrows, opens doors, releases gas)
 
-## Installation
+**Add consequences:**
+- **Damage**: Roll dice for damage with optional saving throws
+- **Teleportation**: Transport unlucky characters to another location
+- **Status effects**: Apply conditions like poisoned, stunned, or blinded
+- **Chain reactions**: Activate multiple tiles, open/close doors, show/hide objects
 
-1. Download the module from the Foundry module browser, or
-2. Install manually by placing this folder in `Data/modules/`
-3. Enable both "Monk's Active Tiles" and "EM Tile Utilities" in your world
+### Puzzle Reset Tiles
+Save hours of manual work resetting puzzle rooms between game sessions. Place a reset tile that restores everything to its starting state with one click.
 
-## Usage
+- **Restore positions**: Moves tiles back to where they started
+- **Reset switches**: Returns all levers to their initial position
+- **Fix puzzle state**: Resets all tracked variables to default values
+- **Reset doors**: Closes, opens, or locks doors as needed
+- **Clear history**: Wipes trigger memory so traps can fire again
 
-All tools are accessible from the **Tiles layer toolbar** in Foundry VTT. After enabling the module, you'll see five new buttons:
+### Scene Management Tools
 
-- 🔀 **Toggle icon** - Create Switch
-- ↶ **Undo icon** - Create Reset Tile
-- 💡 **Lightbulb icon** - Create Light Tile
-- 📋 **List icon** - Scene Variables
-- 📚 **Layer-group icon** - Tile Manager
+**Variables Viewer**: See all puzzle variables in your scene at a glance—which switches are on, which traps have triggered, which doors are locked. Real-time display updates as your players interact with elements.
 
-### Creating a Switch
+**Tile Manager**: Browse every interactive tile on your map with thumbnails. Quickly select, edit, or delete tiles. See which tiles are active and how many actions they contain. Auto-refreshes when tiles change.
 
-1. Select the Tiles layer
-2. Click the "Create Switch" button (toggle icon) in the toolbar
-3. Configure your switch settings:
-   - Switch Name
-   - Variable Name (unique identifier)
-   - ON/OFF Images (file picker available)
-   - Sound file (file picker available)
-4. Click "Create"
-5. Click on the canvas to place the switch
+---
 
-The switch can be activated by double-clicking. It toggles between ON/OFF states and tracks its state in a scene variable.
+## 📋 Requirements
 
-### Creating a Light Tile
+- **FoundryVTT v13** or higher
+- **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** (required dependency)
 
-1. Select the Tiles layer
-2. Click the "Create Light Tile" button (lightbulb icon) in the toolbar
-3. Configure your light settings:
-   - Light Name
-   - OFF/ON Images (file picker available)
-   - **Use Darkness Trigger**: Toggle for automatic activation
-     - When enabled: Light activates automatically based on scene darkness
-     - Darkness Minimum: Slider to set activation threshold (0-1)
-     - When disabled: Light toggles manually on double-click
-   - **Dim Light Radius**: Distance of dim light (default: 40 feet)
-   - **Bright Light Radius**: Distance of bright light (default: 20 feet)
-   - **Light Color**: Color picker for light tint (default: warm torch #ffa726)
-   - **Color Intensity**: Slider for color opacity (0-1)
-4. Click "Create"
-5. Click on the canvas to place the light tile
+---
 
-The light tile creates both a tile graphic and a separate AmbientLight source. For manual lights, double-click toggles the light on/off.
+## 🚀 Quick Start
 
-### Creating a Reset Tile
+### Installation
 
-1. Select the Tiles layer
-2. Click the "Create Reset Tile" button (undo icon) in the toolbar
-3. Click "Add Tile" and select tiles from the canvas
-4. For each tile, configure:
-   - **Reverse Actions**: Undo the tile's last action sequence
-   - Visibility, Active state, Rotation
-   - Position (Start position for reset)
-   - Image state
-   - Variable values
-5. Configure reset image for the reset tile itself
-6. Click "Create"
-7. Click on the canvas to place the reset tile (2x2 grid size)
+1. Open Foundry VTT
+2. Go to **Add-on Modules** → **Install Module**
+3. Search for "**EM Tile Utilities**"
+4. Click **Install**
+5. Enable both **Monk's Active Tiles** and **EM Tile Utilities** in your world
 
-The reset tile will restore all selected tiles to their configured states when double-clicked.
+### First Use
 
-### Viewing Scene Variables
+1. **Switch to the Tiles layer** in your scene
+2. Look for **new toolbar buttons** with icons for switches, lights, traps, etc.
+3. **Click any button** to open its creation dialog
+4. **Fill in the form** with your preferred images and settings
+5. **Click Create** and then **click on your map** to place the element
 
-1. Select the Tiles layer
-2. Click the "Scene Variables" button (list icon) in the toolbar
-3. See all variables in the current scene with their values and associated tiles
-4. Click "Refresh" to update the view
+That's it! Your interactive element is ready to use.
 
-### Using the Tile Manager
+---
 
-1. Select the Tiles layer
-2. Click the "Tile Manager" button (layer-group icon) in the toolbar
-3. Browse all tiles on the scene:
-   - Thumbnail preview
-   - Tile name
-   - Position (x, y) and Elevation
-   - Size (width × height)
-   - Status badges (Monk's Active Tile, Actions count, Variables count)
-   - Visibility/Lock status
-4. Actions for each tile:
-   - **Select** (crosshair icon): Select the tile on canvas
-   - **Edit** (pencil icon): Open tile configuration
-   - **Delete** (trash icon): Delete tile with confirmation
-5. The list auto-refreshes when tiles are created, updated, or deleted
+## 📖 Creating Your First Puzzle
 
-### Module Settings
+Let's create a simple puzzle: three switches that open a door.
 
-Configure defaults in **Game Settings → Module Settings → EM Tile Utilities**:
+### Step 1: Create the Switches
 
-- Default ON Image (for switches)
-- Default OFF Image (for switches)
-- Default Sound (for switches)
-- Default Light ON Image
-- Default Light OFF Image
+1. Click the **Toggle Switch** button (🔀 icon) in the Tiles toolbar
+2. Configure your first switch:
+   - Name: "Switch 1"
+   - Variable: "switch_1" (leave default)
+   - Choose ON/OFF images (or use defaults)
+   - Choose a sound effect
+3. Click **Create** and place on your map
+4. Repeat for switches 2 and 3
 
-## Development
+### Step 2: Test the Switches
 
-This module is built with TypeScript for better code organization and type safety.
+Double-click each switch to test it. You should see:
+- The image changes between ON and OFF states
+- A sound effect plays
+- A GM message shows the switch state
 
-### Project Structure
+### Step 3: Link to a Door (Optional)
 
-```
-em-tile-utilities/
-├── src/                    # TypeScript source files
-│   ├── dialogs/           # Dialog components
-│   │   ├── switch-dialog.ts      # Switch creation dialog
-│   │   ├── light-dialog.ts       # Light tile creation dialog
-│   │   ├── reset-dialog.ts       # Reset tile creation dialog
-│   │   ├── variables-viewer.ts   # Scene variables viewer
-│   │   └── tile-manager.ts       # Tile management interface
-│   ├── utils/             # Utility functions
-│   │   └── tile-helpers.ts       # Tile creation helpers
-│   ├── types/             # TypeScript type definitions
-│   │   ├── foundry.d.ts          # Foundry VTT types
-│   │   └── module.ts             # Module-specific types
-│   └── main.ts            # Main entry point
-├── templates/             # Handlebars templates
-│   ├── switch-config.hbs
-│   ├── light-config.hbs
-│   ├── reset-config.hbs
-│   ├── variables-viewer.hbs
-│   ├── tile-manager.hbs
-│   └── form-footer.hbs
-├── styles/                # CSS styles
-│   └── dialogs.css
-├── lang/                  # Localization files
-│   └── en.json
-├── dist/                  # Compiled JavaScript (generated)
-├── .github/workflows/     # GitHub Actions
-│   └── release.yml        # Release automation
-├── scripts/               # Build scripts
-│   └── release.js         # Version bump and changelog
-├── rollup.config.mjs      # Build configuration
-├── tsconfig.json          # TypeScript configuration
-├── package.json           # NPM dependencies and scripts
-├── module.json            # Foundry module manifest
-└── CHANGELOG.md           # Version history
-```
+Open the **Variables Viewer** (📋 icon) to see your switch states, then use Monk's Active Tiles to create logic that checks if all three switches are ON before opening a door.
 
-### Setup
+---
 
-1. Install dependencies:
+## 🎨 Examples & Use Cases
 
-```bash
-npm install
-```
+### Classic Dungeon Puzzles
+- **Torch puzzle**: Four torches must be lit in the correct sequence
+- **Pressure plates**: Step on plates to open passages or trigger traps
+- **Lever maze**: Pull levers to rotate walls and create a path through
 
-2. Build the project:
+### Dynamic Environments
+- **Campfire**: Players can light/extinguish fires at campsites
+- **Street lamps**: City lights that turn on at dusk, off at dawn
+- **Magical barriers**: Shimmering walls that appear/disappear when touched
 
-```bash
-npm run build
-```
+### Dramatic Encounters
+- **Collapsing floor**: Tiles disappear as characters walk across them
+- **Arrow traps**: Hidden pressure plates that deal damage to the unwary
+- **Gas vents**: Poison clouds that apply conditions to anyone nearby
 
-### Available Scripts
+### Session Management
+- **Puzzle reset**: One-click restoration of complex puzzle rooms
+- **Trap rearm**: Reset all traps between encounters
+- **Scene cleanup**: Restore doors, lights, and objects to defaults
 
-- `npm run build` - Build the project once
-- `npm run watch` - Watch for changes and rebuild automatically
-- `npm run clean` - Clean the dist folder
-- `npm run release:patch` - Bump patch version (1.0.1 → 1.0.2) and update changelog
-- `npm run release:minor` - Bump minor version (1.0.1 → 1.1.0) and update changelog
-- `npm run release:major` - Bump major version (1.0.1 → 2.0.0) and update changelog
+---
 
-### Development Workflow
+## ⚙️ Configuration
 
-```bash
-npm run watch
-```
+Access module settings from **Game Settings → Module Settings → EM Tile Utilities**.
 
-This watches for file changes and rebuilds automatically. When you save TypeScript files in the `src/` directory, they will be compiled to `dist/main.js`. Refresh Foundry VTT to see your changes.
+**Customize defaults** for faster creation:
+- Default switch images (ON/OFF)
+- Default light images (ON/OFF)
+- Default trap images (armed/triggered)
+- Default sound effects
 
-### Making Changes
+Set these once, and every new element you create will use your preferred assets.
 
-1. Edit TypeScript files in the `src/` directory
-2. Run `npm run watch` in a terminal
-3. Save your changes - they will automatically be compiled
-4. Refresh Foundry VTT to see your changes
+---
 
-### Releasing a New Version
+## 🎓 Tips for Game Masters
 
-The module uses automated versioning and changelog generation:
+### Organize Your Assets
+- Create a dedicated folder for puzzle assets (switches, levers, plates, etc.)
+- Name files clearly: `lever-up.png` and `lever-down.png`
+- Set defaults in module settings to match your asset library
 
-1. Make your commits using conventional commit messages:
-   - `feat: add new feature` → Added section
-   - `fix: resolve bug` → Fixed section
-   - `chore: update dependencies` → Changed section
+### Plan Before You Build
+- Sketch out puzzle logic on paper first
+- Decide which switches control what
+- Plan trap placement before creating tiles
 
-2. Run the release script locally:
+### Test Everything
+- Always test your puzzles before the session
+- Try unexpected interactions (what if they flip switches backwards?)
+- Use the **Variables Viewer** to verify puzzle state
 
-   ```bash
-   npm run release:minor  # or patch/major
-   ```
+### Use the Tile Manager
+- Name your tiles descriptively: "North Door Switch", "Hidden Trap 1"
+- The Tile Manager shows all tiles with their names and positions
+- Quickly find and edit specific elements during your session
 
-3. Or trigger the GitHub Actions workflow:
-   - Go to **Actions** → **Release Version**
-   - Click **Run workflow**
-   - Select version type
-   - The workflow will automatically:
-     - Bump version and update changelog
-     - Build the project
-     - Commit changes and create a git tag
-     - Create a GitHub release with artifacts
-     - **Notify FoundryVTT Package Release API** (registers the release on FoundryVTT.com)
+### Start Simple
+- Begin with one switch and one door
+- Add complexity once you're comfortable
+- Combine tools to create elaborate scenarios
 
-#### GitHub Secret Setup
+---
 
-To enable automatic FoundryVTT release notifications, you need to add your package API token as a GitHub secret:
+## 🤝 Support & Community
 
-1. Get your package API token from [FoundryVTT.com](https://foundryvtt.com):
-   - Log in to your FoundryVTT account
-   - Go to your [Packages page](https://foundryvtt.com/me/packages)
-   - Select your package (em-tile-utilities)
-   - Find the **API Token** section and copy your token (starts with `fvttp_`)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/jesshmusic/em-tile-utilities/issues)
+- **Discussions**: Ask questions in the [Foundry VTT Discord](https://discord.gg/foundryvtt) (#module-development or #modules-troubleshooting channels)
 
-2. Add the token as a GitHub secret:
-   - Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**
-   - Click **New repository secret**
-   - Name: `FOUNDRY_PACKAGE_TOKEN`
-   - Value: Paste your package API token
-   - Click **Add secret**
+---
 
-The release workflow will automatically notify FoundryVTT when a new version is published, making it immediately available to users through the package manager.
+## 📜 Attribution
 
-### Type Definitions
+Icons from [game-icons.net](https://game-icons.net) by various artists, licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
 
-Basic Foundry VTT type definitions are included in `src/types/foundry.d.ts`. These provide autocomplete and type checking for common Foundry APIs.
+- [Lever](https://game-icons.net/1x1/lorc/lever.html) by Lorc
+- [Candle Flame](https://game-icons.net/1x1/lorc/candle-flame.html) by Lorc
+- [Clockwise Rotation](https://game-icons.net/1x1/delapouite/clockwise-rotation.html) by Delapouite
+- [Scroll Unfurled](https://game-icons.net/1x1/lorc/scroll-unfurled.html) by Lorc
+- [Stack](https://game-icons.net/1x1/delapouite/stack.html) by Delapouite
 
-## Attribution
+---
 
-Icons from [game-icons.net](https://game-icons.net) by various authors, licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
-
-- [Lever](https://game-icons.net/1x1/lorc/lever.html) by [Lorc](https://lorcblog.blogspot.com/)
-- [Candle Flame](https://game-icons.net/1x1/lorc/candle-flame.html) by [Lorc](https://lorcblog.blogspot.com/)
-- [Clockwise Rotation](https://game-icons.net/1x1/delapouite/clockwise-rotation.html) by [Delapouite](https://delapouite.com/)
-- [Scroll Unfurled](https://game-icons.net/1x1/lorc/scroll-unfurled.html) by [Lorc](https://lorcblog.blogspot.com/)
-- [Stack](https://game-icons.net/1x1/delapouite/stack.html) by [Delapouite](https://delapouite.com/)
-
-## License
+## 📄 License
 
 ISC
