@@ -2,7 +2,7 @@
   "id": "em-tile-utilities",
   "title": "EM Tile Utilities",
   "description": "Utility tile creation tools for Monk's Active Tiles - switches, lights, resets, and more",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -23,8 +23,12 @@
       }
     ]
   },
-  "scripts": ["dist/main.js"],
-  "styles": ["styles/dialogs.css"],
+  "scripts": [
+    "dist/main.js"
+  ],
+  "styles": [
+    "styles/dialogs.css"
+  ],
   "languages": [
     {
       "lang": "en",
