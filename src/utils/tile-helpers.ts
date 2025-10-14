@@ -1,4 +1,5 @@
 import type { SwitchConfig, ResetTileConfig, LightConfig, TrapConfig } from '../types/module';
+import { TrapResultType, TrapTargetType } from '../types/module';
 
 /**
  * Create a switch tile with ON/OFF states
@@ -596,8 +597,25 @@ export async function createTrapTile(
   // Build actions array
   const actions: any[] = [];
 
-  // Action 1: Show/hide trap (or show triggered image)
-  if (config.hideTrapOnTrigger) {
+  // Action 1: Handle trap visual response based on type
+  if (config.tilesToActivate && config.tilesToActivate.length > 0) {
+    // Activating trap: activate other tiles
+    config.tilesToActivate.forEach(tileId => {
+      actions.push({
+        action: 'activate',
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${tileId}`,
+            name: `Tile: ${tileId}`
+          },
+          activate: 'activate',
+          collection: 'tiles'
+        },
+        id: foundry.utils.randomID()
+      });
+    });
+  } else if (config.hideTrapOnTrigger) {
+    // Disappearing trap: hide the trap tile
     actions.push({
       action: 'showhide',
       data: {
@@ -612,7 +630,7 @@ export async function createTrapTile(
       id: foundry.utils.randomID()
     });
   } else if (config.triggeredImage) {
-    // Change to triggered image
+    // Switching trap: change to triggered image
     actions.push({
       action: 'tileimage',
       data: {
@@ -643,42 +661,139 @@ export async function createTrapTile(
     });
   }
 
-  // Action 3: Request saving throw (Monk's Token Bar)
-  actions.push({
-    action: 'monks-tokenbar.requestroll',
-    data: {
-      entity: {
-        id: 'within',
-        name: 'Tokens within Tile'
-      },
-      request: config.savingThrow,
-      dc: config.dc.toString(),
-      flavor: config.flavorText,
-      rollmode: 'roll',
-      silent: false,
-      fastforward: false,
-      usetokens: 'fail',
-      continue: 'failed'
-    },
-    id: foundry.utils.randomID()
-  });
+  // Action 3: Add result-based actions
+  const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
+  const targetEntityName =
+    config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
 
-  // Action 4: Deal damage to tokens that failed
-  if (config.damageOnFail) {
-    actions.push({
-      action: 'hurtheal',
-      data: {
-        entity: {
-          id: 'previous',
-          name: 'Current tokens'
-        },
-        value: `-[[${config.damageOnFail}]]`,
-        chatMessage: true,
-        rollmode: 'roll',
-        showdice: true
-      },
-      id: foundry.utils.randomID()
-    });
+  switch (config.resultType) {
+    case TrapResultType.DAMAGE:
+      // Add saving throw if enabled
+      if (config.hasSavingThrow) {
+        actions.push({
+          action: 'monks-tokenbar.requestroll',
+          data: {
+            entity: {
+              id: targetEntityId,
+              name: targetEntityName
+            },
+            request: config.savingThrow,
+            dc: config.dc.toString(),
+            flavor: config.flavorText,
+            rollmode: 'roll',
+            silent: false,
+            fastforward: false,
+            usetokens: 'fail',
+            continue: 'failed'
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+
+      // Deal damage (to tokens that failed saving throw if enabled, or all targets if not)
+      if (config.damageOnFail) {
+        actions.push({
+          action: 'hurtheal',
+          data: {
+            entity: {
+              id: config.hasSavingThrow ? 'previous' : targetEntityId,
+              name: config.hasSavingThrow ? 'Current tokens' : targetEntityName
+            },
+            value: `-[[${config.damageOnFail}]]`,
+            chatMessage: true,
+            rollmode: 'roll',
+            showdice: true
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+      break;
+
+    case TrapResultType.TELEPORT:
+      // Add saving throw if enabled
+      if (config.hasSavingThrow) {
+        actions.push({
+          action: 'monks-tokenbar.requestroll',
+          data: {
+            entity: {
+              id: targetEntityId,
+              name: targetEntityName
+            },
+            request: config.savingThrow,
+            dc: config.dc.toString(),
+            flavor: config.flavorText || 'Make a saving throw!',
+            rollmode: 'roll',
+            silent: false,
+            fastforward: false,
+            usetokens: 'fail',
+            continue: 'failed'
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+
+      // Teleport action (teleports tokens that failed saving throw if enabled, or all targets if not)
+      if (config.teleportConfig) {
+        actions.push({
+          action: 'teleport',
+          data: {
+            entity: {
+              id: config.hasSavingThrow ? 'previous' : targetEntityId,
+              name: config.hasSavingThrow ? 'Current tokens' : targetEntityName
+            },
+            location: {
+              x: config.teleportConfig.x,
+              y: config.teleportConfig.y,
+              name: `[x:${config.teleportConfig.x} y:${config.teleportConfig.y}]`
+            },
+            remotesnap: true,
+            animatepan: true
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+      break;
+
+    case TrapResultType.ACTIVE_EFFECT:
+      // Add saving throw if enabled
+      if (config.hasSavingThrow) {
+        actions.push({
+          action: 'monks-tokenbar.requestroll',
+          data: {
+            entity: {
+              id: targetEntityId,
+              name: targetEntityName
+            },
+            request: config.savingThrow,
+            dc: config.dc.toString(),
+            flavor: config.flavorText || 'Make a saving throw!',
+            rollmode: 'roll',
+            silent: false,
+            fastforward: false,
+            usetokens: 'fail',
+            continue: 'failed'
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+
+      // Active Effect action (applies to tokens that failed saving throw if enabled, or all targets if not)
+      if (config.activeEffectConfig) {
+        actions.push({
+          action: 'activeeffect',
+          data: {
+            entity: {
+              id: config.hasSavingThrow ? 'previous' : targetEntityId,
+              name: config.hasSavingThrow ? 'Current tokens' : targetEntityName
+            },
+            effectid: config.activeEffectConfig.effectid,
+            addeffect: config.activeEffectConfig.addeffect,
+            altereffect: config.activeEffectConfig.altereffect || ''
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+      break;
   }
 
   // Prepare files array (starting image and optionally triggered image)

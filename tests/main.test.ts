@@ -257,21 +257,6 @@ describe('Main Module', () => {
       expect(typeof toolbarCallback).toBe('function');
     });
 
-    it('should add variables viewer tool to tiles toolbar', () => {
-      const mockControls = { tiles: { tools: {} } };
-
-      if (toolbarCallback) {
-        toolbarCallback(mockControls);
-      }
-
-      expect(mockControls.tiles.tools['em-puzzles-view-variables']).toBeDefined();
-      expect(mockControls.tiles.tools['em-puzzles-view-variables'].title).toBe(
-        'EMPUZZLES.SceneVariables'
-      );
-      expect(mockControls.tiles.tools['em-puzzles-view-variables'].icon).toBe('gi-scroll-unfurled');
-      expect(mockControls.tiles.tools['em-puzzles-view-variables'].order).toBe(1003);
-    });
-
     it('should add tile manager tool to tiles toolbar', () => {
       const mockControls = { tiles: { tools: {} } };
 
@@ -284,35 +269,27 @@ describe('Main Module', () => {
         'EMPUZZLES.TileManager'
       );
       expect(mockControls.tiles.tools['em-puzzles-tile-manager'].icon).toBe('gi-card-pile');
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].order).toBe(1004);
+      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].order).toBe(1003);
     });
 
-    it('should add all tools as buttons', () => {
+    it('should add tile manager tool as button', () => {
       const mockControls = { tiles: { tools: {} } };
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      const toolNames = ['em-puzzles-view-variables', 'em-puzzles-tile-manager'];
-
-      toolNames.forEach(toolName => {
-        expect(mockControls.tiles.tools[toolName].button).toBe(true);
-      });
+      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].button).toBe(true);
     });
 
-    it('should assign onClick handlers to all tools', () => {
+    it('should assign onClick handler to tile manager tool', () => {
       const mockControls = { tiles: { tools: {} } };
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      const toolNames = ['em-puzzles-view-variables', 'em-puzzles-tile-manager'];
-
-      toolNames.forEach(toolName => {
-        expect(typeof mockControls.tiles.tools[toolName].onClick).toBe('function');
-      });
+      expect(typeof mockControls.tiles.tools['em-puzzles-tile-manager'].onClick).toBe('function');
     });
 
     it('should handle missing tiles control gracefully', () => {

@@ -1,0 +1,152 @@
+<form>
+  <div class="form-group">
+    <label for="trapName">{{localize "EMPUZZLES.TrapName"}}</label>
+    <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" />
+    <p class="hint">{{localize "EMPUZZLES.TrapNameHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="startingImage">{{localize "EMPUZZLES.StartingImage"}}</label>
+    <div class="form-fields">
+      <input type="text" id="startingImage" name="startingImage" value="{{defaultTrapImage}}" placeholder="path/to/floor.png" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="startingImage" title="Browse Files" tabindex="-1">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+    <p class="hint">{{localize "EMPUZZLES.StartingImageHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="triggeredImage">{{localize "EMPUZZLES.TriggeredImage"}}</label>
+    <div class="form-fields">
+      <input type="text" id="triggeredImage" name="triggeredImage" value="{{defaultTrapTriggeredImage}}" placeholder="path/to/broken-floor.png" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="triggeredImage" title="Browse Files" tabindex="-1">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+    <p class="hint">{{localize "EMPUZZLES.TriggeredImageHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
+    <div class="form-fields">
+      <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+    <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="minRequired">{{localize "EMPUZZLES.MinRequired"}}</label>
+    <input type="number" id="minRequired" name="minRequired" value="" min="1" data-dtype="Number" />
+    <p class="hint">{{localize "EMPUZZLES.MinRequiredHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="targetType">{{localize "EMPUZZLES.TargetType"}}</label>
+    <select id="targetType" name="targetType">
+      {{#each targetTypeOptions as |option|}}
+        <option value="{{option.value}}" {{#if (eq option.value ../defaultTargetType)}}selected{{/if}}>
+          {{localize option.label}}
+        </option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.TargetTypeHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="hasSavingThrow" name="hasSavingThrow" data-saving-throw-checkbox {{#if defaultHasSavingThrow}}checked{{/if}} />
+      {{localize "EMPUZZLES.HasSavingThrow"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.HasSavingThrowHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
+    <select id="resultType" name="resultType" data-result-type-select>
+      {{#each resultTypeOptions as |option|}}
+        <option value="{{option.value}}" {{#if (eq option.value ../defaultResultType)}}selected{{/if}}>
+          {{localize option.label}}
+        </option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.ResultTypeHint"}}</p>
+  </div>
+
+  <div class="saving-throw-fields" style="display: none;">
+    <div class="form-group">
+      <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
+      <select id="savingThrow" name="savingThrow">
+        {{#each savingThrowOptions as |option|}}
+          <option value="{{option.value}}" {{#if (eq option.value "ability:dex")}}selected{{/if}}>
+            {{localize option.label}}
+          </option>
+        {{/each}}
+      </select>
+      <p class="hint">{{localize "EMPUZZLES.SavingThrowHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="dc">{{localize "EMPUZZLES.DC"}}</label>
+      <input type="number" id="dc" name="dc" value="14" min="1" max="30" data-dtype="Number" />
+      <p class="hint">{{localize "EMPUZZLES.DCHint"}}</p>
+    </div>
+  </div>
+
+  <div class="result-type-fields" data-result-type="damage">
+    <div class="form-group">
+      <label for="damageOnFail">{{localize "EMPUZZLES.DamageOnFail"}}</label>
+      <input type="text" id="damageOnFail" name="damageOnFail" value="2d6" placeholder="2d6" />
+      <p class="hint">{{localize "EMPUZZLES.DamageOnFailHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
+      <textarea id="flavorText" name="flavorText" rows="3" placeholder="{{localize 'EMPUZZLES.FlavorTextPlaceholder'}}"></textarea>
+      <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
+    </div>
+  </div>
+
+  <div class="result-type-fields" data-result-type="teleport" style="display: none;">
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.TeleportDestination"}}</label>
+      <button type="button" class="select-position-button" data-action="selectTeleportPosition">
+        <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+      </button>
+      <input type="hidden" name="teleportX" value="{{teleportX}}" />
+      <input type="hidden" name="teleportY" value="{{teleportY}}" />
+      <p class="hint teleport-position-display">
+        {{#if teleportX}}
+          {{localize "EMPUZZLES.SelectedPosition"}}: ({{teleportX}}, {{teleportY}})
+        {{else}}
+          {{localize "EMPUZZLES.NoPositionSelected"}}
+        {{/if}}
+      </p>
+    </div>
+  </div>
+
+  <div class="result-type-fields" data-result-type="activeeffect" style="display: none;">
+    <div class="form-group">
+      <label for="effectId">{{localize "EMPUZZLES.EffectSelect"}}</label>
+      <select id="effectId" name="effectId">
+        {{#each effectOptions as |option|}}
+          <option value="{{option.value}}">{{option.label}}</option>
+        {{/each}}
+      </select>
+      <p class="hint">{{localize "EMPUZZLES.EffectSelectHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="addEffect">{{localize "EMPUZZLES.EffectAction"}}</label>
+      <select id="addEffect" name="addEffect">
+        <option value="add">{{localize "EMPUZZLES.EffectAdd"}}</option>
+        <option value="remove">{{localize "EMPUZZLES.EffectRemove"}}</option>
+        <option value="toggle">{{localize "EMPUZZLES.EffectToggle"}}</option>
+      </select>
+      <p class="hint">{{localize "EMPUZZLES.EffectActionHint"}}</p>
+    </div>
+  </div>
+</form>

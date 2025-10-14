@@ -1,7 +1,10 @@
 import { showSwitchDialog } from './switch-dialog';
 import { showLightDialog } from './light-dialog';
 import { showResetTileDialog } from './reset-dialog';
-import { showTrapDialog } from './trap-dialog';
+import { showDisappearingTrapDialog } from './disappearing-trap-dialog';
+import { showSwitchingTrapDialog } from './switching-trap-dialog';
+import { showActivatingTrapDialog } from './activating-trap-dialog';
+import { showSceneVariablesDialog } from './variables-viewer';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -9,7 +12,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
 /**
  * Tile Manager dialog for viewing and editing all tiles on the scene
  * @extends ApplicationV2
- * @mixes HandlebarsApplication
+ * @mixes HandlebarsApplicationMixin
  */
 export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   sortBy: string = 'name';
@@ -33,7 +36,10 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createSwitch: TileManagerDialog.#onCreateSwitch,
       createLight: TileManagerDialog.#onCreateLight,
       createReset: TileManagerDialog.#onCreateReset,
-      createTrap: TileManagerDialog.#onCreateTrap,
+      createDisappearingTrap: TileManagerDialog.#onCreateDisappearingTrap,
+      createSwitchingTrap: TileManagerDialog.#onCreateSwitchingTrap,
+      createActivatingTrap: TileManagerDialog.#onCreateActivatingTrap,
+      viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
       refreshTiles: TileManagerDialog.#onRefreshTiles,
@@ -295,15 +301,57 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
-   * Handle create trap button click
+   * Handle create disappearing trap button click
    */
-  static async #onCreateTrap(
+  static async #onCreateDisappearingTrap(
     this: TileManagerDialog,
     event: PointerEvent,
     _target: HTMLElement
   ): Promise<void> {
     event.preventDefault();
-    showTrapDialog();
+    showDisappearingTrapDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create switching trap button click
+   */
+  static async #onCreateSwitchingTrap(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showSwitchingTrapDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create activating trap button click
+   */
+  static async #onCreateActivatingTrap(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showActivatingTrapDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle view variables button click
+   */
+  static async #onViewVariables(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showSceneVariablesDialog();
   }
 
   /* -------------------------------------------- */

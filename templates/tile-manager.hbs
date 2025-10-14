@@ -5,9 +5,14 @@
         <strong>{{localize "EMPUZZLES.TotalTiles"}}:</strong> {{tileCount}}
       </div>
     {{/if}}
-    <button type="button" class="refresh-tiles-btn" data-action="refreshTiles" title="{{localize 'EMPUZZLES.Refresh'}}">
-      <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
-    </button>
+    <div class="header-actions">
+      <button type="button" class="refresh-tiles-btn" data-action="refreshTiles" title="{{localize 'EMPUZZLES.Refresh'}}">
+        <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
+      </button>
+      <button type="button" class="view-variables-btn" data-action="viewVariables" title="{{localize 'EMPUZZLES.SceneVariables'}}">
+        <i class="gi-scroll-unfurled"></i> {{localize "EMPUZZLES.SceneVariables"}}
+      </button>
+    </div>
   </div>
 
   <div class="tile-creation-cards">
@@ -38,13 +43,31 @@
         <p class="card-description">{{localize "EMPUZZLES.CreateResetTileDesc"}}</p>
       </div>
     </button>
-    <button type="button" class="create-tile-card create-trap-card" data-action="createTrap">
+    <button type="button" class="create-tile-card create-trap-card" data-action="createDisappearingTrap">
       <div class="card-icon">
-        <i class="gi-spikes"></i>
+        <i class="fa-solid fa-bomb"></i>
       </div>
       <div class="card-content">
-        <h3 class="card-title">{{localize "EMPUZZLES.CreateTrap"}}</h3>
-        <p class="card-description">{{localize "EMPUZZLES.CreateTrapDesc"}}</p>
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateDisappearingTrap"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateDisappearingTrapDesc"}}</p>
+      </div>
+    </button>
+    <button type="button" class="create-tile-card create-trap-card" data-action="createSwitchingTrap">
+      <div class="card-icon">
+        <i class="fa-solid fa-skull-crossbones"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateSwitchingTrap"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateSwitchingTrapDesc"}}</p>
+      </div>
+    </button>
+    <button type="button" class="create-tile-card create-trap-card" data-action="createActivatingTrap">
+      <div class="card-icon">
+        <i class="fa-solid fa-gears"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateActivatingTrap"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateActivatingTrapDesc"}}</p>
       </div>
     </button>
   </div>
@@ -81,10 +104,10 @@
                 {{#if tile.isVideo}}
                   <video src="{{tile.image}}" class="tile-thumbnail" autoplay loop muted></video>
                 {{else}}
-                  <img src="{{tile.image}}" class="tile-thumbnail" />
+                  <img src="{{tile.image}}" class="tile-thumbnail" alt="" />
                 {{/if}}
               {{else}}
-                <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" />
+                <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" alt="" />
               {{/if}}
               <div class="tile-details">
                 <strong class="tile-name">{{tile.name}}</strong>

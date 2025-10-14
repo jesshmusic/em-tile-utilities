@@ -2,7 +2,6 @@
  * EM Tile Utilities
  * Utility tile creation tools for Monk's Active Tiles
  */
-import { showSceneVariablesDialog } from './dialogs/variables-viewer';
 import { showTileManagerDialog } from './dialogs/tile-manager';
 import buildInfo from '../build-info.json';
 import packageInfo from '../package.json';
@@ -143,16 +142,6 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
   const tools = tilesControl.tools;
   if (!tools) return;
 
-  // Add scene variables viewer tool
-  tools['em-puzzles-view-variables'] = {
-    name: 'em-puzzles-view-variables',
-    title: 'EMPUZZLES.SceneVariables',
-    icon: 'gi-scroll-unfurled',
-    button: true,
-    onClick: () => showSceneVariablesDialog(),
-    order: 1003
-  };
-
   // Add tile manager tool (primary UI for the module)
   tools['em-puzzles-tile-manager'] = {
     name: 'em-puzzles-tile-manager',
@@ -160,6 +149,6 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     icon: 'gi-card-pile',
     button: true,
     onClick: () => showTileManagerDialog(),
-    order: 1004
+    order: 1003
   };
 });

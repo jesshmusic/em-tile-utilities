@@ -477,9 +477,9 @@ const lightId = (light as any).id;
     {{#each tiles as |tile|}}
       <div class='tile-entry' data-tile-id='{{tile.id}}'>
         {{#if tile.image}}
-          <img src='{{tile.image}}' class='tile-thumbnail' />
+          <img src='{{tile.image}}' class='tile-thumbnail' alt='' />
         {{else}}
-          <img src='icons/svg/hazard.svg' class='tile-thumbnail tile-thumbnail-placeholder' />
+          <img src='icons/svg/hazard.svg' class='tile-thumbnail tile-thumbnail-placeholder' alt='' />
         {{/if}}
         <span>{{tile.name}}</span>
       </div>
@@ -697,6 +697,120 @@ export interface LightConfig {
 - When you make changes to the module, please run `npm run lint` and `npm run format` to check for style and best practices. Change any issues that are reported.
 - When you create a new file, add it to the VSC.
 - Add JSDoc comments to all public methods and properties.
+
+### Linting Best Practices
+
+**Always run linting before committing:**
+```bash
+npm run lint        # Check for issues
+npm run lint -- --fix  # Auto-fix issues
+npm run format      # Format code with Prettier
+```
+
+**Common Linting Issues and Fixes:**
+
+1. **Import Formatting** - Keep imports on one line when possible:
+   ```typescript
+   // Good
+   import type { SwitchConfig, LightConfig, TrapConfig } from '../types/module';
+
+   // Bad (triggers prettier/prettier warning)
+   import type {
+     SwitchConfig,
+     LightConfig,
+     TrapConfig
+   } from '../types/module';
+   ```
+
+2. **Return Type Formatting** - Multi-line object return types:
+   ```typescript
+   // Good
+   protected _validateFields(form: HTMLFormElement): {
+     valid: boolean;
+     message?: string;
+   } {
+     // ...
+   }
+
+   // Bad (triggers prettier/prettier warning)
+   protected _validateFields(form: HTMLFormElement): { valid: boolean; message?: string } {
+     // ...
+   }
+   ```
+
+3. **Long String Selectors** - Break onto multiple lines:
+   ```typescript
+   // Good
+   const element = this.element.querySelector(
+     '[data-action="selectPosition"]'
+   ) as HTMLButtonElement;
+
+   // Bad (triggers prettier/prettier warning)
+   const element = this.element.querySelector('[data-action="selectPosition"]') as HTMLButtonElement;
+   ```
+
+4. **Function Parameters** - Keep short, break if long:
+   ```typescript
+   // Good (short)
+   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
+
+   // Good (long - use multi-line)
+   async _onSubmit(
+     _event: SubmitEvent,
+     form: HTMLFormElement,
+     _formData: any
+   ): Promise<void> {
+   ```
+
+5. **Unused Parameters** - Prefix with underscore:
+   ```typescript
+   // Good
+   const handler = (_clickEvent: any) => {
+     // Not using clickEvent
+   };
+
+   // Bad (triggers @typescript-eslint/no-unused-vars)
+   const handler = (clickEvent: any) => {
+     // Not using clickEvent
+   };
+   ```
+
+6. **Union Types** - Multi-line for readability:
+   ```typescript
+   // Good
+   target:
+     | Element
+     | HTMLInputElement
+     | HTMLSelectElement;
+
+   // Bad (triggers prettier/prettier warning)
+   target: Element | HTMLInputElement | HTMLSelectElement;
+   ```
+
+7. **Grid Position Calculations** - Break long method calls:
+   ```typescript
+   // Good
+   const snapped = (canvas as any).grid.getSnappedPosition(
+     position.x,
+     position.y
+   );
+
+   // Bad (triggers prettier/prettier warning)
+   const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+   ```
+
+**Template HTML Validation:**
+- The Handlebars linter may warn about `<div>` elements in certain contexts - these are usually safe to ignore if the template renders correctly
+- Always include `alt` attributes for `<img>` tags (use `alt=""` for decorative images)
+- For placeholder images like `icons/svg/hazard.svg`, these come from Foundry core and don't need path validation
+
+**Auto-Fix Workflow:**
+```bash
+# Make changes
+npm run lint -- --fix  # Auto-fix most issues
+npm run build          # Verify build succeeds
+# Manually fix remaining warnings
+```
 
 ## Version Management
 
