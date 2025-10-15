@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [1.5.0] - 2025-10-14
 
 ### Added
-- adds automatic package release
 
+- adds automatic package release
 
 ## [1.4.0] - 2025-10-14
 
 ### Added
+
 - adds door features to the activate trap
 - adjusts the activate trap
 - separates trap creation into three templates
@@ -18,17 +19,19 @@ All notable changes to this project will be documented in this file.
 - replaces icons for the buttons
 
 ### Fixed
+
 - fixes a bunch of tests
 - fixes a bunch of tests
 
 ### Changed
+
 - adds tests, lint, and prettier
 
 ### Other
+
 - enhancement: adds default settings to the trap
 - enhancement: restyles the tile create buttons
 - change: adds tile history reset checkbox
-
 
 ## [1.3.0] - 2025-10-12
 

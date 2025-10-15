@@ -9,6 +9,7 @@ Built as a companion to [Monk's Active Tiles](https://foundryvtt.com/packages/mo
 ## 🎯 What Can You Create?
 
 ### Interactive Switches & Levers
+
 Place toggleable switches that control doors, traps, lights, or any other element in your scene. Perfect for puzzle rooms where players must flip switches in the right sequence, or simple levers that open secret passages.
 
 - **Visual feedback**: Switches change appearance when activated
@@ -17,6 +18,7 @@ Place toggleable switches that control doors, traps, lights, or any other elemen
 - **Link to anything**: Connect switches to doors, lights, traps, or other tiles
 
 ### Dynamic Lighting
+
 Create torches, lanterns, candles, and magical lights that players can interact with—or that respond automatically to darkness.
 
 - **Manual control**: Double-click to toggle lights on/off
@@ -25,20 +27,24 @@ Create torches, lanterns, candles, and magical lights that players can interact 
 - **Realistic behavior**: Each light creates an actual light source with proper shadows
 
 ### Pressure Plate Traps
+
 Design dangerous floors, tripwires, and hidden hazards that trigger when tokens enter their space.
 
 **Choose your trap style:**
+
 - **Disappearing**: Trap vanishes after triggering (pit traps, collapsing floors)
 - **Switching**: Trap changes appearance when activated (pressure plate depresses, tripwire breaks)
 - **Activating**: Trap triggers other elements (fires arrows, opens doors, releases gas)
 
 **Add consequences:**
+
 - **Damage**: Roll dice for damage with optional saving throws
 - **Teleportation**: Transport unlucky characters to another location
 - **Status effects**: Apply conditions like poisoned, stunned, or blinded
 - **Chain reactions**: Activate multiple tiles, open/close doors, show/hide objects
 
 ### Puzzle Reset Tiles
+
 Save hours of manual work resetting puzzle rooms between game sessions. Place a reset tile that restores everything to its starting state with one click.
 
 - **Restore positions**: Moves tiles back to where they started
@@ -102,6 +108,7 @@ Let's create a simple puzzle: three switches that open a door.
 ### Step 2: Test the Switches
 
 Double-click each switch to test it. You should see:
+
 - The image changes between ON and OFF states
 - A sound effect plays
 - A GM message shows the switch state
@@ -115,21 +122,25 @@ Open the **Variables Viewer** (📋 icon) to see your switch states, then use Mo
 ## 🎨 Examples & Use Cases
 
 ### Classic Dungeon Puzzles
+
 - **Torch puzzle**: Four torches must be lit in the correct sequence
 - **Pressure plates**: Step on plates to open passages or trigger traps
 - **Lever maze**: Pull levers to rotate walls and create a path through
 
 ### Dynamic Environments
+
 - **Campfire**: Players can light/extinguish fires at campsites
 - **Street lamps**: City lights that turn on at dusk, off at dawn
 - **Magical barriers**: Shimmering walls that appear/disappear when touched
 
 ### Dramatic Encounters
+
 - **Collapsing floor**: Tiles disappear as characters walk across them
 - **Arrow traps**: Hidden pressure plates that deal damage to the unwary
 - **Gas vents**: Poison clouds that apply conditions to anyone nearby
 
 ### Session Management
+
 - **Puzzle reset**: One-click restoration of complex puzzle rooms
 - **Trap rearm**: Reset all traps between encounters
 - **Scene cleanup**: Restore doors, lights, and objects to defaults
@@ -141,6 +152,7 @@ Open the **Variables Viewer** (📋 icon) to see your switch states, then use Mo
 Access module settings from **Game Settings → Module Settings → EM Tile Utilities**.
 
 **Customize defaults** for faster creation:
+
 - Default switch images (ON/OFF)
 - Default light images (ON/OFF)
 - Default trap images (armed/triggered)
@@ -153,26 +165,31 @@ Set these once, and every new element you create will use your preferred assets.
 ## 🎓 Tips for Game Masters
 
 ### Organize Your Assets
+
 - Create a dedicated folder for puzzle assets (switches, levers, plates, etc.)
 - Name files clearly: `lever-up.png` and `lever-down.png`
 - Set defaults in module settings to match your asset library
 
 ### Plan Before You Build
+
 - Sketch out puzzle logic on paper first
 - Decide which switches control what
 - Plan trap placement before creating tiles
 
 ### Test Everything
+
 - Always test your puzzles before the session
 - Try unexpected interactions (what if they flip switches backwards?)
 - Use the **Variables Viewer** to verify puzzle state
 
 ### Use the Tile Manager
+
 - Name your tiles descriptively: "North Door Switch", "Hidden Trap 1"
 - The Tile Manager shows all tiles with their names and positions
 - Quickly find and edit specific elements during your session
 
 ### Start Simple
+
 - Begin with one switch and one door
 - Add complexity once you're comfortable
 - Combine tools to create elaborate scenarios

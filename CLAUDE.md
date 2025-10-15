@@ -3,6 +3,7 @@
 This document contains technical notes, patterns, and conventions for working on the EM Tile Utilities project.
 
 > **Note**: This is the **developer documentation**. The README.md is written for end users and contains no implementation details. Keep them separate:
+>
 > - **README.md**: User-focused, benefits-oriented, no technical jargon
 > - **CLAUDE.md**: Developer-focused, implementation details, code patterns
 
@@ -483,7 +484,11 @@ const lightId = (light as any).id;
         {{#if tile.image}}
           <img src='{{tile.image}}' class='tile-thumbnail' alt='' />
         {{else}}
-          <img src='icons/svg/hazard.svg' class='tile-thumbnail tile-thumbnail-placeholder' alt='' />
+          <img
+            src='icons/svg/hazard.svg'
+            class='tile-thumbnail tile-thumbnail-placeholder'
+            alt=''
+          />
         {{/if}}
         <span>{{tile.name}}</span>
       </div>
@@ -705,6 +710,7 @@ export interface LightConfig {
 ### Linting Best Practices
 
 **Always run linting before committing:**
+
 ```bash
 npm run lint        # Check for issues
 npm run lint -- --fix  # Auto-fix issues
@@ -714,19 +720,17 @@ npm run format      # Format code with Prettier
 **Common Linting Issues and Fixes:**
 
 1. **Import Formatting** - Keep imports on one line when possible:
+
    ```typescript
    // Good
    import type { SwitchConfig, LightConfig, TrapConfig } from '../types/module';
 
    // Bad (triggers prettier/prettier warning)
-   import type {
-     SwitchConfig,
-     LightConfig,
-     TrapConfig
-   } from '../types/module';
+   import type { SwitchConfig, LightConfig, TrapConfig } from '../types/module';
    ```
 
 2. **Return Type Formatting** - Multi-line object return types:
+
    ```typescript
    // Good
    protected _validateFields(form: HTMLFormElement): {
@@ -743,6 +747,7 @@ npm run format      # Format code with Prettier
    ```
 
 3. **Long String Selectors** - Break onto multiple lines:
+
    ```typescript
    // Good
    const element = this.element.querySelector(
@@ -750,10 +755,13 @@ npm run format      # Format code with Prettier
    ) as HTMLButtonElement;
 
    // Bad (triggers prettier/prettier warning)
-   const element = this.element.querySelector('[data-action="selectPosition"]') as HTMLButtonElement;
+   const element = this.element.querySelector(
+     '[data-action="selectPosition"]'
+   ) as HTMLButtonElement;
    ```
 
 4. **Function Parameters** - Keep short, break if long:
+
    ```typescript
    // Good (short)
    async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
@@ -767,6 +775,7 @@ npm run format      # Format code with Prettier
    ```
 
 5. **Unused Parameters** - Prefix with underscore:
+
    ```typescript
    // Good
    const handler = (_clickEvent: any) => {
@@ -780,6 +789,7 @@ npm run format      # Format code with Prettier
    ```
 
 6. **Union Types** - Multi-line for readability:
+
    ```typescript
    // Good
    target:
@@ -792,23 +802,23 @@ npm run format      # Format code with Prettier
    ```
 
 7. **Grid Position Calculations** - Break long method calls:
+
    ```typescript
    // Good
-   const snapped = (canvas as any).grid.getSnappedPosition(
-     position.x,
-     position.y
-   );
+   const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
 
    // Bad (triggers prettier/prettier warning)
    const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
    ```
 
 **Template HTML Validation:**
+
 - The Handlebars linter may warn about `<div>` elements in certain contexts - these are usually safe to ignore if the template renders correctly
 - Always include `alt` attributes for `<img>` tags (use `alt=""` for decorative images)
 - For placeholder images like `icons/svg/hazard.svg`, these come from Foundry core and don't need path validation
 
 **Auto-Fix Workflow:**
+
 ```bash
 # Make changes
 npm run lint -- --fix  # Auto-fix most issues
