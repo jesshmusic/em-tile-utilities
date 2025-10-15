@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2025-10-15
+
+### Fixed
+- updatest the version of the module properly
+
+
 ## [1.5.1] - 2025-10-15
 
 ### Added
