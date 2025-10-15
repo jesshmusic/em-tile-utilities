@@ -146,7 +146,7 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
   tools['em-puzzles-tile-manager'] = {
     name: 'em-puzzles-tile-manager',
     title: 'EMPUZZLES.TileManager',
-    icon: 'gi-card-pile',
+    icon: 'gi-floor-hatch',
     button: true,
     onClick: () => showTileManagerDialog(),
     order: 1003

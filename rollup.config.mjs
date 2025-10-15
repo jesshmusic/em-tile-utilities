@@ -23,6 +23,12 @@ export default {
   ],
   watch: {
     include: 'src/**',
-    clearScreen: false
+    clearScreen: false,
+    buildDelay: 100
+  },
+  onwarn(warning, warn) {
+    // Suppress certain warnings
+    if (warning.code === 'THIS_IS_UNDEFINED') return;
+    warn(warning);
   }
 };

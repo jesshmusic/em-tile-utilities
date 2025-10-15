@@ -81,7 +81,15 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       const tileName = tile.name || monksData?.name || 'Unnamed Tile';
       const isActive = monksData?.active !== false;
       const actionCount = monksData?.actions?.length || 0;
-      const variableCount = Object.keys(monksData?.variables || {}).length;
+      const variables = monksData?.variables || {};
+      const variableCount = Object.keys(variables).length;
+
+      // Format variables for display
+      const variablesList = Object.entries(variables).map(([key, value]) => ({
+        key: key,
+        value: String(value),
+        displayValue: typeof value === 'boolean' ? (value ? 'true' : 'false') : String(value)
+      }));
 
       // Check if the texture is a video file
       const imageSrc = tile.texture.src || '';
@@ -104,7 +112,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         active: isActive,
         hasMonksData: !!monksData,
         actionCount: actionCount,
-        variableCount: variableCount
+        variableCount: variableCount,
+        variables: variablesList
       };
     });
 

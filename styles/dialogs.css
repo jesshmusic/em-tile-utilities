@@ -599,6 +599,28 @@
   color: var(--color-text-dark-secondary);
   font-style: italic;
 }
+
+.tile-variables {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.variable-item {
+  font-size: 0.9em;
+}
+
+.variable-item code {
+  background: rgba(252, 231, 147, 0.2);
+  border: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+  font-family: monospace;
+  display: inline-block;
+}
 /* Custom Icons from game-icons.net */
 /* Icons are licensed under CC BY 3.0 - see icons/README.md for attribution */
 
@@ -620,7 +642,8 @@
 .gi-clockwise-rotation::before,
 .gi-scroll-unfurled::before,
 .gi-card-pile::before,
-.gi-spikes::before {
+.gi-spikes::before,
+.gi-floor-hatch::before {
   content: "";
   display: inline-block;
   width: 1em;
@@ -628,6 +651,23 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+}
+
+/* Make toolbar icons bigger */
+#controls .scene-control .control-tool.gi-lever::before,
+#controls .scene-control .control-tool.gi-candle-flame::before,
+#controls .scene-control .control-tool.gi-clockwise-rotation::before,
+#controls .scene-control .control-tool.gi-scroll-unfurled::before,
+#controls .scene-control .control-tool.gi-card-pile::before,
+#controls .scene-control .control-tool.gi-spikes::before {
+  width: 1.6em;
+  height: 1.6em;
+}
+
+/* Floor hatch needs to be even bigger because the artwork is smaller in the viewBox */
+#controls .scene-control .control-tool.gi-floor-hatch::before {
+  width: 2.2em;
+  height: 2.2em;
 }
 
 .gi-lever::before {
@@ -652,6 +692,10 @@
 
 .gi-spikes::before {
   background-image: url('../icons/spikes.svg');
+}
+
+.gi-floor-hatch::before {
+  background-image: url('../icons/floor-hatch.svg');
 }
 
 /* Specific icons */

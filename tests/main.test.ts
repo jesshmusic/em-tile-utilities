@@ -268,7 +268,7 @@ describe('Main Module', () => {
       expect(mockControls.tiles.tools['em-puzzles-tile-manager'].title).toBe(
         'EMPUZZLES.TileManager'
       );
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].icon).toBe('gi-card-pile');
+      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].icon).toBe('gi-floor-hatch');
       expect(mockControls.tiles.tools['em-puzzles-tile-manager'].order).toBe(1003);
     });
 

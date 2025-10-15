@@ -154,6 +154,16 @@
             </div>
           </div>
 
+          {{#if tile.variables.length}}
+            <div class="tile-variables">
+              {{#each tile.variables as |variable|}}
+                <div class="variable-item">
+                  <code>{{variable.key}} = {{variable.displayValue}}</code>
+                </div>
+              {{/each}}
+            </div>
+          {{/if}}
+
           <div class="tile-status">
             {{#if tile.hasMonksData}}
               <span class="status-badge monks-active">

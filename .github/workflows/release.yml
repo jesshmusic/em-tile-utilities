@@ -60,7 +60,7 @@ jobs:
              module.json > module.json.tmp && mv module.json.tmp module.json
 
       - name: Create module archive
-        run: zip -r ./module.zip module.json README.md LICENSE styles/ templates/ lang/ dist/
+        run: zip -r ./module.zip module.json README.md LICENSE styles/ templates/ lang/ dist/ icons/
 
       - name: Commit changes
         run: |
