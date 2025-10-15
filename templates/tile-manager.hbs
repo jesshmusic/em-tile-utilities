@@ -6,6 +6,9 @@
       </div>
     {{/if}}
     <div class="header-actions">
+      <button type="button" class="import-tile-btn" data-action="importTile" title="{{localize 'EMPUZZLES.ImportTile'}}">
+        <i class="fas fa-file-import"></i> {{localize "EMPUZZLES.ImportTile"}}
+      </button>
       <button type="button" class="refresh-tiles-btn" data-action="refreshTiles" title="{{localize 'EMPUZZLES.Refresh'}}">
         <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
       </button>
@@ -141,6 +144,9 @@
               </button>
               <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditTile'}}">
                 <i class="fas fa-edit"></i>
+              </button>
+              <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}">
+                <i class="fas fa-file-export"></i>
               </button>
               <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}">
                 <i class="fas fa-trash"></i>

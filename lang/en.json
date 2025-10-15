@@ -169,6 +169,8 @@
     "DeleteTileConfirmMessage": "Are you sure you want to delete '{name}'? This action cannot be undone.",
     "ToggleVisibility": "Toggle Visibility",
     "ToggleActive": "Toggle Active State",
+    "ExportTile": "Export Tile",
+    "ImportTile": "Import Tile",
     "Search": "Search",
     "SearchPlaceholder": "Filter tiles by name...",
     "ClearSearch": "Clear search",

@@ -45,7 +45,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       refreshTiles: TileManagerDialog.#onRefreshTiles,
       deleteTile: TileManagerDialog.#onDeleteTile,
       toggleVisibility: TileManagerDialog.#onToggleVisibility,
-      toggleActive: TileManagerDialog.#onToggleActive
+      toggleActive: TileManagerDialog.#onToggleActive,
+      exportTile: TileManagerDialog.#onExportTile,
+      importTile: TileManagerDialog.#onImportTile
     }
   };
 
@@ -521,6 +523,119 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const state = newActiveState ? 'active' : 'inactive';
     ui.notifications.info(`Tile is now ${state}`);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle exporting a tile as JSON
+   */
+  static async #onExportTile(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    const tileId = target.dataset.tileId;
+    const tileName = target.dataset.tileName || 'tile';
+
+    if (!tileId) return;
+
+    const tile = canvas.scene?.tiles.get(tileId);
+    if (!tile) {
+      ui.notifications.warn('Tile not found!');
+      return;
+    }
+
+    // Extract tile data (excluding position-specific and scene-specific data)
+    const tileData = {
+      name: (tile as any).name,
+      texture: (tile as any).texture,
+      width: (tile as any).width,
+      height: (tile as any).height,
+      elevation: (tile as any).elevation,
+      sort: (tile as any).sort,
+      rotation: (tile as any).rotation,
+      alpha: (tile as any).alpha,
+      hidden: (tile as any).hidden,
+      locked: (tile as any).locked,
+      occlusion: (tile as any).occlusion,
+      video: (tile as any).video,
+      restrictions: (tile as any).restrictions,
+      flags: (tile as any).flags
+    };
+
+    // Create JSON string
+    const json = JSON.stringify(tileData, null, 2);
+
+    // Use FilePicker's built-in download method if available, otherwise use saveDataToFile
+    const filename = `${tileName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+
+    // Use Foundry's saveDataToFile utility
+    (foundry.utils as any).saveDataToFile(json, 'application/json', filename);
+
+    ui.notifications.info(`Exported: ${tileName}`);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle importing a tile from JSON
+   */
+  static async #onImportTile(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    // Create file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+
+    input.onchange = async (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const tileData = JSON.parse(text);
+
+        // Validate that it has required fields
+        if (!tileData.texture || !tileData.width || !tileData.height) {
+          ui.notifications.error('Invalid tile JSON: missing required fields');
+          return;
+        }
+
+        // Show notification and set up canvas click handler
+        ui.notifications.info('Click on the canvas to place the imported tile...');
+
+        const handler = async (clickEvent: any) => {
+          const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+          const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+          // Create the tile at the clicked position
+          const newTileData = {
+            ...tileData,
+            x: snapped.x,
+            y: snapped.y
+          };
+
+          await canvas.scene?.createEmbeddedDocuments('Tile', [newTileData]);
+
+          ui.notifications.info('Tile imported successfully!');
+          (canvas as any).stage.off('click', handler);
+        };
+
+        (canvas as any).stage.on('click', handler);
+      } catch (error) {
+        console.error('Error importing tile:', error);
+        ui.notifications.error('Failed to import tile: Invalid JSON file');
+      }
+    };
+
+    input.click();
   }
 }
 
