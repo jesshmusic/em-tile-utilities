@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2025-10-15
+
+### Added
+- adds tile import/export
+- adds tile import/export
+- documentation update
+
+
 ## [1.5.0] - 2025-10-14
 
 ### Added
