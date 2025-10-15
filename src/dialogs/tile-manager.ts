@@ -4,6 +4,7 @@ import { showResetTileDialog } from './reset-dialog';
 import { showDisappearingTrapDialog } from './disappearing-trap-dialog';
 import { showSwitchingTrapDialog } from './switching-trap-dialog';
 import { showActivatingTrapDialog } from './activating-trap-dialog';
+import { showCheckVariablesDialog } from './check-variables-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
@@ -39,6 +40,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createDisappearingTrap: TileManagerDialog.#onCreateDisappearingTrap,
       createSwitchingTrap: TileManagerDialog.#onCreateSwitchingTrap,
       createActivatingTrap: TileManagerDialog.#onCreateActivatingTrap,
+      createCheckVariables: TileManagerDialog.#onCreateCheckVariables,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
@@ -349,6 +351,20 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   ): Promise<void> {
     event.preventDefault();
     showActivatingTrapDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create check variables tile button click
+   */
+  static async #onCreateCheckVariables(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showCheckVariablesDialog();
   }
 
   /* -------------------------------------------- */
