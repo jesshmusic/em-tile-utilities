@@ -59,6 +59,16 @@ export async function createSwitchTile(
         chance: 100,
         fileindex: 0,
         actions: [
+          // Initialize variable if it doesn't exist (safe to run on every click)
+          {
+            action: 'setvariable',
+            data: {
+              name: config.variableName,
+              value: `{{default variable.${config.variableName} false}}`,
+              scope: 'scene'
+            },
+            id: foundry.utils.randomID()
+          },
           // Play sound
           {
             action: 'playsound',
