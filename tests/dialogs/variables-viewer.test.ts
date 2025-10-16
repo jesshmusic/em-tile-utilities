@@ -259,7 +259,9 @@ describe('SceneVariablesViewer', () => {
 
       showSceneVariablesDialog();
 
-      expect((global as any).ui.notifications.error).toHaveBeenCalledWith('No active scene!');
+      expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
+        'EM Tiles Error: No active scene!'
+      );
     });
 
     it('should not create dialog when no active scene', () => {

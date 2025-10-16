@@ -180,7 +180,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('No active scene!');
+      ui.notifications.error('EM Tiles Error: No active scene!');
       return;
     }
 

@@ -544,7 +544,9 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, { object: {} });
 
-      expect((global as any).ui.notifications.error).toHaveBeenCalledWith('No active scene!');
+      expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
+        'EM Tiles Error: No active scene!'
+      );
     });
 
     it('should show warning if no tiles selected', async () => {

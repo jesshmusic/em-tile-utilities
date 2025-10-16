@@ -394,7 +394,9 @@ describe('LightConfigDialog', () => {
       const handler = (LightConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      expect((global as any).ui.notifications.error).toHaveBeenCalledWith('No active scene!');
+      expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
+        'EM Tiles Error: No active scene!'
+      );
     });
 
     it('should show info notification for canvas placement', async () => {

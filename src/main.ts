@@ -120,7 +120,7 @@ Hooks.once('init', () => {
 Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
     ui.notifications.error(
-      "EM Tile Utilities requires Monk's Active Tiles to be installed and active."
+      "EM Tiles Error: EM Tile Utilities requires Monk's Active Tiles to be installed and active."
     );
     return;
   }

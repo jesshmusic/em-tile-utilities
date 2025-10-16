@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [1.5.3] - 2025-10-16
 
 ### Added
+
 - removes the check variable tile
 - adds a basic check variables tile
 - adds a new icon and shows variables
-
 
 ## [1.5.2] - 2025-10-15
 

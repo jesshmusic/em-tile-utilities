@@ -5,6 +5,7 @@ import { showDisappearingTrapDialog } from './disappearing-trap-dialog';
 import { showSwitchingTrapDialog } from './switching-trap-dialog';
 import { showActivatingTrapDialog } from './activating-trap-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
+import { showCheckStateDialog } from './check-state-dialog';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -39,6 +40,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createDisappearingTrap: TileManagerDialog.#onCreateDisappearingTrap,
       createSwitchingTrap: TileManagerDialog.#onCreateSwitchingTrap,
       createActivatingTrap: TileManagerDialog.#onCreateActivatingTrap,
+      createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
@@ -354,6 +356,20 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
+   * Handle create check state tile button click
+   */
+  static async #onCreateCheckState(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showCheckStateDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle view variables button click
    */
   static async #onViewVariables(
@@ -613,7 +629,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Validate that it has required fields
         if (!tileData.texture || !tileData.width || !tileData.height) {
-          ui.notifications.error('Invalid tile JSON: missing required fields');
+          ui.notifications.error('EM Tiles Error: Invalid tile JSON: missing required fields');
           return;
         }
 
@@ -639,8 +655,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         (canvas as any).stage.on('click', handler);
       } catch (error) {
-        console.error('Error importing tile:', error);
-        ui.notifications.error('Failed to import tile: Invalid JSON file');
+        console.error('EM Tiles Error: Error importing tile:', error);
+        ui.notifications.error('EM Tiles Error: Failed to import tile: Invalid JSON file');
       }
     };
 

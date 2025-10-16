@@ -440,7 +440,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('No active scene!');
+      ui.notifications.error('EM Tiles Error: No active scene!');
       return;
     }
 
@@ -527,7 +527,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
     if (!hasValidExtension) {
       ui.notifications.error(
-        `Invalid image file: ${resetTileImage}. Please use a valid image file.`
+        `EM Tiles Error: Invalid image file: ${resetTileImage}. Please use a valid image file.`
       );
       return;
     }

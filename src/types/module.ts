@@ -175,3 +175,16 @@ export interface TileReference {
   name: string;
   id: string;
 }
+
+export interface CheckStateConfig {
+  name: string;
+  image: string;
+  tilesToCheck: Array<{
+    tileId: string;
+    tileName: string;
+    variables: Array<{
+      variableName: string;
+      currentValue: string;
+    }>;
+  }>;
+}

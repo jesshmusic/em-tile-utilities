@@ -1,4 +1,10 @@
-import type { SwitchConfig, ResetTileConfig, LightConfig, TrapConfig } from '../types/module';
+import type {
+  SwitchConfig,
+  ResetTileConfig,
+  LightConfig,
+  TrapConfig,
+  CheckStateConfig
+} from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
 
 /**
@@ -65,7 +71,8 @@ export async function createSwitchTile(
             data: {
               name: config.variableName,
               value: `{{default variable.${config.variableName} false}}`,
-              scope: 'scene'
+              scope: 'scene',
+              entity: 'tile'
             },
             id: foundry.utils.randomID()
           },
@@ -91,7 +98,8 @@ export async function createSwitchTile(
             data: {
               name: config.variableName,
               value: `{{not variable.${config.variableName}}}`,
-              scope: 'scene'
+              scope: 'scene',
+              entity: 'tile'
             },
             id: foundry.utils.randomID()
           },
@@ -102,17 +110,26 @@ export async function createSwitchTile(
               text: `${config.name}: {{#if (eq variable.${config.variableName} true)}}ON{{else}}OFF{{/if}}`,
               flavor: '',
               whisper: 'gm',
-              language: ''
+              language: '',
+              entity: '',
+              incharacter: false,
+              chatbubble: 'true',
+              showto: 'gm'
             },
             id: foundry.utils.randomID()
           },
           // Check if ON - if true continue, if false goto "off"
           {
-            action: 'checkvalue',
+            action: 'checkvariable',
             data: {
-              name: `variable.${config.variableName}`,
+              name: config.variableName,
               value: 'true',
-              fail: 'off'
+              fail: 'off',
+              entity: {
+                id: 'tile',
+                name: 'This Tile'
+              },
+              type: 'all'
             },
             id: foundry.utils.randomID()
           },
@@ -927,6 +944,122 @@ export async function createTrapTile(
     },
     visible: true,
     img: config.startingImage
+  };
+
+  await scene.createEmbeddedDocuments('Tile', [tileData]);
+}
+
+/**
+ * Create a check state tile that monitors variables from other tiles
+ */
+export async function createCheckStateTile(
+  scene: Scene,
+  config: CheckStateConfig,
+  x?: number,
+  y?: number
+): Promise<void> {
+  // Get grid size from scene (2x2 grid spaces for check state tile)
+  const gridSize = (canvas as any).grid.size * 2;
+
+  // Default to center if no position provided
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
+  // Build actions array
+  const actions: any[] = [];
+
+  // Build inline code that reads variables from the tiles and displays them
+  const code = `// Check State: ${config.name}
+const scene = canvas.scene;
+if (!scene) {
+  ui.notifications.error("No active scene!");
+  return;
+}
+
+let message = "<h3>${config.name}</h3><table><tr><th>Tile</th><th>Variable</th><th>Value</th></tr>";
+
+${config.tilesToCheck
+  .map(
+    tile => `
+// Check variables from: ${tile.tileName}
+const tile_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')} = scene.tiles.get("${tile.tileId}");
+if (tile_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}) {
+  const vars_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')} = tile_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}.flags["monks-active-tiles"]?.variables || {};
+${tile.variables
+  .map(
+    v => `  const val_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}_${v.variableName.replace(/[^a-zA-Z0-9]/g, '_')} = vars_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}["${v.variableName}"];
+  message += "<tr><td>${tile.tileName}</td><td>${v.variableName}</td><td>" + val_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}_${v.variableName.replace(/[^a-zA-Z0-9]/g, '_')} + "</td></tr>";`
+  )
+  .join('\n')}
+}
+`
+  )
+  .join('\n')}
+
+message += "</table>";
+
+ChatMessage.create({
+  content: message,
+  whisper: ChatMessage.getWhisperRecipients("GM")
+});`;
+
+  // Add the runcode action with inline code
+  actions.push({
+    action: 'runcode',
+    data: {
+      code: code
+    },
+    id: foundry.utils.randomID()
+  });
+
+  const tileData = {
+    texture: {
+      src: config.image,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: 'fill',
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: '#ffffff',
+      alphaThreshold: 0.75
+    },
+    width: gridSize,
+    height: gridSize,
+    x: tileX,
+    y: tileY,
+    elevation: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: false,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      'monks-active-tiles': {
+        name: config.name,
+        active: true,
+        record: false,
+        restriction: 'all',
+        controlled: 'all',
+        trigger: ['dblclick'],
+        allowpaused: false,
+        usealpha: false,
+        pointer: true,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: [],
+        variables: {}
+      }
+    },
+    visible: true,
+    img: config.image
   };
 
   await scene.createEmbeddedDocuments('Tile', [tileData]);

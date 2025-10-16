@@ -676,8 +676,8 @@
 
 /* Floor hatch needs to be even bigger because the artwork is smaller in the viewBox */
 #controls .scene-control .control-tool.gi-floor-hatch::before {
-  width: 2.2em;
-  height: 2.2em;
+  width: 3.5em;
+  height: 3.5em;
 }
 
 .gi-lever::before {
@@ -825,6 +825,73 @@ button .game-icon,
 }
 
 .remove-wall-button:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+
+/* Check State Dialog Styles */
+.check-state-dialog select[name='tileSelect'] {
+  min-width: 200px;
+}
+
+.selected-tiles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.selected-tile-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+}
+
+.selected-tile-item .tile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.selected-tile-item .tile-info strong {
+  font-size: 1.05em;
+}
+
+.selected-tile-item .variables-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selected-tile-item .variables-list code {
+  background: rgba(100, 150, 200, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.selected-tile-item .remove-tile {
+  padding: 0.35rem 0.6rem;
+  font-size: 1em;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(200, 50, 50, 0.2);
+  border-color: rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+  border-radius: 3px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.selected-tile-item .remove-tile:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;

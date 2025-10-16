@@ -87,8 +87,8 @@ describe('tile-helpers', () => {
       expect(setVariable).toBeDefined();
       expect(setVariable.data.name).toBe(switchConfig.variableName);
 
-      const checkValue = actions.find((a: any) => a.action === 'checkvalue');
-      expect(checkValue).toBeDefined();
+      const checkVar = actions.find((a: any) => a.action === 'checkvariable');
+      expect(checkVar).toBeDefined();
     });
 
     it('should include ON and OFF images in files array', async () => {

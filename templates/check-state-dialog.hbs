@@ -1,0 +1,69 @@
+<form>
+  <div class='form-group'>
+    <label for='tileName'>{{localize 'EMPUZZLES.TileName'}}</label>
+    <input type='text' name='tileName' value='{{tileName}}' />
+    <p class='hint'>{{localize 'EMPUZZLES.TileNameHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='tileImage'>{{localize 'EMPUZZLES.Image'}}</label>
+    <div class='file-picker-group'>
+      <input type='text' name='tileImage' value='{{tileImage}}' />
+      <button type='button' class='file-picker' data-target='tileImage' data-type='imagevideo'>
+        <i class='fas fa-file-image'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label>{{localize 'EMPUZZLES.SelectTilesToMonitor'}}</label>
+    {{#if hasTilesWithVariables}}
+      <div style='display: flex; gap: 0.5rem; align-items: flex-start;'>
+        <select name='tileSelect' style='flex: 1;'>
+          <option value=''>{{localize 'EMPUZZLES.ChooseTile'}}</option>
+          {{#each tilesWithVariables as |tile|}}
+            <option value='{{tile.id}}'>{{tile.name}} ({{tile.variableCount}} {{localize
+                'EMPUZZLES.Variables'
+              }})</option>
+          {{/each}}
+        </select>
+        <button type='button' data-action='addTile' class='add-tile-btn'>
+          <i class='fas fa-plus'></i>
+          {{localize 'EMPUZZLES.Add'}}
+        </button>
+      </div>
+      <p class='hint'>{{localize 'EMPUZZLES.SelectTilesToMonitorHint'}}</p>
+    {{else}}
+      <p class='no-content'>{{localize 'EMPUZZLES.NoTilesWithVariables'}}</p>
+    {{/if}}
+  </div>
+
+  {{#if hasSelectedTiles}}
+    <div class='form-group'>
+      <label>{{localize 'EMPUZZLES.MonitoringTiles'}}</label>
+      <div class='selected-tiles-list'>
+        {{#each selectedTiles as |selectedTile|}}
+          <div class='selected-tile-item'>
+            <div class='tile-info'>
+              <strong>{{selectedTile.tileName}}</strong>
+              <div class='variables-list'>
+                {{#each selectedTile.variables as |variable|}}
+                  <code>{{variable.variableName}} = {{variable.currentValue}}</code>
+                {{/each}}
+              </div>
+            </div>
+            <button
+              type='button'
+              class='remove-tile'
+              data-action='removeTile'
+              data-tile-id='{{selectedTile.tileId}}'
+            >
+              <i class='fas fa-times'></i>
+            </button>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+</form>

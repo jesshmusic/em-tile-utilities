@@ -334,7 +334,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('No active scene!');
+      ui.notifications.error('EM Tiles Error: No active scene!');
       return;
     }
 
