@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2025-10-18
+
+### Added
+- works on experimental features
+- attempt 2 at a state tile
+
+
 ## [1.5.3] - 2025-10-16
 
 ### Added
