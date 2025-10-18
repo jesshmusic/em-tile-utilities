@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1] - 2025-10-18
+
+### Other
+- enhancement: cleans up the switch actions
+
+
 ## [1.6.0] - 2025-10-18
 
 ### Added
