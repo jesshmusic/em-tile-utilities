@@ -97,7 +97,7 @@ export async function createSwitchTile(
             action: 'setvariable',
             data: {
               name: config.variableName,
-              value: `{{#if (eq variable.${config.variableName} "ON")}}OFF{{else}}ON{{/if}}`,
+              value: `{{#if (eq variable.${config.variableName} "ON")}}"OFF"{{else}}"ON"{{/if}}`,
               scope: 'scene',
               entity: 'tile'
             },
@@ -123,7 +123,7 @@ export async function createSwitchTile(
             action: 'checkvariable',
             data: {
               name: config.variableName,
-              value: 'ON',
+              value: '"ON"',
               fail: 'off',
               entity: {
                 id: 'tile',
@@ -133,37 +133,31 @@ export async function createSwitchTile(
             },
             id: foundry.utils.randomID()
           },
-          // Change to ON image (fileindex 0)
+          // Change to ON image (first)
           {
             action: 'tileimage',
             data: {
               entity: { id: 'tile', name: 'This Tile' },
-              select: 'previous',
+              select: 'first',
               transition: 'none'
             },
             id: foundry.utils.randomID()
           },
-          // Stop
-          {
-            action: 'stop',
-            data: {},
-            id: foundry.utils.randomID()
-          },
-          // OFF anchor
+          // OFF anchor (stops execution when landed on)
           {
             action: 'anchor',
             data: {
               tag: 'off',
-              stop: false
+              stop: true
             },
             id: foundry.utils.randomID()
           },
-          // Change to OFF image (fileindex 1)
+          // Change to OFF image (last)
           {
             action: 'tileimage',
             data: {
               entity: { id: 'tile', name: 'This Tile' },
-              select: 'next',
+              select: 'last',
               transition: 'none'
             },
             id: foundry.utils.randomID()

@@ -75,20 +75,37 @@ describe('tile-helpers', () => {
       const tileData = callArgs[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      // Should have multiple actions: playsound, setvariable, chatmessage, checkvalue, tileimage, stop, anchor, tileimage
-      expect(actions.length).toBeGreaterThan(5);
+      // Should have 8 actions: setvariable (init), playsound, setvariable (toggle), chatmessage,
+      // checkvariable, tileimage (first), anchor, tileimage (last)
+      expect(actions.length).toBe(8);
 
       // Check for key actions
       const playSound = actions.find((a: any) => a.action === 'playsound');
       expect(playSound).toBeDefined();
       expect(playSound.data.audiofile).toBe(switchConfig.sound);
 
-      const setVariable = actions.find((a: any) => a.action === 'setvariable');
-      expect(setVariable).toBeDefined();
-      expect(setVariable.data.name).toBe(switchConfig.variableName);
+      const setVariables = actions.filter((a: any) => a.action === 'setvariable');
+      expect(setVariables.length).toBe(2); // One for init, one for toggle
+      expect(setVariables[0].data.name).toBe(switchConfig.variableName);
+      expect(setVariables[1].data.name).toBe(switchConfig.variableName);
 
+      // Check checkvariable with quoted value
       const checkVar = actions.find((a: any) => a.action === 'checkvariable');
       expect(checkVar).toBeDefined();
+      expect(checkVar.data.value).toBe('"ON"');
+      expect(checkVar.data.fail).toBe('off');
+
+      // Check tileimage actions use first/last
+      const tileImages = actions.filter((a: any) => a.action === 'tileimage');
+      expect(tileImages.length).toBe(2);
+      expect(tileImages[0].data.select).toBe('first'); // ON image
+      expect(tileImages[1].data.select).toBe('last'); // OFF image
+
+      // Check for anchor with stop: true
+      const anchor = actions.find((a: any) => a.action === 'anchor');
+      expect(anchor).toBeDefined();
+      expect(anchor.data.tag).toBe('off');
+      expect(anchor.data.stop).toBe(true);
     });
 
     it('should include ON and OFF images in files array', async () => {
@@ -111,6 +128,18 @@ describe('tile-helpers', () => {
       const variables = tileData.flags['monks-active-tiles'].variables;
 
       expect(variables[switchConfig.variableName]).toBe('OFF');
+    });
+
+    it('should use quoted values in toggle action', async () => {
+      await createSwitchTile(mockScene, switchConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const toggleAction = actions.filter((a: any) => a.action === 'setvariable')[1]; // Second setvariable is toggle
+      expect(toggleAction.data.value).toContain('"ON"');
+      expect(toggleAction.data.value).toContain('"OFF"');
     });
 
     it('should use default position when not provided', async () => {
