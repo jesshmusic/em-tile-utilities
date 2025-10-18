@@ -65,6 +65,7 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 
 - **FoundryVTT v13** or higher
 - **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** (required dependency)
+- **[Monk's Token Bar](https://foundryvtt.com/packages/monks-tokenbar)** (required dependency)
 
 ---
 
@@ -76,7 +77,7 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 2. Go to **Add-on Modules** → **Install Module**
 3. Search for "**EM Tile Utilities**"
 4. Click **Install**
-5. Enable both **Monk's Active Tiles** and **EM Tile Utilities** in your world
+5. Enable **Monk's Active Tiles**, **Monk's Token Bar**, and **EM Tile Utilities** in your world
 
 ### First Use
 

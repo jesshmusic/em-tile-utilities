@@ -176,6 +176,73 @@ export interface TileReference {
   id: string;
 }
 
+/**
+ * Comparison operators for branch conditions
+ */
+export enum ConditionOperator {
+  EQUALS = 'eq',
+  NOT_EQUALS = 'ne',
+  GREATER_THAN = 'gt',
+  LESS_THAN = 'lt',
+  GREATER_THAN_OR_EQUAL = 'gte',
+  LESS_THAN_OR_EQUAL = 'lte'
+}
+
+/**
+ * Logic connectors for multiple conditions
+ */
+export enum LogicConnector {
+  AND = 'and',
+  OR = 'or'
+}
+
+/**
+ * Branch action category
+ */
+export enum BranchActionCategory {
+  TILE_CHANGE = 'tile',
+  DOOR_CHANGE = 'door'
+}
+
+/**
+ * A single condition in a branch
+ */
+export interface BranchCondition {
+  tileId: string;
+  tileName: string;
+  variableName: string;
+  operator: ConditionOperator;
+  value: string;
+  logicConnector: LogicConnector;
+  isSwitch?: boolean; // True if variable is from a switch tile (ON/OFF values)
+}
+
+/**
+ * A single action to execute when branch matches
+ */
+export interface BranchAction {
+  category: BranchActionCategory;
+  // For tile change:
+  targetTileId?: string;
+  targetTileName?: string;
+  activateMode?: 'activate' | 'deactivate' | 'toggle' | 'nothing';
+  triggerTile?: boolean;
+  showHideMode?: 'show' | 'hide' | 'toggle' | 'nothing';
+  // For door change:
+  wallId?: string;
+  wallName?: string;
+  doorState?: 'open' | 'closed' | 'locked';
+}
+
+/**
+ * A branch with conditions and actions
+ */
+export interface Branch {
+  name: string;
+  conditions: BranchCondition[];
+  actions: BranchAction[];
+}
+
 export interface CheckStateConfig {
   name: string;
   image: string;
@@ -187,4 +254,5 @@ export interface CheckStateConfig {
       currentValue: string;
     }>;
   }>;
+  branches: Branch[];
 }

@@ -1,3 +1,6 @@
+import type { Branch, ConditionOperator, LogicConnector } from '../types/module';
+import { BranchActionCategory } from '../types/module';
+
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
 
@@ -12,6 +15,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     tileName: string;
     variables: Array<{ variableName: string; currentValue: string }>;
   }> = [];
+  branches: Branch[] = [];
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -34,7 +38,15 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     },
     actions: {
       addTile: CheckStateDialog.#onAddTile,
-      removeTile: CheckStateDialog.#onRemoveTile
+      removeTile: CheckStateDialog.#onRemoveTile,
+      addBranch: CheckStateDialog.#onAddBranch,
+      removeBranch: CheckStateDialog.#onRemoveBranch,
+      addCondition: CheckStateDialog.#onAddCondition,
+      removeCondition: CheckStateDialog.#onRemoveCondition,
+      addAction: CheckStateDialog.#onAddAction,
+      removeAction: CheckStateDialog.#onRemoveAction,
+      selectTile: CheckStateDialog.#onSelectTile,
+      selectWall: CheckStateDialog.#onSelectWall
     }
   };
 
@@ -86,6 +98,33 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       .filter((tile: any) => tile !== null)
       .sort((a, b) => a.name.localeCompare(b.name));
 
+    // Collect all unique values from selected tiles' variables
+    const uniqueValues = new Set<string>();
+    this.selectedTiles.forEach(tile => {
+      tile.variables.forEach(variable => {
+        uniqueValues.add(variable.currentValue);
+      });
+    });
+    const possibleValues = Array.from(uniqueValues).sort();
+
+    // Detect which conditions are from switch tiles
+    // A switch tile has variables that only use "ON" or "OFF" values
+    const enrichedBranches = this.branches.map(branch => ({
+      ...branch,
+      conditions: branch.conditions.map(condition => {
+        const tile = this.selectedTiles.find(t => t.tileId === condition.tileId);
+        if (!tile) return condition;
+
+        const variable = tile.variables.find(v => v.variableName === condition.variableName);
+        if (!variable) return condition;
+
+        // Check if this variable is a switch (values are "ON" or "OFF")
+        const isSwitch = variable.currentValue === 'ON' || variable.currentValue === 'OFF';
+
+        return { ...condition, isSwitch };
+      })
+    }));
+
     return {
       ...context,
       tilesWithVariables: tilesWithVariables,
@@ -94,6 +133,9 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       hasSelectedTiles: this.selectedTiles.length > 0,
       tileName: this.tileName,
       tileImage: this.tileImage,
+      branches: enrichedBranches,
+      hasBranches: this.branches.length > 0,
+      possibleValues: possibleValues,
       buttons: [
         {
           type: 'submit',
@@ -133,6 +175,183 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
         this.tileImage = (event.target as HTMLInputElement).value;
       });
     }
+
+    // Set up listeners for branch name inputs
+    this.element.querySelectorAll('.branch-name-input').forEach((input: Element) => {
+      (input as HTMLInputElement).addEventListener('input', (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        if (!isNaN(branchIndex) && this.branches[branchIndex]) {
+          this.branches[branchIndex].name = target.value;
+        }
+      });
+    });
+
+    // Set up listeners for condition variable select
+    this.element.querySelectorAll('.condition-variable-select').forEach((select: Element) => {
+      (select as HTMLSelectElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLSelectElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const conditionIndex = parseInt(target.dataset.conditionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(conditionIndex) &&
+          this.branches[branchIndex]?.conditions[conditionIndex]
+        ) {
+          const condition = this.branches[branchIndex].conditions[conditionIndex];
+          condition.variableName = target.value;
+
+          // Get the tile ID from the selected option
+          const selectedOption = target.options[target.selectedIndex];
+          const tileId = selectedOption.dataset.tileId;
+
+          if (tileId) {
+            const tile = this.selectedTiles.find(t => t.tileId === tileId);
+            if (tile) {
+              condition.tileId = tileId;
+              condition.tileName = tile.tileName;
+              const variable = tile.variables.find(v => v.variableName === target.value);
+              if (variable) {
+                condition.value = variable.currentValue;
+              }
+            }
+          }
+          this.render();
+        }
+      });
+    });
+
+    this.element.querySelectorAll('.condition-connector-select').forEach((select: Element) => {
+      (select as HTMLSelectElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLSelectElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const conditionIndex = parseInt(target.dataset.conditionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(conditionIndex) &&
+          this.branches[branchIndex]?.conditions[conditionIndex]
+        ) {
+          this.branches[branchIndex].conditions[conditionIndex].logicConnector =
+            target.value as any;
+        }
+      });
+    });
+
+    // Set up listeners for condition value radio buttons
+    this.element
+      .querySelectorAll('.condition-value-radio input[type="radio"]')
+      .forEach((radio: Element) => {
+        (radio as HTMLInputElement).addEventListener('change', (event: Event) => {
+          const target = event.target as HTMLInputElement;
+          const branchIndex = parseInt(target.dataset.branchIndex || '');
+          const conditionIndex = parseInt(target.dataset.conditionIndex || '');
+          if (
+            !isNaN(branchIndex) &&
+            !isNaN(conditionIndex) &&
+            this.branches[branchIndex]?.conditions[conditionIndex]
+          ) {
+            this.branches[branchIndex].conditions[conditionIndex].value = target.value;
+          }
+        });
+      });
+
+    // Set up listeners for condition value text inputs
+    this.element.querySelectorAll('.condition-value-input').forEach((input: Element) => {
+      (input as HTMLInputElement).addEventListener('input', (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const conditionIndex = parseInt(target.dataset.conditionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(conditionIndex) &&
+          this.branches[branchIndex]?.conditions[conditionIndex]
+        ) {
+          this.branches[branchIndex].conditions[conditionIndex].value = target.value;
+        }
+      });
+    });
+
+    // Set up listeners for action category select
+    this.element.querySelectorAll('.action-category-select').forEach((select: Element) => {
+      (select as HTMLSelectElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLSelectElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const actionIndex = parseInt(target.dataset.actionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(actionIndex) &&
+          this.branches[branchIndex]?.actions[actionIndex]
+        ) {
+          this.branches[branchIndex].actions[actionIndex].category =
+            target.value as BranchActionCategory;
+          this.render();
+        }
+      });
+    });
+
+    // Set up listeners for door state selects
+    this.element.querySelectorAll('.door-state-select').forEach((select: Element) => {
+      (select as HTMLSelectElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLSelectElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const actionIndex = parseInt(target.dataset.actionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(actionIndex) &&
+          this.branches[branchIndex]?.actions[actionIndex]
+        ) {
+          this.branches[branchIndex].actions[actionIndex].doorState = target.value as any;
+        }
+      });
+    });
+
+    // Set up listeners for activate mode selects
+    this.element.querySelectorAll('.activate-mode-select').forEach((select: Element) => {
+      (select as HTMLSelectElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLSelectElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const actionIndex = parseInt(target.dataset.actionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(actionIndex) &&
+          this.branches[branchIndex]?.actions[actionIndex]
+        ) {
+          this.branches[branchIndex].actions[actionIndex].activateMode = target.value as any;
+        }
+      });
+    });
+
+    // Set up listeners for trigger checkboxes
+    this.element.querySelectorAll('.trigger-checkbox').forEach((checkbox: Element) => {
+      (checkbox as HTMLInputElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const actionIndex = parseInt(target.dataset.actionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(actionIndex) &&
+          this.branches[branchIndex]?.actions[actionIndex]
+        ) {
+          this.branches[branchIndex].actions[actionIndex].triggerTile = target.checked;
+        }
+      });
+    });
+
+    // Set up listeners for show/hide mode selects
+    this.element.querySelectorAll('.showhide-mode-select').forEach((select: Element) => {
+      (select as HTMLSelectElement).addEventListener('change', (event: Event) => {
+        const target = event.target as HTMLSelectElement;
+        const branchIndex = parseInt(target.dataset.branchIndex || '');
+        const actionIndex = parseInt(target.dataset.actionIndex || '');
+        if (
+          !isNaN(branchIndex) &&
+          !isNaN(actionIndex) &&
+          this.branches[branchIndex]?.actions[actionIndex]
+        ) {
+          this.branches[branchIndex].actions[actionIndex].showHideMode = target.value as any;
+        }
+      });
+    });
   }
 
   /* -------------------------------------------- */
@@ -232,7 +451,11 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
   /**
    * Handle form submission
    */
-  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
+  static async #onSubmit(
+    event: SubmitEvent,
+    _form: HTMLFormElement,
+    _formData: any
+  ): Promise<void> {
     event.preventDefault();
     const instance = this as unknown as CheckStateDialog;
 
@@ -252,7 +475,8 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       const config = {
         name: instance.tileName,
         image: instance.tileImage,
-        tilesToCheck: instance.selectedTiles
+        tilesToCheck: instance.selectedTiles,
+        branches: instance.branches
       };
 
       console.log('Check State Config:', config);
@@ -284,6 +508,307 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
         'EM Tiles Error: Failed to initialize Check State tile creation: ' + error.message
       );
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle adding a new branch
+   */
+  static async #onAddBranch(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchCount = this.branches.length + 1;
+    this.branches.push({
+      name: `Branch ${branchCount}`,
+      conditions: [],
+      actions: []
+    });
+
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle removing a branch
+   */
+  static async #onRemoveBranch(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    if (isNaN(branchIndex)) return;
+
+    this.branches.splice(branchIndex, 1);
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle adding a condition to a branch
+   */
+  static async #onAddCondition(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    if (isNaN(branchIndex)) return;
+
+    const branch = this.branches[branchIndex];
+    if (!branch) return;
+
+    // Default to first selected tile's first variable
+    if (this.selectedTiles.length === 0 || this.selectedTiles[0].variables.length === 0) {
+      ui.notifications.warn('Please select tiles with variables first!');
+      return;
+    }
+
+    const firstTile = this.selectedTiles[0];
+    const firstVar = firstTile.variables[0];
+
+    // Store scroll position before adding
+    const branchesList = this.element.querySelector('.branches-list');
+    const scrollTop = branchesList ? branchesList.scrollTop : 0;
+
+    // Check if this is a switch variable
+    const isSwitch = firstVar.currentValue === 'ON' || firstVar.currentValue === 'OFF';
+
+    branch.conditions.push({
+      tileId: firstTile.tileId,
+      tileName: firstTile.tileName,
+      variableName: firstVar.variableName,
+      operator: 'eq' as ConditionOperator,
+      value: firstVar.currentValue,
+      logicConnector: 'and' as LogicConnector,
+      isSwitch: isSwitch
+    });
+
+    await this.render();
+
+    // Restore scroll position
+    requestAnimationFrame(() => {
+      const newBranchesList = this.element.querySelector('.branches-list');
+      if (newBranchesList) {
+        newBranchesList.scrollTop = scrollTop;
+      }
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle removing a condition from a branch
+   */
+  static async #onRemoveCondition(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    const conditionIndex = parseInt(target.dataset.conditionIndex || '');
+    if (isNaN(branchIndex) || isNaN(conditionIndex)) return;
+
+    const branch = this.branches[branchIndex];
+    if (!branch) return;
+
+    branch.conditions.splice(conditionIndex, 1);
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle adding an action to a branch
+   */
+  static async #onAddAction(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    if (isNaN(branchIndex)) return;
+
+    const branch = this.branches[branchIndex];
+    if (!branch) return;
+
+    // Store scroll position before adding
+    const branchesList = this.element.querySelector('.branches-list');
+    const scrollTop = branchesList ? branchesList.scrollTop : 0;
+
+    // Default to tile change action
+    branch.actions.push({
+      category: BranchActionCategory.TILE_CHANGE,
+      targetTileId: '',
+      targetTileName: '',
+      activateMode: 'nothing',
+      triggerTile: false,
+      showHideMode: 'nothing'
+    });
+
+    await this.render();
+
+    // Restore scroll position
+    requestAnimationFrame(() => {
+      const newBranchesList = this.element.querySelector('.branches-list');
+      if (newBranchesList) {
+        newBranchesList.scrollTop = scrollTop;
+      }
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle removing an action from a branch
+   */
+  static async #onRemoveAction(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    const actionIndex = parseInt(target.dataset.actionIndex || '');
+    if (isNaN(branchIndex) || isNaN(actionIndex)) return;
+
+    const branch = this.branches[branchIndex];
+    if (!branch) return;
+
+    branch.actions.splice(actionIndex, 1);
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle selecting a tile for a trigger action
+   */
+  static async #onSelectTile(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    const actionIndex = parseInt(target.dataset.actionIndex || '');
+    if (isNaN(branchIndex) || isNaN(actionIndex)) return;
+
+    const branch = this.branches[branchIndex];
+    if (!branch) return;
+
+    const action = branch.actions[actionIndex];
+    if (!action) return;
+
+    ui.notifications.info('Click on a tile on the canvas...');
+
+    const handler = (clickEvent: any) => {
+      const tile = clickEvent.interactionData?.object?.document;
+
+      if (!tile) {
+        ui.notifications.warn('No tile selected!');
+        (canvas as any).stage.off('click', handler);
+        return;
+      }
+
+      const monksData = (tile as any).flags['monks-active-tiles'];
+      if (!monksData || !monksData.active) {
+        ui.notifications.warn("Selected tile is not an active Monk's Active Tile!");
+        (canvas as any).stage.off('click', handler);
+        return;
+      }
+
+      action.targetTileId = tile.id;
+      action.targetTileName = tile.name || monksData.name || 'Unnamed Tile';
+      this.render();
+
+      (canvas as any).stage.off('click', handler);
+    };
+
+    (canvas as any).stage.on('click', handler);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle selecting a wall/door for an action
+   */
+  static async #onSelectWall(
+    this: CheckStateDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+
+    const branchIndex = parseInt(target.dataset.branchIndex || '');
+    const actionIndex = parseInt(target.dataset.actionIndex || '');
+    if (isNaN(branchIndex) || isNaN(actionIndex)) return;
+
+    const branch = this.branches[branchIndex];
+    if (!branch) return;
+
+    const action = branch.actions[actionIndex];
+    if (!action) return;
+
+    ui.notifications.info('Click on a wall or door on the canvas...');
+
+    const handler = (clickEvent: any) => {
+      const position = clickEvent.data.getLocalPosition((canvas as any).walls);
+
+      // Find nearest wall
+      const walls = Array.from((canvas.scene.walls as any).values());
+      let nearest: any = null;
+      let minDist = Infinity;
+
+      walls.forEach((wall: any) => {
+        const midX = (wall.c[0] + wall.c[2]) / 2;
+        const midY = (wall.c[1] + wall.c[3]) / 2;
+        const dist = Math.hypot(position.x - midX, position.y - midY);
+
+        if (dist < minDist && dist < 100) {
+          minDist = dist;
+          nearest = wall;
+        }
+      });
+
+      if (nearest) {
+        action.wallId = nearest.id;
+        action.wallName = nearest.door
+          ? `Door ${nearest.id.substring(0, 8)}`
+          : `Wall ${nearest.id.substring(0, 8)}`;
+        action.doorState = nearest.door
+          ? nearest.ds === 0
+            ? 'closed'
+            : nearest.ds === 1
+              ? 'open'
+              : 'locked'
+          : 'closed';
+        this.render();
+      } else {
+        ui.notifications.warn('No wall or door found at that location!');
+      }
+
+      (canvas as any).stage.off('click', handler);
+    };
+
+    (canvas as any).stage.on('click', handler);
   }
 }
 

@@ -549,7 +549,7 @@ describe('TileManagerDialog', () => {
 
     describe('#onDeleteTile', () => {
       it('should delete tile after confirmation', async () => {
-        (global as any).Dialog.confirm = jest.fn(async () => true);
+        (global as any).foundry.applications.api.DialogV2.confirm = jest.fn(async () => true);
 
         const mockTile = mockScene.tiles.get('tile-1');
         const target = { dataset: { tileId: 'tile-1', tileName: 'Alpha Tile' } };
@@ -562,7 +562,7 @@ describe('TileManagerDialog', () => {
       });
 
       it('should not delete if confirmation cancelled', async () => {
-        (global as any).Dialog.confirm = jest.fn(async () => false);
+        (global as any).foundry.applications.api.DialogV2.confirm = jest.fn(async () => false);
 
         const mockTile = mockScene.tiles.get('tile-1');
         const target = { dataset: { tileId: 'tile-1', tileName: 'Alpha Tile' } };

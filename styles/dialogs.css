@@ -663,6 +663,10 @@
   background-position: center;
 }
 
+.gi-floor-hatch::before {
+  background-size: 1.5em;
+}
+
 /* Make toolbar icons bigger */
 #controls .scene-control .control-tool.gi-lever::before,
 #controls .scene-control .control-tool.gi-candle-flame::before,
@@ -840,34 +844,49 @@ button .game-icon,
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
 .selected-tile-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.05);
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--color-border-light-tertiary);
   border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
 }
 
 .selected-tile-item .tile-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .selected-tile-item .tile-info strong {
-  font-size: 1.05em;
+  font-size: 1em;
+  flex-shrink: 0;
 }
 
 .selected-tile-item .variables-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+  overflow-x: auto;
+  flex: 1;
 }
 
 .selected-tile-item .variables-list code {
@@ -876,6 +895,8 @@ button .game-icon,
   border-radius: 3px;
   font-family: monospace;
   font-size: 0.9em;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .selected-tile-item .remove-tile {
@@ -895,5 +916,236 @@ button .game-icon,
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
+}
+
+/* Branch Styles for Check State Dialog */
+.branches-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--color-border-light-tertiary);
+}
+
+.add-branch-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9em;
+}
+
+.branches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.branch-card {
+  padding: 1rem;
+  background: rgba(100, 150, 200, 0.1);
+  border: 1px solid rgba(100, 150, 200, 0.3);
+  border-radius: 5px;
+}
+
+.branch-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+}
+
+.branch-name-input {
+  flex: 1;
+  font-weight: bold;
+  font-size: 1.1em;
+  padding: 0.35rem 0.5rem;
+}
+
+.remove-branch-btn {
+  padding: 0.35rem 0.6rem;
+  background: rgba(200, 50, 50, 0.2);
+  border: 1px solid rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-branch-btn:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+
+.branch-section {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.branch-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.branch-section-header strong {
+  font-size: 1em;
+  color: var(--color-text-dark-primary);
+}
+
+.add-condition-btn,
+.add-action-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85em;
+  background: rgba(100, 200, 100, 0.2);
+  border: 1px solid rgba(100, 200, 100, 0.4);
+  color: #4caf50;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-condition-btn:hover,
+.add-action-btn:hover {
+  background: rgba(100, 200, 100, 0.3);
+  border-color: rgba(100, 200, 100, 0.5);
+}
+
+.conditions-list,
+.actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.condition-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  flex-wrap: nowrap;
+}
+
+.condition-variable-select {
+  min-width: 120px;
+  max-width: 180px;
+  flex-shrink: 1;
+}
+
+.condition-equals {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: var(--color-text-dark-primary);
+  flex-shrink: 0;
+  padding: 0 0.25rem;
+}
+
+.condition-value-radios {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex: 1;
+  flex-wrap: nowrap;
+}
+
+.condition-value-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.condition-value-radio:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-border-light-highlight);
+}
+
+.condition-value-radio input[type='radio'] {
+  cursor: pointer;
+  margin: 0;
+}
+
+.condition-value-radio span {
+  font-weight: 500;
+}
+
+.condition-connector-select {
+  min-width: 80px;
+  font-weight: bold;
+}
+
+.remove-condition-btn,
+.remove-action-btn {
+  padding: 0.25rem 0.5rem;
+  background: rgba(200, 50, 50, 0.2);
+  border: 1px solid rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.remove-condition-btn:hover,
+.remove-action-btn:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  flex-wrap: wrap;
+}
+
+.action-type-select {
+  min-width: 120px;
+  max-width: 150px;
+  flex-shrink: 1;
+}
+
+.action-target-select,
+.door-state-select {
+  min-width: 120px;
+  max-width: 180px;
+  flex: 1;
+}
+
+.select-tile-btn,
+.select-wall-btn {
+  padding: 0.4rem 0.8rem;
+  background: rgba(100, 150, 200, 0.2);
+  border: 1px solid rgba(100, 150, 200, 0.4);
+  color: #64a4c8;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+.select-tile-btn:hover,
+.select-wall-btn:hover {
+  background: rgba(100, 150, 200, 0.3);
+  border-color: rgba(100, 150, 200, 0.5);
 }
 

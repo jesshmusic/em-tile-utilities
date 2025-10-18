@@ -18,7 +18,14 @@
         "id": "monks-active-tiles",
         "type": "module",
         "compatibility": {
-          "minimum": "11.0"
+          "minimum": "13.0"
+        }
+      },
+      {
+        "id": "monks-tokenbar",
+        "type": "module",
+        "compatibility": {
+          "minimum": "13.0"
         }
       }
     ]

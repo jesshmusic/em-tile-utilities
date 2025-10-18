@@ -114,6 +114,16 @@ Hooks.once('init', () => {
     type: Number,
     default: 1
   });
+
+  // Register experimental features toggle
+  game.settings.register('em-tile-utilities', 'experimentalFeatures', {
+    name: 'Experimental Features',
+    hint: 'Enable experimental features such as the Check State tile. These features may be incomplete or subject to change.',
+    scope: 'world',
+    config: true,
+    type: Boolean,
+    default: false
+  });
 });
 
 // Check for dependencies
@@ -121,6 +131,13 @@ Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
     ui.notifications.error(
       "EM Tiles Error: EM Tile Utilities requires Monk's Active Tiles to be installed and active."
+    );
+    return;
+  }
+
+  if (!game.modules.get('monks-tokenbar')?.active) {
+    ui.notifications.error(
+      "EM Tiles Error: EM Tile Utilities requires Monk's Token Bar to be installed and active."
     );
     return;
   }

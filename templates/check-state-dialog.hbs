@@ -40,7 +40,7 @@
   </div>
 
   {{#if hasSelectedTiles}}
-    <div class='form-group'>
+    <div class='form-group' style="align-items: flex-start; flex-direction: column;">
       <label>{{localize 'EMPUZZLES.MonitoringTiles'}}</label>
       <div class='selected-tiles-list'>
         {{#each selectedTiles as |selectedTile|}}
@@ -64,6 +64,308 @@
           </div>
         {{/each}}
       </div>
+    </div>
+  {{/if}}
+
+  {{#if hasSelectedTiles}}
+    <div class='form-group branches-section'>
+      <div style='display: flex; justify-content: space-between; align-items: center;'>
+        <label>{{localize 'EMPUZZLES.Branches'}}</label>
+        <button type='button' data-action='addBranch' class='add-branch-btn'>
+          <i class='fas fa-plus'></i>
+          {{localize 'EMPUZZLES.AddBranch'}}
+        </button>
+      </div>
+      <p class='hint'>{{localize 'EMPUZZLES.BranchesHint'}}</p>
+
+      {{#if hasBranches}}
+        <div class='branches-list'>
+          {{#each branches as |branch branchIndex|}}
+            <div class='branch-card'>
+              <div class='branch-header'>
+                <input
+                  type='text'
+                  class='branch-name-input'
+                  value='{{branch.name}}'
+                  placeholder='Branch Name'
+                  data-branch-index='{{branchIndex}}'
+                />
+                <button
+                  type='button'
+                  class='remove-branch-btn'
+                  data-action='removeBranch'
+                  data-branch-index='{{branchIndex}}'
+                >
+                  <i class='fas fa-times'></i>
+                </button>
+              </div>
+
+              <!-- Conditions Section -->
+              <div class='branch-section'>
+                <div class='branch-section-header'>
+                  <strong>{{localize 'EMPUZZLES.Conditions'}}</strong>
+                  <button
+                    type='button'
+                    class='add-condition-btn'
+                    data-action='addCondition'
+                    data-branch-index='{{branchIndex}}'
+                  >
+                    <i class='fas fa-plus'></i>
+                    {{localize 'EMPUZZLES.AddCondition'}}
+                  </button>
+                </div>
+
+                {{#if branch.conditions}}
+                  <div class='conditions-list'>
+                    {{#each branch.conditions as |condition conditionIndex|}}
+                      <div class='condition-item'>
+                        <select
+                          class='condition-variable-select'
+                          data-branch-index='{{branchIndex}}'
+                          data-condition-index='{{conditionIndex}}'
+                        >
+                          {{#each ../../selectedTiles as |tile|}}
+                            {{#each tile.variables as |variable|}}
+                              <option
+                                value='{{variable.variableName}}'
+                                data-tile-id='{{tile.tileId}}'
+                                {{#if (eq variable.variableName condition.variableName)}}selected{{/if}}
+                              >{{tile.tileName}}: {{variable.variableName}}</option>
+                            {{/each}}
+                          {{/each}}
+                        </select>
+
+                        <span class='condition-equals'>=</span>
+
+                        {{#if condition.isSwitch}}
+                          <div class='condition-value-radios'>
+                            <label class='condition-value-radio'>
+                              <input
+                                type='radio'
+                                name='condition-value-{{branchIndex}}-{{conditionIndex}}'
+                                value='ON'
+                                {{#if (eq 'ON' condition.value)}}checked{{/if}}
+                                data-branch-index='{{branchIndex}}'
+                                data-condition-index='{{conditionIndex}}'
+                              />
+                              <span>ON</span>
+                            </label>
+                            <label class='condition-value-radio'>
+                              <input
+                                type='radio'
+                                name='condition-value-{{branchIndex}}-{{conditionIndex}}'
+                                value='OFF'
+                                {{#if (eq 'OFF' condition.value)}}checked{{/if}}
+                                data-branch-index='{{branchIndex}}'
+                                data-condition-index='{{conditionIndex}}'
+                              />
+                              <span>OFF</span>
+                            </label>
+                          </div>
+                        {{else}}
+                          <input
+                            type='text'
+                            class='condition-value-input'
+                            value='{{condition.value}}'
+                            data-branch-index='{{branchIndex}}'
+                            data-condition-index='{{conditionIndex}}'
+                          />
+                        {{/if}}
+
+                        {{#unless @last}}
+                          <select
+                            class='condition-connector-select'
+                            data-branch-index='{{branchIndex}}'
+                            data-condition-index='{{conditionIndex}}'
+                          >
+                            <option value='and' {{#if (eq condition.logicConnector 'and')}}selected{{/if}}>{{localize
+                                'EMPUZZLES.LogicAND'
+                              }}</option>
+                            <option value='or' {{#if (eq condition.logicConnector 'or')}}selected{{/if}}>{{localize
+                                'EMPUZZLES.LogicOR'
+                              }}</option>
+                          </select>
+                        {{/unless}}
+
+                        <button
+                          type='button'
+                          class='remove-condition-btn'
+                          data-action='removeCondition'
+                          data-branch-index='{{branchIndex}}'
+                          data-condition-index='{{conditionIndex}}'
+                        >
+                          <i class='fas fa-times'></i>
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{else}}
+                  <p class='no-content'>{{localize 'EMPUZZLES.NoConditions'}}</p>
+                {{/if}}
+              </div>
+
+              <!-- Actions Section -->
+              <div class='branch-section'>
+                <div class='branch-section-header'>
+                  <strong>{{localize 'EMPUZZLES.Actions'}}</strong>
+                  <button
+                    type='button'
+                    class='add-action-btn'
+                    data-action='addAction'
+                    data-branch-index='{{branchIndex}}'
+                  >
+                    <i class='fas fa-plus'></i>
+                    {{localize 'EMPUZZLES.AddAction'}}
+                  </button>
+                </div>
+
+                {{#if branch.actions}}
+                  <div class='actions-list'>
+                    {{#each branch.actions as |action actionIndex|}}
+                      <div class='action-item'>
+                        <select
+                          class='action-category-select'
+                          data-branch-index='{{branchIndex}}'
+                          data-action-index='{{actionIndex}}'
+                        >
+                          <option value='tile' {{#if (eq action.category 'tile')}}selected{{/if}}>{{localize
+                              'EMPUZZLES.TileChange'
+                            }}</option>
+                          <option value='door' {{#if (eq action.category 'door')}}selected{{/if}}>{{localize
+                              'EMPUZZLES.DoorChange'
+                            }}</option>
+                        </select>
+
+                        {{#if (eq action.category 'tile')}}
+                          <button
+                            type='button'
+                            class='select-tile-btn'
+                            data-action='selectTile'
+                            data-branch-index='{{branchIndex}}'
+                            data-action-index='{{actionIndex}}'
+                          >
+                            <i class='fas fa-crosshairs'></i>
+                            {{#if action.targetTileId}}
+                              {{action.targetTileName}}
+                            {{else}}
+                              {{localize 'EMPUZZLES.SelectTile'}}
+                            {{/if}}
+                          </button>
+
+                          <label class='action-option-label'>
+                            <span>{{localize 'EMPUZZLES.ActivateLabel'}}:</span>
+                            <select
+                              class='activate-mode-select'
+                              data-branch-index='{{branchIndex}}'
+                              data-action-index='{{actionIndex}}'
+                            >
+                              <option value='nothing' {{#if (eq action.activateMode 'nothing')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Nothing'
+                                }}</option>
+                              <option value='activate' {{#if (eq action.activateMode 'activate')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Activate'
+                                }}</option>
+                              <option
+                                value='deactivate'
+                                {{#if (eq action.activateMode 'deactivate')}}selected{{/if}}
+                              >{{localize 'EMPUZZLES.Deactivate'}}</option>
+                              <option value='toggle' {{#if (eq action.activateMode 'toggle')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Toggle'
+                                }}</option>
+                            </select>
+                          </label>
+
+                          <label class='action-option-label'>
+                            <input
+                              type='checkbox'
+                              class='trigger-checkbox'
+                              data-branch-index='{{branchIndex}}'
+                              data-action-index='{{actionIndex}}'
+                              {{#if action.triggerTile}}checked{{/if}}
+                            />
+                            <span>{{localize 'EMPUZZLES.TriggerTile'}}</span>
+                          </label>
+
+                          <label class='action-option-label'>
+                            <span>{{localize 'EMPUZZLES.ShowHideLabel'}}:</span>
+                            <select
+                              class='showhide-mode-select'
+                              data-branch-index='{{branchIndex}}'
+                              data-action-index='{{actionIndex}}'
+                            >
+                              <option value='nothing' {{#if (eq action.showHideMode 'nothing')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Nothing'
+                                }}</option>
+                              <option value='show' {{#if (eq action.showHideMode 'show')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Show'
+                                }}</option>
+                              <option value='hide' {{#if (eq action.showHideMode 'hide')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Hide'
+                                }}</option>
+                              <option value='toggle' {{#if (eq action.showHideMode 'toggle')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.Toggle'
+                                }}</option>
+                            </select>
+                          </label>
+                        {{/if}}
+
+                        {{#if (eq action.category 'door')}}
+                          <button
+                            type='button'
+                            class='select-wall-btn'
+                            data-action='selectWall'
+                            data-branch-index='{{branchIndex}}'
+                            data-action-index='{{actionIndex}}'
+                          >
+                            <i class='fas fa-crosshairs'></i>
+                            {{#if action.wallId}}
+                              {{action.wallName}}
+                            {{else}}
+                              {{localize 'EMPUZZLES.SelectWall'}}
+                            {{/if}}
+                          </button>
+
+                          {{#if action.wallId}}
+                            <select
+                              class='door-state-select'
+                              data-branch-index='{{branchIndex}}'
+                              data-action-index='{{actionIndex}}'
+                            >
+                              <option value='open' {{#if (eq action.doorState 'open')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.DoorOpen'
+                                }}</option>
+                              <option value='closed' {{#if (eq action.doorState 'closed')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.DoorClosed'
+                                }}</option>
+                              <option value='locked' {{#if (eq action.doorState 'locked')}}selected{{/if}}>{{localize
+                                  'EMPUZZLES.DoorLocked'
+                                }}</option>
+                            </select>
+                          {{/if}}
+                        {{/if}}
+
+                        <button
+                          type='button'
+                          class='remove-action-btn'
+                          data-action='removeAction'
+                          data-branch-index='{{branchIndex}}'
+                          data-action-index='{{actionIndex}}'
+                        >
+                          <i class='fas fa-times'></i>
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{else}}
+                  <p class='no-content'>{{localize 'EMPUZZLES.NoActions'}}</p>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class='no-content'>{{localize 'EMPUZZLES.NoBranches'}}</p>
+      {{/if}}
     </div>
   {{/if}}
 </form>

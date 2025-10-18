@@ -67,13 +67,20 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     const context = await super._prepareContext(_options);
     const scene = canvas.scene;
 
+    // Get experimental features setting
+    const experimentalFeatures = game.settings.get(
+      'em-tile-utilities',
+      'experimentalFeatures'
+    ) as boolean;
+
     if (!scene) {
       return {
         ...context,
         tiles: [],
         hasTiles: false,
         sortBy: this.sortBy,
-        searchQuery: this.searchQuery
+        searchQuery: this.searchQuery,
+        experimentalFeatures: experimentalFeatures
       };
     }
 
@@ -144,7 +151,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       hasTiles: tiles.length > 0,
       tileCount: tiles.length,
       sortBy: this.sortBy,
-      searchQuery: this.searchQuery
+      searchQuery: this.searchQuery,
+      experimentalFeatures: experimentalFeatures
     };
   }
 
@@ -469,13 +477,15 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       return;
     }
 
-    // Show confirmation dialog
-    const confirmed = await (Dialog as any).confirm({
-      title: game.i18n.localize('EMPUZZLES.DeleteTileConfirmTitle'),
+    // Show confirmation dialog (V2 API)
+    const DialogV2 = (foundry.applications.api as any).DialogV2;
+    const confirmed = await DialogV2.confirm({
+      window: {
+        title: game.i18n.localize('EMPUZZLES.DeleteTileConfirmTitle')
+      },
       content: `<p>${game.i18n.localize('EMPUZZLES.DeleteTileConfirmMessage').replace('{name}', tileName)}</p>`,
-      yes: () => true,
-      no: () => false,
-      defaultYes: false
+      rejectClose: false,
+      modal: true
     });
 
     if (!confirmed) return;

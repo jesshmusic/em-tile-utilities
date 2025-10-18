@@ -103,14 +103,14 @@ describe('tile-helpers', () => {
       expect(files[1].name).toBe(switchConfig.offImage);
     });
 
-    it('should initialize variable to false', async () => {
+    it('should initialize variable to OFF', async () => {
       await createSwitchTile(mockScene, switchConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
       const tileData = callArgs[1][0];
       const variables = tileData.flags['monks-active-tiles'].variables;
 
-      expect(variables[switchConfig.variableName]).toBe(false);
+      expect(variables[switchConfig.variableName]).toBe('OFF');
     });
 
     it('should use default position when not provided', async () => {

@@ -40,6 +40,9 @@ export function mockFoundry() {
           return class extends Base {
             static PARTS = Base.PARTS || {};
           };
+        },
+        DialogV2: {
+          confirm: jest.fn(async () => true)
         }
       }
     }

@@ -70,7 +70,7 @@ export async function createSwitchTile(
             action: 'setvariable',
             data: {
               name: config.variableName,
-              value: `{{default variable.${config.variableName} false}}`,
+              value: `{{default variable.${config.variableName} "OFF"}}`,
               scope: 'scene',
               entity: 'tile'
             },
@@ -97,7 +97,7 @@ export async function createSwitchTile(
             action: 'setvariable',
             data: {
               name: config.variableName,
-              value: `{{not variable.${config.variableName}}}`,
+              value: `{{#if (eq variable.${config.variableName} "ON")}}OFF{{else}}ON{{/if}}`,
               scope: 'scene',
               entity: 'tile'
             },
@@ -107,7 +107,7 @@ export async function createSwitchTile(
           {
             action: 'chatmessage',
             data: {
-              text: `${config.name}: {{#if (eq variable.${config.variableName} true)}}ON{{else}}OFF{{/if}}`,
+              text: `${config.name}: {{variable.${config.variableName}}}`,
               flavor: '',
               whisper: 'gm',
               language: '',
@@ -118,12 +118,12 @@ export async function createSwitchTile(
             },
             id: foundry.utils.randomID()
           },
-          // Check if ON - if true continue, if false goto "off"
+          // Check if ON - if ON continue, if OFF goto "off"
           {
             action: 'checkvariable',
             data: {
               name: config.variableName,
-              value: 'true',
+              value: 'ON',
               fail: 'off',
               entity: {
                 id: 'tile',
@@ -174,7 +174,7 @@ export async function createSwitchTile(
           { id: foundry.utils.randomID(), name: config.offImage }
         ],
         variables: {
-          [config.variableName]: false
+          [config.variableName]: 'OFF'
         }
       }
     },
@@ -965,52 +965,196 @@ export async function createCheckStateTile(
   const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
   const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
 
-  // Build actions array
+  // Build actions array using actual Monk's Active Tiles actions
   const actions: any[] = [];
 
-  // Build inline code that reads variables from the tiles and displays them
-  const code = `// Check State: ${config.name}
-const scene = canvas.scene;
-if (!scene) {
-  ui.notifications.error("No active scene!");
-  return;
-}
+  // Use standard MAT actions for branching
+  if (config.branches.length === 0) {
+    // No branches - just show a chat message
+    actions.push({
+      action: 'chatmessage',
+      data: {
+        text: `<h3>${config.name}</h3><p><em>No branches configured</em></p>`,
+        flavor: '',
+        whisper: 'gm',
+        language: '',
+        entity: '',
+        incharacter: false,
+        chatbubble: 'false',
+        showto: 'gm'
+      },
+      id: foundry.utils.randomID()
+    });
+  } else {
+    // Process each branch
+    config.branches.forEach((branch, branchIndex) => {
+      // Sanitize branch name for use as anchor tag
+      const sanitizedName = branch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+      const branchAnchor = sanitizedName;
+      const nextBranch = config.branches[branchIndex + 1];
+      const nextBranchAnchor = nextBranch
+        ? nextBranch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+        : 'end';
 
-let message = "<h3>${config.name}</h3><table><tr><th>Tile</th><th>Variable</th><th>Value</th></tr>";
+      // Add anchor for this branch
+      actions.push({
+        action: 'anchor',
+        data: {
+          tag: branchAnchor,
+          stop: false
+        },
+        id: foundry.utils.randomID()
+      });
 
-${config.tilesToCheck
-  .map(
-    tile => `
-// Check variables from: ${tile.tileName}
-const tile_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')} = scene.tiles.get("${tile.tileId}");
-if (tile_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}) {
-  const vars_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')} = tile_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}.flags["monks-active-tiles"]?.variables || {};
-${tile.variables
-  .map(
-    v => `  const val_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}_${v.variableName.replace(/[^a-zA-Z0-9]/g, '_')} = vars_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}["${v.variableName}"];
-  message += "<tr><td>${tile.tileName}</td><td>${v.variableName}</td><td>" + val_${tile.tileId.replace(/[^a-zA-Z0-9]/g, '_')}_${v.variableName.replace(/[^a-zA-Z0-9]/g, '_')} + "</td></tr>";`
-  )
-  .join('\n')}
-}
-`
-  )
-  .join('\n')}
+      // Add conditions as checkvariable actions
+      if (branch.conditions.length > 0) {
+        branch.conditions.forEach(condition => {
+          // Get the tile that has this variable
+          const tile = config.tilesToCheck.find(t =>
+            t.variables.some(v => v.variableName === condition.variableName)
+          );
 
-message += "</table>";
+          if (tile && condition.operator === 'eq') {
+            actions.push({
+              action: 'checkvariable',
+              data: {
+                name: condition.variableName,
+                value: `"${condition.value}"`,
+                fail: nextBranchAnchor,
+                entity: {
+                  id: `Scene.${scene.id}.Tile.${tile.tileId}`,
+                  name: tile.tileName
+                },
+                type: 'all'
+              },
+              id: foundry.utils.randomID()
+            });
+          }
+        });
+      }
 
-ChatMessage.create({
-  content: message,
-  whisper: ChatMessage.getWhisperRecipients("GM")
-});`;
+      // All conditions passed - execute branch actions
+      branch.actions.forEach(action => {
+        if (action.category === 'tile' && action.targetTileId) {
+          // Activate action (if not "nothing")
+          if (action.activateMode && action.activateMode !== 'nothing') {
+            actions.push({
+              action: 'activate',
+              data: {
+                entity: {
+                  id: `Scene.${scene.id}.Tile.${action.targetTileId}`,
+                  name: action.targetTileName || 'Target Tile'
+                },
+                activate: action.activateMode,
+                collection: 'tiles'
+              },
+              id: foundry.utils.randomID()
+            });
+          }
 
-  // Add the runcode action with inline code
-  actions.push({
-    action: 'runcode',
-    data: {
-      code: code
-    },
-    id: foundry.utils.randomID()
-  });
+          // Trigger tile action
+          if (action.triggerTile) {
+            actions.push({
+              action: 'trigger',
+              data: {
+                entity: {
+                  id: `Scene.${scene.id}.Tile.${action.targetTileId}`,
+                  name: action.targetTileName || 'Target Tile'
+                },
+                tileid: action.targetTileId,
+                method: 'dblclick'
+              },
+              id: foundry.utils.randomID()
+            });
+          }
+
+          // Show/Hide action (if not "nothing")
+          if (action.showHideMode && action.showHideMode !== 'nothing') {
+            actions.push({
+              action: 'showhide',
+              data: {
+                entity: {
+                  id: `Scene.${scene.id}.Tile.${action.targetTileId}`,
+                  name: action.targetTileName || 'Target Tile'
+                },
+                collection: 'tiles',
+                hidden: action.showHideMode,
+                fade: 0
+              },
+              id: foundry.utils.randomID()
+            });
+          }
+        } else if (action.category === 'door' && action.wallId && action.doorState) {
+          // Door state change
+          actions.push({
+            action: 'changedoor',
+            data: {
+              entity: {
+                id: `Scene.${scene.id}.Wall.${action.wallId}`,
+                name: action.wallName || 'Door'
+              },
+              type: 'nothing',
+              state: action.doorState.toUpperCase(),
+              movement: 'nothing',
+              light: 'nothing',
+              sight: 'nothing',
+              sound: 'nothing'
+            },
+            id: foundry.utils.randomID()
+          });
+        }
+      });
+
+      // Add chat message showing which branch matched
+      actions.push({
+        action: 'chatmessage',
+        data: {
+          text: `<h3>${config.name}</h3><p><strong>Matched Branch:</strong> ${branch.name}</p>`,
+          flavor: '',
+          whisper: 'gm',
+          language: '',
+          entity: '',
+          incharacter: false,
+          chatbubble: 'false',
+          showto: 'gm'
+        },
+        id: foundry.utils.randomID()
+      });
+
+      // Stop execution after branch executes
+      actions.push({
+        action: 'stop',
+        data: {},
+        id: foundry.utils.randomID()
+      });
+    });
+
+    // Add end anchor
+    actions.push({
+      action: 'anchor',
+      data: {
+        tag: 'end',
+        stop: false
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // If we reach here, no branch matched
+    actions.push({
+      action: 'chatmessage',
+      data: {
+        text: `<h3>${config.name}</h3><p><em>No branch conditions matched</em></p>`,
+        flavor: '',
+        whisper: 'gm',
+        language: '',
+        entity: '',
+        incharacter: false,
+        chatbubble: 'false',
+        showto: 'gm'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
 
   const tileData = {
     texture: {

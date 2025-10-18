@@ -38,6 +38,9 @@ declare global {
     utils: {
       randomID(): string;
     };
+    applications: {
+      api: any;
+    };
   }
 
   interface HooksManager {
@@ -64,6 +67,7 @@ declare global {
     id: string;
     name: string;
     tiles: Collection<Tile>;
+    walls: Collection<any>;
     dimensions: {
       sceneWidth: number;
       sceneHeight: number;
