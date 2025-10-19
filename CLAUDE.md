@@ -175,14 +175,35 @@ To remove the flag:
    # 4. Test existing features to ensure no regressions
    ```
 
-6. **Creating a Pull Request**
+6. **Bump Version Before Creating PR**
 
-   When your feature is ready:
+   **IMPORTANT**: Version must be bumped as part of your PR, not by the workflow.
 
    ```bash
+   # Determine the version bump type:
+   # - patch: Bug fixes, documentation (1.6.1 → 1.6.2)
+   # - minor: New features, enhancements (1.6.1 → 1.7.0)
+   # - major: Breaking changes (1.6.1 → 2.0.0)
+
+   # Run the release script
+   npm run release:patch   # or release:minor or release:major
+
+   # This will:
+   # - Update package.json and module.json versions
+   # - Generate CHANGELOG.md entry from commit messages
+   # - Update build-info.json
+
+   # Commit the version bump
+   git add package.json module.json CHANGELOG.md build-info.json
+   git commit -m "chore: bump version to X.X.X"
+
    # Make sure all changes are committed
    git status
+   ```
 
+7. **Creating a Pull Request**
+
+   ```bash
    # Push your branch to GitHub
    git push -u origin feat/feature-name
    ```
@@ -196,18 +217,18 @@ To remove the flag:
      - Any breaking changes or dependencies
    - Add screenshots or GIFs if the feature has UI changes
    - Mark as "experimental" in the PR title if applicable
-   - **Add a version label** to control the release type (see [Automated Releases](#automated-releases) below):
-     - `patch` - Bug fixes, minor tweaks (1.6.1 → 1.6.2)
-     - `minor` - New features, enhancements (1.6.1 → 1.7.0)
-     - `major` - Breaking changes (1.6.1 → 2.0.0)
+   - **Optional**: Add a version label for documentation:
+     - `patch` - Bug fixes, documentation
+     - `minor` - New features, enhancements
+     - `major` - Breaking changes
 
-7. **Pull Request Best Practices**
+8. **Pull Request Best Practices**
    - **Keep PRs Focused** - One feature per PR makes review easier
    - **Respond to Feedback** - Address review comments promptly
    - **Update Documentation** - Ensure README.md, CLAUDE.md, and code comments are current
    - **Squash If Needed** - Consider squashing commits if the history is messy
 
-8. **After Merging**
+9. **After Merging**
 
    Once the PR is merged:
 
@@ -252,32 +273,28 @@ When a feature has been tested and is ready to be promoted from experimental to 
 
 ## Automated Releases
 
-**IMPORTANT**: Releases are now automated via GitHub Actions when PRs are merged to `main`.
+**IMPORTANT**: Releases are automated via GitHub Actions when PRs are merged to `main`. Version bumps must be done BEFORE creating the PR.
 
 ### How It Works
 
 When a pull request is merged into `main`:
 
 1. The `auto-release.yml` workflow automatically triggers
-2. It checks the PR labels to determine the version bump type:
-   - `major` label → Major version bump (1.6.1 → 2.0.0) - Breaking changes
-   - `minor` label → Minor version bump (1.6.1 → 1.7.0) - New features
-   - `patch` label → Patch version bump (1.6.1 → 1.6.2) - Bug fixes
-   - No label → Defaults to `patch`
-3. The workflow automatically:
-   - Runs `npm run release:{type}` to bump versions and update CHANGELOG
+2. It reads the version from `package.json` (which you already bumped)
+3. It verifies the version is newer than the last tag
+4. The workflow automatically:
    - Builds the project (`npm run build`)
-   - Updates `module.json` with correct download URLs
    - Creates a `module.zip` archive
-   - Commits the version changes
    - Creates a git tag (e.g., `v1.7.0`)
-   - Pushes changes and tags to GitHub
-   - Creates a GitHub Release with changelog
+   - Pushes the tag to GitHub
+   - Creates a GitHub Release with changelog from CHANGELOG.md
    - Notifies FoundryVTT Package API
 
-### Setting Up Repository Labels (One-Time Setup)
+**Note**: No commits are pushed to `main` - the version bump is already part of your PR.
 
-The following labels must exist in your GitHub repository for auto-release to work. Create them once:
+### Optional: Repository Labels for Documentation
+
+Labels are **optional** but helpful for documenting what type of change a PR contains:
 
 1. Go to `https://github.com/YOUR-USERNAME/em-tile-utilities/labels`
 2. Create these labels if they don't exist:
@@ -293,27 +310,18 @@ gh label create "minor" --description "New features and enhancements" --color "0
 gh label create "major" --description "Breaking changes" --color "d93f0b"
 ```
 
-### Adding Version Labels to PRs
+### Adding Labels to PRs (Optional)
+
+Labels don't control the version bump (you do that with `npm run release:X`), but they're useful for documentation:
 
 **On GitHub.com:**
 
 1. Open your pull request
 2. On the right sidebar, click "Labels"
-3. Select the appropriate version label:
-   - Use `patch` for bug fixes and minor improvements
-   - Use `minor` for new features and enhancements
-   - Use `major` for breaking changes
-4. The label should be added before merging
-
-**From the CLI (using gh):**
-
-```bash
-# Add a label to your PR
-gh pr edit <PR-NUMBER> --add-label "minor"
-
-# Example
-gh pr edit 42 --add-label "minor"
-```
+3. Select the label that matches your version bump:
+   - `patch` if you ran `npm run release:patch`
+   - `minor` if you ran `npm run release:minor`
+   - `major` if you ran `npm run release:major`
 
 ### Version Bump Guidelines
 
@@ -341,15 +349,17 @@ gh pr edit 42 --add-label "minor"
 - Major architectural changes
 - Changes that require user migration
 
-### Manual Releases (Fallback)
+### Manual Releases
 
-If you need to create a release manually without merging a PR:
+If you need to trigger a release manually (e.g., after merging without auto-release):
 
-1. Go to GitHub Actions in your repository
-2. Select "Release Version" workflow
-3. Click "Run workflow"
-4. Choose the version type (patch/minor/major)
-5. Click "Run workflow"
+1. Ensure the version has been bumped and merged to `main`
+2. Go to GitHub Actions in your repository
+3. Select "Manual Release" workflow
+4. Click "Run workflow" on the `main` branch
+5. The workflow will create a release from the current version in `package.json`
+
+**Note**: This only works if the version in `package.json` hasn't been released yet. If the tag already exists, the workflow will fail.
 
 ### Changelog Generation
 
@@ -366,6 +376,8 @@ This is why descriptive commit messages following the conventional format are im
 
 ```bash
 # 1. Create feature branch
+git checkout main
+git pull origin main
 git checkout -b feat/teleport-tile
 
 # 2. Develop feature
@@ -373,18 +385,25 @@ git checkout -b feat/teleport-tile
 git add .
 git commit -m "feat: adds teleport tile with sound effects"
 
-# 3. Push to GitHub
+# 3. Bump version before creating PR
+npm run release:minor
+
+# This generates CHANGELOG from commits and updates versions
+git add package.json module.json CHANGELOG.md build-info.json
+git commit -m "chore: bump version to 1.7.0"
+
+# 4. Push to GitHub
 git push -u origin feat/teleport-tile
 
-# 4. Create PR on GitHub with 'minor' label
+# 5. Create PR on GitHub (optionally add 'minor' label for documentation)
 
-# 5. After review, merge PR → Auto-release triggers!
+# 6. After review, merge PR → Auto-release triggers!
 
-# 6. GitHub Actions automatically:
-#    - Bumps version to 1.7.0
-#    - Updates CHANGELOG.md
+# 7. GitHub Actions automatically:
+#    - Reads version 1.7.0 from package.json
+#    - Builds the project
 #    - Creates git tag v1.7.0
-#    - Creates GitHub Release
+#    - Creates GitHub Release with your CHANGELOG
 #    - Publishes to Foundry Package API
 ```
 

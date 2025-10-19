@@ -46,6 +46,8 @@ fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2) + '\n');
 
 // Update module.json
 moduleJson.version = newVersion;
+// Update download URL to match new version
+moduleJson.download = `https://github.com/jesshmusic/em-tile-utilities/releases/download/v${newVersion}/module.zip`;
 fs.writeFileSync(modulePath, JSON.stringify(moduleJson, null, 2) + '\n');
 
 // Generate changelog
