@@ -110,6 +110,284 @@ To remove the flag:
 
 - **Check State Tile** - Complex conditional tile that monitors variables and executes different actions based on conditions
 
+## Feature Development Workflow
+
+**IMPORTANT**: All new features must be developed in a feature branch and start behind the experimental features flag.
+
+### Starting a New Feature
+
+1. **Create a Feature Branch from Main**
+
+   Always branch from `main` to ensure you have the latest stable code:
+
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feat/feature-name
+   ```
+
+2. **Branch Naming Conventions**
+
+   Use prefixes to categorize your work:
+   - `feat/` - New features (e.g., `feat/teleport-tile`, `feat/multi-state-switch`)
+   - `enhancement/` - Improvements to existing features (e.g., `enhancement/switch-animations`)
+   - `fix/` - Bug fixes (e.g., `fix/light-toggle-bug`)
+   - `refactor/` - Code refactoring without behavior changes (e.g., `refactor/tile-helpers`)
+   - `docs/` - Documentation updates (e.g., `docs/api-reference`)
+   - `test/` - Adding or updating tests (e.g., `test/switch-dialog`)
+
+   Use descriptive kebab-case names that clearly indicate what the branch contains.
+
+3. **Put Feature Behind Experimental Flag**
+
+   See the [Experimental Features Policy](#experimental-features-policy) section above for detailed implementation steps. Every new feature MUST:
+   - Be hidden behind the `experimentalFeatures` setting
+   - Be conditionally rendered in templates using `{{#if experimentalFeatures}}`
+   - Be documented as experimental in code comments and commit messages
+
+4. **Development Best Practices**
+   - **Make Small, Focused Commits** - Each commit should represent a single logical change
+   - **Write Descriptive Commit Messages** - Follow the existing style (see `git log` for examples):
+     - Format: `type: description` (e.g., `feat: adds teleport tile`, `fix: resolves switch toggle bug`)
+     - Use present tense ("add" not "added")
+     - Keep first line under 72 characters
+     - Add bullet points for details if needed
+   - **Run Tests Frequently** - Use `npm run watch` and test in Foundry as you develop
+   - **Lint and Format** - Run `npm run lint` and `npm run format` before committing
+   - **Keep CLAUDE.md Updated** - Document new patterns, gotchas, or architectural decisions
+
+5. **Testing Your Feature**
+
+   Before creating a pull request:
+
+   ```bash
+   # Run linting and formatting
+   npm run lint
+   npm run format
+
+   # Build the project
+   npm run build
+
+   # Test in Foundry
+   # 1. Enable experimental features in module settings
+   # 2. Test the new feature thoroughly
+   # 3. Test with experimental features disabled to ensure nothing breaks
+   # 4. Test existing features to ensure no regressions
+   ```
+
+6. **Creating a Pull Request**
+
+   When your feature is ready:
+
+   ```bash
+   # Make sure all changes are committed
+   git status
+
+   # Push your branch to GitHub
+   git push -u origin feat/feature-name
+   ```
+
+   Then on GitHub:
+   - Create a pull request from your feature branch to `main`
+   - Write a clear PR description explaining:
+     - What the feature does
+     - Why it's needed
+     - How to test it
+     - Any breaking changes or dependencies
+   - Add screenshots or GIFs if the feature has UI changes
+   - Mark as "experimental" in the PR title if applicable
+   - **Add a version label** to control the release type (see [Automated Releases](#automated-releases) below):
+     - `patch` - Bug fixes, minor tweaks (1.6.1 → 1.6.2)
+     - `minor` - New features, enhancements (1.6.1 → 1.7.0)
+     - `major` - Breaking changes (1.6.1 → 2.0.0)
+
+7. **Pull Request Best Practices**
+   - **Keep PRs Focused** - One feature per PR makes review easier
+   - **Respond to Feedback** - Address review comments promptly
+   - **Update Documentation** - Ensure README.md, CLAUDE.md, and code comments are current
+   - **Squash If Needed** - Consider squashing commits if the history is messy
+
+8. **After Merging**
+
+   Once the PR is merged:
+
+   ```bash
+   # Switch back to main and pull the latest changes
+   git checkout main
+   git pull origin main
+
+   # Delete the local feature branch (optional)
+   git branch -d feat/feature-name
+
+   # Delete the remote feature branch (optional)
+   git push origin --delete feat/feature-name
+   ```
+
+### Feature Branch Examples
+
+**Good branch names:**
+
+- `feat/teleport-tile` - Adding a new teleport tile type
+- `enhancement/switch-sound-effects` - Improving switch audio options
+- `fix/light-color-picker` - Fixing color picker bug in light dialog
+- `refactor/tile-creation-logic` - Refactoring tile helper functions
+- `docs/handlebars-patterns` - Adding Handlebars documentation
+
+**Bad branch names:**
+
+- `new-stuff` - Too vague
+- `john-working` - Not descriptive
+- `fix` - What are you fixing?
+- `tile` - Which tile? What about it?
+
+### When Features Become Stable
+
+When a feature has been tested and is ready to be promoted from experimental to stable:
+
+1. Remove the `{{#if experimentalFeatures}}` wrapper from templates
+2. Update CLAUDE.md to remove it from "Current Experimental Features"
+3. Update CHANGELOG to note the feature is now stable
+4. Create a PR with these changes
+5. After merge, a minor version release will be created automatically (e.g., 1.6.0 → 1.7.0)
+
+## Automated Releases
+
+**IMPORTANT**: Releases are now automated via GitHub Actions when PRs are merged to `main`.
+
+### How It Works
+
+When a pull request is merged into `main`:
+
+1. The `auto-release.yml` workflow automatically triggers
+2. It checks the PR labels to determine the version bump type:
+   - `major` label → Major version bump (1.6.1 → 2.0.0) - Breaking changes
+   - `minor` label → Minor version bump (1.6.1 → 1.7.0) - New features
+   - `patch` label → Patch version bump (1.6.1 → 1.6.2) - Bug fixes
+   - No label → Defaults to `patch`
+3. The workflow automatically:
+   - Runs `npm run release:{type}` to bump versions and update CHANGELOG
+   - Builds the project (`npm run build`)
+   - Updates `module.json` with correct download URLs
+   - Creates a `module.zip` archive
+   - Commits the version changes
+   - Creates a git tag (e.g., `v1.7.0`)
+   - Pushes changes and tags to GitHub
+   - Creates a GitHub Release with changelog
+   - Notifies FoundryVTT Package API
+
+### Setting Up Repository Labels (One-Time Setup)
+
+The following labels must exist in your GitHub repository for auto-release to work. Create them once:
+
+1. Go to `https://github.com/YOUR-USERNAME/em-tile-utilities/labels`
+2. Create these labels if they don't exist:
+   - **patch** - Color: `#d4c5f9` (purple) - "Bug fixes and minor improvements"
+   - **minor** - Color: `#0e8a16` (green) - "New features and enhancements"
+   - **major** - Color: `#d93f0b` (red) - "Breaking changes"
+
+Alternatively, create them via CLI:
+
+```bash
+gh label create "patch" --description "Bug fixes and minor improvements" --color "d4c5f9"
+gh label create "minor" --description "New features and enhancements" --color "0e8a16"
+gh label create "major" --description "Breaking changes" --color "d93f0b"
+```
+
+### Adding Version Labels to PRs
+
+**On GitHub.com:**
+
+1. Open your pull request
+2. On the right sidebar, click "Labels"
+3. Select the appropriate version label:
+   - Use `patch` for bug fixes and minor improvements
+   - Use `minor` for new features and enhancements
+   - Use `major` for breaking changes
+4. The label should be added before merging
+
+**From the CLI (using gh):**
+
+```bash
+# Add a label to your PR
+gh pr edit <PR-NUMBER> --add-label "minor"
+
+# Example
+gh pr edit 42 --add-label "minor"
+```
+
+### Version Bump Guidelines
+
+**Use `patch` (1.6.1 → 1.6.2) for:**
+
+- Bug fixes
+- Performance improvements
+- Documentation updates
+- Code cleanup/refactoring
+- Minor UI tweaks
+
+**Use `minor` (1.6.1 → 1.7.0) for:**
+
+- New tile types
+- New features
+- New dialogs or tools
+- Promoting experimental features to stable
+- Adding new configuration options
+
+**Use `major` (1.6.1 → 2.0.0) for:**
+
+- Breaking API changes
+- Removing features
+- Foundry version requirement changes
+- Major architectural changes
+- Changes that require user migration
+
+### Manual Releases (Fallback)
+
+If you need to create a release manually without merging a PR:
+
+1. Go to GitHub Actions in your repository
+2. Select "Release Version" workflow
+3. Click "Run workflow"
+4. Choose the version type (patch/minor/major)
+5. Click "Run workflow"
+
+### Changelog Generation
+
+The `scripts/release.js` script automatically generates changelog entries from git commit messages:
+
+- **feat:** commits → "Added" section
+- **fix:** commits → "Fixed" section
+- **chore:**, **refactor:**, **update:** commits → "Changed" section
+- Other commits → "Other" section
+
+This is why descriptive commit messages following the conventional format are important!
+
+### Example Workflow
+
+```bash
+# 1. Create feature branch
+git checkout -b feat/teleport-tile
+
+# 2. Develop feature
+# ... make changes ...
+git add .
+git commit -m "feat: adds teleport tile with sound effects"
+
+# 3. Push to GitHub
+git push -u origin feat/teleport-tile
+
+# 4. Create PR on GitHub with 'minor' label
+
+# 5. After review, merge PR → Auto-release triggers!
+
+# 6. GitHub Actions automatically:
+#    - Bumps version to 1.7.0
+#    - Updates CHANGELOG.md
+#    - Creates git tag v1.7.0
+#    - Creates GitHub Release
+#    - Publishes to Foundry Package API
+```
+
 ## Architecture
 
 ### File Structure

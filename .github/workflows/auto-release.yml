@@ -1,0 +1,133 @@
+name: Auto Release on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  auto-release:
+    # Only run if PR was merged (not just closed)
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine version bump type
+        id: version_type
+        run: |
+          # Check PR labels to determine version type
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+
+          if echo "$LABELS" | grep -q "major"; then
+            echo "type=major" >> $GITHUB_OUTPUT
+            echo "Using MAJOR version bump (breaking changes)"
+          elif echo "$LABELS" | grep -q "minor"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+            echo "Using MINOR version bump (new features)"
+          elif echo "$LABELS" | grep -q "patch"; then
+            echo "type=patch" >> $GITHUB_OUTPUT
+            echo "Using PATCH version bump (bug fixes)"
+          else
+            # Default to patch for unlabeled PRs
+            echo "type=patch" >> $GITHUB_OUTPUT
+            echo "No version label found, defaulting to PATCH"
+          fi
+
+      - name: Bump version and update changelog
+        id: version
+        run: |
+          npm run release:${{ steps.version_type.outputs.type }}
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Update module.json URLs
+        run: |
+          jq --arg version "${{ steps.version.outputs.new_version }}" \
+             --arg repo "${{ github.repository }}" \
+             '.version = $version |
+              .url = "https://github.com/\($repo)" |
+              .manifest = "https://github.com/\($repo)/releases/latest/download/module.json" |
+              .download = "https://github.com/\($repo)/releases/download/v\($version)/module.zip"' \
+             module.json > module.json.tmp && mv module.json.tmp module.json
+
+      - name: Create module archive
+        run: zip -r ./module.zip module.json README.md LICENSE styles/ templates/ lang/ dist/ icons/
+
+      - name: Commit changes
+        run: |
+          git add package.json module.json CHANGELOG.md build-info.json
+          git commit -m "chore: release v${{ steps.version.outputs.new_version }}"
+          git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
+
+      - name: Push changes
+        run: |
+          git push origin main
+          git push origin "v${{ steps.version.outputs.new_version }}"
+
+      - name: Extract latest changelog entry
+        id: changelog
+        run: |
+          CHANGELOG=$(awk '/^## \[/{if(++n==1) flag=1; else flag=0} flag' CHANGELOG.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.version.outputs.new_version }}
+          name: Release v${{ steps.version.outputs.new_version }}
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+
+            **Auto-released from PR #${{ github.event.pull_request.number }}**: ${{ github.event.pull_request.title }}
+          artifacts: './module.json,./module.zip'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false
+
+      - name: Notify FoundryVTT Package Release API
+        run: |
+          curl -X POST https://foundryvtt.com/_api/packages/release_version/ \
+            -H "Content-Type: application/json" \
+            -H "Authorization: ${{ secrets.FOUNDRY_PACKAGE_TOKEN }}" \
+            -d '{
+              "id": "em-tile-utilities",
+              "dry-run": false,
+              "release": {
+                "version": "${{ steps.version.outputs.new_version }}",
+                "manifest": "https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.new_version }}/module.json",
+                "notes": "https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}",
+                "compatibility": {
+                  "minimum": "13",
+                  "verified": "13"
+                }
+              }
+            }'
