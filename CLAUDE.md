@@ -16,6 +16,100 @@ This document contains technical notes, patterns, and conventions for working on
 - FoundryVTT v13+ (uses ApplicationV2 API)
 - Monk's Active Tiles v11.0+ (required module)
 
+## Experimental Features Policy
+
+**IMPORTANT**: All new features MUST start under the experimental features flag.
+
+### Why Use Experimental Features?
+
+- Allows testing new features without affecting stable users
+- Provides a safe way to iterate on incomplete implementations
+- Users can opt-in to try new features while understanding they may change
+- Easier to deprecate or remove features that don't work out
+
+### Implementation Steps
+
+When creating a new feature (dialog, tile type, tool, etc.):
+
+1. **Check the Setting** - The experimental features flag is already registered in `src/main.ts`:
+
+   ```typescript
+   game.settings.register('em-tile-utilities', 'experimentalFeatures', {
+     name: 'Experimental Features',
+     hint: 'Enable experimental features...',
+     scope: 'world',
+     config: true,
+     type: Boolean,
+     default: false, // OFF by default
+     requiresReload: true // Prompts user to reload when toggled
+   });
+   ```
+
+2. **Hide UI Elements** - In `tile-manager.ts`, pass the setting to the template:
+
+   ```typescript
+   async _prepareContext(_options: any): Promise<any> {
+     const experimentalFeatures = game.settings.get(
+       'em-tile-utilities',
+       'experimentalFeatures'
+     ) as boolean;
+
+     return {
+       ...context,
+       experimentalFeatures: experimentalFeatures
+     };
+   }
+   ```
+
+3. **Conditionally Render** - In `tile-manager.hbs`, wrap the feature button:
+
+   ```handlebars
+   {{#if experimentalFeatures}}
+     <button type='button' class='create-tile-card' data-action='createNewFeature'>
+       <div class='card-icon'>
+         <i class='fa-solid fa-icon'></i>
+       </div>
+       <div class='card-content'>
+         <h3 class='card-title'>{{localize 'EMPUZZLES.CreateNewFeature'}}</h3>
+         <p class='card-description'>{{localize 'EMPUZZLES.CreateNewFeatureDesc'}}</p>
+       </div>
+     </button>
+   {{/if}}
+   ```
+
+4. **Add Localization** - In `lang/en.json`:
+
+   ```json
+   {
+     "EMPUZZLES": {
+       "CreateNewFeature": "New Feature Name",
+       "CreateNewFeatureDesc": "Description of what the feature does"
+     }
+   }
+   ```
+
+5. **Document as Experimental** - In code comments and commit messages, clearly mark the feature as experimental.
+
+### When to Remove Experimental Flag
+
+Remove the experimental flag when:
+
+- Feature is fully implemented and tested
+- Feature has been used by beta testers without major issues
+- Feature is stable enough for general use
+- Documentation is complete
+
+To remove the flag:
+
+1. Remove the `{{#if experimentalFeatures}}` wrapper from templates
+2. Remove the experimental note from documentation
+3. Update CHANGELOG to indicate the feature is now stable
+4. Increment minor version (e.g., 1.6.0 → 1.7.0)
+
+### Current Experimental Features
+
+- **Check State Tile** - Complex conditional tile that monitors variables and executes different actions based on conditions
+
 ## Architecture
 
 ### File Structure
@@ -538,9 +632,14 @@ game.settings.register('em-tile-utilities', 'settingName', {
   config: true, // Show in module settings UI
   type: String, // String, Number, Boolean
   default: 'default value',
-  filePicker: 'imagevideo' // Optional: adds file picker button
+  filePicker: 'imagevideo', // Optional: adds file picker button
+  requiresReload: true // Optional: prompts user to reload when changed
 });
 ```
+
+**Important Options:**
+
+- `requiresReload: true` - When set, Foundry will automatically show a dialog asking the user to reload when the setting is changed. Use this for settings that affect UI rendering, feature visibility, or other aspects that require a fresh initialization.
 
 ### Accessing Settings
 
