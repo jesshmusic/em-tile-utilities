@@ -92,9 +92,9 @@ Some checks were not successful
 This branch has no conflicts with the base branch
 ```
 
-## Required Labels
+## Optional Labels for Documentation
 
-The automated release workflow uses GitHub labels to determine version bump types. These labels must be created in your repository.
+GitHub labels can be used to document what type of version bump a PR contains. Labels are optional since the version is controlled by running `npm run release:X` before creating the PR.
 
 ### Creating Version Labels
 
@@ -125,13 +125,15 @@ The automated release workflow uses GitHub labels to determine version bump type
    - Description: `Breaking changes`
    - Color: `#d93f0b` (red)
 
-### Using Labels on Pull Requests
+### Using Labels on Pull Requests (Optional)
 
-When creating a PR, add ONE of the version labels to indicate the type of release:
+Labels are **optional** but helpful for documentation. The version bump is controlled by running `npm run release:X` before creating the PR, not by labels.
 
-- **patch** - For bug fixes, documentation updates, minor tweaks
-- **minor** - For new features, new tile types, enhancements
-- **major** - For breaking changes, API changes, major refactoring
+Add a label that matches your version bump for documentation purposes:
+
+- **patch** - Bug fixes, documentation updates, minor tweaks (you ran `npm run release:patch`)
+- **minor** - New features, tile types, enhancements (you ran `npm run release:minor`)
+- **major** - Breaking changes, API changes (you ran `npm run release:major`)
 
 **Example:**
 
@@ -147,10 +149,7 @@ gh pr edit 42 --add-label "minor"
 
 1. Open your pull request
 2. On the right sidebar, click "Labels"
-3. Select the appropriate version label
-4. The label should be visible before merging
-
-**If no label is added**, the auto-release workflow will default to a `patch` version bump.
+3. Select the label that matches the version bump in your PR
 
 ## GitHub Secrets
 
@@ -233,20 +232,20 @@ The repository has three GitHub Actions workflows:
 
 **What it does:**
 
-1. Reads the PR label (`patch`, `minor`, or `major`)
-2. Bumps version in `package.json` and `module.json`
-3. Updates `CHANGELOG.md` from git commit messages
-4. Builds the project
-5. Creates `module.zip` archive
-6. Commits version changes and creates git tag
-7. Pushes to GitHub
-8. Creates GitHub Release with changelog
-9. Notifies FoundryVTT Package API
+1. Reads the version from `package.json` (already bumped in the PR)
+2. Verifies the version is newer than the last release
+3. Builds the project
+4. Creates `module.zip` archive
+5. Creates git tag and pushes it
+6. Creates GitHub Release with changelog from `CHANGELOG.md`
+7. Notifies FoundryVTT Package API
 
 **Requires:**
 
-- Version label on PR (`patch`, `minor`, or `major`)
+- Version must be bumped in the PR using `npm run release:X`
 - `FOUNDRY_PACKAGE_TOKEN` secret
+
+**Note:** No commits are pushed to `main` - the version bump is already part of your PR, so branch protection rules don't block the workflow.
 
 ### 3. Manual Release Workflow (`release.yml`)
 
@@ -256,15 +255,18 @@ The repository has three GitHub Actions workflows:
 
 **What it does:**
 
-- Same as auto-release, but initiated manually
-- Allows choosing version bump type in the UI
+- Reads the version from `package.json` on `main` branch
+- Checks if the tag already exists (prevents duplicate releases)
+- Builds the project and creates release artifacts
+- Creates git tag and GitHub Release
 
 **When to use:**
 
-- Emergency releases
-- Hotfixes that bypass normal PR process
-- Testing the release process
-- When auto-release fails
+- When auto-release fails or is disabled
+- Re-running a release after fixing issues
+- Creating a release for an already-merged version bump
+
+**Note:** The version must already be bumped and merged to `main`. This workflow doesn't bump versions.
 
 ## Troubleshooting
 
@@ -287,17 +289,17 @@ The repository has three GitHub Actions workflows:
    - Error: API call to FoundryVTT fails
    - Fix: Add the secret in repository settings
 
-2. **No version label on PR**
-   - Default behavior: Uses `patch` bump
-   - Not an error, but might not be intended
+2. **Version wasn't bumped in PR**
+   - Error: "Version was not bumped!"
+   - Fix: Run `npm run release:X` and commit the changes before merging
 
-3. **Merge conflicts**
-   - Error: Cannot commit version changes
-   - Fix: Ensure PR is up-to-date before merging
+3. **Version already released**
+   - Error: Tag already exists
+   - Fix: Check if someone already created this version, or bump to a new version
 
 4. **Build failures**
    - Error: `npm run build` fails
-   - Fix: Ensure code builds locally before merging
+   - Fix: Ensure code builds locally before creating the PR
 
 ### Cannot Merge PR
 
@@ -322,18 +324,20 @@ The repository has three GitHub Actions workflows:
 
 1. ✅ Always create feature branches from up-to-date `main`
 2. ✅ Run `npm run lint` and `npm test` before pushing
-3. ✅ Add appropriate version label to PRs
-4. ✅ Keep PRs focused on single features/fixes
-5. ✅ Write descriptive commit messages following conventional format
+3. ✅ **Bump version with `npm run release:X`** before creating PR
+4. ✅ Add optional version label to PRs for documentation
+5. ✅ Keep PRs focused on single features/fixes
+6. ✅ Write descriptive commit messages following conventional format
 
 ### For Maintainers
 
 1. ✅ Review PRs promptly
-2. ✅ Ensure version labels are correct before merging
-3. ✅ Verify all status checks pass before merging
-4. ✅ Monitor GitHub Actions for workflow failures
-5. ✅ Keep branch protection rules enforced
-6. ✅ Regularly update dependencies and workflows
+2. ✅ **Verify version was bumped** in the PR before merging
+3. ✅ Ensure version labels match the actual bump (if used)
+4. ✅ Verify all status checks pass before merging
+5. ✅ Monitor GitHub Actions for workflow failures
+6. ✅ Keep branch protection rules enforced
+7. ✅ Regularly update dependencies and workflows
 
 ## Additional Resources
 
