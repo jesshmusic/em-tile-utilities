@@ -246,7 +246,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Store the teleport position
       this.teleportX = snapped.x;
@@ -443,7 +443,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const onMouseDown = (event: any) => {
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
       startPos = { x: snapped.x, y: snapped.y };
 
       // Create preview graphics
@@ -455,7 +455,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (!startPos || !previewGraphics) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Calculate width and height
       const width = Math.abs(snapped.x - startPos.x);
@@ -475,7 +475,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (!startPos) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Calculate dimensions
       const width = Math.abs(snapped.x - startPos.x);

@@ -337,7 +337,7 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Update tile data with position
       const tileData = this.selectedTiles.get(tileId);

@@ -3,9 +3,106 @@ import type {
   ResetTileConfig,
   LightConfig,
   TrapConfig,
+  CombatTrapConfig,
   CheckStateConfig
 } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
+
+/**
+ * Get or create the "EM Tile Utilities" folder for trap actors
+ */
+async function getOrCreateTrapActorsFolder(): Promise<string> {
+  // Check if folder already exists
+  const existingFolder = (game as any).folders.find(
+    (f: any) => f.name === 'EM Tile Utilities' && f.type === 'Actor'
+  );
+
+  if (existingFolder) {
+    return existingFolder.id;
+  }
+
+  // Create the folder
+  const folder = await (game as any).folders.documentClass.create({
+    name: 'EM Tile Utilities',
+    type: 'Actor',
+    parent: null
+  });
+
+  return folder.id;
+}
+
+/**
+ * Create a trap actor with a weapon for attack rolls
+ * Returns both the actor ID and weapon ID
+ */
+async function createTrapActor(
+  name: string,
+  attackBonus: number,
+  damageFormula: string,
+  damageType: string
+): Promise<{ actorId: string; weaponId: string }> {
+  const folderId = await getOrCreateTrapActorsFolder();
+
+  // Create the actor
+  const actorData = {
+    name: `${name} (Trap)`,
+    type: 'npc',
+    folder: folderId,
+    img: 'icons/svg/trap.svg',
+    system: {
+      abilities: {
+        str: { value: 10 },
+        dex: { value: 10 },
+        con: { value: 10 },
+        int: { value: 10 },
+        wis: { value: 10 },
+        cha: { value: 10 }
+      }
+    }
+  };
+
+  const actor = await (game as any).actors.documentClass.create(actorData);
+
+  // Create a weapon item for the attack
+  const weaponData = {
+    name: `${name} Attack`,
+    type: 'weapon',
+    system: {
+      quantity: 1,
+      weight: 0,
+      price: { value: 0, denomination: 'gp' },
+      equipped: true,
+      identified: true,
+      activation: { type: 'action', cost: 1, condition: '' },
+      duration: { value: '', units: '' },
+      target: { value: 1, width: null, units: '', type: 'creature' },
+      range: { value: 5, long: null, units: 'ft' },
+      uses: { value: null, max: '', per: null, recovery: '' },
+      consume: { type: '', target: null, amount: null },
+      ability: '',
+      actionType: 'mwak',
+      attackBonus: attackBonus.toString(),
+      chatFlavor: '',
+      critical: { threshold: null, damage: '' },
+      damage: {
+        parts: [[damageFormula, damageType]],
+        versatile: ''
+      },
+      formula: '',
+      save: { ability: '', dc: null, scaling: 'spell' },
+      armor: { value: 10 },
+      hp: { value: 0, max: 0, dt: null, conditions: '' },
+      weaponType: 'simpleM',
+      properties: {},
+      proficient: true
+    }
+  };
+
+  const [weapon] = await actor.createEmbeddedDocuments('Item', [weaponData]);
+  const weaponId = (weapon as any).id;
+
+  return { actorId: actor.id, weaponId: weaponId };
+}
 
 /**
  * Create a switch tile with ON/OFF states
@@ -1198,6 +1295,307 @@ export async function createCheckStateTile(
     },
     visible: true,
     img: config.image
+  };
+
+  await scene.createEmbeddedDocuments('Tile', [tileData]);
+}
+
+/**
+ * Create a combat trap tile that uses attack rolls instead of saving throws
+ * This creates an NPC actor in the "EM Tile Utilities" folder with a weapon configured
+ * to make the attack rolls, and the trap tile uses Monk's Active Tiles "attack" action.
+ */
+export async function createCombatTrapTile(
+  scene: Scene,
+  config: CombatTrapConfig,
+  x?: number,
+  y?: number,
+  width?: number,
+  height?: number
+): Promise<void> {
+  // Get grid size from scene
+  const gridSize = (canvas as any).grid.size;
+
+  // Default to center if no position provided
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
+  // Use provided dimensions or default to grid size
+  const tileWidth = width ?? gridSize;
+  const tileHeight = height ?? gridSize;
+
+  // Create the trap actor with weapon
+  const { actorId, weaponId } = await createTrapActor(
+    config.name,
+    config.attackBonus,
+    config.damageFormula,
+    config.damageType
+  );
+
+  // Place the actor as a hidden token on the scene at the trap location
+  const actor = (game as any).actors.get(actorId);
+  let trapTokenId = '';
+
+  if (actor) {
+    const tokenDocData = {
+      actorId: actorId,
+      name: `${config.name} (Trap)`,
+      x: tileX,
+      y: tileY,
+      width: 1,
+      height: 1,
+      rotation: 0,
+      hidden: true, // Always hidden
+      locked: true, // Lock so it can't be moved accidentally
+      disposition: -1, // Hostile
+      displayName: 0, // Never display name
+      displayBars: 0, // Never display bars
+      alpha: 0.5 // Semi-transparent for GMs
+    };
+
+    const [token] = await scene.createEmbeddedDocuments('Token', [tokenDocData]);
+    trapTokenId = (token as any).id;
+
+    // Store token ID for cleanup
+    (scene as any).setFlag('em-tile-utilities', `trap-token-${actorId}`, trapTokenId);
+  }
+
+  // Build actions array
+  const actions: any[] = [];
+
+  // Create a unique variable name for tracking trigger count
+  const triggerCountVar = `${config.name.replace(/[^a-zA-Z0-9]/g, '_')}_trigger_count`;
+
+  // If maxTriggers is set, implement trigger limiting
+  if (config.maxTriggers > 0) {
+    // Initialize trigger count variable if it doesn't exist (defaults to 0)
+    actions.push({
+      action: 'setvariable',
+      data: {
+        name: triggerCountVar,
+        value: `{{default variable.${triggerCountVar} 0}}`,
+        scope: 'scene',
+        entity: 'tile'
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // Increment the trigger count
+    actions.push({
+      action: 'setvariable',
+      data: {
+        name: triggerCountVar,
+        value: `{{add variable.${triggerCountVar} 1}}`,
+        scope: 'scene',
+        entity: 'tile'
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // Check if we've reached the trigger limit
+    actions.push({
+      action: 'checkvariable',
+      data: {
+        name: triggerCountVar,
+        value: `${config.maxTriggers}`,
+        fail: 'continue_trap',
+        entity: {
+          id: 'tile',
+          name: 'This Tile'
+        },
+        type: 'gte'
+      },
+      id: foundry.utils.randomID()
+    });
+
+    // If limit reached, deactivate the tile and stop
+    actions.push({
+      action: 'activate',
+      data: {
+        entity: {
+          id: 'tile',
+          name: 'This Tile'
+        },
+        activate: 'deactivate',
+        collection: 'tiles'
+      },
+      id: foundry.utils.randomID()
+    });
+
+    actions.push({
+      action: 'chatmessage',
+      data: {
+        text: `${config.name}: Maximum triggers reached (${config.maxTriggers}), trap deactivated.`,
+        flavor: '',
+        whisper: 'gm',
+        language: '',
+        entity: '',
+        incharacter: false,
+        chatbubble: 'false',
+        showto: 'gm'
+      },
+      id: foundry.utils.randomID()
+    });
+
+    actions.push({
+      action: 'stop',
+      data: {},
+      id: foundry.utils.randomID()
+    });
+
+    // Anchor point to continue if limit not reached
+    actions.push({
+      action: 'anchor',
+      data: {
+        tag: 'continue_trap',
+        stop: false
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Action 1: Handle trap visual response
+  if (config.hideTrapOnTrigger) {
+    // Hide the trap tile
+    actions.push({
+      action: 'showhide',
+      data: {
+        entity: {
+          id: 'tile',
+          name: 'This Tile'
+        },
+        collection: 'tiles',
+        hidden: 'hide',
+        fade: 0
+      },
+      id: foundry.utils.randomID()
+    });
+  } else if (config.triggeredImage) {
+    // Change to triggered image
+    actions.push({
+      action: 'tileimage',
+      data: {
+        entity: { id: 'tile', name: 'This Tile' },
+        select: 'next',
+        transition: 'none'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Action 2: Play sound if provided
+  if (config.sound) {
+    actions.push({
+      action: 'playsound',
+      data: {
+        audiofile: config.sound,
+        audiofor: 'everyone',
+        volume: 1,
+        loop: false,
+        fade: 0.25,
+        scenerestrict: false,
+        prevent: false,
+        delay: false,
+        playlist: true
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Action 3: Run the attack with Monk's attack action in "Use" mode (works with MIDI-qol)
+  // Note: Using ID-based reference for actor because Monk's attack action doesn't support tagger references
+  // Monk's Active Tiles handles entity targeting via 'token' and 'within' references
+  const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
+  const targetEntityName =
+    config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+
+  actions.push({
+    action: 'attack',
+    data: {
+      entity: {
+        id: targetEntityId,
+        name: targetEntityName
+      },
+      actor: {
+        id: `Scene.${scene.id}.Token.${trapTokenId}`,
+        name: `${config.name} (Trap)`
+      },
+      itemid: weaponId,
+      rollmode: 'roll',
+      chatbubble: false,
+      attack: {
+        id: weaponId,
+        name: `${config.name} Attack`
+      },
+      rollattack: 'false',
+      chatcard: true,
+      fastforward: true,
+      rolldamage: true
+    },
+    id: foundry.utils.randomID()
+  });
+
+  // Use default trap image if none provided (for hidden traps)
+  const defaultTrapImage = 'icons/svg/trap.svg';
+  const startingImage = config.startingImage || defaultTrapImage;
+  const isHidden = !config.startingImage; // Hide if no image provided
+
+  // Prepare files array (starting image and optionally triggered image)
+  const files: any[] = [{ id: foundry.utils.randomID(), name: startingImage }];
+  if (!config.hideTrapOnTrigger && config.triggeredImage) {
+    files.push({ id: foundry.utils.randomID(), name: config.triggeredImage });
+  }
+
+  const tileData = {
+    texture: {
+      src: startingImage,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: 'fill',
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: '#ffffff',
+      alphaThreshold: 0.75
+    },
+    width: tileWidth,
+    height: tileHeight,
+    x: tileX,
+    y: tileY,
+    elevation: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: isHidden, // Hide tile if no image provided
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      'monks-active-tiles': {
+        name: config.name,
+        active: true,
+        record: true,
+        restriction: 'all',
+        controlled: 'all',
+        trigger: ['enter'],
+        allowpaused: false,
+        usealpha: false,
+        pointer: false,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: files,
+        variables: {},
+        // Store the actor ID for cleanup when tile is deleted
+        'em-trap-actor-id': actorId
+      }
+    },
+    visible: true,
+    img: startingImage
   };
 
   await scene.createEmbeddedDocuments('Tile', [tileData]);

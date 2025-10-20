@@ -97,7 +97,11 @@ export function mockFoundry() {
     },
     grid: {
       size: 100,
-      getSnappedPosition: jest.fn((x: number, y: number) => ({ x, y }))
+      getSnappedPosition: jest.fn((x: number, y: number) => ({ x, y })),
+      getSnappedPoint: jest.fn((position: any, _options?: any) => ({
+        x: position.x,
+        y: position.y
+      }))
     },
     tiles: {
       getLocalPosition: jest.fn((point: any) => point),

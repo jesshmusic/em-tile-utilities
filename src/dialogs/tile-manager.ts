@@ -6,6 +6,7 @@ import { showSwitchingTrapDialog } from './switching-trap-dialog';
 import { showActivatingTrapDialog } from './activating-trap-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
+import { showCombatTrapDialog } from './combat-trap-dialog';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -41,6 +42,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createSwitchingTrap: TileManagerDialog.#onCreateSwitchingTrap,
       createActivatingTrap: TileManagerDialog.#onCreateActivatingTrap,
       createCheckState: TileManagerDialog.#onCreateCheckState,
+      createCombatTrap: TileManagerDialog.#onCreateCombatTrap,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
@@ -378,6 +380,20 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
+   * Handle create combat trap button click
+   */
+  static async #onCreateCombatTrap(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    showCombatTrapDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle view variables button click
    */
   static async #onViewVariables(
@@ -648,7 +664,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         const handler = async (clickEvent: any) => {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
           // Create the tile at the clicked position
           const newTileData = {

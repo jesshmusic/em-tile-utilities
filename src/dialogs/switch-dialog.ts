@@ -145,7 +145,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
 
       // Snap to grid
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Create the switch at the clicked position
       await createSwitchTile(

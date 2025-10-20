@@ -5,15 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [1.6.2] - 2025-10-19
 
 ### Added
+
 - docs: add GitHub repository setup guide
 - adds automated release workflow and feature development guide
 
 ### Changed
+
 - move version bumping to PR process instead of workflow
 
 ### Other
-- enhancement: adds auto-reload prompt for experimental features
 
+- enhancement: adds auto-reload prompt for experimental features
 
 ## [1.6.1] - 2025-10-18
 
