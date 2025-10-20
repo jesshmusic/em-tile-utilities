@@ -1539,109 +1539,34 @@ export async function createCombatTrapTile(
     });
   }
 
-  // Action 3: Run the attack
-  // Use runcode to manually roll attack and damage, bypassing MIDI-qol's targeting issues
-  const attackCode = `
-// EM Tile Utilities - Combat Trap Attack
-const targetType = "${config.targetType}";
-const trapTokenId = "${trapTokenId}";
-const weaponId = "${weaponId}";
-const attackBonus = ${config.attackBonus};
-const damageFormula = "${config.damageFormula}";
-const damageType = "${config.damageType}";
-
-// Get the trap token and actor
-const trapToken = canvas.scene.tokens.get(trapTokenId);
-if (!trapToken) {
-  console.error("EM Tile Utilities - Combat Trap: Trap token not found");
-  return;
-}
-
-const trapActor = trapToken.actor;
-if (!trapActor) {
-  console.error("EM Tile Utilities - Combat Trap: Trap actor not found");
-  return;
-}
-
-// Get the weapon item
-const weapon = trapActor.items.get(weaponId);
-if (!weapon) {
-  console.error("EM Tile Utilities - Combat Trap: Weapon not found");
-  return;
-}
-
-// Determine targets
-let targetTokens = [];
-if (targetType === "${TrapTargetType.TRIGGERING}") {
-  if (token && token.document) {
-    targetTokens = [token.document];
-  }
-} else {
-  if (tokens && tokens.length > 0) {
-    targetTokens = tokens.map(t => t.document).filter(t => t);
-  }
-}
-
-if (targetTokens.length === 0) {
-  console.warn("EM Tile Utilities - Combat Trap: No targets found");
-  return;
-}
-
-console.log(\`EM Tile Utilities - Combat Trap: Attacking \${targetTokens.length} target(s)\`);
-
-// Process each target
-for (const targetToken of targetTokens) {
-  const targetActor = targetToken.actor;
-  if (!targetActor) continue;
-
-  // Roll attack
-  const attackRoll = await new Roll("1d20 + @bonus", { bonus: attackBonus }).evaluate();
-  const attackTotal = attackRoll.total;
-
-  // Get target AC
-  const targetAC = targetActor.system.attributes.ac.value;
-  const isHit = attackTotal >= targetAC;
-
-  // Roll damage if hit
-  let damageRoll = null;
-  if (isHit) {
-    damageRoll = await new Roll(damageFormula).evaluate();
-  }
-
-  // Create chat message
-  const messageContent = \`
-    <div class="dnd5e2 chat-card item-card">
-      <header class="card-header flexrow">
-        <img src="\${weapon.img}" width="36" height="36"/>
-        <h3>\${weapon.name}</h3>
-      </header>
-      <div class="card-content">
-        <p><strong>Attack Roll:</strong> \${attackRoll.total} (d20: \${attackRoll.dice[0].total})</p>
-        <p><strong>Target:</strong> \${targetActor.name} (AC \${targetAC})</p>
-        <p><strong>Result:</strong> \${isHit ? '<span style="color: green;">Hit!</span>' : '<span style="color: red;">Miss!</span>'}</p>
-        \${isHit ? \`<p><strong>Damage:</strong> \${damageRoll.total} \${damageType}</p>\` : ''}
-      </div>
-    </div>
-  \`;
-
-  await ChatMessage.create({
-    speaker: { alias: trapActor.name },
-    content: messageContent,
-    type: CONST.CHAT_MESSAGE_TYPES.OTHER,
-    rolls: isHit ? [attackRoll, damageRoll] : [attackRoll]
-  });
-
-  // Apply damage if hit
-  if (isHit && damageRoll) {
-    await targetActor.applyDamage(damageRoll.total, { multiplier: 1 });
-  }
-}
-`;
+  // Action 3: Run the attack using standard Monk's attack action
+  // With hidden: false on trap token, targeting should work properly now
+  const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
+  const targetEntityName =
+    config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
 
   actions.push({
-    action: 'runcode',
+    action: 'attack',
     data: {
-      code: attackCode
+      entity: {
+        id: targetEntityId,
+        name: targetEntityName
+      },
+      actor: {
+        id: `Scene.${scene.id}.Token.${trapTokenId}`,
+        name: `${config.name} (Trap)`
+      },
+      itemid: weaponId,
+      rollmode: 'roll',
+      chatbubble: false,
+      attack: {
+        id: weaponId,
+        name: `${config.name} Attack`
+      },
+      rollattack: 'false', // Use "Use" mode
+      chatcard: true,
+      fastforward: true,
+      rolldamage: true
     },
     id: foundry.utils.randomID()
   });
