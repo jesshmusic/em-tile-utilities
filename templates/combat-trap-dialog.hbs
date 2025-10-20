@@ -1,0 +1,167 @@
+<form>
+  <div class='form-group'>
+    <label for='trapName'>{{localize 'EMPUZZLES.TrapName'}}</label>
+    <input
+      type='text'
+      id='trapName'
+      name='trapName'
+      value='{{trapName}}'
+      placeholder='{{localize "EMPUZZLES.TrapNamePlaceholder"}}'
+    />
+    <p class='hint'>{{localize 'EMPUZZLES.TrapNameHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='startingImage'>{{localize 'EMPUZZLES.StartingImage'}} ({{localize 'EMPUZZLES.Optional'}})</label>
+    <div class='form-fields'>
+      <input
+        type='text'
+        id='startingImage'
+        name='startingImage'
+        value=''
+        placeholder='path/to/trap.png'
+        data-dtype='String'
+      />
+      <button
+        type='button'
+        class='file-picker'
+        data-type='imagevideo'
+        data-target='startingImage'
+        title='Browse Files'
+        tabindex='-1'
+      >
+        <i class='fas fa-file-import fa-fw'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.CombatTrapStartingImageHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='triggeredImage'>{{localize 'EMPUZZLES.TriggeredImage'}} ({{localize 'EMPUZZLES.Optional'}})</label>
+    <div class='form-fields'>
+      <input
+        type='text'
+        id='triggeredImage'
+        name='triggeredImage'
+        value=''
+        placeholder='path/to/trap-triggered.png'
+        data-dtype='String'
+      />
+      <button
+        type='button'
+        class='file-picker'
+        data-type='imagevideo'
+        data-target='triggeredImage'
+        title='Browse Files'
+        tabindex='-1'
+      >
+        <i class='fas fa-file-import fa-fw'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.TriggeredImageHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label>
+      <input type='checkbox' id='hideTrapOnTrigger' name='hideTrapOnTrigger' />
+      {{localize 'EMPUZZLES.HideTrapOnTrigger'}}
+    </label>
+    <p class='hint'>{{localize 'EMPUZZLES.HideTrapOnTriggerHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='sound'>{{localize 'EMPUZZLES.Sound'}}</label>
+    <div class='form-fields'>
+      <input
+        type='text'
+        id='sound'
+        name='sound'
+        value='{{defaultSound}}'
+        data-dtype='String'
+      />
+      <button
+        type='button'
+        class='file-picker'
+        data-type='audio'
+        data-target='sound'
+        title='Browse Files'
+        tabindex='-1'
+      >
+        <i class='fas fa-file-import fa-fw'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.SoundHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='targetType'>{{localize 'EMPUZZLES.TargetType'}}</label>
+    <select id='targetType' name='targetType'>
+      {{#each targetTypeOptions as |option|}}
+        <option value='{{option.value}}'>
+          {{localize option.label}}
+        </option>
+      {{/each}}
+    </select>
+    <p class='hint'>{{localize 'EMPUZZLES.TargetTypeHint'}}</p>
+  </div>
+
+  <div class='form-group section-header'>
+    <h3>{{localize 'EMPUZZLES.AttackConfiguration'}}</h3>
+  </div>
+
+  <div class='form-group'>
+    <label for='attackBonus'>{{localize 'EMPUZZLES.AttackBonus'}}</label>
+    <input
+      type='number'
+      id='attackBonus'
+      name='attackBonus'
+      value='5'
+      min='-10'
+      max='30'
+      data-dtype='Number'
+    />
+    <p class='hint'>{{localize 'EMPUZZLES.AttackBonusHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='damageFormula'>{{localize 'EMPUZZLES.DamageFormula'}}</label>
+    <input
+      type='text'
+      id='damageFormula'
+      name='damageFormula'
+      value='2d6'
+      placeholder='2d6+3'
+    />
+    <p class='hint'>{{localize 'EMPUZZLES.DamageFormulaHint'}}</p>
+  </div>
+
+  <div class='form-group'>
+    <label for='damageType'>{{localize 'EMPUZZLES.DamageType'}}</label>
+    <select id='damageType' name='damageType'>
+      {{#each damageTypeOptions as |option|}}
+        <option value='{{option.value}}'>
+          {{localize option.label}}
+        </option>
+      {{/each}}
+    </select>
+    <p class='hint'>{{localize 'EMPUZZLES.DamageTypeHint'}}</p>
+  </div>
+
+  <div class='form-group section-header'>
+    <h3>{{localize 'EMPUZZLES.TriggerLimit'}}</h3>
+  </div>
+
+  <div class='form-group'>
+    <label for='maxTriggers'>{{localize 'EMPUZZLES.MaxTriggers'}}</label>
+    <input
+      type='number'
+      id='maxTriggers'
+      name='maxTriggers'
+      value='0'
+      min='0'
+      max='100'
+      data-dtype='Number'
+    />
+    <p class='hint'>{{localize 'EMPUZZLES.MaxTriggersHint'}}</p>
+  </div>
+</form>
