@@ -486,7 +486,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       const handler = async (clickEvent: any) => {
         try {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
           await createCheckStateTile(canvas.scene, config, snapped.x, snapped.y);
 

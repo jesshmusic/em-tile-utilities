@@ -1,6 +1,6 @@
 import type { TrapConfig } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
-import { createTrapTile } from '../utils/tile-helpers';
+import { createTrapTile, getNextTileNumber } from '../utils/tile-helpers';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -107,7 +107,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     const defaultSound = (game.settings.get('em-tile-utilities', 'defaultSound') as string) || '';
     const defaultTrapImage =
       (game.settings.get('em-tile-utilities', 'defaultTrapImage') as string) || '';
-    const trapCounter = (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
+
+    // Generate trap name based on existing traps in scene
+    const nextNumber = getNextTileNumber('Trap');
 
     // Get available effects from CONFIG.statusEffects
     const effectOptions: any[] = [];
@@ -127,7 +129,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const baseContext = {
       ...context,
-      trapName: `Trap ${trapCounter}`,
+      trapName: `Trap ${nextNumber}`,
       defaultSound: defaultSound,
       defaultTrapImage: defaultTrapImage,
       resultTypeOptions: [
@@ -246,7 +248,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Store the teleport position
       this.teleportX = snapped.x;
@@ -443,7 +445,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const onMouseDown = (event: any) => {
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
       startPos = { x: snapped.x, y: snapped.y };
 
       // Create preview graphics
@@ -455,7 +457,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (!startPos || !previewGraphics) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Calculate width and height
       const width = Math.abs(snapped.x - startPos.x);
@@ -475,7 +477,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (!startPos) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Calculate dimensions
       const width = Math.abs(snapped.x - startPos.x);
@@ -489,11 +491,6 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (width > 0 && height > 0) {
         // Create the trap tile at the dragged position with dragged size
         await createTrapTile(scene, trapConfig, x, y, width, height);
-
-        // Increment trap counter
-        const currentCounter =
-          (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
-        await game.settings.set('em-tile-utilities', 'trapCounter', currentCounter + 1);
 
         ui.notifications.info('Trap tile created!');
       }

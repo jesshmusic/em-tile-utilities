@@ -101,6 +101,27 @@ export interface TrapConfig {
   wallActions?: WallAction[]; // Optional: wall/door actions
 }
 
+/**
+ * Configuration for combat trap tiles (uses attack rolls instead of saving throws)
+ */
+export interface CombatTrapConfig {
+  name: string;
+  startingImage: string;
+  triggeredImage: string;
+  hideTrapOnTrigger: boolean;
+  sound: string;
+  targetType: TrapTargetType; // Who to target (triggering token or tokens within tile)
+  // Attack configuration
+  attackBonus: number; // e.g., +5, +7
+  damageFormula: string; // e.g., "2d6+3"
+  damageType: string; // e.g., "piercing", "slashing", "fire"
+  // Trigger limit
+  maxTriggers: number; // 0 = unlimited, 1 = once, 2+ = that many times
+  // For activating trap type
+  tileActions?: TileAction[]; // Optional: tile actions with configurations
+  wallActions?: WallAction[]; // Optional: wall/door actions
+}
+
 export interface ResetTileConfig {
   name: string;
   image: string;

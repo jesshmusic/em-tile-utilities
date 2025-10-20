@@ -195,7 +195,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
 
       // Snap to grid
-      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Create the light tile at the clicked position
       await createLightTile(

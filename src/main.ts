@@ -99,22 +99,6 @@ Hooks.once('init', () => {
     filePicker: 'imagevideo'
   });
 
-  // Register counter for switch IDs
-  game.settings.register('em-tile-utilities', 'switchCounter', {
-    scope: 'world',
-    config: false,
-    type: Number,
-    default: 1
-  });
-
-  // Register counter for trap IDs
-  game.settings.register('em-tile-utilities', 'trapCounter', {
-    scope: 'world',
-    config: false,
-    type: Number,
-    default: 1
-  });
-
   // Register experimental features toggle
   game.settings.register('em-tile-utilities', 'experimentalFeatures', {
     name: 'Experimental Features',
@@ -169,4 +153,33 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     onClick: () => showTileManagerDialog(),
     order: 1003
   };
+});
+
+/**
+ * Clean up trap actors and tokens when combat trap tiles are deleted
+ */
+Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+  const actorId = tile.flags?.['monks-active-tiles']?.['em-trap-actor-id'];
+
+  if (actorId) {
+    const scene = tile.parent;
+
+    // Delete the token first
+    const tokenId = scene?.getFlag('em-tile-utilities', `trap-token-${actorId}`);
+    if (tokenId) {
+      const token = scene.tokens.get(tokenId);
+      if (token) {
+        console.log(`🧩 EM Tile Utilities: Deleting trap token "${token.name}" (${tokenId})`);
+        await token.delete();
+      }
+      await scene.unsetFlag('em-tile-utilities', `trap-token-${actorId}`);
+    }
+
+    // Delete the actor
+    const actor = (game as any).actors.get(actorId);
+    if (actor) {
+      console.log(`🧩 EM Tile Utilities: Deleting trap actor "${actor.name}" (${actorId})`);
+      await actor.delete();
+    }
+  }
 });
