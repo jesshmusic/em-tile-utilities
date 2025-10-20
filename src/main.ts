@@ -99,22 +99,6 @@ Hooks.once('init', () => {
     filePicker: 'imagevideo'
   });
 
-  // Register counter for switch IDs
-  game.settings.register('em-tile-utilities', 'switchCounter', {
-    scope: 'world',
-    config: false,
-    type: Number,
-    default: 1
-  });
-
-  // Register counter for trap IDs
-  game.settings.register('em-tile-utilities', 'trapCounter', {
-    scope: 'world',
-    config: false,
-    type: Number,
-    default: 1
-  });
-
   // Register experimental features toggle
   game.settings.register('em-tile-utilities', 'experimentalFeatures', {
     name: 'Experimental Features',

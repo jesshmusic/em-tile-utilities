@@ -1,4 +1,4 @@
-import { createSwitchTile } from '../utils/tile-helpers';
+import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -50,13 +50,13 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultOffImage') as string;
     const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
 
-    // Get and increment the switch counter
-    const switchCounter = game.settings.get('em-tile-utilities', 'switchCounter') as number;
-    const nextSwitchId = `switch_${switchCounter}`;
+    // Generate switch name based on existing switches in scene
+    const nextNumber = getNextTileNumber('Switch');
+    const nextSwitchId = `switch_${nextNumber}`;
 
     return {
       ...context,
-      switchName: `Switch ${switchCounter}`,
+      switchName: `Switch ${nextNumber}`,
       variableName: nextSwitchId,
       onImage: defaultOnImage,
       offImage: defaultOffImage,
@@ -160,10 +160,6 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
         snapped.x,
         snapped.y
       );
-
-      // Increment the counter for next switch
-      const switchCounter = game.settings.get('em-tile-utilities', 'switchCounter') as number;
-      await game.settings.set('em-tile-utilities', 'switchCounter', switchCounter + 1);
 
       ui.notifications.info('Switch tile created!');
 

@@ -1,6 +1,6 @@
 import type { CombatTrapConfig } from '../types/module';
 import { TrapTargetType } from '../types/module';
-import { createCombatTrapTile } from '../utils/tile-helpers';
+import { createCombatTrapTile, getNextTileNumber } from '../utils/tile-helpers';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -50,11 +50,13 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const defaultSound = (game.settings.get('em-tile-utilities', 'defaultSound') as string) || '';
     const defaultTrapImage =
       (game.settings.get('em-tile-utilities', 'defaultTrapImage') as string) || '';
-    const trapCounter = (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
+
+    // Generate trap name based on existing traps in scene
+    const nextNumber = getNextTileNumber('Combat Trap');
 
     return {
       ...context,
-      trapName: `Combat Trap ${trapCounter}`,
+      trapName: `Combat Trap ${nextNumber}`,
       defaultSound: defaultSound,
       defaultTrapImage: defaultTrapImage,
       targetTypeOptions: [
@@ -259,11 +261,6 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       if (width > 0 && height > 0) {
         // Create the combat trap tile
         await createCombatTrapTile(scene, trapConfig, x, y, width, height);
-
-        // Increment trap counter
-        const currentCounter =
-          (game.settings.get('em-tile-utilities', 'trapCounter') as number) || 1;
-        await game.settings.set('em-tile-utilities', 'trapCounter', currentCounter + 1);
 
         ui.notifications.info('Combat trap created!');
       }

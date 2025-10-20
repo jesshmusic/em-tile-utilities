@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3] - 2025-10-20
+
+### Added
+- adds missing files
+- combat trap tile
+- docs: add GitHub repository setup guide
+- adds automated release workflow and feature development guide
+
+### Fixed
+- update module.json download URL to v1.6.2
+
+### Changed
+- bump version to 1.6.2
+- move version bumping to PR process instead of workflow
+
+### Other
+- enhancement: auto-update download URL in release script
+- enhancement: adds auto-reload prompt for experimental features
+
+
 ## [1.6.2] - 2025-10-19
 
 ### Added
