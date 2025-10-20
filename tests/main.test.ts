@@ -155,44 +155,6 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register switchCounter setting', () => {
-      jest.clearAllMocks();
-
-      if (initCallback) {
-        initCallback();
-      }
-
-      expect((global as any).game.settings.register).toHaveBeenCalledWith(
-        'em-tile-utilities',
-        'switchCounter',
-        expect.objectContaining({
-          scope: 'world',
-          config: false,
-          type: Number,
-          default: 1
-        })
-      );
-    });
-
-    it('should register trapCounter setting', () => {
-      jest.clearAllMocks();
-
-      if (initCallback) {
-        initCallback();
-      }
-
-      expect((global as any).game.settings.register).toHaveBeenCalledWith(
-        'em-tile-utilities',
-        'trapCounter',
-        expect.objectContaining({
-          scope: 'world',
-          config: false,
-          type: Number,
-          default: 1
-        })
-      );
-    });
-
     it('should register all settings with world scope', () => {
       jest.clearAllMocks();
 

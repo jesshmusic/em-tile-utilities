@@ -78,14 +78,22 @@ describe('SwitchConfigDialog', () => {
       expect(context.buttons[0].label).toBe('EMPUZZLES.Create');
     });
 
-    it('should increment counter for each dialog instance', async () => {
-      (global as any).game.settings.get = (module: string, key: string) => {
-        if (key === 'switchCounter') return 5;
-        return null;
-      };
+    it('should use scene-based numbering for switch names', async () => {
+      // Create mock tiles with Switch names
+      const mockTiles = [
+        { name: 'Switch 1', flags: {} },
+        { name: 'Switch 2', flags: {} },
+        { name: 'Other Tile', flags: {} },
+        { name: 'Switch 4', flags: {} }
+      ];
+
+      const mockTileMap = new Map();
+      mockTiles.forEach((tile, i) => mockTileMap.set(`tile${i}`, tile));
+      (global as any).canvas.scene.tiles = mockTileMap;
 
       const context = await dialog._prepareContext({});
 
+      // Should pick next available number (5, since we have 1,2,4)
       expect(context.switchName).toBe('Switch 5');
       expect(context.variableName).toBe('switch_5');
     });
@@ -367,39 +375,6 @@ describe('SwitchConfigDialog', () => {
       await clickHandler(mockClickEvent);
 
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
-    });
-
-    it('should increment switch counter after creation', async () => {
-      (global as any).canvas.scene = mockScene;
-      const mockSet = jest.fn();
-      (global as any).game.settings.set = mockSet;
-
-      const mockEvent = {} as SubmitEvent;
-      const mockForm = {} as HTMLFormElement;
-      const mockFormData = {
-        object: {
-          switchName: 'Test Switch',
-          variableName: 'test_switch',
-          onImage: 'on.png',
-          offImage: 'off.png',
-          sound: 'sound.ogg'
-        }
-      };
-
-      const handler = (SwitchConfigDialog as any).DEFAULT_OPTIONS.form.handler;
-      await handler.call(dialog, mockEvent, mockForm, mockFormData);
-
-      // Get the click handler and simulate click
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
-      const mockClickEvent = {
-        data: {
-          getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
-        }
-      };
-
-      await clickHandler(mockClickEvent);
-
-      expect(mockSet).toHaveBeenCalledWith('em-tile-utilities', 'switchCounter', 2);
     });
 
     it('should remove click handler after tile creation', async () => {
