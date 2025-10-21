@@ -106,45 +106,90 @@
   </div>
 
   <div class='form-group section-header'>
-    <h3>{{localize 'EMPUZZLES.AttackConfiguration'}}</h3>
+    <h3>{{localize 'EMPUZZLES.AttackItem'}}</h3>
   </div>
 
   <div class='form-group'>
-    <label for='attackBonus'>{{localize 'EMPUZZLES.AttackBonus'}}</label>
-    <input
-      type='number'
-      id='attackBonus'
-      name='attackBonus'
-      value='5'
-      min='-10'
-      max='30'
-      data-dtype='Number'
-    />
-    <p class='hint'>{{localize 'EMPUZZLES.AttackBonusHint'}}</p>
+    <label>{{localize 'EMPUZZLES.AttackItemLabel'}}</label>
+    <div class='item-drop-zone' data-item-id='{{itemId}}'>
+      {{#if itemName}}
+        <div class='dropped-item'>
+          <img src='{{itemImg}}' alt='{{itemName}}' />
+          <span>{{itemName}}</span>
+          <button type='button' class='remove-item' title='{{localize "EMPUZZLES.RemoveItem"}}'>
+            <i class='fas fa-times'></i>
+          </button>
+        </div>
+      {{else}}
+        <div class='drop-placeholder'>
+          <i class='fas fa-download'></i>
+          <p>{{localize 'EMPUZZLES.DragItemHere'}}</p>
+        </div>
+      {{/if}}
+    </div>
+    <input type='hidden' id='itemId' name='itemId' value='{{itemId}}' />
+    <input type='hidden' id='itemName' name='itemName' value='{{itemName}}' />
+    <input type='hidden' id='itemImg' name='itemImg' value='{{itemImg}}' />
+    <p class='hint'>{{localize 'EMPUZZLES.AttackItemHint'}}</p>
+  </div>
+
+  <div class='form-group section-header'>
+    <h3>{{localize 'EMPUZZLES.TokenConfiguration'}}</h3>
   </div>
 
   <div class='form-group'>
-    <label for='damageFormula'>{{localize 'EMPUZZLES.DamageFormula'}}</label>
-    <input
-      type='text'
-      id='damageFormula'
-      name='damageFormula'
-      value='2d6'
-      placeholder='2d6+3'
-    />
-    <p class='hint'>{{localize 'EMPUZZLES.DamageFormulaHint'}}</p>
+    <label>
+      <input
+        type='checkbox'
+        id='tokenVisible'
+        name='tokenVisible'
+        {{#if tokenVisible}}checked{{/if}}
+      />
+      {{localize 'EMPUZZLES.TokenVisible'}}
+    </label>
+    <p class='hint'>{{localize 'EMPUZZLES.TokenVisibleHint'}}</p>
+  </div>
+
+  <div class='form-group token-image-group' style='{{#unless tokenVisible}}display: none;{{/unless}}'>
+    <label for='tokenImage'>{{localize 'EMPUZZLES.TokenImage'}} ({{localize 'EMPUZZLES.Optional'}})</label>
+    <div class='form-fields'>
+      <input
+        type='text'
+        id='tokenImage'
+        name='tokenImage'
+        value='{{tokenImage}}'
+        placeholder='path/to/token.png'
+        data-dtype='String'
+      />
+      <button
+        type='button'
+        class='file-picker'
+        data-type='imagevideo'
+        data-target='tokenImage'
+        title='Browse Files'
+        tabindex='-1'
+      >
+        <i class='fas fa-file-import fa-fw'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.TokenImageHint'}}</p>
   </div>
 
   <div class='form-group'>
-    <label for='damageType'>{{localize 'EMPUZZLES.DamageType'}}</label>
-    <select id='damageType' name='damageType'>
-      {{#each damageTypeOptions as |option|}}
-        <option value='{{option.value}}'>
-          {{localize option.label}}
-        </option>
-      {{/each}}
-    </select>
-    <p class='hint'>{{localize 'EMPUZZLES.DamageTypeHint'}}</p>
+    <label>{{localize 'EMPUZZLES.TokenPosition'}} ({{localize 'EMPUZZLES.Optional'}})</label>
+    <button type='button' class='select-position-button' data-action='selectTokenPosition'>
+      <i class='fas fa-crosshairs'></i>
+      {{localize 'EMPUZZLES.SelectPosition'}}
+    </button>
+    <input type='hidden' name='tokenX' value='{{tokenX}}' />
+    <input type='hidden' name='tokenY' value='{{tokenY}}' />
+    <p class='hint token-position-display'>
+      {{#if tokenX}}
+        {{localize 'EMPUZZLES.SelectedPosition'}}: ({{tokenX}}, {{tokenY}})
+      {{else}}
+        {{localize 'EMPUZZLES.NoTokenPositionSelected'}}
+      {{/if}}
+    </p>
   </div>
 
   <div class='form-group section-header'>

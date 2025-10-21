@@ -1149,3 +1149,82 @@ button .game-icon,
   border-color: rgba(100, 150, 200, 0.5);
 }
 
+/* Item Drop Zone Styles (Combat Trap Dialog) */
+.item-drop-zone {
+  min-height: 100px;
+  padding: 1rem;
+  border: 2px dashed var(--color-border-light-tertiary);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.item-drop-zone.drag-over {
+  background: rgba(100, 150, 200, 0.2);
+  border-color: rgba(100, 150, 200, 0.5);
+  border-style: solid;
+}
+
+.drop-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-text-dark-secondary);
+  text-align: center;
+}
+
+.drop-placeholder i {
+  font-size: 2em;
+  opacity: 0.5;
+}
+
+.drop-placeholder p {
+  margin: 0;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.dropped-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+}
+
+.dropped-item img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--color-border-light-tertiary);
+}
+
+.dropped-item span {
+  flex: 1;
+  font-weight: bold;
+}
+
+.dropped-item .remove-item {
+  padding: 0.35rem 0.6rem;
+  font-size: 1em;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(200, 50, 50, 0.2);
+  border-color: rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.dropped-item .remove-item:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+

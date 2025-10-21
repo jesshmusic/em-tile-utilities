@@ -111,10 +111,13 @@ export interface CombatTrapConfig {
   hideTrapOnTrigger: boolean;
   sound: string;
   targetType: TrapTargetType; // Who to target (triggering token or tokens within tile)
-  // Attack configuration
-  attackBonus: number; // e.g., +5, +7
-  damageFormula: string; // e.g., "2d6+3"
-  damageType: string; // e.g., "piercing", "slashing", "fire"
+  // Attack item from compendium
+  itemId: string; // ID of the item/feature to use for attacks
+  // Token configuration
+  tokenVisible: boolean; // Whether the trap token is visible or hidden
+  tokenImage?: string; // Optional custom image for visible tokens
+  tokenX?: number; // Optional custom X position for token
+  tokenY?: number; // Optional custom Y position for token
   // Trigger limit
   maxTriggers: number; // 0 = unlimited, 1 = once, 2+ = that many times
   // For activating trap type

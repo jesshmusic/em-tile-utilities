@@ -27,6 +27,9 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     form: {
       closeOnSubmit: false,
       handler: CombatTrapDialog.prototype._onSubmit
+    },
+    actions: {
+      selectTokenPosition: CombatTrapDialog.prototype._onSelectTokenPosition
     }
   };
 
@@ -63,21 +66,15 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
         { value: TrapTargetType.TRIGGERING, label: 'EMPUZZLES.TargetTriggering' },
         { value: TrapTargetType.WITHIN_TILE, label: 'EMPUZZLES.TargetWithinTile' }
       ],
-      damageTypeOptions: [
-        { value: 'slashing', label: 'EMPUZZLES.DamageSlashing' },
-        { value: 'piercing', label: 'EMPUZZLES.DamagePiercing' },
-        { value: 'bludgeoning', label: 'EMPUZZLES.DamageBludgeoning' },
-        { value: 'fire', label: 'EMPUZZLES.DamageFire' },
-        { value: 'cold', label: 'EMPUZZLES.DamageCold' },
-        { value: 'lightning', label: 'EMPUZZLES.DamageLightning' },
-        { value: 'thunder', label: 'EMPUZZLES.DamageThunder' },
-        { value: 'acid', label: 'EMPUZZLES.DamageAcid' },
-        { value: 'poison', label: 'EMPUZZLES.DamagePoison' },
-        { value: 'psychic', label: 'EMPUZZLES.DamagePsychic' },
-        { value: 'necrotic', label: 'EMPUZZLES.DamageNecrotic' },
-        { value: 'radiant', label: 'EMPUZZLES.DamageRadiant' },
-        { value: 'force', label: 'EMPUZZLES.DamageForce' }
-      ],
+      // Item drop zone state
+      itemId: '',
+      itemName: '',
+      itemImg: '',
+      // Token configuration
+      tokenVisible: false,
+      tokenImage: '',
+      tokenX: null,
+      tokenY: null,
       buttons: [
         {
           type: 'submit',
@@ -99,6 +96,38 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     filePickerButtons.forEach((button: Element) => {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
+
+    // Set up item drop zone
+    const dropZone = this.element.querySelector('.item-drop-zone');
+    if (dropZone) {
+      dropZone.addEventListener('drop', this._onItemDrop.bind(this));
+      dropZone.addEventListener('dragover', (event: Event) => {
+        event.preventDefault();
+        (event.currentTarget as HTMLElement).classList.add('drag-over');
+      });
+      dropZone.addEventListener('dragleave', (event: Event) => {
+        (event.currentTarget as HTMLElement).classList.remove('drag-over');
+      });
+    }
+
+    // Set up remove item button
+    const removeButton = this.element.querySelector('.remove-item');
+    if (removeButton) {
+      (removeButton as HTMLElement).onclick = this._onRemoveItem.bind(this);
+    }
+
+    // Set up token visibility checkbox
+    const tokenVisibleCheckbox = this.element.querySelector('#tokenVisible') as HTMLInputElement;
+    const tokenImageGroup = this.element.querySelector('.token-image-group') as HTMLElement;
+    if (tokenVisibleCheckbox && tokenImageGroup) {
+      tokenVisibleCheckbox.addEventListener('change', () => {
+        if (tokenVisibleCheckbox.checked) {
+          tokenImageGroup.style.display = '';
+        } else {
+          tokenImageGroup.style.display = 'none';
+        }
+      });
+    }
   }
 
   /* -------------------------------------------- */
@@ -134,6 +163,129 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
   /* -------------------------------------------- */
 
   /**
+   * Handle item drop on the drop zone
+   */
+  async _onItemDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).classList.remove('drag-over');
+
+    const data = event.dataTransfer?.getData('text/plain');
+    if (!data) return;
+
+    let dropData: any;
+    try {
+      dropData = JSON.parse(data);
+    } catch {
+      return;
+    }
+
+    // Only accept Item drops
+    if (dropData.type !== 'Item') return;
+
+    // Get the item document
+    let item: any;
+    if (dropData.uuid) {
+      item = await (globalThis as any).fromUuid(dropData.uuid);
+    } else {
+      return;
+    }
+
+    if (!item) return;
+
+    // Update the hidden inputs and display
+    const itemIdInput = this.element.querySelector('#itemId') as HTMLInputElement;
+    const itemNameInput = this.element.querySelector('#itemName') as HTMLInputElement;
+    const itemImgInput = this.element.querySelector('#itemImg') as HTMLInputElement;
+    const dropZone = this.element.querySelector('.item-drop-zone') as HTMLElement;
+
+    if (itemIdInput && itemNameInput && itemImgInput && dropZone) {
+      itemIdInput.value = item.uuid;
+      itemNameInput.value = item.name;
+      itemImgInput.value = item.img;
+
+      // Update the drop zone display
+      dropZone.innerHTML = `
+        <div class='dropped-item'>
+          <img src='${item.img}' alt='${item.name}' />
+          <span>${item.name}</span>
+          <button type='button' class='remove-item' title='Remove Item'>
+            <i class='fas fa-times'></i>
+          </button>
+        </div>
+      `;
+
+      // Re-attach remove button handler
+      const removeButton = dropZone.querySelector('.remove-item');
+      if (removeButton) {
+        (removeButton as HTMLElement).onclick = this._onRemoveItem.bind(this);
+      }
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle remove item button click
+   */
+  _onRemoveItem(event: Event): void {
+    event.preventDefault();
+
+    const itemIdInput = this.element.querySelector('#itemId') as HTMLInputElement;
+    const itemNameInput = this.element.querySelector('#itemName') as HTMLInputElement;
+    const itemImgInput = this.element.querySelector('#itemImg') as HTMLInputElement;
+    const dropZone = this.element.querySelector('.item-drop-zone') as HTMLElement;
+
+    if (itemIdInput && itemNameInput && itemImgInput && dropZone) {
+      itemIdInput.value = '';
+      itemNameInput.value = '';
+      itemImgInput.value = '';
+
+      // Restore placeholder
+      dropZone.innerHTML = `
+        <div class='drop-placeholder'>
+          <i class='fas fa-download'></i>
+          <p>${game.i18n.localize('EMPUZZLES.DragItemHere')}</p>
+        </div>
+      `;
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle select token position button click
+   */
+  async _onSelectTokenPosition(_event: Event, _target: HTMLElement): Promise<void> {
+    ui.notifications.info('Click on the canvas to select the token position...');
+
+    const handler = (clickEvent: any) => {
+      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+      // Update the hidden inputs
+      const tokenXInput = this.element.querySelector('input[name="tokenX"]') as HTMLInputElement;
+      const tokenYInput = this.element.querySelector('input[name="tokenY"]') as HTMLInputElement;
+      const positionDisplay = this.element.querySelector('.token-position-display') as HTMLElement;
+
+      if (tokenXInput && tokenYInput && positionDisplay) {
+        tokenXInput.value = snapped.x.toString();
+        tokenYInput.value = snapped.y.toString();
+
+        // Update the display
+        positionDisplay.textContent = `${game.i18n.localize('EMPUZZLES.SelectedPosition')}: (${snapped.x}, ${snapped.y})`;
+      }
+
+      // Remove the handler
+      (canvas as any).stage.off('click', handler);
+      ui.notifications.info('Token position selected!');
+    };
+
+    (canvas as any).stage.on('click', handler);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle form submission
    */
   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
@@ -155,12 +307,12 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const targetType =
       (form.querySelector('select[name="targetType"]') as HTMLSelectElement)?.value ||
       TrapTargetType.TRIGGERING;
-    const attackBonus = (form.querySelector('input[name="attackBonus"]') as HTMLInputElement)
-      ?.value;
-    const damageFormula = (form.querySelector('input[name="damageFormula"]') as HTMLInputElement)
-      ?.value;
-    const damageType = (form.querySelector('select[name="damageType"]') as HTMLSelectElement)
-      ?.value;
+    const itemId = (form.querySelector('input[name="itemId"]') as HTMLInputElement)?.value;
+    const tokenVisible =
+      (form.querySelector('input[name="tokenVisible"]') as HTMLInputElement)?.checked || false;
+    const tokenImage = (form.querySelector('input[name="tokenImage"]') as HTMLInputElement)?.value;
+    const tokenX = (form.querySelector('input[name="tokenX"]') as HTMLInputElement)?.value;
+    const tokenY = (form.querySelector('input[name="tokenY"]') as HTMLInputElement)?.value;
     const maxTriggers = (form.querySelector('input[name="maxTriggers"]') as HTMLInputElement)
       ?.value;
 
@@ -170,15 +322,8 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       return;
     }
 
-    if (!attackBonus || !damageFormula || !damageType) {
-      ui.notifications.warn('Attack bonus, damage formula, and damage type are required!');
-      return;
-    }
-
-    // Validate attack bonus is a number
-    const attackBonusNum = parseInt(attackBonus);
-    if (isNaN(attackBonusNum)) {
-      ui.notifications.warn('Attack bonus must be a number!');
+    if (!itemId) {
+      ui.notifications.warn('An attack item is required! Drag an item from a compendium.');
       return;
     }
 
@@ -197,9 +342,11 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       hideTrapOnTrigger: hideTrapOnTrigger,
       sound: sound || '',
       targetType: targetType as TrapTargetType,
-      attackBonus: attackBonusNum,
-      damageFormula: damageFormula,
-      damageType: damageType,
+      itemId: itemId,
+      tokenVisible: tokenVisible,
+      tokenImage: tokenImage || undefined,
+      tokenX: tokenX ? parseInt(tokenX) : undefined,
+      tokenY: tokenY ? parseInt(tokenY) : undefined,
       maxTriggers: maxTriggersNum
     };
 
