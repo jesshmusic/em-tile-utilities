@@ -1383,7 +1383,7 @@ export async function createCombatTrapTile(
       height: 1,
       rotation: 0,
       hidden: true, // Always hidden
-      locked: true, // Lock so it can't be moved accidentally
+      locked: false, // Not locked (can be moved/deleted by GM)
       disposition: -1, // Hostile
       displayName: 0, // Never display name
       displayBars: 0, // Never display bars
