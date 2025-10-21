@@ -73,6 +73,15 @@
         <p class="card-description">{{localize "EMPUZZLES.CreateActivatingTrapDesc"}}</p>
       </div>
     </button>
+    <button type="button" class="create-tile-card create-trap-card" data-action="createCombatTrap">
+      <div class="card-icon">
+        <i class="fa-solid fa-crosshairs"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateCombatTrap"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateCombatTrapDesc"}}</p>
+      </div>
+    </button>
     {{#if experimentalFeatures}}
       <button type="button" class="create-tile-card create-utility-card" data-action="createCheckState">
         <div class="card-icon">
@@ -81,15 +90,6 @@
         <div class="card-content">
           <h3 class="card-title">{{localize "EMPUZZLES.CreateCheckStateTile"}}</h3>
           <p class="card-description">{{localize "EMPUZZLES.CreateCheckStateTileDesc"}}</p>
-        </div>
-      </button>
-      <button type="button" class="create-tile-card create-trap-card" data-action="createCombatTrap">
-        <div class="card-icon">
-          <i class="fa-solid fa-crosshairs"></i>
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">{{localize "EMPUZZLES.CreateCombatTrap"}}</h3>
-          <p class="card-description">{{localize "EMPUZZLES.CreateCombatTrapDesc"}}</p>
         </div>
       </button>
     {{/if}}
