@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.7.1] - 2025-10-21
+## [1.8.0] - 2025-10-21
 
 ### Added
 - implement scene-based tile naming and simplify combat trap attacks
@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - adds automated release workflow and feature development guide
 
 ### Fixed
+- set combat trap tokens to unlocked by default
 - implement manual combat resolution for traps to bypass MIDI-qol targeting
 - update module.json download URL to v1.6.2
 
@@ -25,6 +26,33 @@ All notable changes to this project will be documented in this file.
 - enhancement: auto-update download URL in release script
 - enhancement: adds auto-reload prompt for experimental features
 
+
+## [1.7.1] - 2025-10-21
+
+### Added
+
+- implement scene-based tile naming and simplify combat trap attacks
+- adds missing files
+- combat trap tile
+- docs: add GitHub repository setup guide
+- adds automated release workflow and feature development guide
+
+### Fixed
+
+- implement manual combat resolution for traps to bypass MIDI-qol targeting
+- update module.json download URL to v1.6.2
+
+### Changed
+
+- trigger CI rebuild
+- bump version to 1.6.2
+- move version bumping to PR process instead of workflow
+
+### Other
+
+- test: update tests for scene-based tile naming
+- enhancement: auto-update download URL in release script
+- enhancement: adds auto-reload prompt for experimental features
 
 ## [1.7.0] - 2025-10-20
 

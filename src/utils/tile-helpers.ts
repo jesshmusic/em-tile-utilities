@@ -69,79 +69,6 @@ async function getOrCreateTrapActorsFolder(): Promise<string> {
 }
 
 /**
- * Create a trap actor with a weapon for attack rolls
- * Returns both the actor ID and weapon ID
- */
-async function createTrapActor(
-  name: string,
-  attackBonus: number,
-  damageFormula: string,
-  damageType: string
-): Promise<{ actorId: string; weaponId: string }> {
-  const folderId = await getOrCreateTrapActorsFolder();
-
-  // Create the actor
-  const actorData = {
-    name: `${name} (Trap)`,
-    type: 'npc',
-    folder: folderId,
-    img: 'icons/svg/trap.svg',
-    system: {
-      abilities: {
-        str: { value: 10 },
-        dex: { value: 10 },
-        con: { value: 10 },
-        int: { value: 10 },
-        wis: { value: 10 },
-        cha: { value: 10 }
-      }
-    }
-  };
-
-  const actor = await (game as any).actors.documentClass.create(actorData);
-
-  // Create a weapon item for the attack
-  const weaponData = {
-    name: `${name} Attack`,
-    type: 'weapon',
-    system: {
-      quantity: 1,
-      weight: 0,
-      price: { value: 0, denomination: 'gp' },
-      equipped: true,
-      identified: true,
-      activation: { type: 'action', cost: 1, condition: '' },
-      duration: { value: '', units: '' },
-      target: { value: 1, width: null, units: '', type: 'creature' },
-      range: { value: 5, long: null, units: 'ft' },
-      uses: { value: null, max: '', per: null, recovery: '' },
-      consume: { type: '', target: null, amount: null },
-      ability: '',
-      actionType: 'mwak',
-      attackBonus: attackBonus.toString(),
-      chatFlavor: '',
-      critical: { threshold: null, damage: '' },
-      damage: {
-        parts: [[damageFormula, damageType]],
-        versatile: ''
-      },
-      formula: '',
-      save: { ability: '', dc: null, scaling: 'spell' },
-      armor: { value: 10 },
-      hp: { value: 0, max: 0, dt: null, conditions: '' },
-      weaponType: 'simpleM',
-      properties: {},
-      proficient: true
-    }
-  };
-
-  const [weapon] = await actor.createEmbeddedDocuments('Item', [weaponData]);
-  const weaponId = (weapon as any).id;
-
-  return { actorId: actor.id, weaponId: weaponId };
-}
-
-/**
  * Create a switch tile with ON/OFF states
  */
 export async function createSwitchTile(
@@ -1339,7 +1266,7 @@ export async function createCheckStateTile(
 
 /**
  * Create a combat trap tile that uses attack rolls instead of saving throws
- * This creates an NPC actor in the "EM Tile Utilities" folder with a weapon configured
+ * This creates an NPC actor in the "EM Tile Utilities" folder with an item from the compendium
  * to make the attack rolls, and the trap tile uses Monk's Active Tiles "attack" action.
  */
 export async function createCombatTrapTile(
@@ -1361,33 +1288,70 @@ export async function createCombatTrapTile(
   const tileWidth = width ?? gridSize;
   const tileHeight = height ?? gridSize;
 
-  // Create the trap actor with weapon
-  const { actorId, weaponId } = await createTrapActor(
-    config.name,
-    config.attackBonus,
-    config.damageFormula,
-    config.damageType
-  );
+  // Get the item from the compendium
+  const item = await (globalThis as any).fromUuid(config.itemId);
+  if (!item) {
+    ui.notifications.error('EM Tiles Error: Could not find the selected item!');
+    return;
+  }
 
-  // Place the actor as a hidden token on the scene at the trap location
-  const actor = (game as any).actors.get(actorId);
+  // Get or create the trap actors folder
+  const folderId = await getOrCreateTrapActorsFolder();
+
+  // Determine token image
+  const tokenImg = config.tokenVisible && config.tokenImage ? config.tokenImage : (item as any).img;
+
+  // Create the trap actor
+  const actorData = {
+    name: `${config.name} (Trap)`,
+    type: 'npc',
+    folder: folderId,
+    img: (item as any).img || 'icons/svg/trap.svg',
+    prototypeToken: {
+      texture: {
+        src: tokenImg
+      }
+    },
+    system: {
+      abilities: {
+        str: { value: 10 },
+        dex: { value: 10 },
+        con: { value: 10 },
+        int: { value: 10 },
+        wis: { value: 10 },
+        cha: { value: 10 }
+      }
+    }
+  };
+
+  const actor = await (game as any).actors.documentClass.create(actorData);
+  const actorId = actor.id;
+
+  // Add the item to the actor
+  const [addedItem] = await actor.createEmbeddedDocuments('Item', [(item as any).toObject()]);
+  const weaponId = (addedItem as any).id;
+
+  // Place the actor as a token on the scene at the trap location
   let trapTokenId = '';
 
   if (actor) {
     const tokenDocData = {
       actorId: actorId,
       name: `${config.name} (Trap)`,
+      texture: {
+        src: tokenImg
+      },
       x: tileX,
       y: tileY,
       width: 1,
       height: 1,
       rotation: 0,
-      hidden: true, // Always hidden
+      hidden: !config.tokenVisible, // Hidden based on config
       locked: false, // Not locked (can be moved/deleted by GM)
       disposition: -1, // Hostile
       displayName: 0, // Never display name
       displayBars: 0, // Never display bars
-      alpha: 0.5 // Semi-transparent for GMs
+      alpha: config.tokenVisible ? 1 : 0.5 // Fully visible if tokenVisible, semi-transparent for GMs if hidden
     };
 
     const [token] = await scene.createEmbeddedDocuments('Token', [tokenDocData]);
