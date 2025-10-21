@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.2] - 2025-10-21
+
+### Added
+- remove combat trap from experimental flag and simplify tile button labels
+- add optional click-to-set token position for combat traps
+- enhance combat trap with item drag-and-drop and token visibility
+- implement scene-based tile naming and simplify combat trap attacks
+- adds missing files
+- combat trap tile
+- docs: add GitHub repository setup guide
+- adds automated release workflow and feature development guide
+
+### Fixed
+- set combat trap tokens to unlocked by default
+- implement manual combat resolution for traps to bypass MIDI-qol targeting
+- update module.json download URL to v1.6.2
+
+### Changed
+- bump version to 1.8.1
+- trigger CI rebuild
+- bump version to 1.6.2
+- move version bumping to PR process instead of workflow
+
+### Other
+- test: update tests for scene-based tile naming
+- enhancement: auto-update download URL in release script
+- enhancement: adds auto-reload prompt for experimental features
+
+
 ## [1.8.1] - 2025-10-21
 
 ### Added
