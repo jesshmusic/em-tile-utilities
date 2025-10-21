@@ -175,6 +175,23 @@
     <p class='hint'>{{localize 'EMPUZZLES.TokenImageHint'}}</p>
   </div>
 
+  <div class='form-group'>
+    <label>{{localize 'EMPUZZLES.TokenPosition'}} ({{localize 'EMPUZZLES.Optional'}})</label>
+    <button type='button' class='select-position-button' data-action='selectTokenPosition'>
+      <i class='fas fa-crosshairs'></i>
+      {{localize 'EMPUZZLES.SelectPosition'}}
+    </button>
+    <input type='hidden' name='tokenX' value='{{tokenX}}' />
+    <input type='hidden' name='tokenY' value='{{tokenY}}' />
+    <p class='hint token-position-display'>
+      {{#if tokenX}}
+        {{localize 'EMPUZZLES.SelectedPosition'}}: ({{tokenX}}, {{tokenY}})
+      {{else}}
+        {{localize 'EMPUZZLES.NoTokenPositionSelected'}}
+      {{/if}}
+    </p>
+  </div>
+
   <div class='form-group section-header'>
     <h3>{{localize 'EMPUZZLES.TriggerLimit'}}</h3>
   </div>

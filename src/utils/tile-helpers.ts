@@ -1331,7 +1331,10 @@ export async function createCombatTrapTile(
   const [addedItem] = await actor.createEmbeddedDocuments('Item', [(item as any).toObject()]);
   const weaponId = (addedItem as any).id;
 
-  // Place the actor as a token on the scene at the trap location
+  // Place the actor as a token on the scene
+  // Use custom position if provided, otherwise use tile position
+  const tokenPosX = config.tokenX !== undefined ? config.tokenX : tileX;
+  const tokenPosY = config.tokenY !== undefined ? config.tokenY : tileY;
   let trapTokenId = '';
 
   if (actor) {
@@ -1341,8 +1344,8 @@ export async function createCombatTrapTile(
       texture: {
         src: tokenImg
       },
-      x: tileX,
-      y: tileY,
+      x: tokenPosX,
+      y: tokenPosY,
       width: 1,
       height: 1,
       rotation: 0,

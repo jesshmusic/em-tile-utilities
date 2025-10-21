@@ -116,6 +116,8 @@ export interface CombatTrapConfig {
   // Token configuration
   tokenVisible: boolean; // Whether the trap token is visible or hidden
   tokenImage?: string; // Optional custom image for visible tokens
+  tokenX?: number; // Optional custom X position for token
+  tokenY?: number; // Optional custom Y position for token
   // Trigger limit
   maxTriggers: number; // 0 = unlimited, 1 = once, 2+ = that many times
   // For activating trap type

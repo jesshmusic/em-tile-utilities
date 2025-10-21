@@ -27,6 +27,9 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     form: {
       closeOnSubmit: false,
       handler: CombatTrapDialog.prototype._onSubmit
+    },
+    actions: {
+      selectTokenPosition: CombatTrapDialog.prototype._onSelectTokenPosition
     }
   };
 
@@ -70,6 +73,8 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       // Token configuration
       tokenVisible: false,
       tokenImage: '',
+      tokenX: null,
+      tokenY: null,
       buttons: [
         {
           type: 'submit',
@@ -248,6 +253,39 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
   /* -------------------------------------------- */
 
   /**
+   * Handle select token position button click
+   */
+  async _onSelectTokenPosition(_event: Event, _target: HTMLElement): Promise<void> {
+    ui.notifications.info('Click on the canvas to select the token position...');
+
+    const handler = (clickEvent: any) => {
+      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+      const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+
+      // Update the hidden inputs
+      const tokenXInput = this.element.querySelector('input[name="tokenX"]') as HTMLInputElement;
+      const tokenYInput = this.element.querySelector('input[name="tokenY"]') as HTMLInputElement;
+      const positionDisplay = this.element.querySelector('.token-position-display') as HTMLElement;
+
+      if (tokenXInput && tokenYInput && positionDisplay) {
+        tokenXInput.value = snapped.x.toString();
+        tokenYInput.value = snapped.y.toString();
+
+        // Update the display
+        positionDisplay.textContent = `${game.i18n.localize('EMPUZZLES.SelectedPosition')}: (${snapped.x}, ${snapped.y})`;
+      }
+
+      // Remove the handler
+      (canvas as any).stage.off('click', handler);
+      ui.notifications.info('Token position selected!');
+    };
+
+    (canvas as any).stage.on('click', handler);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle form submission
    */
   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
@@ -273,6 +311,8 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const tokenVisible =
       (form.querySelector('input[name="tokenVisible"]') as HTMLInputElement)?.checked || false;
     const tokenImage = (form.querySelector('input[name="tokenImage"]') as HTMLInputElement)?.value;
+    const tokenX = (form.querySelector('input[name="tokenX"]') as HTMLInputElement)?.value;
+    const tokenY = (form.querySelector('input[name="tokenY"]') as HTMLInputElement)?.value;
     const maxTriggers = (form.querySelector('input[name="maxTriggers"]') as HTMLInputElement)
       ?.value;
 
@@ -305,6 +345,8 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       itemId: itemId,
       tokenVisible: tokenVisible,
       tokenImage: tokenImage || undefined,
+      tokenX: tokenX ? parseInt(tokenX) : undefined,
+      tokenY: tokenY ? parseInt(tokenY) : undefined,
       maxTriggers: maxTriggersNum
     };
 

@@ -47,6 +47,8 @@
     "TokenVisibleHint": "When checked, the trap will have a visible token on the map. When unchecked, the token will be hidden.",
     "TokenImage": "Token Image",
     "TokenImageHint": "Custom image for the trap's token (only used if token is visible)",
+    "TokenPosition": "Token Position",
+    "NoTokenPositionSelected": "No position selected. The token will be placed at the tile location. Click the button to set a custom position.",
     "TriggerLimit": "Trigger Limit",
     "MaxTriggers": "Maximum Triggers",
     "MaxTriggersHint": "Number of times this trap can trigger (0 = unlimited, 1 = once, 2+ = that many times)",
