@@ -60,6 +60,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       brightLight: 20,
       lightColor: '#ffa726',
       colorIntensity: 0.5,
+      useOverlay: false,
+      overlayImage: '',
       buttons: [
         {
           type: 'submit',
@@ -99,6 +101,25 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
       toggleDarknessSettings();
       darknessToggle.addEventListener('change', toggleDarknessSettings);
+    }
+
+    // Handle overlay toggle
+    const overlayToggle = this.element.querySelector(
+      'input[name="useOverlay"]'
+    ) as HTMLInputElement;
+    const overlaySettings = this.element.querySelector('.overlay-settings') as HTMLElement;
+
+    if (overlayToggle && overlaySettings) {
+      const toggleOverlaySettings = () => {
+        if (overlayToggle.checked) {
+          overlaySettings.style.display = 'block';
+        } else {
+          overlaySettings.style.display = 'none';
+        }
+      };
+
+      toggleOverlaySettings();
+      overlayToggle.addEventListener('change', toggleOverlaySettings);
     }
 
     // Handle range slider value updates
@@ -209,7 +230,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
           dimLight: parseInt(data.dimLight) || 40,
           brightLight: parseInt(data.brightLight) || 20,
           lightColor: data.lightColor || '#ffffff',
-          colorIntensity: parseFloat(data.colorIntensity) || 0.5
+          colorIntensity: parseFloat(data.colorIntensity) || 0.5,
+          useOverlay: data.useOverlay === true,
+          overlayImage: data.overlayImage || ''
         },
         snapped.x,
         snapped.y

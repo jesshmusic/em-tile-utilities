@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2025-10-22
+
+### Added
+- remove combat trap from experimental flag and simplify tile button labels
+
+### Changed
+- bump version to 1.9.0
+- bump version to 1.8.2
+
+
 ## [1.9.0] - 2025-10-21
 
 ### Added

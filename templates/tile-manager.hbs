@@ -184,6 +184,14 @@
             </div>
           {{/if}}
 
+          {{#if tile.hasTags}}
+            <div class="tile-tags">
+              {{#each tile.tags as |tag|}}
+                <span class="tag-badge">{{tag}}</span>
+              {{/each}}
+            </div>
+          {{/if}}
+
           <div class="tile-status">
             {{#if tile.hasMonksData}}
               <span class="status-badge monks-active">

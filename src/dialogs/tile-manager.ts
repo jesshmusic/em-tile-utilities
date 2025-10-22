@@ -102,6 +102,13 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         displayValue: typeof value === 'boolean' ? (value ? 'true' : 'false') : String(value)
       }));
 
+      // Get tags from Tagger if available
+      let tags: string[] = [];
+      if ((game as any).modules.get('tagger')?.active) {
+        const Tagger = (globalThis as any).Tagger;
+        tags = Tagger.getTags(tile) || [];
+      }
+
       // Check if the texture is a video file
       const imageSrc = tile.texture.src || '';
       const videoExtensions = ['.webm', '.mp4', '.ogg', '.ogv'];
@@ -124,7 +131,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         hasMonksData: !!monksData,
         actionCount: actionCount,
         variableCount: variableCount,
-        variables: variablesList
+        variables: variablesList,
+        tags: tags,
+        hasTags: tags.length > 0
       };
     });
 

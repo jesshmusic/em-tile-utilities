@@ -16,6 +16,8 @@ export interface LightConfig {
   brightLight: number;
   lightColor: string;
   colorIntensity: number;
+  useOverlay: boolean;
+  overlayImage?: string;
 }
 
 /**
@@ -99,6 +101,11 @@ export interface TrapConfig {
   tilesToActivate?: string[]; // Optional: IDs of tiles to activate (deprecated, use tileActions)
   tileActions?: TileAction[]; // Optional: tile actions with configurations
   wallActions?: WallAction[]; // Optional: wall/door actions
+  // For DMG trap items
+  dmgTrapItemId?: string; // UUID of DMG trap item
+  dmgTrapActivityId?: string; // ID of selected activity
+  dmgTrapItemName?: string; // Name for display
+  dmgTrapItemImg?: string; // Image for display
 }
 
 /**

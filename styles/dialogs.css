@@ -631,6 +631,28 @@
   font-family: monospace;
   display: inline-block;
 }
+
+/* Tile Tags Display */
+.tile-tags {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-badge {
+  background: rgba(100, 150, 200, 0.2);
+  border: 1px solid rgba(100, 150, 200, 0.4);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-family: monospace;
+  color: var(--color-text-light-heading);
+  display: inline-block;
+}
+
 /* Custom Icons from game-icons.net */
 /* Icons are licensed under CC BY 3.0 - see icons/README.md for attribution */
 
@@ -1226,5 +1248,119 @@ button .game-icon,
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
+}
+
+/* DMG Trap Item Drop Zone Styles */
+.dmg-trap-section {
+  margin-bottom: 1rem;
+}
+
+.dmg-trap-item-drop-zone {
+  min-height: 80px;
+  padding: 1rem;
+  border: 2px dashed var(--color-border-light-tertiary);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-text-dark-secondary);
+  text-align: center;
+}
+
+.dmg-trap-item-drop-zone.drag-over {
+  background: rgba(200, 100, 150, 0.2);
+  border-color: rgba(200, 100, 150, 0.5);
+  border-style: solid;
+}
+
+.dmg-trap-item-drop-zone i {
+  font-size: 2em;
+  opacity: 0.5;
+}
+
+.dmg-trap-item-drop-zone p {
+  margin: 0;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.dmg-trap-item-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dmg-trap-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+}
+
+.dmg-trap-item-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--color-border-light-tertiary);
+}
+
+.dmg-trap-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.dmg-trap-item-name {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.dmg-trap-remove-button {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.9em;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(200, 50, 50, 0.2);
+  border-color: rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+  border-radius: 3px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: flex-start;
+}
+
+.dmg-trap-remove-button:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+
+.dmg-trap-activity-select-wrapper {
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+}
+
+.dmg-trap-activity-select-wrapper label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.dmg-trap-activity-select-wrapper select {
+  width: 100%;
 }
 

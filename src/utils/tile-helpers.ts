@@ -46,6 +46,71 @@ export function getNextTileNumber(baseName: string): number {
 }
 
 /**
+ * Convert a string to PascalCase (e.g., "my light" -> "MyLight")
+ * @param str - The string to convert
+ * @returns The PascalCase version of the string
+ */
+function toPascalCase(str: string): string {
+  return str
+    .split(/[\s-_]+/) // Split on spaces, hyphens, or underscores
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+}
+
+/**
+ * Get all unique tags in the current scene
+ * @returns Array of all tags used in the scene
+ */
+function getAllTagsInScene(): string[] {
+  if (!(game as any).modules.get('tagger')?.active) return [];
+
+  const Tagger = (globalThis as any).Tagger;
+  const scene = (canvas as any).scene;
+  if (!scene) return [];
+
+  const allTags = new Set<string>();
+
+  // Get tags from all tiles
+  const tiles = Array.from((scene.tiles as any).values());
+  tiles.forEach((tile: any) => {
+    const tags = Tagger.getTags(tile) || [];
+    tags.forEach((tag: string) => allTags.add(tag));
+  });
+
+  // Get tags from all lights
+  const lights = Array.from((scene.lights as any).values());
+  lights.forEach((light: any) => {
+    const tags = Tagger.getTags(light) || [];
+    tags.forEach((tag: string) => allTags.add(tag));
+  });
+
+  return Array.from(allTags);
+}
+
+/**
+ * Generate a unique tag for a light group based on the light name
+ * @param lightName - The name of the light (e.g., "Torch", "Campfire")
+ * @returns A unique tag in PascalCase format (e.g., "Torch", "Torch2", "Campfire")
+ */
+function generateUniqueLightTag(lightName: string): string {
+  const baseName = toPascalCase(lightName);
+  const existingTags = getAllTagsInScene();
+
+  // If the base name is unique, use it
+  if (!existingTags.includes(baseName)) {
+    return baseName;
+  }
+
+  // Otherwise, find the next available number
+  let counter = 2;
+  while (existingTags.includes(`${baseName}${counter}`)) {
+    counter++;
+  }
+
+  return `${baseName}${counter}`;
+}
+
+/**
  * Get or create the "EM Tile Utilities" folder for trap actors
  */
 async function getOrCreateTrapActorsFolder(): Promise<string> {
@@ -567,6 +632,67 @@ export async function createLightTile(
   const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
   const lightId = (light as any).id;
 
+  // Generate a unique tag for this light group (for Tagger integration)
+  // Uses the light name in PascalCase with incrementing numbers if needed
+  const lightGroupTag = generateUniqueLightTag(config.name);
+
+  // Create overlay tile if enabled
+  let overlayTileId: string | null = null;
+  if (config.useOverlay && config.overlayImage) {
+    const overlayTileData = {
+      texture: {
+        src: config.overlayImage,
+        anchorX: 0.5,
+        anchorY: 0.5,
+        fit: 'fill',
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+        tint: '#ffffff',
+        alphaThreshold: 0.75
+      },
+      width: gridSize,
+      height: gridSize,
+      x: tileX,
+      y: tileY,
+      elevation: 1, // Place slightly above the main tile
+      occlusion: { mode: 0, alpha: 0 },
+      rotation: 0,
+      alpha: 1,
+      hidden: true, // Start hidden, will be shown when light is ON
+      locked: false,
+      restrictions: { light: false, weather: false },
+      video: { loop: true, autoplay: true, volume: 0 },
+      flags: {
+        'monks-active-tiles': {
+          name: `${config.name} (Overlay)`,
+          active: false,
+          record: false,
+          restriction: 'all',
+          controlled: 'all',
+          trigger: [],
+          allowpaused: false,
+          usealpha: false,
+          pointer: false,
+          vision: true,
+          pertoken: false,
+          minrequired: null,
+          cooldown: null,
+          chance: 100,
+          fileindex: 0,
+          actions: [],
+          files: [],
+          variables: {}
+        }
+      },
+      visible: true,
+      img: config.overlayImage
+    };
+
+    const [overlayTile] = await scene.createEmbeddedDocuments('Tile', [overlayTileData]);
+    overlayTileId = (overlayTile as any).id;
+  }
+
   // Determine trigger type based on darkness setting
   const trigger = config.useDarkness ? ['darkness'] : ['dblclick'];
 
@@ -596,6 +722,23 @@ export async function createLightTile(
       },
       id: foundry.utils.randomID()
     });
+
+    // Toggle overlay tile if enabled
+    if (overlayTileId) {
+      actions.push({
+        action: 'showhide',
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${overlayTileId}`,
+            name: `Tile: ${overlayTileId}`
+          },
+          collection: 'tiles',
+          hidden: 'toggle',
+          fade: 0
+        },
+        id: foundry.utils.randomID()
+      });
+    }
   }
 
   const tileData = {
@@ -651,7 +794,27 @@ export async function createLightTile(
     img: config.offImage
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [mainTile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Tag all entities with the same identifier using Tagger
+  // This allows us to find and delete related entities when the main tile is deleted
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+
+    // Tag the main tile
+    await Tagger.setTags(mainTile, [lightGroupTag]);
+
+    // Tag the light source
+    await Tagger.setTags(light, [lightGroupTag]);
+
+    // Tag the overlay tile if it was created
+    if (overlayTileId) {
+      const overlayTile = scene.tiles.get(overlayTileId);
+      if (overlayTile) {
+        await Tagger.setTags(overlayTile, [lightGroupTag]);
+      }
+    }
+  }
 }
 
 /**

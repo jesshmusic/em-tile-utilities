@@ -172,7 +172,8 @@ describe('tile-helpers', () => {
         dimLight: 40,
         brightLight: 20,
         lightColor: '#ffa726',
-        colorIntensity: 0.5
+        colorIntensity: 0.5,
+        useOverlay: false
       };
     });
 

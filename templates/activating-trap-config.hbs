@@ -47,18 +47,52 @@
 
   <div class="form-group">
     <label>
-      <input type="checkbox" id="hasSavingThrow" name="hasSavingThrow" data-saving-throw-checkbox {{#if defaultHasSavingThrow}}checked{{/if}} />
+      <input type="checkbox" id="hasSavingThrow" name="hasSavingThrow" data-saving-throw-checkbox {{#if defaultHasSavingThrow}}checked{{/if}} {{#if hasDmgTrap}}disabled{{/if}} />
       {{localize "EMPUZZLES.HasSavingThrow"}}
     </label>
     <p class="hint">{{localize "EMPUZZLES.HasSavingThrowHint"}}</p>
   </div>
 
+  {{! DMG Trap Item Integration }}
+  <div class="form-group dmg-trap-section">
+    <label>{{localize "EMPUZZLES.DMGTrapItem"}}</label>
+    {{#if hasDmgTrap}}
+      <div class="dmg-trap-item-display">
+        <div class="dmg-trap-item-info">
+          <img src="{{dmgTrap.itemImg}}" class="dmg-trap-item-image" alt="" />
+          <div class="dmg-trap-item-details">
+            <span class="dmg-trap-item-name">{{dmgTrap.itemName}}</span>
+            <button type="button" class="dmg-trap-remove-button" data-action="removeDmgTrapItem" title="{{localize 'EMPUZZLES.RemoveDMGTrapItem'}}">
+              <i class="fas fa-times"></i> {{localize "EMPUZZLES.Remove"}}
+            </button>
+          </div>
+        </div>
+        <div class="dmg-trap-activity-select-wrapper">
+          <label for="dmgTrapActivity">{{localize "EMPUZZLES.DMGTrapLevelRange"}}</label>
+          <select id="dmgTrapActivity" name="dmgTrapActivity" data-dmg-trap-activity-select>
+            {{#each dmgTrap.activityOptions as |activity|}}
+              <option value="{{activity.value}}" {{#if (eq activity.value ../dmgTrap.selectedActivityId)}}selected{{/if}}>
+                {{activity.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+    {{else}}
+      <div class="dmg-trap-item-drop-zone" data-dmg-trap-drop-zone>
+        <i class="fas fa-file-import"></i>
+        <p>{{localize "EMPUZZLES.DMGTrapDropZone"}}</p>
+      </div>
+    {{/if}}
+    <p class="hint">{{localize "EMPUZZLES.DMGTrapActivatingHint"}}</p>
+  </div>
+
   <div class="saving-throw-fields" style="display: none;">
     <div class="form-group">
       <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
-      <select id="savingThrow" name="savingThrow">
+      <select id="savingThrow" name="savingThrow" {{#if hasDmgTrap}}disabled{{/if}}>
         {{#each savingThrowOptions as |option|}}
-          <option value="{{option.value}}" {{#if (eq option.value "ability:dex")}}selected{{/if}}>
+          <option value="{{option.value}}" {{#if (eq option.value (or ../defaultSavingThrow "ability:dex"))}}selected{{/if}}>
             {{localize option.label}}
           </option>
         {{/each}}
@@ -68,7 +102,7 @@
 
     <div class="form-group">
       <label for="dc">{{localize "EMPUZZLES.DC"}}</label>
-      <input type="number" id="dc" name="dc" value="14" min="1" max="30" data-dtype="Number" />
+      <input type="number" id="dc" name="dc" value="{{or defaultDC 14}}" min="1" max="30" data-dtype="Number" {{#if hasDmgTrap}}disabled{{/if}} />
       <p class="hint">{{localize "EMPUZZLES.DCHint"}}</p>
     </div>
   </div>
