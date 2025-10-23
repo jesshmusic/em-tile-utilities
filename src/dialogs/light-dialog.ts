@@ -1,4 +1,5 @@
 import { createLightTile } from '../utils/tile-helpers';
+import { getActiveTileManager } from './tile-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -23,7 +24,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       width: 576
     },
     form: {
-      closeOnSubmit: true,
+      closeOnSubmit: false,
       handler: LightConfigDialog.#onSubmit
     }
   };
@@ -195,6 +196,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
    * Handle form submission
    */
   static async #onSubmit(
+    this: LightConfigDialog,
     _event: SubmitEvent,
     _form: HTMLFormElement,
     formData: any
@@ -206,6 +208,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     const data = formData.object;
+
+    // Minimize the dialog so user can see the canvas
+    this.minimize();
 
     // Show notification to click on canvas
     ui.notifications.info('Click on the canvas to place the light tile...');
@@ -242,6 +247,15 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
       // Remove the handler after placement
       (canvas as any).stage.off('click', handler);
+
+      // Close the dialog
+      this.close();
+
+      // Restore Tile Manager if it was minimized
+      const tileManager = getActiveTileManager();
+      if (tileManager) {
+        tileManager.maximize();
+      }
     };
 
     // Add the click handler

@@ -1,5 +1,6 @@
 import type { Branch, ConditionOperator, LogicConnector } from '../types/module';
 import { BranchActionCategory } from '../types/module';
+import { getActiveTileManager } from './tile-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -33,7 +34,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       height: 'auto'
     },
     form: {
-      closeOnSubmit: true,
+      closeOnSubmit: false,
       handler: CheckStateDialog.#onSubmit
     },
     actions: {
@@ -481,6 +482,9 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
       console.log('Check State Config:', config);
 
+      // Minimize the dialog so user can see the canvas
+      instance.minimize();
+
       ui.notifications.info('Click on the canvas to place the Check State tile...');
 
       const handler = async (clickEvent: any) => {
@@ -492,6 +496,15 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
           ui.notifications.info('Check State tile created!');
           (canvas as any).stage.off('click', handler);
+
+          // Close the dialog
+          instance.close();
+
+          // Restore Tile Manager if it was minimized
+          const tileManager = getActiveTileManager();
+          if (tileManager) {
+            tileManager.maximize();
+          }
         } catch (error) {
           console.error('EM Tiles Error: Error placing Check State tile:', error);
           ui.notifications.error(

@@ -1,5 +1,6 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
 import { createResetTile } from '../utils/tile-helpers';
+import { getActiveTileManager } from './tile-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -170,7 +171,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       height: 700
     },
     form: {
-      closeOnSubmit: true,
+      closeOnSubmit: false,
       handler: ResetTileConfigDialog.#onSubmit
     },
     actions: {
@@ -437,7 +438,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   /**
    * Handle form submission
    */
-  static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
+  static async #onSubmit(
+    this: ResetTileConfigDialog,
+    event: SubmitEvent,
+    form: HTMLFormElement,
+    formData: any
+  ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
       ui.notifications.error('EM Tiles Error: No active scene!');
@@ -532,6 +538,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       return;
     }
 
+    // Minimize the dialog so user can see the canvas
+    this.minimize();
+
     // Show notification to click on canvas
     ui.notifications.info('Click on the canvas to place the reset tile...');
 
@@ -560,6 +569,15 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
       // Remove the handler after placement
       (canvas as any).stage.off('click', handler);
+
+      // Close the dialog
+      this.close();
+
+      // Restore Tile Manager if it was minimized
+      const tileManager = getActiveTileManager();
+      if (tileManager) {
+        tileManager.maximize();
+      }
     };
 
     // Add the click handler

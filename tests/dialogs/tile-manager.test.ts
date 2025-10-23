@@ -10,6 +10,23 @@ mockFoundry();
 
 import { TileManagerDialog, showTileManagerDialog } from '../../src/dialogs/tile-manager';
 
+/**
+ * Helper function to extract flat array of tiles from grouped structure
+ * The new grouping feature returns an array of groups, each with a tiles array
+ */
+function extractTilesFromGroups(groupedTiles: any[]): any[] {
+  const tiles: any[] = [];
+  groupedTiles.forEach((item: any) => {
+    if (item.isGroup && item.tiles) {
+      tiles.push(...item.tiles);
+    } else {
+      // If it's not grouped (shouldn't happen), just add it
+      tiles.push(item);
+    }
+  });
+  return tiles;
+}
+
 describe('TileManagerDialog', () => {
   let dialog: TileManagerDialog;
   let mockScene: any;
@@ -65,52 +82,58 @@ describe('TileManagerDialog', () => {
   describe('_prepareContext', () => {
     it('should return tiles sorted by name by default', async () => {
       const context = await dialog._prepareContext({});
+      const tiles = extractTilesFromGroups(context.tiles);
 
-      expect(context.tiles).toHaveLength(3);
-      expect(context.tiles[0].name).toBe('Alpha Tile');
-      expect(context.tiles[1].name).toBe('Beta Tile');
-      expect(context.tiles[2].name).toBe('Gamma Tile');
+      expect(tiles).toHaveLength(3);
+      expect(tiles[0].name).toBe('Alpha Tile');
+      expect(tiles[1].name).toBe('Beta Tile');
+      expect(tiles[2].name).toBe('Gamma Tile');
     });
 
     it('should sort tiles by X position', async () => {
       dialog.sortBy = 'x';
       const context = await dialog._prepareContext({});
+      const tiles = extractTilesFromGroups(context.tiles);
 
-      expect(context.tiles[0].x).toBe(100);
-      expect(context.tiles[1].x).toBe(200);
-      expect(context.tiles[2].x).toBe(300);
+      expect(tiles[0].x).toBe(100);
+      expect(tiles[1].x).toBe(200);
+      expect(tiles[2].x).toBe(300);
     });
 
     it('should sort tiles by Y position', async () => {
       dialog.sortBy = 'y';
       const context = await dialog._prepareContext({});
+      const tiles = extractTilesFromGroups(context.tiles);
 
-      expect(context.tiles[0].y).toBe(100);
-      expect(context.tiles[1].y).toBe(200);
-      expect(context.tiles[2].y).toBe(300);
+      expect(tiles[0].y).toBe(100);
+      expect(tiles[1].y).toBe(200);
+      expect(tiles[2].y).toBe(300);
     });
 
     it('should sort tiles by elevation', async () => {
       dialog.sortBy = 'elevation';
       const context = await dialog._prepareContext({});
+      const tiles = extractTilesFromGroups(context.tiles);
 
-      expect(context.tiles[0].elevation).toBe(0);
-      expect(context.tiles[1].elevation).toBe(0);
-      expect(context.tiles[2].elevation).toBe(5);
+      expect(tiles[0].elevation).toBe(0);
+      expect(tiles[1].elevation).toBe(0);
+      expect(tiles[2].elevation).toBe(5);
     });
 
     it('should sort tiles by sort order', async () => {
       dialog.sortBy = 'sort';
       const context = await dialog._prepareContext({});
+      const tiles = extractTilesFromGroups(context.tiles);
 
-      expect(context.tiles[0].sort).toBe(1);
-      expect(context.tiles[1].sort).toBe(2);
-      expect(context.tiles[2].sort).toBe(3);
+      expect(tiles[0].sort).toBe(1);
+      expect(tiles[1].sort).toBe(2);
+      expect(tiles[2].sort).toBe(3);
     });
 
     it('should include tile metadata', async () => {
       const context = await dialog._prepareContext({});
-      const tile = context.tiles[0];
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tile = tiles[0];
 
       expect(tile).toHaveProperty('id');
       expect(tile).toHaveProperty('name');
@@ -131,7 +154,8 @@ describe('TileManagerDialog', () => {
       mockScene.tiles.get('tile-1').texture.src = 'path/to/video.webm';
 
       const context = await dialog._prepareContext({});
-      const tile = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tile = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tile.isVideo).toBe(true);
     });
@@ -140,7 +164,8 @@ describe('TileManagerDialog', () => {
       mockScene.tiles.get('tile-1').texture.src = 'path/to/image.png';
 
       const context = await dialog._prepareContext({});
-      const tile = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tile = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tile.isVideo).toBe(false);
     });
@@ -190,7 +215,8 @@ describe('TileManagerDialog', () => {
       };
 
       const context = await dialog._prepareContext({});
-      const tileData = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tileData = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tileData.hasMonksData).toBe(true);
       expect(tileData.actionCount).toBe(2);
@@ -204,7 +230,8 @@ describe('TileManagerDialog', () => {
       tile.flags['monks-active-tiles'].name = 'Monks Name';
 
       const context = await dialog._prepareContext({});
-      const tileData = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tileData = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tileData.name).toBe('Monks Name');
     });
@@ -215,7 +242,8 @@ describe('TileManagerDialog', () => {
       tile.flags['monks-active-tiles'].name = '';
 
       const context = await dialog._prepareContext({});
-      const tileData = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tileData = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tileData.name).toBe('Unnamed Tile');
     });
@@ -225,7 +253,8 @@ describe('TileManagerDialog', () => {
       delete tile.flags['monks-active-tiles'].active;
 
       const context = await dialog._prepareContext({});
-      const tileData = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tileData = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tileData.active).toBe(true);
     });
@@ -235,7 +264,8 @@ describe('TileManagerDialog', () => {
       delete tile.flags['monks-active-tiles'];
 
       const context = await dialog._prepareContext({});
-      const tileData = context.tiles.find((t: any) => t.id === 'tile-1');
+      const tiles = extractTilesFromGroups(context.tiles);
+      const tileData = tiles.find((t: any) => t.id === 'tile-1');
 
       expect(tileData.hasMonksData).toBe(false);
       expect(tileData.actionCount).toBe(0);
@@ -269,7 +299,8 @@ describe('TileManagerDialog', () => {
         mockScene.tiles.get('tile-1').texture.src = `path/to/file${ext}`;
 
         const context = await dialog._prepareContext({});
-        const tile = context.tiles.find((t: any) => t.id === 'tile-1');
+        const tiles = extractTilesFromGroups(context.tiles);
+        const tile = tiles.find((t: any) => t.id === 'tile-1');
 
         expect(tile.isVideo).toBe(true);
       });
@@ -278,7 +309,8 @@ describe('TileManagerDialog', () => {
         mockScene.tiles.get('tile-1').texture.src = `path/to/file${ext.toUpperCase()}`;
 
         const context = await dialog._prepareContext({});
-        const tile = context.tiles.find((t: any) => t.id === 'tile-1');
+        const tiles = extractTilesFromGroups(context.tiles);
+        const tile = tiles.find((t: any) => t.id === 'tile-1');
 
         expect(tile.isVideo).toBe(true);
       });
@@ -291,7 +323,8 @@ describe('TileManagerDialog', () => {
         mockScene.tiles.get('tile-1').texture.src = `path/to/file${ext}`;
 
         const context = await dialog._prepareContext({});
-        const tile = context.tiles.find((t: any) => t.id === 'tile-1');
+        const tiles = extractTilesFromGroups(context.tiles);
+        const tile = tiles.find((t: any) => t.id === 'tile-1');
 
         expect(tile.isVideo).toBe(false);
       });

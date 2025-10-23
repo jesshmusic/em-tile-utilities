@@ -26,7 +26,8 @@ export interface LightConfig {
 export enum TrapResultType {
   DAMAGE = 'damage',
   TELEPORT = 'teleport',
-  ACTIVE_EFFECT = 'activeeffect'
+  ACTIVE_EFFECT = 'activeeffect',
+  COMBAT = 'combat'
 }
 
 /**
@@ -92,11 +93,16 @@ export interface TrapConfig {
   dc: number;
   // For damage result type
   damageOnFail: string;
+  halfDamageOnSuccess?: boolean; // Whether successful saves take half damage
   flavorText: string;
   // For teleport result type
-  teleportConfig?: TeleportConfig; // Optional: teleport destination
+  teleportX?: number; // Teleport destination X
+  teleportY?: number; // Teleport destination Y
+  teleportConfig?: TeleportConfig; // Optional: teleport destination (legacy)
   // For active effect result type
-  activeEffectConfig?: ActiveEffectConfig; // Optional: active effect to apply
+  effectId?: string; // Effect ID to apply
+  addEffect?: boolean; // True = add, False = remove
+  activeEffectConfig?: ActiveEffectConfig; // Optional: active effect to apply (legacy)
   // For activating trap type
   tilesToActivate?: string[]; // Optional: IDs of tiles to activate (deprecated, use tileActions)
   tileActions?: TileAction[]; // Optional: tile actions with configurations

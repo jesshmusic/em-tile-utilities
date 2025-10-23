@@ -152,6 +152,14 @@
     </div>
 
     <div class="form-group">
+      <label>
+        <input type="checkbox" id="halfDamageOnSuccess" name="halfDamageOnSuccess" {{#if defaultHalfDamageOnSuccess}}checked{{/if}} {{#if hasDmgTrap}}disabled{{/if}} />
+        {{localize "EMPUZZLES.HalfDamageOnSuccess"}}
+      </label>
+      <p class="hint">{{localize "EMPUZZLES.HalfDamageOnSuccessHint"}}</p>
+    </div>
+
+    <div class="form-group">
       <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
       <textarea id="flavorText" name="flavorText" rows="3" placeholder="{{localize 'EMPUZZLES.FlavorTextPlaceholder'}}"></textarea>
       <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>

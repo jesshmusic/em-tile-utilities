@@ -223,7 +223,8 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       // Pre-populate fields from DMG trap activity
       defaultDC: activityData ? activityData.dc : undefined,
       defaultDamageOnFail: activityData ? activityData.damageFormula : undefined,
-      defaultSavingThrow: activityData ? `ability:${activityData.ability}` : undefined
+      defaultSavingThrow: activityData ? `ability:${activityData.ability}` : undefined,
+      defaultHalfDamageOnSuccess: activityData ? activityData.halfDamageOnSuccess : undefined
     };
 
     // Let derived class add type-specific context
@@ -608,6 +609,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     dc: number;
     damageFormula: string;
     damageType: string;
+    halfDamageOnSuccess: boolean;
   } {
     const ability = activity.save?.ability?.[0] || 'dex';
     const dc = parseInt(activity.save?.dc?.formula || '14');
@@ -616,7 +618,10 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     let damageFormula = '';
     if (activity.damage?.parts?.custom) {
       damageFormula = activity.damage.parts.custom;
-    } else if (activity.damage?.parts?.[0]?.custom?.enabled && activity.damage.parts[0].custom?.formula) {
+    } else if (
+      activity.damage?.parts?.[0]?.custom?.enabled &&
+      activity.damage.parts[0].custom?.formula
+    ) {
       // Fallback: check if parts is an array with custom formula
       damageFormula = activity.damage.parts[0].custom.formula;
     } else if (activity.damage?.parts?.[0]?.number && activity.damage.parts[0]?.denomination) {
@@ -624,19 +629,22 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       damageFormula = `${activity.damage.parts[0].number}d${activity.damage.parts[0].denomination}`;
     }
 
-    // Handle half damage on successful save
-    if (activity.save?.damage === 'half' && damageFormula) {
-      damageFormula = `(${damageFormula}) / 2`;
-    }
+    // Check if save allows half damage on success (property is damage.onSave, not save.damage)
+    const halfDamageOnSuccess = activity.damage?.onSave === 'half' && !!damageFormula;
 
     // Extract damage type
-    const damageType = activity.damage?.parts?.types?.[0]
-      || activity.damage?.parts?.[0]?.types?.[0]
-      || 'untyped';
+    const damageType =
+      activity.damage?.parts?.types?.[0] || activity.damage?.parts?.[0]?.types?.[0] || 'untyped';
 
-    console.log('Extracted Activity Data:', { ability, dc, damageFormula, damageType });
+    console.log('Extracted Activity Data:', {
+      ability,
+      dc,
+      damageFormula,
+      damageType,
+      halfDamageOnSuccess
+    });
 
-    return { ability, dc, damageFormula, damageType };
+    return { ability, dc, damageFormula, damageType, halfDamageOnSuccess };
   }
 
   /**
@@ -721,6 +729,10 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     const dc = (form.querySelector('input[name="dc"]') as HTMLInputElement)?.value;
     const damageOnFail = (form.querySelector('input[name="damageOnFail"]') as HTMLInputElement)
       ?.value;
+    const halfDamageOnSuccessCheckbox = form.querySelector(
+      'input[name="halfDamageOnSuccess"]'
+    ) as HTMLInputElement;
+    const halfDamageOnSuccessManual = halfDamageOnSuccessCheckbox?.checked || false;
     const flavorText = (form.querySelector('textarea[name="flavorText"]') as HTMLTextAreaElement)
       ?.value;
 
@@ -747,6 +759,18 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       return;
     }
 
+    // Check if using DMG trap item and extract half-damage setting, or use manual checkbox
+    let halfDamageOnSuccess = halfDamageOnSuccessManual;
+    if (this.dmgTrapItemId && this.dmgTrapActivityId) {
+      const selectedActivity = this.dmgTrapActivities?.find(
+        (activity: any) => activity._id === this.dmgTrapActivityId
+      );
+      if (selectedActivity) {
+        const activityData = this._extractActivityData(selectedActivity);
+        halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+      }
+    }
+
     // Build base trap config
     const baseTrapConfig: TrapConfig = {
       name: trapName,
@@ -761,6 +785,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       savingThrow: savingThrow || 'ability:dex',
       dc: dc ? parseInt(dc) : 10,
       damageOnFail: damageOnFail || '1d6',
+      halfDamageOnSuccess: halfDamageOnSuccess,
       flavorText: flavorText || 'You triggered a trap!'
     };
 
@@ -806,8 +831,8 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const onMouseDown = (event: any) => {
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
-      startPos = { x: snapped.x, y: snapped.y };
+      // Don't snap during drag - use raw position
+      startPos = { x: position.x, y: position.y };
 
       // Create preview graphics
       previewGraphics = new PIXI.Graphics();
@@ -818,17 +843,17 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (!startPos || !previewGraphics) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      // Don't snap during drag - use raw position for smooth preview
 
       // Calculate width and height
-      const width = Math.abs(snapped.x - startPos.x);
-      const height = Math.abs(snapped.y - startPos.y);
+      const width = Math.abs(position.x - startPos.x);
+      const height = Math.abs(position.y - startPos.y);
 
       // Calculate top-left corner
-      const x = Math.min(startPos.x, snapped.x);
-      const y = Math.min(startPos.y, snapped.y);
+      const x = Math.min(startPos.x, position.x);
+      const y = Math.min(startPos.y, position.y);
 
-      // Draw preview rectangle
+      // Draw preview rectangle (no snapping)
       previewGraphics.clear();
       previewGraphics.lineStyle(2, 0xff0000, 0.8);
       previewGraphics.drawRect(x, y, width, height);
@@ -838,19 +863,19 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       if (!startPos) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      // Don't snap during calculation - use raw positions
 
       // Calculate dimensions
-      const width = Math.abs(snapped.x - startPos.x);
-      const height = Math.abs(snapped.y - startPos.y);
+      const width = Math.abs(position.x - startPos.x);
+      const height = Math.abs(position.y - startPos.y);
 
       // Calculate top-left corner
-      const x = Math.min(startPos.x, snapped.x);
-      const y = Math.min(startPos.y, snapped.y);
+      const x = Math.min(startPos.x, position.x);
+      const y = Math.min(startPos.y, position.y);
 
-      // Only create if there's a valid size
-      if (width > 0 && height > 0) {
-        // Create the trap tile at the dragged position with dragged size
+      // Only create if there's a valid size (minimum 10 pixels)
+      if (width > 10 && height > 10) {
+        // Create the trap tile with the exact dragged dimensions (no snapping)
         await createTrapTile(scene, trapConfig, x, y, width, height);
 
         ui.notifications.info('Trap tile created!');

@@ -653,6 +653,61 @@
   display: inline-block;
 }
 
+/* Tile Group Styles */
+.tile-group {
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.group-header {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px 3px 0 0;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.group-header:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.group-toggle-icon {
+  font-size: 0.85em;
+  color: var(--color-text-dark-secondary);
+  transition: transform 0.2s;
+  min-width: 1em;
+}
+
+.group-name {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--color-text-light-heading);
+}
+
+.group-count {
+  font-size: 0.9em;
+  color: var(--color-text-dark-secondary);
+  font-weight: normal;
+}
+
+.group-tiles {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tile-entry-grouped {
+  margin-left: 1rem;
+  border-left: 3px solid rgba(100, 150, 200, 0.3);
+}
+
 /* Custom Icons from game-icons.net */
 /* Icons are licensed under CC BY 3.0 - see icons/README.md for attribution */
 
@@ -1362,5 +1417,117 @@ button .game-icon,
 
 .dmg-trap-activity-select-wrapper select {
   width: 100%;
+}
+
+/* Attack Item Styles (for Combat Traps) */
+.attack-item-section {
+  margin-bottom: 1rem;
+}
+
+.attack-item-drop-zone {
+  min-height: 80px;
+  padding: 1rem;
+  border: 2px dashed var(--color-border-light-tertiary);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-text-dark-secondary);
+  text-align: center;
+}
+
+.attack-item-drop-zone.drag-over {
+  background: rgba(150, 100, 200, 0.2);
+  border-color: rgba(150, 100, 200, 0.5);
+  border-style: solid;
+}
+
+.attack-item-drop-zone i {
+  font-size: 2em;
+  opacity: 0.5;
+}
+
+.attack-item-drop-zone p {
+  margin: 0;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.attack-item-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+}
+
+.attack-item-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--color-border-light-tertiary);
+}
+
+.attack-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.attack-item-name {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.attack-item-remove-button {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.9em;
+  cursor: pointer;
+  border: 1px solid var(--color-border-light-tertiary);
+  background: rgba(200, 50, 50, 0.2);
+  border-color: rgba(200, 50, 50, 0.4);
+  color: #ff6b6b;
+  border-radius: 3px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: flex-start;
+}
+
+.attack-item-remove-button:hover {
+  background: rgba(200, 50, 50, 0.4);
+  border-color: rgba(200, 50, 50, 0.6);
+  color: #ff4444;
+}
+
+/* Token Configuration Styles */
+.token-config-section {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  margin-top: 0.5rem;
+}
+
+.token-config-section .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.token-config-section .checkbox-label input[type="checkbox"] {
+  margin: 0;
 }
 

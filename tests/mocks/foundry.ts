@@ -157,16 +157,45 @@ export function createMockScene(id = 'test-scene', tiles: any[] = []) {
     return results;
   };
 
+  // Create empty lights map
+  const lightMap = new Map();
+  (lightMap as any).filter = function (callback: (value: any) => boolean) {
+    const results: any[] = [];
+    this.forEach((value: any) => {
+      if (callback(value)) {
+        results.push(value);
+      }
+    });
+    return results;
+  };
+
+  // Storage for flags
+  const flags: Record<string, any> = {};
+
   return {
     id,
     name: 'Test Scene',
     tiles: tileMap,
+    lights: lightMap,
     dimensions: {
       sceneWidth: 1000,
       sceneHeight: 1000
     },
     createEmbeddedDocuments: jest.fn(async (type: string, data: any[]) => {
       return data.map(d => ({ ...d, id: foundry.utils.randomID() }));
+    }),
+    setFlag: jest.fn(async (scope: string, key: string, value: any) => {
+      if (!flags[scope]) flags[scope] = {};
+      flags[scope][key] = value;
+      return value;
+    }),
+    getFlag: jest.fn((scope: string, key: string) => {
+      return flags[scope]?.[key];
+    }),
+    unsetFlag: jest.fn(async (scope: string, key: string) => {
+      if (flags[scope]) {
+        delete flags[scope][key];
+      }
     })
   };
 }
