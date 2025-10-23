@@ -1,4 +1,5 @@
 import { createLightTile } from '../utils/tile-helpers';
+import { getActiveTileManager } from './tile-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -23,7 +24,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       width: 576
     },
     form: {
-      closeOnSubmit: true,
+      closeOnSubmit: false,
       handler: LightConfigDialog.#onSubmit
     }
   };
@@ -60,6 +61,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       brightLight: 20,
       lightColor: '#ffa726',
       colorIntensity: 0.5,
+      useOverlay: false,
+      overlayImage: '',
       buttons: [
         {
           type: 'submit',
@@ -99,6 +102,25 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
       toggleDarknessSettings();
       darknessToggle.addEventListener('change', toggleDarknessSettings);
+    }
+
+    // Handle overlay toggle
+    const overlayToggle = this.element.querySelector(
+      'input[name="useOverlay"]'
+    ) as HTMLInputElement;
+    const overlaySettings = this.element.querySelector('.overlay-settings') as HTMLElement;
+
+    if (overlayToggle && overlaySettings) {
+      const toggleOverlaySettings = () => {
+        if (overlayToggle.checked) {
+          overlaySettings.style.display = 'block';
+        } else {
+          overlaySettings.style.display = 'none';
+        }
+      };
+
+      toggleOverlaySettings();
+      overlayToggle.addEventListener('change', toggleOverlaySettings);
     }
 
     // Handle range slider value updates
@@ -174,6 +196,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
    * Handle form submission
    */
   static async #onSubmit(
+    this: LightConfigDialog,
     _event: SubmitEvent,
     _form: HTMLFormElement,
     formData: any
@@ -185,6 +208,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     const data = formData.object;
+
+    // Minimize the dialog so user can see the canvas
+    this.minimize();
 
     // Show notification to click on canvas
     ui.notifications.info('Click on the canvas to place the light tile...');
@@ -209,7 +235,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
           dimLight: parseInt(data.dimLight) || 40,
           brightLight: parseInt(data.brightLight) || 20,
           lightColor: data.lightColor || '#ffffff',
-          colorIntensity: parseFloat(data.colorIntensity) || 0.5
+          colorIntensity: parseFloat(data.colorIntensity) || 0.5,
+          useOverlay: data.useOverlay === true,
+          overlayImage: data.overlayImage || ''
         },
         snapped.x,
         snapped.y
@@ -219,6 +247,15 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
       // Remove the handler after placement
       (canvas as any).stage.off('click', handler);
+
+      // Close the dialog
+      this.close();
+
+      // Restore Tile Manager if it was minimized
+      const tileManager = getActiveTileManager();
+      if (tileManager) {
+        tileManager.maximize();
+      }
     };
 
     // Add the click handler

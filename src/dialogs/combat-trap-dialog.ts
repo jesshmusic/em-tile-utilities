@@ -362,8 +362,8 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
     const onMouseDown = (event: any) => {
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
-      startPos = { x: snapped.x, y: snapped.y };
+      // Don't snap during drag - use raw position
+      startPos = { x: position.x, y: position.y };
 
       // Create preview graphics
       previewGraphics = new PIXI.Graphics();
@@ -374,17 +374,17 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       if (!startPos || !previewGraphics) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      // Don't snap during drag - use raw position for smooth preview
 
       // Calculate width and height
-      const width = Math.abs(snapped.x - startPos.x);
-      const height = Math.abs(snapped.y - startPos.y);
+      const width = Math.abs(position.x - startPos.x);
+      const height = Math.abs(position.y - startPos.y);
 
       // Calculate top-left corner
-      const x = Math.min(startPos.x, snapped.x);
-      const y = Math.min(startPos.y, snapped.y);
+      const x = Math.min(startPos.x, position.x);
+      const y = Math.min(startPos.y, position.y);
 
-      // Draw preview rectangle
+      // Draw preview rectangle (no snapping)
       previewGraphics.clear();
       previewGraphics.lineStyle(2, 0xff6b35, 0.8);
       previewGraphics.drawRect(x, y, width, height);
@@ -394,19 +394,19 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       if (!startPos) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      // Don't snap during calculation - use raw positions
 
       // Calculate dimensions
-      const width = Math.abs(snapped.x - startPos.x);
-      const height = Math.abs(snapped.y - startPos.y);
+      const width = Math.abs(position.x - startPos.x);
+      const height = Math.abs(position.y - startPos.y);
 
       // Calculate top-left corner
-      const x = Math.min(startPos.x, snapped.x);
-      const y = Math.min(startPos.y, snapped.y);
+      const x = Math.min(startPos.x, position.x);
+      const y = Math.min(startPos.y, position.y);
 
-      // Only create if there's a valid size
-      if (width > 0 && height > 0) {
-        // Create the combat trap tile
+      // Only create if there's a valid size (minimum 10 pixels)
+      if (width > 10 && height > 10) {
+        // Create the combat trap tile with the exact dragged dimensions (no snapping)
         await createCombatTrapTile(scene, trapConfig, x, y, width, height);
 
         ui.notifications.info('Combat trap created!');

@@ -43,7 +43,7 @@ describe('LightConfigDialog', () => {
     it('should have form configuration with close on submit', () => {
       const options = (LightConfigDialog as any).DEFAULT_OPTIONS;
 
-      expect(options.form.closeOnSubmit).toBe(true);
+      expect(options.form.closeOnSubmit).toBe(false);
       expect(options.form.handler).toBeDefined();
     });
   });
@@ -372,6 +372,12 @@ describe('LightConfigDialog', () => {
   });
 
   describe('form submission', () => {
+    beforeEach(() => {
+      // Mock dialog methods for form submission tests
+      dialog.minimize = jest.fn();
+      dialog.close = jest.fn();
+    });
+
     it('should show error if no active scene', async () => {
       (global as any).canvas.scene = null;
 

@@ -127,6 +127,13 @@ Hooks.once('ready', () => {
     return;
   }
 
+  if (!game.modules.get('tagger')?.active) {
+    ui.notifications.error(
+      'EM Tiles Error: EM Tile Utilities requires Tagger to be installed and active.'
+    );
+    return;
+  }
+
   console.log(
     '%c🧩 EM Tile Utilities %c✓ Ready!',
     'color: #ff6b35; font-weight: bold; font-size: 14px;',
@@ -180,6 +187,55 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
     if (actor) {
       console.log(`🧩 EM Tile Utilities: Deleting trap actor "${actor.name}" (${actorId})`);
       await actor.delete();
+    }
+  }
+});
+
+/**
+ * Clean up light sources and overlay tiles when light tiles are deleted
+ * Uses Tagger to find and delete related entities
+ */
+Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+  // Check if Tagger is available
+  if (!(game as any).modules.get('tagger')?.active) return;
+
+  const Tagger = (globalThis as any).Tagger;
+  const scene = tile.parent;
+
+  // Get tags from this tile
+  const tags = Tagger.getTags(tile);
+  if (!tags || tags.length === 0) return;
+
+  // Check if this tile has light-related actions (toggles lights)
+  const monksData = tile.flags?.['monks-active-tiles'];
+  const hasLightActions = monksData?.actions?.some(
+    (action: any) =>
+      action.action === 'activate' && action.data?.entity?.id?.includes('AmbientLight')
+  );
+
+  if (!hasLightActions) return;
+
+  // Process each tag to clean up related entities
+  for (const lightGroupTag of tags) {
+    console.log(`🧩 EM Tile Utilities: Cleaning up light group "${lightGroupTag}"`);
+
+    // Find all entities with the same tag in this scene
+    const taggedEntities = Tagger.getByTag(lightGroupTag, {
+      scenes: [scene],
+      caseInsensitive: false
+    });
+
+    // Delete all related entities except the tile being deleted
+    for (const entity of taggedEntities) {
+      if (entity.id === tile.id) continue; // Skip the tile being deleted
+
+      if (entity.documentName === 'AmbientLight') {
+        console.log(`🧩 EM Tile Utilities: Deleting light source "${entity.id}" from light group`);
+        await entity.delete();
+      } else if (entity.documentName === 'Tile') {
+        console.log(`🧩 EM Tile Utilities: Deleting overlay tile "${entity.id}" from light group`);
+        await entity.delete();
+      }
     }
   }
 });

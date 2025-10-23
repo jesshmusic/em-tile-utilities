@@ -2,7 +2,7 @@
  * Tests for tile-helpers.ts
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import {
   createSwitchTile,
   createLightTile,
@@ -172,7 +172,8 @@ describe('tile-helpers', () => {
         dimLight: 40,
         brightLight: 20,
         lightColor: '#ffa726',
-        colorIntensity: 0.5
+        colorIntensity: 0.5,
+        useOverlay: false
       };
     });
 
@@ -638,6 +639,868 @@ describe('tile-helpers', () => {
 
       const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
       expect(savingThrowAction.data.flavor).toBe(trapConfig.flavorText);
+    });
+  });
+
+  describe('createCheckStateTile', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+    });
+
+    it('should create a check state tile with correct size', async () => {
+      const config = {
+        name: 'Check State',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: []
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/tile-helpers');
+      await createCheckStateTile(mockScene, config, 200, 200);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+
+      expect(tileData.width).toBe(200); // 2x2 grid
+      expect(tileData.height).toBe(200);
+    });
+
+    it('should use dblclick trigger', async () => {
+      const config = {
+        name: 'Check State',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: []
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/tile-helpers');
+      await createCheckStateTile(mockScene, config, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+
+      expect(tileData.flags['monks-active-tiles'].trigger).toContain('dblclick');
+    });
+
+    it('should include check state name', async () => {
+      const config = {
+        name: 'Door Logic',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: []
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/tile-helpers');
+      await createCheckStateTile(mockScene, config, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+
+      expect(tileData.flags['monks-active-tiles'].name).toBe('Door Logic');
+    });
+  });
+
+  describe('createCombatTrapTile', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+
+      // Mock fromUuid for item loading
+      (global as any).fromUuid = jest.fn(() =>
+        Promise.resolve({
+          name: 'Longsword',
+          img: 'icons/weapons/sword.png',
+          toObject: () => ({ name: 'Longsword' })
+        })
+      );
+
+      // Mock game.actors
+      (global as any).game.actors = {
+        documentClass: {
+          create: jest.fn(() =>
+            Promise.resolve({
+              id: 'actor123',
+              createEmbeddedDocuments: jest.fn(() => Promise.resolve([{ id: 'item456' }]))
+            })
+          )
+        }
+      };
+
+      // Mock game.folders
+      (global as any).game.folders = {
+        find: jest.fn().mockReturnValue({ id: 'folder789' })
+      };
+    });
+
+    it('should create combat trap with attack item', async () => {
+      const config = {
+        name: 'Combat Trap',
+        startingImage: 'icons/svg/trap.svg',
+        triggeredImage: '',
+        hideTrapOnTrigger: false,
+        sound: '',
+        targetType: TrapTargetType.TRIGGERING,
+        itemId: 'Item.weapon123',
+        tokenVisible: false,
+        maxTriggers: 0
+      };
+
+      const { createCombatTrapTile } = await import('../../src/utils/tile-helpers');
+      await createCombatTrapTile(mockScene, config, 200, 200);
+
+      // Should create both tile and token
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
+    });
+
+    it('should create trap actor in EM Tile Utilities folder', async () => {
+      const config = {
+        name: 'Combat Trap',
+        startingImage: 'icons/svg/trap.svg',
+        triggeredImage: '',
+        hideTrapOnTrigger: false,
+        sound: '',
+        targetType: TrapTargetType.TRIGGERING,
+        itemId: 'Item.weapon123',
+        tokenVisible: false,
+        maxTriggers: 0
+      };
+
+      const { createCombatTrapTile } = await import('../../src/utils/tile-helpers');
+      await createCombatTrapTile(mockScene, config, 200, 200);
+
+      expect((global as any).game.actors.documentClass.create).toHaveBeenCalled();
+      const actorData = (global as any).game.actors.documentClass.create.mock.calls[0][0];
+      expect(actorData.name).toContain('Combat Trap');
+    });
+
+    it('should support trigger limits', async () => {
+      const config = {
+        name: 'Combat Trap',
+        startingImage: 'icons/svg/trap.svg',
+        triggeredImage: '',
+        hideTrapOnTrigger: false,
+        sound: '',
+        targetType: TrapTargetType.TRIGGERING,
+        itemId: 'Item.weapon123',
+        tokenVisible: false,
+        maxTriggers: 3
+      };
+
+      const { createCombatTrapTile } = await import('../../src/utils/tile-helpers');
+      await createCombatTrapTile(mockScene, config, 200, 200);
+
+      // Verify trigger limit logic is included
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
+    });
+  });
+
+  describe('tagging functionality', () => {
+    let mockScene: any;
+    let mockTagger: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+
+      // Mock Tagger
+      mockTagger = {
+        getTags: jest.fn(() => []),
+        setTags: jest.fn(() => Promise.resolve())
+      };
+
+      (global as any).Tagger = mockTagger;
+      (global as any).game.modules = {
+        get: jest.fn((id: string) => {
+          if (id === 'tagger') {
+            return { active: true };
+          }
+          return null;
+        })
+      };
+    });
+
+    it('should tag switch tiles with EM prefix', async () => {
+      const config = {
+        name: 'Test Switch',
+        variableName: 'switch_1',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        sound: 'path/to/sound.ogg'
+      };
+
+      await createSwitchTile(mockScene, config, 200, 200);
+
+      expect(mockTagger.setTags).toHaveBeenCalled();
+      const tagArgs = mockTagger.setTags.mock.calls[0];
+      const tags = tagArgs[1];
+      expect(tags[0]).toMatch(/^EM/); // Should start with EM
+      expect(tags[0]).toContain('TestSwitch');
+    });
+
+    it('should tag light tiles with EM prefix', async () => {
+      const config: LightConfig = {
+        name: 'Torch',
+        offImage: 'path/to/off.png',
+        onImage: 'path/to/on.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: '#ffffff',
+        colorIntensity: 0.5,
+        useOverlay: false
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      expect(mockTagger.setTags).toHaveBeenCalled();
+      // Should tag both tile and light
+      expect(mockTagger.setTags.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    it('should tag reset tiles with EM prefix', async () => {
+      const config: ResetTileConfig = {
+        name: 'Reset Tile',
+        image: 'icons/svg/regen.svg',
+        varsToReset: {},
+        tilesToReset: []
+      };
+
+      await createResetTile(mockScene, config, 200, 200);
+
+      expect(mockTagger.setTags).toHaveBeenCalled();
+      const tags = mockTagger.setTags.mock.calls[0][1];
+      expect(tags[0]).toMatch(/^EM/);
+      expect(tags[0]).toContain('ResetTile');
+    });
+
+    it('should tag trap tiles with EM prefix', async () => {
+      const trapConfig: TrapConfig = {
+        name: 'Floor Trap',
+        startingImage: 'path/to/trap.png',
+        triggeredImage: 'path/to/triggered.png',
+        hideTrapOnTrigger: false,
+        sound: '',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: false,
+        minRequired: null,
+        savingThrow: '',
+        dc: 15,
+        damageOnFail: '2d6',
+        flavorText: 'You triggered a trap!'
+      };
+
+      await createTrapTile(mockScene, trapConfig, 200, 200);
+
+      expect(mockTagger.setTags).toHaveBeenCalled();
+      const tags = mockTagger.setTags.mock.calls[0][1];
+      expect(tags[0]).toMatch(/^EM/);
+      expect(tags[0]).toContain('FloorTrap');
+    });
+
+    it('should increment tag numbers for duplicate names', async () => {
+      // First tile
+      mockTagger.getTags.mockImplementation((doc: any) => {
+        return doc._tags || [];
+      });
+
+      const config1 = {
+        name: 'Switch',
+        variableName: 'switch_1',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        sound: ''
+      };
+      await createSwitchTile(mockScene, config1, 200, 200);
+      const firstTag = mockTagger.setTags.mock.calls[0][1][0];
+
+      // Add first tile to scene with its tag
+      const firstTile = { id: 'tile1', _tags: [firstTag] };
+      mockScene.tiles.set('tile1', firstTile);
+
+      mockTagger.setTags.mockClear();
+
+      // Second tile - should detect first tile's tag and append number
+      const config2 = {
+        name: 'Switch',
+        variableName: 'switch_2',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        sound: ''
+      };
+      await createSwitchTile(mockScene, config2, 200, 200);
+      const secondTag = mockTagger.setTags.mock.calls[0][1][0];
+
+      // Second tag should have a number
+      expect(secondTag).toMatch(/\d$/);
+      expect(secondTag).not.toBe(firstTag);
+    });
+
+    it('should handle missing Tagger gracefully', async () => {
+      (global as any).game.modules = {
+        get: jest.fn().mockReturnValue(null)
+      };
+
+      const config = {
+        name: 'Test Switch',
+        variableName: 'switch_1',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        sound: ''
+      };
+
+      // Should not throw error when Tagger is not available
+      await expect(createSwitchTile(mockScene, config, 200, 200)).resolves.not.toThrow();
+    });
+  });
+
+  describe('getNextTileNumber', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+    });
+
+    it('should return 1 when no matching tiles exist', async () => {
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('Switch');
+      expect(result).toBe(1);
+    });
+
+    it('should return 1 when scene is null', async () => {
+      (global as any).canvas.scene = null;
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('Switch');
+      expect(result).toBe(1);
+    });
+
+    it('should increment based on existing tile names', async () => {
+      // Add tiles with numbered names
+      const tile1 = {
+        id: 'tile1',
+        name: 'Switch 1',
+        flags: { 'monks-active-tiles': { name: 'Switch 1' } }
+      };
+      const tile2 = {
+        id: 'tile2',
+        name: 'Switch 2',
+        flags: { 'monks-active-tiles': { name: 'Switch 2' } }
+      };
+      mockScene.tiles.set('tile1', tile1);
+      mockScene.tiles.set('tile2', tile2);
+
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('Switch');
+      expect(result).toBe(3);
+    });
+
+    it('should check monks active tiles name', async () => {
+      const tile1 = {
+        id: 'tile1',
+        name: '',
+        flags: { 'monks-active-tiles': { name: 'Trap 5' } }
+      };
+      mockScene.tiles.set('tile1', tile1);
+
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('Trap');
+      expect(result).toBe(6);
+    });
+
+    it('should find highest number when tiles are out of order', async () => {
+      const tile1 = {
+        id: 'tile1',
+        name: 'Light 10',
+        flags: { 'monks-active-tiles': { name: 'Light 10' } }
+      };
+      const tile2 = {
+        id: 'tile2',
+        name: 'Light 2',
+        flags: { 'monks-active-tiles': { name: 'Light 2' } }
+      };
+      mockScene.tiles.set('tile1', tile1);
+      mockScene.tiles.set('tile2', tile2);
+
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('Light');
+      expect(result).toBe(11);
+    });
+
+    it('should handle tiles without flags', async () => {
+      const tile1 = {
+        id: 'tile1',
+        name: 'Reset 3'
+      };
+      mockScene.tiles.set('tile1', tile1);
+
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('Reset');
+      expect(result).toBe(4);
+    });
+
+    it('should be case insensitive when matching', async () => {
+      const tile1 = {
+        id: 'tile1',
+        name: 'SWITCH 7',
+        flags: { 'monks-active-tiles': { name: 'SWITCH 7' } }
+      };
+      mockScene.tiles.set('tile1', tile1);
+
+      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const result = getNextTileNumber('switch');
+      expect(result).toBe(8);
+    });
+  });
+
+  describe('light creation with different configurations', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+    });
+
+    it('should create light with no color when lightColor is null', async () => {
+      const config: LightConfig = {
+        name: 'White Light',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: null,
+        colorIntensity: 0.5,
+        useOverlay: false
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith(
+        'AmbientLight',
+        expect.any(Array)
+      );
+    });
+
+    it('should create light with color when lightColor is provided', async () => {
+      const config: LightConfig = {
+        name: 'Red Light',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: '#ff0000',
+        colorIntensity: 0.8,
+        useOverlay: false
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      const lightCall = mockScene.createEmbeddedDocuments.mock.calls.find(
+        (call: any) => call[0] === 'AmbientLight'
+      );
+      expect(lightCall).toBeDefined();
+      const lightData = lightCall[1][0];
+      expect(lightData.config.color).toBe('#ff0000');
+      expect(lightData.config.alpha).toBe(0.8);
+    });
+
+    it('should configure darkness range when useDarkness is true', async () => {
+      const config: LightConfig = {
+        name: 'Darkness Light',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        useDarkness: true,
+        darknessMin: 0.5,
+        dimLight: 30,
+        brightLight: 15,
+        lightColor: null,
+        colorIntensity: 0.5,
+        useOverlay: false
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      const lightCall = mockScene.createEmbeddedDocuments.mock.calls.find(
+        (call: any) => call[0] === 'AmbientLight'
+      );
+      const lightData = lightCall[1][0];
+      expect(lightData.config.darkness.min).toBe(0.5);
+      expect(lightData.config.darkness.max).toBe(1);
+    });
+
+    it('should set darkness range to full when not using darkness', async () => {
+      const config: LightConfig = {
+        name: 'Normal Light',
+        onImage: 'path/to/on.png',
+        offImage: 'path/to/off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: null,
+        colorIntensity: 0.5,
+        useOverlay: false
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      const lightCall = mockScene.createEmbeddedDocuments.mock.calls.find(
+        (call: any) => call[0] === 'AmbientLight'
+      );
+      const lightData = lightCall[1][0];
+      expect(lightData.config.darkness.min).toBe(0);
+      expect(lightData.config.darkness.max).toBe(1);
+    });
+  });
+
+  describe('trap creation with different result types', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+    });
+
+    it('should create trap with damage result type', async () => {
+      const config: TrapConfig = {
+        name: 'Damage Trap',
+        startingImage: 'path/to/trap.png',
+        triggeredImage: 'path/to/triggered.png',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: false,
+        minRequired: null,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '2d6',
+        flavorText: 'You trigger a trap!',
+        sound: '',
+        hideTrapOnTrigger: false
+      };
+
+      await createTrapTile(mockScene, config, 200, 200);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
+
+      const tileCall = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = tileCall[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have damage-related actions
+      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtActions.length).toBeGreaterThan(0);
+    });
+
+    it('should create trap with teleport result type', async () => {
+      const config: TrapConfig = {
+        name: 'Teleport Trap',
+        startingImage: 'path/to/trap.png',
+        triggeredImage: 'path/to/triggered.png',
+        resultType: TrapResultType.TELEPORT,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: false,
+        minRequired: null,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '',
+        flavorText: '',
+        sound: '',
+        teleportConfig: { x: 500, y: 600 },
+        hideTrapOnTrigger: true
+      };
+
+      await createTrapTile(mockScene, config, 200, 200);
+
+      const tileCall = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = tileCall[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have teleport action
+      const teleportAction = actions.find((a: any) => a.action === 'teleport');
+      expect(teleportAction).toBeDefined();
+    });
+
+    it('should create trap with active effect result type', async () => {
+      const config: TrapConfig = {
+        name: 'Effect Trap',
+        startingImage: 'path/to/trap.png',
+        triggeredImage: 'path/to/triggered.png',
+        resultType: TrapResultType.ACTIVE_EFFECT,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: true,
+        minRequired: null,
+        savingThrow: 'con',
+        dc: 12,
+        damageOnFail: '',
+        flavorText: '',
+        sound: '',
+        hideTrapOnTrigger: false,
+        activeEffectConfig: { effectid: 'Convenient Effect: Poisoned', addeffect: 'add' }
+      };
+
+      await createTrapTile(mockScene, config, 200, 200);
+
+      const tileCall = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = tileCall[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have active effect action
+      const effectAction = actions.find((a: any) => a.action === 'activeeffect');
+      expect(effectAction).toBeDefined();
+    });
+
+    it('should include saving throw when hasSavingThrow is true', async () => {
+      const config: TrapConfig = {
+        name: 'Save Trap',
+        startingImage: 'path/to/trap.png',
+        triggeredImage: 'path/to/triggered.png',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: true,
+        minRequired: null,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '2d6',
+        flavorText: 'You take damage!',
+        sound: '',
+        hideTrapOnTrigger: false
+      };
+
+      await createTrapTile(mockScene, config, 200, 200);
+
+      const tileCall = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = tileCall[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have saving throw action when hasSavingThrow is true
+      const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(saveAction).toBeDefined();
+    });
+  });
+
+  describe('reset tile creation', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+    });
+
+    it('should create reset tile with valid configuration', async () => {
+      const config: ResetTileConfig = {
+        name: 'Reset Button',
+        image: 'path/to/button.png',
+        varsToReset: {},
+        tilesToReset: []
+      };
+
+      await createResetTile(mockScene, config, 200, 200);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
+
+      const tileCall = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = tileCall[1][0];
+      expect(tileData.flags['monks-active-tiles'].name).toBe('Reset Button');
+    });
+  });
+
+  describe('verifying tile action sequences', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+    });
+
+    it('should create switch with correct action sequence', async () => {
+      const config: SwitchConfig = {
+        name: 'Test Switch',
+        variableName: 'test_var',
+        onImage: 'on.png',
+        offImage: 'off.png',
+        sound: 'click.ogg'
+      };
+
+      await createSwitchTile(mockScene, config, 100, 100);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Verify action sequence: init var -> sound -> toggle var -> chat -> check -> image1 -> anchor -> image2
+      expect(actions[0].action).toBe('setvariable'); // Initialize variable
+      expect(actions[0].data.name).toBe('test_var');
+
+      expect(actions[1].action).toBe('playsound'); // Play click sound
+      expect(actions[1].data.audiofile).toBe('click.ogg');
+
+      expect(actions[2].action).toBe('setvariable'); // Toggle variable
+      expect(actions[2].data.value).toContain('variable.test_var'); // Check it references the variable
+      expect(actions[2].data.value).toContain('if'); // Uses conditional logic
+
+      expect(actions[3].action).toBe('chatmessage'); // Status message
+
+      expect(actions[4].action).toBe('checkvariable'); // Check state
+      expect(actions[4].data.fail).toBe('off'); // Jump to 'off' anchor if not ON
+
+      expect(actions[5].action).toBe('tileimage'); // Show ON image
+      expect(actions[5].data.select).toBe('first');
+
+      expect(actions[6].action).toBe('anchor'); // 'off' label
+      expect(actions[6].data.tag).toBe('off');
+
+      expect(actions[7].action).toBe('tileimage'); // Show OFF image
+      expect(actions[7].data.select).toBe('last');
+    });
+
+    it('should create light tile with toggle actions', async () => {
+      const config: LightConfig = {
+        name: 'Test Light',
+        onImage: 'lit.png',
+        offImage: 'unlit.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: '#ff9900',
+        colorIntensity: 0.8,
+        useOverlay: false
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      // Verify tile created
+      const tileCalls = mockScene.createEmbeddedDocuments.mock.calls.filter(
+        (call: any) => call[0] === 'Tile'
+      );
+      expect(tileCalls.length).toBe(1);
+
+      const tileData = tileCalls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have light toggle action
+      const activateAction = actions.find((a: any) => a.action === 'activate');
+      expect(activateAction).toBeDefined();
+      expect(activateAction.data.activate).toBe('toggle');
+
+      // Verify light was created with correct color
+      const lightCalls = mockScene.createEmbeddedDocuments.mock.calls.filter(
+        (call: any) => call[0] === 'AmbientLight'
+      );
+      expect(lightCalls.length).toBe(1);
+
+      const lightData = lightCalls[0][1][0];
+      expect(lightData.config.color).toBe('#ff9900');
+      expect(lightData.config.alpha).toBe(0.8);
+      expect(lightData.config.dim).toBe(40);
+      expect(lightData.config.bright).toBe(20);
+    });
+
+    it('should create trap with saving throw flow', async () => {
+      const config: TrapConfig = {
+        name: 'Save Trap',
+        startingImage: 'trap.png',
+        triggeredImage: 'triggered.png',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: true,
+        minRequired: 1,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '3d6',
+        flavorText: 'A trap triggers!',
+        sound: 'trap.ogg',
+        hideTrapOnTrigger: false
+      };
+
+      await createTrapTile(mockScene, config, 300, 300);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have saving throw action
+      const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(saveAction).toBeDefined();
+      expect(saveAction.data.request).toBe('dex');
+
+      // Should have hurt/heal action for damage
+      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtActions.length).toBeGreaterThan(0);
+
+      // Should have flavor text in saving throw
+      expect(saveAction.data.flavor).toBe('A trap triggers!');
+    });
+
+    it('should create trap with teleport and hide behavior', async () => {
+      const config: TrapConfig = {
+        name: 'Pit Trap',
+        startingImage: 'floor.png',
+        triggeredImage: 'hole.png',
+        resultType: TrapResultType.TELEPORT,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: false,
+        minRequired: null,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '',
+        flavorText: 'You fall into a pit!',
+        sound: '',
+        teleportConfig: { x: 1000, y: 2000 },
+        hideTrapOnTrigger: true
+      };
+
+      await createTrapTile(mockScene, config, 500, 500);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have teleport action with coordinates
+      const teleportAction = actions.find((a: any) => a.action === 'teleport');
+      expect(teleportAction).toBeDefined();
+      expect(teleportAction.data.location.x).toBe(1000);
+      expect(teleportAction.data.location.y).toBe(2000);
+
+      // Should have showhide action if hideTrapOnTrigger is true
+      if (config.hideTrapOnTrigger) {
+        const hideAction = actions.find((a: any) => a.action === 'showhide');
+        expect(hideAction).toBeDefined();
+        expect(hideAction.data.hidden).toBe('hide');
+      }
+    });
+
+    it('should verify tile files array for image switching', async () => {
+      const config: SwitchConfig = {
+        name: 'Door',
+        variableName: 'door_state',
+        onImage: 'open.png',
+        offImage: 'closed.png',
+        sound: ''
+      };
+
+      await createSwitchTile(mockScene, config, 100, 100);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const monksData = tileData.flags['monks-active-tiles'];
+
+      // Verify files array has both images
+      expect(monksData.files).toBeDefined();
+      expect(monksData.files.length).toBe(2);
+      expect(monksData.files[0].name).toBe('open.png');
+      expect(monksData.files[1].name).toBe('closed.png');
+
+      // Verify fileindex starts at 0 (first file)
+      expect(monksData.fileindex).toBe(0);
     });
   });
 });

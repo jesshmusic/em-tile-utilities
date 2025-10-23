@@ -1,4 +1,5 @@
 import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
+import { getActiveTileManager } from './tile-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -23,7 +24,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       width: 576
     },
     form: {
-      closeOnSubmit: true,
+      closeOnSubmit: false,
       handler: SwitchConfigDialog.#onSubmit
     }
   };
@@ -124,6 +125,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
    * @param {FormDataExtended} formData - The form data
    */
   static async #onSubmit(
+    this: SwitchConfigDialog,
     _event: SubmitEvent,
     _form: HTMLFormElement,
     formData: any
@@ -135,6 +137,9 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     }
 
     const data = formData.object;
+
+    // Minimize the dialog so user can see the canvas
+    this.minimize();
 
     // Show notification to click on canvas
     ui.notifications.info('Click on the canvas to place the switch tile...');
@@ -165,6 +170,15 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
 
       // Remove the handler after placement
       (canvas as any).stage.off('click', handler);
+
+      // Close the dialog
+      this.close();
+
+      // Restore Tile Manager if it was minimized
+      const tileManager = getActiveTileManager();
+      if (tileManager) {
+        tileManager.maximize();
+      }
     };
 
     // Add the click handler

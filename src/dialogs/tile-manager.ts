@@ -1,15 +1,24 @@
 import { showSwitchDialog } from './switch-dialog';
 import { showLightDialog } from './light-dialog';
 import { showResetTileDialog } from './reset-dialog';
-import { showDisappearingTrapDialog } from './disappearing-trap-dialog';
-import { showSwitchingTrapDialog } from './switching-trap-dialog';
-import { showActivatingTrapDialog } from './activating-trap-dialog';
+import { showTrapDialog } from './trap-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
-import { showCombatTrapDialog } from './combat-trap-dialog';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
+
+/**
+ * Track the active Tile Manager instance so dialogs can restore it after tile creation
+ */
+let activeTileManager: TileManagerDialog | null = null;
+
+/**
+ * Get the active Tile Manager instance
+ */
+export function getActiveTileManager(): TileManagerDialog | null {
+  return activeTileManager;
+}
 
 /**
  * Tile Manager dialog for viewing and editing all tiles on the scene
@@ -19,6 +28,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
 export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   sortBy: string = 'name';
   searchQuery: string = '';
+  expandedGroups: Set<string> = new Set();
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -38,11 +48,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createSwitch: TileManagerDialog.#onCreateSwitch,
       createLight: TileManagerDialog.#onCreateLight,
       createReset: TileManagerDialog.#onCreateReset,
-      createDisappearingTrap: TileManagerDialog.#onCreateDisappearingTrap,
-      createSwitchingTrap: TileManagerDialog.#onCreateSwitchingTrap,
-      createActivatingTrap: TileManagerDialog.#onCreateActivatingTrap,
+      createTrap: TileManagerDialog.#onCreateTrap,
       createCheckState: TileManagerDialog.#onCreateCheckState,
-      createCombatTrap: TileManagerDialog.#onCreateCombatTrap,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
@@ -51,7 +58,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       toggleVisibility: TileManagerDialog.#onToggleVisibility,
       toggleActive: TileManagerDialog.#onToggleActive,
       exportTile: TileManagerDialog.#onExportTile,
-      importTile: TileManagerDialog.#onImportTile
+      importTile: TileManagerDialog.#onImportTile,
+      toggleGroup: TileManagerDialog.#onToggleGroup
     }
   };
 
@@ -102,6 +110,13 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         displayValue: typeof value === 'boolean' ? (value ? 'true' : 'false') : String(value)
       }));
 
+      // Get tags from Tagger if available
+      let tags: string[] = [];
+      if ((game as any).modules.get('tagger')?.active) {
+        const Tagger = (globalThis as any).Tagger;
+        tags = Tagger.getTags(tile) || [];
+      }
+
       // Check if the texture is a video file
       const imageSrc = tile.texture.src || '';
       const videoExtensions = ['.webm', '.mp4', '.ogg', '.ogv'];
@@ -124,7 +139,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         hasMonksData: !!monksData,
         actionCount: actionCount,
         variableCount: variableCount,
-        variables: variablesList
+        variables: variablesList,
+        tags: tags,
+        hasTags: tags.length > 0
       };
     });
 
@@ -147,15 +164,86 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         break;
     }
 
+    // Group tiles by base tag (removing trailing numbers)
+    const groupedTiles = this._groupTilesByTag(tiles);
+
     return {
       ...context,
-      tiles: tiles,
+      tiles: groupedTiles,
       hasTiles: tiles.length > 0,
       tileCount: tiles.length,
       sortBy: this.sortBy,
       searchQuery: this.searchQuery,
       experimentalFeatures: experimentalFeatures
     };
+  }
+
+  /**
+   * Group tiles by EM tags and Misc section
+   * Each unique EM tag gets its own collapsible section
+   * All non-EM tagged tiles go into a single "Misc" section
+   * @param tiles - Array of tile objects
+   * @returns Array with EM tag groups and Misc group
+   */
+  _groupTilesByTag(tiles: any[]): any[] {
+    const emTagGroups = new Map<string, any[]>();
+    const miscTiles: any[] = [];
+
+    // Separate tiles by their EM tags or Misc
+    tiles.forEach(tile => {
+      if (tile.hasTags && tile.tags.length > 0) {
+        // Check for EM tags
+        const emTag = tile.tags.find((tag: string) => tag.startsWith('EM'));
+        if (emTag) {
+          // Has an EM tag - add to that tag's group
+          if (!emTagGroups.has(emTag)) {
+            emTagGroups.set(emTag, []);
+          }
+          const group = emTagGroups.get(emTag);
+          if (group) {
+            group.push(tile);
+          }
+        } else {
+          // Has tags but none are EM - goes to Misc
+          miscTiles.push(tile);
+        }
+      } else {
+        // No tags - goes to Misc
+        miscTiles.push(tile);
+      }
+    });
+
+    const result: any[] = [];
+
+    // Add all EM tag groups (sorted alphabetically)
+    const sortedEmTags = Array.from(emTagGroups.keys()).sort();
+    sortedEmTags.forEach(tag => {
+      const groupTiles = emTagGroups.get(tag);
+      if (!groupTiles) return;
+
+      result.push({
+        isGroup: true,
+        baseTag: tag,
+        groupName: tag,
+        tileCount: groupTiles.length,
+        tiles: groupTiles,
+        expanded: this.expandedGroups.has(tag)
+      });
+    });
+
+    // Add Misc section at the end if there are any non-EM tiles
+    if (miscTiles.length > 0) {
+      result.push({
+        isGroup: true,
+        baseTag: 'Misc',
+        groupName: 'Misc',
+        tileCount: miscTiles.length,
+        tiles: miscTiles,
+        expanded: this.expandedGroups.has('Misc')
+      });
+    }
+
+    return result;
   }
 
   /* -------------------------------------------- */
@@ -252,6 +340,11 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   _onClose(options: any): void {
     super._onClose(options);
 
+    // Clear active instance tracking
+    if (activeTileManager === this) {
+      activeTileManager = null;
+    }
+
     // Clean up hooks
     if ((this as any)._hooksRegistered) {
       (Hooks as any).off('createTile', (this as any)._createHook);
@@ -290,6 +383,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     _target: HTMLElement
   ): Promise<void> {
     event.preventDefault();
+    this.minimize();
     showSwitchDialog();
   }
 
@@ -304,6 +398,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     _target: HTMLElement
   ): Promise<void> {
     event.preventDefault();
+    this.minimize();
     showLightDialog();
   }
 
@@ -318,49 +413,23 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     _target: HTMLElement
   ): Promise<void> {
     event.preventDefault();
+    this.minimize();
     showResetTileDialog();
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Handle create disappearing trap button click
+   * Handle create trap button click (unified trap dialog)
    */
-  static async #onCreateDisappearingTrap(
+  static async #onCreateTrap(
     this: TileManagerDialog,
     event: PointerEvent,
     _target: HTMLElement
   ): Promise<void> {
     event.preventDefault();
-    showDisappearingTrapDialog();
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Handle create switching trap button click
-   */
-  static async #onCreateSwitchingTrap(
-    this: TileManagerDialog,
-    event: PointerEvent,
-    _target: HTMLElement
-  ): Promise<void> {
-    event.preventDefault();
-    showSwitchingTrapDialog();
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Handle create activating trap button click
-   */
-  static async #onCreateActivatingTrap(
-    this: TileManagerDialog,
-    event: PointerEvent,
-    _target: HTMLElement
-  ): Promise<void> {
-    event.preventDefault();
-    showActivatingTrapDialog();
+    this.minimize();
+    showTrapDialog();
   }
 
   /* -------------------------------------------- */
@@ -374,21 +443,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     _target: HTMLElement
   ): Promise<void> {
     event.preventDefault();
+    this.minimize();
     showCheckStateDialog();
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Handle create combat trap button click
-   */
-  static async #onCreateCombatTrap(
-    this: TileManagerDialog,
-    event: PointerEvent,
-    _target: HTMLElement
-  ): Promise<void> {
-    event.preventDefault();
-    showCombatTrapDialog();
   }
 
   /* -------------------------------------------- */
@@ -688,11 +744,39 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     input.click();
   }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle toggle group expand/collapse
+   */
+  static async #onToggleGroup(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    const baseTag = target.dataset.baseTag;
+
+    if (!baseTag) return;
+
+    // Toggle expanded state
+    if (this.expandedGroups.has(baseTag)) {
+      this.expandedGroups.delete(baseTag);
+    } else {
+      this.expandedGroups.add(baseTag);
+    }
+
+    // Re-render to show/hide group tiles
+    this.render();
+  }
 }
 
 /**
  * Show the tile manager dialog
  */
 export function showTileManagerDialog(): void {
-  new TileManagerDialog().render(true);
+  const dialog = new TileManagerDialog();
+  activeTileManager = dialog;
+  dialog.render(true);
 }

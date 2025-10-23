@@ -46,6 +46,90 @@ export function getNextTileNumber(baseName: string): number {
 }
 
 /**
+ * Convert a string to PascalCase (e.g., "my light" -> "MyLight")
+ * @param str - The string to convert
+ * @returns The PascalCase version of the string
+ */
+function toPascalCase(str: string): string {
+  return str
+    .split(/[\s-_]+/) // Split on spaces, hyphens, or underscores
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+}
+
+/**
+ * Get all unique tags in the current scene
+ * @returns Array of all tags used in the scene
+ */
+function getAllTagsInScene(): string[] {
+  if (!(game as any).modules.get('tagger')?.active) return [];
+
+  const Tagger = (globalThis as any).Tagger;
+  const scene = (canvas as any).scene;
+  if (!scene) return [];
+
+  const allTags = new Set<string>();
+
+  // Get tags from all tiles
+  const tiles = Array.from((scene.tiles as any).values());
+  tiles.forEach((tile: any) => {
+    const tags = Tagger.getTags(tile) || [];
+    tags.forEach((tag: string) => allTags.add(tag));
+  });
+
+  // Get tags from all lights
+  const lights = Array.from((scene.lights as any).values());
+  lights.forEach((light: any) => {
+    const tags = Tagger.getTags(light) || [];
+    tags.forEach((tag: string) => allTags.add(tag));
+  });
+
+  return Array.from(allTags);
+}
+
+/**
+ * Generate a unique tag with EM prefix
+ * @param name - The base name (e.g., "Torch", "Floor Trap Damage", "My Switch")
+ * @returns A unique tag in PascalCase format with EM prefix (e.g., "EMTorch", "EMTorch2")
+ */
+function generateUniqueEMTag(name: string): string {
+  const baseName = 'EM' + toPascalCase(name);
+  const existingTags = getAllTagsInScene();
+
+  // If the base name is unique, use it
+  if (!existingTags.includes(baseName)) {
+    return baseName;
+  }
+
+  // Otherwise, find the next available number
+  let counter = 2;
+  while (existingTags.includes(`${baseName}${counter}`)) {
+    counter++;
+  }
+
+  return `${baseName}${counter}`;
+}
+
+/**
+ * Generate a unique tag for a light group based on the light name
+ * @param lightName - The name of the light (e.g., "Torch", "Campfire")
+ * @returns A unique tag in PascalCase format with EM prefix (e.g., "EMTorch", "EMTorch2", "EMCampfire")
+ */
+function generateUniqueLightTag(lightName: string): string {
+  return generateUniqueEMTag(lightName);
+}
+
+/**
+ * Generate a unique tag for a trap based on trap name and type
+ * @param trapName - The name of the trap (e.g., "Floor Trap", "Pit Trap")
+ * @param trapType - The type of trap result (e.g., "damage", "teleport", "combat", "activating")
+ * @returns A unique tag in format EM{{trapName}}{{trapType}}{{number}} (e.g., "EMFloorTrapDamage", "EMFloorTrapDamage2")
+ */
+function generateUniqueTrapTag(trapName: string, trapType: string): string {
+  return generateUniqueEMTag(trapName + ' ' + trapType);
+}
+
+/**
  * Get or create the "EM Tile Utilities" folder for trap actors
  */
 async function getOrCreateTrapActorsFolder(): Promise<string> {
@@ -237,7 +321,14 @@ export async function createSwitchTile(
     img: config.offImage
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Tag the switch tile using Tagger if available
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+    const switchTag = generateUniqueEMTag(config.name);
+    await Tagger.setTags(tile, [switchTag]);
+  }
 }
 
 /**
@@ -509,7 +600,14 @@ export async function createResetTile(
     img: config.image
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Tag the reset tile using Tagger if available
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+    const resetTag = generateUniqueEMTag(config.name);
+    await Tagger.setTags(tile, [resetTag]);
+  }
 }
 
 /**
@@ -567,6 +665,67 @@ export async function createLightTile(
   const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
   const lightId = (light as any).id;
 
+  // Generate a unique tag for this light group (for Tagger integration)
+  // Uses the light name in PascalCase with incrementing numbers if needed
+  const lightGroupTag = generateUniqueLightTag(config.name);
+
+  // Create overlay tile if enabled
+  let overlayTileId: string | null = null;
+  if (config.useOverlay && config.overlayImage) {
+    const overlayTileData = {
+      texture: {
+        src: config.overlayImage,
+        anchorX: 0.5,
+        anchorY: 0.5,
+        fit: 'fill',
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+        tint: '#ffffff',
+        alphaThreshold: 0.75
+      },
+      width: gridSize,
+      height: gridSize,
+      x: tileX,
+      y: tileY,
+      elevation: 1, // Place slightly above the main tile
+      occlusion: { mode: 0, alpha: 0 },
+      rotation: 0,
+      alpha: 1,
+      hidden: true, // Start hidden, will be shown when light is ON
+      locked: false,
+      restrictions: { light: false, weather: false },
+      video: { loop: true, autoplay: true, volume: 0 },
+      flags: {
+        'monks-active-tiles': {
+          name: `${config.name} (Overlay)`,
+          active: false,
+          record: false,
+          restriction: 'all',
+          controlled: 'all',
+          trigger: [],
+          allowpaused: false,
+          usealpha: false,
+          pointer: false,
+          vision: true,
+          pertoken: false,
+          minrequired: null,
+          cooldown: null,
+          chance: 100,
+          fileindex: 0,
+          actions: [],
+          files: [],
+          variables: {}
+        }
+      },
+      visible: true,
+      img: config.overlayImage
+    };
+
+    const [overlayTile] = await scene.createEmbeddedDocuments('Tile', [overlayTileData]);
+    overlayTileId = (overlayTile as any).id;
+  }
+
   // Determine trigger type based on darkness setting
   const trigger = config.useDarkness ? ['darkness'] : ['dblclick'];
 
@@ -596,6 +755,23 @@ export async function createLightTile(
       },
       id: foundry.utils.randomID()
     });
+
+    // Toggle overlay tile if enabled
+    if (overlayTileId) {
+      actions.push({
+        action: 'showhide',
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.Tile.${overlayTileId}`,
+            name: `Tile: ${overlayTileId}`
+          },
+          collection: 'tiles',
+          hidden: 'toggle',
+          fade: 0
+        },
+        id: foundry.utils.randomID()
+      });
+    }
   }
 
   const tileData = {
@@ -651,7 +827,27 @@ export async function createLightTile(
     img: config.offImage
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [mainTile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Tag all entities with the same identifier using Tagger
+  // This allows us to find and delete related entities when the main tile is deleted
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+
+    // Tag the main tile
+    await Tagger.setTags(mainTile, [lightGroupTag]);
+
+    // Tag the light source
+    await Tagger.setTags(light, [lightGroupTag]);
+
+    // Tag the overlay tile if it was created
+    if (overlayTileId) {
+      const overlayTile = scene.tiles.get(overlayTileId);
+      if (overlayTile) {
+        await Tagger.setTags(overlayTile, [lightGroupTag]);
+      }
+    }
+  }
 }
 
 /**
@@ -818,42 +1014,161 @@ export async function createTrapTile(
       case TrapResultType.DAMAGE:
         // Add saving throw if enabled
         if (config.hasSavingThrow) {
-          actions.push({
-            action: 'monks-tokenbar.requestroll',
-            data: {
-              entity: {
-                id: targetEntityId,
-                name: targetEntityName
+          if (config.halfDamageOnSuccess) {
+            // Half damage on success: use filterrequest to branch logic
+            // 1. Request the save (auto-roll with fastforward)
+            actions.push({
+              action: 'monks-tokenbar.requestroll',
+              data: {
+                entity: {
+                  id: targetEntityId,
+                  name: targetEntityName
+                },
+                request: config.savingThrow,
+                dc: config.dc.toString(),
+                flavor: config.flavorText,
+                rollmode: 'roll',
+                silent: false,
+                fastforward: true,
+                usetokens: 'all',
+                continue: 'always'
               },
-              request: config.savingThrow,
-              dc: config.dc.toString(),
-              flavor: config.flavorText,
-              rollmode: 'roll',
-              silent: false,
-              fastforward: false,
-              usetokens: 'fail',
-              continue: 'failed'
-            },
-            id: foundry.utils.randomID()
-          });
-        }
+              id: foundry.utils.randomID()
+            });
 
-        // Deal damage (to tokens that failed saving throw if enabled, or all targets if not)
-        if (config.damageOnFail) {
-          actions.push({
-            action: 'hurtheal',
-            data: {
-              entity: {
-                id: config.hasSavingThrow ? 'previous' : targetEntityId,
-                name: config.hasSavingThrow ? 'Current tokens' : targetEntityName
+            // 2. Filter request - splits into pass/fail branches
+            actions.push({
+              action: 'monks-tokenbar.filterrequest',
+              data: {
+                passed: 'trapSuccess',
+                failed: 'trapFail',
+                resume: 'trapDone'
               },
-              value: `-[[${config.damageOnFail}]]`,
-              chatMessage: true,
-              rollmode: 'roll',
-              showdice: true
-            },
-            id: foundry.utils.randomID()
-          });
+              id: foundry.utils.randomID()
+            });
+
+            // 3. Fail anchor
+            actions.push({
+              action: 'anchor',
+              data: {
+                tag: 'trapFail',
+                stop: true
+              },
+              id: foundry.utils.randomID()
+            });
+
+            // 4. Full damage to failed saves
+            if (config.damageOnFail) {
+              actions.push({
+                action: 'hurtheal',
+                data: {
+                  entity: {
+                    id: 'previous',
+                    name: 'Current tokens'
+                  },
+                  value: `-[[${config.damageOnFail}]]`,
+                  chatMessage: true,
+                  rollmode: 'roll',
+                  showdice: true
+                },
+                id: foundry.utils.randomID()
+              });
+            }
+
+            // 5. Success anchor
+            actions.push({
+              action: 'anchor',
+              data: {
+                tag: 'trapSuccess',
+                stop: true
+              },
+              id: foundry.utils.randomID()
+            });
+
+            // 6. Half damage to successful saves
+            if (config.damageOnFail) {
+              actions.push({
+                action: 'hurtheal',
+                data: {
+                  entity: {
+                    id: 'previous',
+                    name: 'Current tokens'
+                  },
+                  value: `-[[floor((${config.damageOnFail}) / 2)]]`,
+                  chatMessage: true,
+                  rollmode: 'roll',
+                  showdice: true
+                },
+                id: foundry.utils.randomID()
+              });
+            }
+
+            // 7. Done anchor
+            actions.push({
+              action: 'anchor',
+              data: {
+                tag: 'trapDone',
+                stop: true
+              },
+              id: foundry.utils.randomID()
+            });
+          } else {
+            // Standard save - only damage on failure
+            actions.push({
+              action: 'monks-tokenbar.requestroll',
+              data: {
+                entity: {
+                  id: targetEntityId,
+                  name: targetEntityName
+                },
+                request: config.savingThrow,
+                dc: config.dc.toString(),
+                flavor: config.flavorText,
+                rollmode: 'roll',
+                silent: false,
+                fastforward: false,
+                usetokens: 'fail',
+                continue: 'failed'
+              },
+              id: foundry.utils.randomID()
+            });
+
+            // Full damage to failed saves only
+            if (config.damageOnFail) {
+              actions.push({
+                action: 'hurtheal',
+                data: {
+                  entity: {
+                    id: 'previous',
+                    name: 'Current tokens'
+                  },
+                  value: `-[[${config.damageOnFail}]]`,
+                  chatMessage: true,
+                  rollmode: 'roll',
+                  showdice: true
+                },
+                id: foundry.utils.randomID()
+              });
+            }
+          }
+        } else {
+          // No saving throw - damage all targets
+          if (config.damageOnFail) {
+            actions.push({
+              action: 'hurtheal',
+              data: {
+                entity: {
+                  id: targetEntityId,
+                  name: targetEntityName
+                },
+                value: `-[[${config.damageOnFail}]]`,
+                chatMessage: true,
+                rollmode: 'roll',
+                showdice: true
+              },
+              id: foundry.utils.randomID()
+            });
+          }
         }
         break;
 
@@ -1001,7 +1316,18 @@ export async function createTrapTile(
     img: config.startingImage
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Determine trap type for tagging
+  const trapType =
+    config.tileActions && config.tileActions.length > 0 ? 'activating' : config.resultType;
+
+  // Tag the trap tile using Tagger if available
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+    const trapTag = generateUniqueTrapTag(config.name, trapType);
+    await Tagger.setTags(tile, [trapTag]);
+  }
 }
 
 /**
@@ -1261,7 +1587,14 @@ export async function createCheckStateTile(
     img: config.image
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Tag the check state tile using Tagger if available
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+    const checkStateTag = generateUniqueEMTag(config.name);
+    await Tagger.setTags(tile, [checkStateTag]);
+  }
 }
 
 /**
@@ -1506,8 +1839,23 @@ export async function createCombatTrapTile(
     });
   }
 
-  // Action 3: Run the attack using standard Monk's attack action
-  // With hidden: false on trap token, targeting should work properly now
+  // Action 3: Show the trap token before attacking (if it was hidden)
+  // This prevents advantage from being an unseen attacker
+  actions.push({
+    action: 'showhide',
+    data: {
+      entity: {
+        id: `Scene.${scene.id}.Token.${trapTokenId}`,
+        name: `${config.name} (Trap)`
+      },
+      collection: 'tokens',
+      hidden: 'show',
+      fade: 0
+    },
+    id: foundry.utils.randomID()
+  });
+
+  // Action 4: Run the attack using standard Monk's attack action
   const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
   const targetEntityName =
     config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
@@ -1601,5 +1949,12 @@ export async function createCombatTrapTile(
     img: startingImage
   };
 
-  await scene.createEmbeddedDocuments('Tile', [tileData]);
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+
+  // Tag the combat trap tile using Tagger if available
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+    const trapTag = generateUniqueTrapTag(config.name, 'combat');
+    await Tagger.setTags(tile, [trapTag]);
+  }
 }
