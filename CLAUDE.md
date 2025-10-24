@@ -1,6 +1,6 @@
 # CLAUDE.md - Technical Reference for AI Assistants
 
-This document contains technical notes, patterns, and conventions for working on the EM Tile Utilities project.
+This document contains technical notes, patterns, and conventions for working on the Dorman Lakely's Tile Utilities project.
 
 > **Note**: This is the **developer documentation**. The README.md is written for end users and contains no implementation details. Keep them separate:
 >
@@ -9,7 +9,7 @@ This document contains technical notes, patterns, and conventions for working on
 
 ## Project Overview
 
-**EM Tile Utilities** is a FoundryVTT v13 module that provides UI tools for creating interactive tiles using Monk's Active Tiles. Built with TypeScript, uses Foundry's ApplicationV2 API.
+**Dorman Lakely's Tile Utilities** is a FoundryVTT v13 module that provides UI tools for creating interactive tiles using Monk's Active Tiles. Built with TypeScript, uses Foundry's ApplicationV2 API.
 
 **Key Dependencies:**
 

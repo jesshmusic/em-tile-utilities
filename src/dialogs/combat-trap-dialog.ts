@@ -291,7 +291,7 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('EM Tiles Error: No active scene!');
+      ui.notifications.error('Tile Utilities Error: No active scene!');
       return;
     }
 

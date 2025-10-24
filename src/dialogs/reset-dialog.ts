@@ -1,6 +1,6 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
 import { createResetTile } from '../utils/tile-helpers';
-import { getActiveTileManager } from './tile-manager';
+import { getActiveTileManager } from './tile-manager-state';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -446,7 +446,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('EM Tiles Error: No active scene!');
+      ui.notifications.error('Tile Utilities Error: No active scene!');
       return;
     }
 
@@ -488,7 +488,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
           });
         }
       });
-      console.log('EM Puzzles', wallDoorStates);
+      console.log('Tile Utilities', wallDoorStates);
 
       tilesToReset.push({
         tileId: tileId,
@@ -533,7 +533,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
     if (!hasValidExtension) {
       ui.notifications.error(
-        `EM Tiles Error: Invalid image file: ${resetTileImage}. Please use a valid image file.`
+        `Tile Utilities Error: Invalid image file: ${resetTileImage}. Please use a valid image file.`
       );
       return;
     }

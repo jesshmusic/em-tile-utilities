@@ -130,12 +130,12 @@ function generateUniqueTrapTag(trapName: string, trapType: string): string {
 }
 
 /**
- * Get or create the "EM Tile Utilities" folder for trap actors
+ * Get or create the "Dorman Lakely's Tile Utilities" folder for trap actors
  */
 async function getOrCreateTrapActorsFolder(): Promise<string> {
   // Check if folder already exists
   const existingFolder = (game as any).folders.find(
-    (f: any) => f.name === 'EM Tile Utilities' && f.type === 'Actor'
+    (f: any) => f.name === "Dorman Lakely's Tile Utilities" && f.type === 'Actor'
   );
 
   if (existingFolder) {
@@ -144,7 +144,7 @@ async function getOrCreateTrapActorsFolder(): Promise<string> {
 
   // Create the folder
   const folder = await (game as any).folders.documentClass.create({
-    name: 'EM Tile Utilities',
+    name: "Dorman Lakely's Tile Utilities",
     type: 'Actor',
     parent: null
   });
@@ -1599,7 +1599,7 @@ export async function createCheckStateTile(
 
 /**
  * Create a combat trap tile that uses attack rolls instead of saving throws
- * This creates an NPC actor in the "EM Tile Utilities" folder with an item from the compendium
+ * This creates an NPC actor in the "Dorman Lakely's Tile Utilities" folder with an item from the compendium
  * to make the attack rolls, and the trap tile uses Monk's Active Tiles "attack" action.
  */
 export async function createCombatTrapTile(
@@ -1624,7 +1624,7 @@ export async function createCombatTrapTile(
   // Get the item from the compendium
   const item = await (globalThis as any).fromUuid(config.itemId);
   if (!item) {
-    ui.notifications.error('EM Tiles Error: Could not find the selected item!');
+    ui.notifications.error('Tile Utilities Error: Could not find the selected item!');
     return;
   }
 

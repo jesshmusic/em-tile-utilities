@@ -1,5 +1,5 @@
 /**
- * Jest setup file for EM Tile Utilities tests
+ * Jest setup file for Dorman Lakely's Tile Utilities tests
  * Mocks Foundry VTT globals and APIs
  */
 

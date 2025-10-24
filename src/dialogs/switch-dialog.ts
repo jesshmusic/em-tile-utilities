@@ -1,5 +1,5 @@
 import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
-import { getActiveTileManager } from './tile-manager';
+import { getActiveTileManager } from './tile-manager-state';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -132,7 +132,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('EM Tiles Error: No active scene!');
+      ui.notifications.error('Tile Utilities Error: No active scene!');
       return;
     }
 

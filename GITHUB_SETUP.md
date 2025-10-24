@@ -1,6 +1,6 @@
 # GitHub Repository Setup Guide
 
-This document explains how to configure GitHub repository settings for the EM Tile Utilities project to enable automated workflows and enforce code quality.
+This document explains how to configure GitHub repository settings for the Dorman Lakely's Tile Utilities project to enable automated workflows and enforce code quality.
 
 ## Table of Contents
 
@@ -178,7 +178,7 @@ The automated release workflow requires certain secrets to be configured in your
 
    a. Go to [FoundryVTT Package Admin](https://foundryvtt.com/admin)
    b. Sign in with your FoundryVTT account
-   c. Navigate to your package: "EM Tile Utilities"
+   c. Navigate to your package: "Dorman Lakely's Tile Utilities"
    d. Generate an API token for package releases
    e. Copy the token
 

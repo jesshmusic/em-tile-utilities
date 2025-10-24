@@ -1,5 +1,5 @@
 /**
- * EM Tile Utilities
+ * Dorman Lakely's Tile Utilities
  * Utility tile creation tools for Monk's Active Tiles
  */
 import { showTileManagerDialog } from './dialogs/tile-manager';
@@ -11,21 +11,32 @@ Hooks.once('init', () => {
   // Fun banner!
   console.log(
     `%c
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   ███████╗███╗   ███╗    ████████╗██╗██╗     ███████╗███████╗ ║
-║   ██╔════╝████╗ ████║    ╚══██╔══╝██║██║     ██╔════╝██╔════╝ ║
-║   █████╗  ██╔████╔██║       ██║   ██║██║     █████╗  ███████╗ ║
-║   ██╔══╝  ██║╚██╔╝██║       ██║   ██║██║     ██╔══╝  ╚════██║ ║
-║   ███████╗██║ ╚═╝ ██║       ██║   ██║███████╗███████╗███████║ ║
-║   ╚══════╝╚═╝     ╚═╝       ╚═╝   ╚═╝╚══════╝╚══════╝╚══════╝ ║
-║                                                               ║
-║                 🧩 EM Tile Utilities v${packageInfo.version}                 ║
-║                      Build #${buildInfo.buildNumber}          ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════╗
+║                                                      ║
+║                         /^\\                          ║
+║                        /   \\                         ║
+║                       /_____\\                        ║
+║                      (  * *  )                       ║
+║                       \\_ - _/                        ║
+║                        _|_|_                         ║
+║                       /  |  \\                        ║
+║                      /   |   \\                       ║
+║                     /    |    \\                      ║
+║                    /     |     \\                     ║
+║                   /______|______\\                    ║
+║                         /_\\                          ║
+║                        /___\\                         ║
+║                       (_____)                        ║
+║                        |   |                         ║
+║                        |   |                         ║
+║                        |___|                         ║
+║                                                      ║
+╚══════════════════════════════════════════════════════╝
+🧙 Dorman Lakely's Tile Utilities v${packageInfo.version}
+Build #${buildInfo.buildNumber}
+
     `,
-    'color: #ff6b35; font-weight: bold;'
+    'color: #9b59b6; font-weight: bold;'
   );
 
   // Register settings
@@ -115,27 +126,27 @@ Hooks.once('init', () => {
 Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
     ui.notifications.error(
-      "EM Tiles Error: EM Tile Utilities requires Monk's Active Tiles to be installed and active."
+      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Monk's Active Tiles to be installed and active."
     );
     return;
   }
 
   if (!game.modules.get('monks-tokenbar')?.active) {
     ui.notifications.error(
-      "EM Tiles Error: EM Tile Utilities requires Monk's Token Bar to be installed and active."
+      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Monk's Token Bar to be installed and active."
     );
     return;
   }
 
   if (!game.modules.get('tagger')?.active) {
     ui.notifications.error(
-      'EM Tiles Error: EM Tile Utilities requires Tagger to be installed and active.'
+      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Tagger to be installed and active."
     );
     return;
   }
 
   console.log(
-    '%c🧩 EM Tile Utilities %c✓ Ready!',
+    "%c🧩 Dorman Lakely's Tile Utilities %c✓ Ready!",
     'color: #ff6b35; font-weight: bold; font-size: 14px;',
     'color: #4caf50; font-weight: bold; font-size: 14px;'
   );
@@ -176,7 +187,9 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
     if (tokenId) {
       const token = scene.tokens.get(tokenId);
       if (token) {
-        console.log(`🧩 EM Tile Utilities: Deleting trap token "${token.name}" (${tokenId})`);
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Deleting trap token "${token.name}" (${tokenId})`
+        );
         await token.delete();
       }
       await scene.unsetFlag('em-tile-utilities', `trap-token-${actorId}`);
@@ -185,7 +198,9 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
     // Delete the actor
     const actor = (game as any).actors.get(actorId);
     if (actor) {
-      console.log(`🧩 EM Tile Utilities: Deleting trap actor "${actor.name}" (${actorId})`);
+      console.log(
+        `🧩 Dorman Lakely's Tile Utilities: Deleting trap actor "${actor.name}" (${actorId})`
+      );
       await actor.delete();
     }
   }
@@ -217,7 +232,7 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
   // Process each tag to clean up related entities
   for (const lightGroupTag of tags) {
-    console.log(`🧩 EM Tile Utilities: Cleaning up light group "${lightGroupTag}"`);
+    console.log(`🧩 Dorman Lakely's Tile Utilities: Cleaning up light group "${lightGroupTag}"`);
 
     // Find all entities with the same tag in this scene
     const taggedEntities = Tagger.getByTag(lightGroupTag, {
@@ -230,10 +245,14 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
       if (entity.id === tile.id) continue; // Skip the tile being deleted
 
       if (entity.documentName === 'AmbientLight') {
-        console.log(`🧩 EM Tile Utilities: Deleting light source "${entity.id}" from light group`);
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Deleting light source "${entity.id}" from light group`
+        );
         await entity.delete();
       } else if (entity.documentName === 'Tile') {
-        console.log(`🧩 EM Tile Utilities: Deleting overlay tile "${entity.id}" from light group`);
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Deleting overlay tile "${entity.id}" from light group`
+        );
         await entity.delete();
       }
     }

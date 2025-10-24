@@ -1,6 +1,6 @@
 import type { Branch, ConditionOperator, LogicConnector } from '../types/module';
 import { BranchActionCategory } from '../types/module';
-import { getActiveTileManager } from './tile-manager';
+import { getActiveTileManager } from './tile-manager-state';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -464,7 +464,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // Validation
     if (instance.selectedTiles.length === 0) {
-      ui.notifications.error('EM Tiles Error: Please select at least one tile to monitor!');
+      ui.notifications.error('Tile Utilities Error: Please select at least one tile to monitor!');
       return;
     }
 
@@ -506,9 +506,9 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
             tileManager.maximize();
           }
         } catch (error) {
-          console.error('EM Tiles Error: Error placing Check State tile:', error);
+          console.error('Tile Utilities Error: Error placing Check State tile:', error);
           ui.notifications.error(
-            'EM Tiles Error: Failed to create Check State tile: ' + error.message
+            'Tile Utilities Error: Failed to create Check State tile: ' + error.message
           );
           (canvas as any).stage.off('click', handler);
         }
@@ -516,9 +516,9 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
       (canvas as any).stage.on('click', handler);
     } catch (error) {
-      console.error('EM Tiles Error: Error in Check State form submit:', error);
+      console.error('Tile Utilities Error: Error in Check State form submit:', error);
       ui.notifications.error(
-        'EM Tiles Error: Failed to initialize Check State tile creation: ' + error.message
+        'Tile Utilities Error: Failed to initialize Check State tile creation: ' + error.message
       );
     }
   }

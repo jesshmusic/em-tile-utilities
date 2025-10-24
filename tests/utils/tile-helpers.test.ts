@@ -758,7 +758,7 @@ describe('tile-helpers', () => {
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
     });
 
-    it('should create trap actor in EM Tile Utilities folder', async () => {
+    it("should create trap actor in Dorman Lakely's Tile Utilities folder", async () => {
       const config = {
         name: 'Combat Trap',
         startingImage: 'icons/svg/trap.svg',
