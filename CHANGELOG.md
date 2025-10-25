@@ -6,25 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - add Tile Manager auto-restore after tile creation
-- add DMG trap item integration for trap dialogs
-- remove combat trap from experimental flag and simplify tile button labels
-
-### Changed
-- bump version to 1.9.0
-- bump version to 1.8.2
-
 
 ## [1.11.0] - 2025-10-23
 
 ### Added
-
 - add DMG trap item integration for trap dialogs
 - remove combat trap from experimental flag and simplify tile button labels
 
 ### Changed
-
 - bump version to 1.9.0
 - bump version to 1.8.2
+
 
 ## [1.10.0] - 2025-10-22
 
@@ -132,10 +124,12 @@ All notable changes to this project will be documented in this file.
 - enhancement: auto-update download URL in release script
 - enhancement: adds auto-reload prompt for experimental features
 
-## [1.8.0] - 2025-10-21
+## [1.8.0] - 2025-10-20
 
 ### Added
 
+- add optional click-to-set token position for combat traps
+- enhance combat trap with item drag-and-drop and token visibility
 - implement scene-based tile naming and simplify combat trap attacks
 - adds missing files
 - combat trap tile
@@ -160,10 +154,12 @@ All notable changes to this project will be documented in this file.
 - enhancement: auto-update download URL in release script
 - enhancement: adds auto-reload prompt for experimental features
 
-## [1.7.1] - 2025-10-21
+## [1.7.0] - 2025-10-19
 
 ### Added
 
+- add optional click-to-set token position for combat traps
+- enhance combat trap with item drag-and-drop and token visibility
 - implement scene-based tile naming and simplify combat trap attacks
 - adds missing files
 - combat trap tile
@@ -172,12 +168,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- set combat trap tokens to unlocked by default
 - implement manual combat resolution for traps to bypass MIDI-qol targeting
 - update module.json download URL to v1.6.2
 
 ### Changed
 
-- trigger CI rebuild
 - bump version to 1.6.2
 - move version bumping to PR process instead of workflow
 
@@ -187,10 +183,13 @@ All notable changes to this project will be documented in this file.
 - enhancement: auto-update download URL in release script
 - enhancement: adds auto-reload prompt for experimental features
 
-## [1.7.0] - 2025-10-20
+## [1.6.2] - 2025-10-19
 
 ### Added
 
+- add optional click-to-set token position for combat traps
+- enhance combat trap with item drag-and-drop and token visibility
+- implement scene-based tile naming and simplify combat trap attacks
 - adds missing files
 - combat trap tile
 - docs: add GitHub repository setup guide
@@ -198,198 +197,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- set combat trap tokens to unlocked by default
 - implement manual combat resolution for traps to bypass MIDI-qol targeting
 - update module.json download URL to v1.6.2
 
 ### Changed
 
-- bump version to 1.6.2
 - move version bumping to PR process instead of workflow
 
 ### Other
 
+- test: update tests for scene-based tile naming
 - enhancement: auto-update download URL in release script
 - enhancement: adds auto-reload prompt for experimental features
-
-## [1.6.3] - 2025-10-20
-
-### Added
-
-- adds missing files
-- combat trap tile
-- docs: add GitHub repository setup guide
-- adds automated release workflow and feature development guide
-
-### Fixed
-
-- update module.json download URL to v1.6.2
-
-### Changed
-
-- bump version to 1.6.2
-- move version bumping to PR process instead of workflow
-
-### Other
-
-- enhancement: auto-update download URL in release script
-- enhancement: adds auto-reload prompt for experimental features
-
-## [1.6.2] - 2025-10-19
-
-### Added
-
-- docs: add GitHub repository setup guide
-- adds automated release workflow and feature development guide
-
-### Changed
-
-- move version bumping to PR process instead of workflow
-
-### Other
-
-- enhancement: adds auto-reload prompt for experimental features
-
-## [1.6.1] - 2025-10-18
-
-### Other
-
-- enhancement: cleans up the switch actions
-
-## [1.6.0] - 2025-10-18
-
-### Added
-
-- works on experimental features
-- attempt 2 at a state tile
-
-## [1.5.3] - 2025-10-16
-
-### Added
-
-- removes the check variable tile
-- adds a basic check variables tile
-- adds a new icon and shows variables
-
-## [1.5.2] - 2025-10-15
-
-### Fixed
-
-- updatest the version of the module properly
-
-## [1.5.1] - 2025-10-15
-
-### Added
-
-- adds tile import/export
-- adds tile import/export
-- documentation update
-
-## [1.5.0] - 2025-10-14
-
-### Added
-
-- adds automatic package release
-
-## [1.4.0] - 2025-10-14
-
-### Added
-
-- adds door features to the activate trap
-- adjusts the activate trap
-- separates trap creation into three templates
-- added initial trap tile creator
-- replaces icons for the buttons
-
-### Fixed
-
-- fixes a bunch of tests
-- fixes a bunch of tests
-
-### Changed
-
-- adds tests, lint, and prettier
-
-### Other
-
-- enhancement: adds default settings to the trap
-- enhancement: restyles the tile create buttons
-- change: adds tile history reset checkbox
-
-## [1.3.0] - 2025-10-12
-
-### Other
-
-- enhancement: updates the tile manager with more functionality - added sorting - added search - made resizable - added active and visibility toggles - fixed webm display
-
-## [1.2.0] - 2025-10-11
-
-### Added
-
-- fix: removes script to add release notes file
-- fix: removes script to add release notes file
-
-## [1.1.2] - 2025-10-11
-
-### Changed
-
-- updates the minimum version and name
-- updates the minimum version and name
-
-## [1.1.1] - 2025-10-11
-
-### Changed
-
-- updates the minimum version and name
-
-## [1.1.0] - 2025-10-11
-
-### Added
-
-- add light tiles and some automation
-- adds a tile browser for the scene
-- styles the dialogs with Application V2
-- sets the switch variable and adds a variable display dialog
-- improves token settings
-
-### Fixed
-
-- custom tiles can be clicked onto the map now.
-- the custom tile image selection persists
-- door changes now set properly
-
-### Other
-
-- Initial commit: EM Puzzles and Trap Tiles module
-
-## [1.0.1] - 2025-01-XX
-
-### Added
-
-- Create Switch Tile: Double-click activated switches with ON/OFF states and variable tracking
-- Create Reset Tile: Tiles that reset multiple variables and tile states to initial values
-- Create Light Tile: Tiles with embedded light sources (click or darkness-triggered)
-  - Support for custom light colors (default: warm torch color #ffa726)
-  - Color intensity control
-  - Configurable bright/dim light radii (default: 20/40 for torch)
-  - Darkness-based automatic activation option
-- Scene Variables Viewer: View and manage all Monk's Active Tiles variables
-- Tile Manager: View, select, edit, and delete all tiles on the scene
-  - Shows tile elevation, position, size
-  - Quick select/edit/delete actions
-  - Auto-refresh on tile changes
-- Module settings for default images (switch ON/OFF, light ON/OFF)
-- Localization support (English)
-
-### Features
-
-- Click-to-place functionality for all tile types
-- Grid snapping for precise placement
-- Integration with Monk's Active Tiles module
-- File picker support for custom images
-- Confirmation dialogs for destructive actions
-
-### Technical
-
-- Built with TypeScript and Rollup
-- Foundry VTT v13 ApplicationV2 API
-- Automatic build numbering system
