@@ -1,7 +1,7 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
 import { TrapTargetType, TrapResultType } from '../types/module';
 import { createTrapTile, createCombatTrapTile, getNextTileNumber } from '../utils/tile-helpers';
-import { getActiveTileManager } from './tile-manager';
+import { getActiveTileManager } from './tile-manager-state';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;

@@ -1,6 +1,6 @@
-# EM Tile Utilities - Test Suite
+# Dorman Lakely's Tile Utilities - Test Suite
 
-This directory contains the Jest test suite for EM Tile Utilities.
+This directory contains the Jest test suite for Dorman Lakely's Tile Utilities.
 
 ## Structure
 

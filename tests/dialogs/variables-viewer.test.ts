@@ -260,7 +260,7 @@ describe('SceneVariablesViewer', () => {
       showSceneVariablesDialog();
 
       expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
-        'EM Tiles Error: No active scene!'
+        'Tile Utilities Error: No active scene!'
       );
     });
 

@@ -141,7 +141,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
 export function showSceneVariablesDialog(): void {
   const scene = canvas.scene;
   if (!scene) {
-    ui.notifications.error('EM Tiles Error: No active scene!');
+    ui.notifications.error('Tile Utilities Error: No active scene!');
     return;
   }
 

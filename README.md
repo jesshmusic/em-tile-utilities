@@ -1,8 +1,8 @@
-# EM Tile Utilities
+# Dorman Lakely's Tile Utilities
 
 **Transform your maps into interactive adventures.** Create puzzles, traps, and dynamic lighting in seconds with intuitive point-and-click tools—no complex configuration needed.
 
-Built as a companion to [Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles), EM Tile Utilities gives you ready-to-use templates for the most common interactive elements game masters need.
+Built as a companion to [Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles), Dorman Lakely's Tile Utilities gives you ready-to-use templates for the most common interactive elements game masters need.
 
 ---
 
@@ -75,9 +75,9 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 
 1. Open Foundry VTT
 2. Go to **Add-on Modules** → **Install Module**
-3. Search for "**EM Tile Utilities**"
+3. Search for "**Dorman Lakely's Tile Utilities**"
 4. Click **Install**
-5. Enable **Monk's Active Tiles**, **Monk's Token Bar**, and **EM Tile Utilities** in your world
+5. Enable **Monk's Active Tiles**, **Monk's Token Bar**, and **Dorman Lakely's Tile Utilities** in your world
 
 ### First Use
 
@@ -150,7 +150,7 @@ Open the **Variables Viewer** (📋 icon) to see your switch states, then use Mo
 
 ## ⚙️ Configuration
 
-Access module settings from **Game Settings → Module Settings → EM Tile Utilities**.
+Access module settings from **Game Settings → Module Settings → Dorman Lakely's Tile Utilities**.
 
 **Customize defaults** for faster creation:
 

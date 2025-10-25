@@ -4,21 +4,10 @@ import { showResetTileDialog } from './reset-dialog';
 import { showTrapDialog } from './trap-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
+import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
-
-/**
- * Track the active Tile Manager instance so dialogs can restore it after tile creation
- */
-let activeTileManager: TileManagerDialog | null = null;
-
-/**
- * Get the active Tile Manager instance
- */
-export function getActiveTileManager(): TileManagerDialog | null {
-  return activeTileManager;
-}
 
 /**
  * Tile Manager dialog for viewing and editing all tiles on the scene
@@ -341,8 +330,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     super._onClose(options);
 
     // Clear active instance tracking
-    if (activeTileManager === this) {
-      activeTileManager = null;
+    if (getActiveTileManager() === this) {
+      setActiveTileManager(null);
     }
 
     // Clean up hooks
@@ -711,7 +700,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Validate that it has required fields
         if (!tileData.texture || !tileData.width || !tileData.height) {
-          ui.notifications.error('EM Tiles Error: Invalid tile JSON: missing required fields');
+          ui.notifications.error(
+            'Tile Utilities Error: Invalid tile JSON: missing required fields'
+          );
           return;
         }
 
@@ -737,8 +728,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         (canvas as any).stage.on('click', handler);
       } catch (error) {
-        console.error('EM Tiles Error: Error importing tile:', error);
-        ui.notifications.error('EM Tiles Error: Failed to import tile: Invalid JSON file');
+        console.error('Tile Utilities Error: Error importing tile:', error);
+        ui.notifications.error('Tile Utilities Error: Failed to import tile: Invalid JSON file');
       }
     };
 
@@ -777,6 +768,6 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
  */
 export function showTileManagerDialog(): void {
   const dialog = new TileManagerDialog();
-  activeTileManager = dialog;
+  setActiveTileManager(dialog);
   dialog.render(true);
 }

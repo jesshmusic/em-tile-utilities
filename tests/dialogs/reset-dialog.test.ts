@@ -551,7 +551,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, { object: {} });
 
       expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
-        'EM Tiles Error: No active scene!'
+        'Tile Utilities Error: No active scene!'
       );
     });
 

@@ -139,7 +139,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     let activityData: any = null;
 
     if (this.dmgTrapItemId && this.dmgTrapItemData && this.dmgTrapActivities) {
-      console.log('🧩 EM Tile Utilities: Preparing DMG trap context', {
+      console.log("🧩 Dorman Lakely's Tile Utilities: Preparing DMG trap context", {
         itemId: this.dmgTrapItemId,
         itemName: this.dmgTrapItemData.name,
         activitiesCount: this.dmgTrapActivities.length,
@@ -152,13 +152,13 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
         (activity: any) => activity._id === this.dmgTrapActivityId
       );
 
-      console.log('🧩 EM Tile Utilities: Selected activity', selectedActivity);
+      console.log("🧩 Dorman Lakely's Tile Utilities: Selected activity", selectedActivity);
 
       if (selectedActivity) {
         // Extract save/damage data from selected activity
         activityData = this._extractActivityData(selectedActivity);
 
-        console.log('🧩 EM Tile Utilities: Extracted activity data', activityData);
+        console.log("🧩 Dorman Lakely's Tile Utilities: Extracted activity data", activityData);
 
         // Prepare activity options for dropdown
         const activityOptions = this.dmgTrapActivities.map((activity: any) => ({
@@ -173,7 +173,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
           selectedActivityId: this.dmgTrapActivityId
         };
       } else {
-        console.warn('🧩 EM Tile Utilities: Could not find selected activity', {
+        console.warn("🧩 Dorman Lakely's Tile Utilities: Could not find selected activity", {
           selectedActivityId: this.dmgTrapActivityId,
           availableIds: this.dmgTrapActivities.map((a: any) => a._id)
         });
@@ -509,7 +509,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     // Debug logging to help diagnose the issue
     if (!activitiesArray || activitiesArray.length === 0) {
-      console.warn('🧩 EM Tile Utilities: Item has no activities', {
+      console.warn("🧩 Dorman Lakely's Tile Utilities: Item has no activities", {
         itemName: item.name,
         itemType: item.type,
         hasSystem: !!item.system,
@@ -531,7 +531,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     this.dmgTrapItemData = item;
     this.dmgTrapActivities = activitiesArray;
 
-    console.log('🧩 EM Tile Utilities: DMG trap item dropped', {
+    console.log("🧩 Dorman Lakely's Tile Utilities: DMG trap item dropped", {
       itemName: item.name,
       itemUuid: item.uuid,
       activitiesCount: activitiesArray.length,
@@ -542,7 +542,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     // Select first activity by default
     if (this.dmgTrapActivities.length > 0) {
       this.dmgTrapActivityId = this.dmgTrapActivities[0]._id;
-      console.log('🧩 EM Tile Utilities: Selected first activity', {
+      console.log("🧩 Dorman Lakely's Tile Utilities: Selected first activity", {
         activityId: this.dmgTrapActivityId,
         activityName: this.dmgTrapActivities[0].name
       });
@@ -705,7 +705,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('EM Tiles Error: No active scene!');
+      ui.notifications.error('Tile Utilities Error: No active scene!');
       return;
     }
 

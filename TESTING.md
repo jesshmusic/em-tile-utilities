@@ -1,4 +1,4 @@
-# Testing Summary - EM Tile Utilities
+# Testing Summary - Dorman Lakely's Tile Utilities
 
 ## Test Suite Status
 
