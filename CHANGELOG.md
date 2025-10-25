@@ -12,7 +12,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - format code and update build info after merge
 
-
 ## [1.12.0] - 2025-10-24
 
 ### Added
