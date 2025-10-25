@@ -8,35 +8,16 @@ import packageInfo from '../package.json';
 
 // Module initialization
 Hooks.once('init', () => {
-  // Fun banner!
+  // Module initialization banner
   console.log(
-    `%c
-╔══════════════════════════════════════════════════════╗
-║                                                      ║
-║                         /^\\                          ║
-║                        /   \\                         ║
-║                       /_____\\                        ║
-║                      (  * *  )                       ║
-║                       \\_ - _/                        ║
-║                        _|_|_                         ║
-║                       /  |  \\                        ║
-║                      /   |   \\                       ║
-║                     /    |    \\                      ║
-║                    /     |     \\                     ║
-║                   /______|______\\                    ║
-║                         /_\\                          ║
-║                        /___\\                         ║
-║                       (_____)                        ║
-║                        |   |                         ║
-║                        |   |                         ║
-║                        |___|                         ║
-║                                                      ║
-╚══════════════════════════════════════════════════════╝
-🧙 Dorman Lakely's Tile Utilities v${packageInfo.version}
-Build #${buildInfo.buildNumber}
-
-    `,
-    'color: #9b59b6; font-weight: bold;'
+    "%c🧩 Dorman Lakely's Tile Utilities %cv" +
+      packageInfo.version +
+      ' %c(Build #' +
+      buildInfo.buildNumber +
+      ')',
+    'color: #d32f2f; font-weight: bold; font-size: 20px;',
+    'color: #f44336; font-weight: normal; font-size: 14px;',
+    'color: #ef5350; font-weight: normal; font-size: 14px;'
   );
 
   // Register settings
@@ -147,7 +128,7 @@ Hooks.once('ready', () => {
 
   console.log(
     "%c🧩 Dorman Lakely's Tile Utilities %c✓ Ready!",
-    'color: #ff6b35; font-weight: bold; font-size: 14px;',
+    'color: #d32f2f; font-weight: bold; font-size: 20px;',
     'color: #4caf50; font-weight: bold; font-size: 14px;'
   );
 });
