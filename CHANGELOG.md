@@ -5,18 +5,20 @@ All notable changes to this project will be documented in this file.
 ## [1.12.0] - 2025-10-24
 
 ### Added
+
 - add Tile Manager auto-restore after tile creation
 
 ## [1.11.0] - 2025-10-23
 
 ### Added
+
 - add DMG trap item integration for trap dialogs
 - remove combat trap from experimental flag and simplify tile button labels
 
 ### Changed
+
 - bump version to 1.9.0
 - bump version to 1.8.2
-
 
 ## [1.10.0] - 2025-10-22
 

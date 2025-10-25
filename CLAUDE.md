@@ -442,6 +442,16 @@ dist/main.js                  # Build output (IIFE bundle)
 
 ## Foundry VTT v13 Patterns
 
+### ApplicationV2 Best Practices
+
+**Key Principles:**
+
+1. **Use Private Static Methods for Handlers** - Form submission and action handlers should be private static methods using `#` syntax
+2. **Minimize on Placement** - When waiting for canvas click, minimize the dialog so user can see
+3. **Clean Up Event Handlers** - Always remove canvas event listeners after use
+4. **Restore Parent Dialog** - If dialog was opened from Tile Manager, restore it after creation
+5. **Consistent Button Structure** - Use form-footer.hbs with button array for consistency
+
 ### ApplicationV2 Dialogs
 
 All dialogs extend `HandlebarsApplicationMixin(ApplicationV2)`:
@@ -502,6 +512,42 @@ export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 - `_onRender` is where you set up DOM event listeners
 - `formData.object` contains form field values as an object
 
+**Form Footer Pattern:**
+
+Use a reusable footer template for consistent buttons:
+
+```typescript
+// In _prepareContext:
+return {
+  ...context,
+  buttons: [
+    {
+      type: 'submit',
+      icon: 'fa-solid fa-check',
+      label: 'EMPUZZLES.Create'
+    },
+    {
+      type: 'button',
+      action: 'cancel',
+      icon: 'fa-solid fa-times',
+      label: 'EMPUZZLES.Cancel'
+    }
+  ]
+};
+```
+
+```handlebars
+{{!-- templates/form-footer.hbs --}}
+<footer class="form-footer">
+  {{#each buttons as |button|}}
+  <button type="{{button.type}}" {{#if button.action}}data-action="{{button.action}}"{{/if}}>
+    {{#if button.icon}}<i class="{{button.icon}}"></i>{{/if}}
+    {{localize button.label}}
+  </button>
+  {{/each}}
+</footer>
+```
+
 ### File Pickers
 
 Standard pattern for file picker buttons:
@@ -540,24 +586,57 @@ async _onFilePicker(event: Event): Promise<void> {
 For placing tiles on canvas after dialog submission:
 
 ```typescript
-static async #onSubmit(event: SubmitEvent, form: HTMLFormElement, formData: any): Promise<void> {
+static async #onSubmit(
+  this: SwitchConfigDialog, // Type the 'this' context
+  _event: SubmitEvent,
+  _form: HTMLFormElement,
+  formData: any
+): Promise<void> {
+  const scene = canvas.scene;
+  if (!scene) {
+    ui.notifications.error('No active scene!');
+    return;
+  }
+
   const data = formData.object;
+
+  // IMPORTANT: Minimize dialog so user can see canvas
+  this.minimize();
 
   ui.notifications.info('Click on the canvas to place the tile...');
 
   const handler = async (clickEvent: any) => {
     const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-    const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
+    const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
-    await createTile(canvas.scene, data, snapped.x, snapped.y);
+    await createTile(scene, data, snapped.x, snapped.y);
 
     ui.notifications.info('Tile created!');
+
+    // Clean up: Remove event listener
     (canvas as any).stage.off('click', handler);
+
+    // Close this dialog
+    this.close();
+
+    // Restore parent dialog if it exists
+    const tileManager = getActiveTileManager();
+    if (tileManager) {
+      tileManager.maximize();
+    }
   };
 
   (canvas as any).stage.on('click', handler);
 }
 ```
+
+**Key Points:**
+
+- Type `this` in the handler signature for proper context
+- Always minimize dialog before canvas placement
+- Use `getSnappedPoint` with `{ mode: 2 }` for center snapping
+- Clean up event listeners with `.off()` after placement
+- Close dialog and restore parent (Tile Manager) after creation
 
 ## Monk's Active Tiles Integration
 
