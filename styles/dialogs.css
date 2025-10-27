@@ -2,6 +2,43 @@
 /* Using only Foundry VTT's built-in CSS classes */
 /* Custom styles only for complex tile list in reset dialog */
 
+/* Dialog Scrolling - Applied to all tile creation dialogs */
+.trap-config.window-app,
+.switch-config.window-app,
+.light-config.window-app,
+.reset-config.window-app,
+.check-state-dialog.window-app {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh; /* Prevent dialogs from exceeding viewport */
+}
+
+.trap-config .window-content,
+.switch-config .window-content,
+.light-config .window-content,
+.reset-config .window-content,
+.check-state-dialog .window-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem;
+}
+
+.trap-config .form-footer,
+.switch-config .form-footer,
+.light-config .form-footer,
+.reset-config .form-footer,
+.check-state-dialog .form-footer {
+  flex-shrink: 0;
+  background: #000;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border-light-tertiary);
+  z-index: 10;
+}
+
 .add-tile-btn {
   width: 100%;
 }
@@ -1529,5 +1566,114 @@ button .game-icon,
 
 .token-config-section .checkbox-label input[type="checkbox"] {
   margin: 0;
+}
+
+/* Multiple Dropdown Select (Monk's Active Tiles Style) */
+.multiple-dropdown-select {
+  position: relative;
+}
+
+.multiple-dropdown {
+  height: var(--input-height, 28px);
+  background: var(--color-cool-4, rgba(0, 0, 0, 0.05));
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px;
+  cursor: pointer;
+  transition: outline-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.multiple-dropdown:hover {
+  outline: 1px solid var(--color-border-light-highlight);
+}
+
+.multiple-dropdown-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  flex: 1;
+  min-height: 20px;
+  align-items: center;
+}
+
+.multiple-dropdown-option {
+  display: inline-flex;
+  align-items: center;
+  background-color: #333;
+  border: 1px solid #777;
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-right: 2px;
+  font-size: 0.85em;
+}
+
+.multiple-dropdown-option span {
+  margin-right: 4px;
+}
+
+.multiple-dropdown-option .remove-option {
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 2px;
+  color: #999;
+}
+
+.multiple-dropdown-option .remove-option:hover {
+  color: #fff;
+}
+
+.multiple-dropdown .fa-chevron-down {
+  font-size: 0.75em;
+  color: var(--color-text-dark-secondary);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.dropdown-list {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: url(../../../ui/parchment.jpg) repeat;
+  border: 1px solid #808080;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-list.open {
+  display: block;
+}
+
+.multiple-dropdown-item {
+  padding: 4px 8px;
+  min-height: 25px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.2s;
+}
+
+.multiple-dropdown-item:hover {
+  background-color: #1e90ff;
+  color: #fff;
+}
+
+.multiple-dropdown-item.selected {
+  background-color: coral;
+  color: #fff;
 }
 
