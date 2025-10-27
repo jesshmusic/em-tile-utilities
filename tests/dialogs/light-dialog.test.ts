@@ -28,7 +28,7 @@ describe('LightConfigDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-candle-flame');
       expect(options.window.title).toBe('EMPUZZLES.CreateLightTile');
-      expect(options.position.width).toBe(576);
+      expect(options.position.width).toBe(600);
     });
 
     it('should have correct parts configuration', () => {
@@ -96,10 +96,14 @@ describe('LightConfigDialog', () => {
     it('should include buttons configuration', async () => {
       const context = await dialog._prepareContext({});
 
-      expect(context.buttons).toHaveLength(1);
+      expect(context.buttons).toHaveLength(2);
       expect(context.buttons[0].type).toBe('submit');
       expect(context.buttons[0].icon).toBe('fa-solid fa-check');
       expect(context.buttons[0].label).toBe('EMPUZZLES.Create');
+      expect(context.buttons[1].type).toBe('button');
+      expect(context.buttons[1].action).toBe('close');
+      expect(context.buttons[1].icon).toBe('fa-solid fa-times');
+      expect(context.buttons[1].label).toBe('EMPUZZLES.Cancel');
     });
   });
 
