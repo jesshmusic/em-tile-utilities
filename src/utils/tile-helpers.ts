@@ -1260,6 +1260,30 @@ export async function createTrapTile(
     }
   }
 
+  // Action 4: Add additional effects if specified
+  if (config.additionalEffects && config.additionalEffects.length > 0) {
+    const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
+    const targetEntityName =
+      config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+
+    // Add each additional effect
+    config.additionalEffects.forEach(effectId => {
+      actions.push({
+        action: 'activeeffect',
+        data: {
+          entity: {
+            id: targetEntityId,
+            name: targetEntityName
+          },
+          effectid: effectId,
+          addeffect: 'add',
+          altereffect: ''
+        },
+        id: foundry.utils.randomID()
+      });
+    });
+  }
+
   // Prepare files array (starting image and optionally triggered image)
   const files: any[] = [{ id: foundry.utils.randomID(), name: config.startingImage }];
   if (!config.hideTrapOnTrigger && config.triggeredImage) {
@@ -1286,7 +1310,7 @@ export async function createTrapTile(
     occlusion: { mode: 0, alpha: 0 },
     rotation: 0,
     alpha: 1,
-    hidden: false,
+    hidden: config.hidden ?? false,
     locked: false,
     restrictions: { light: false, weather: false },
     video: { loop: true, autoplay: true, volume: 0 },

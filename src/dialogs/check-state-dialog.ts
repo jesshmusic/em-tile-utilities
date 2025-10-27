@@ -31,13 +31,14 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     },
     position: {
       width: 600,
-      height: 'auto'
+      height: 750
     },
     form: {
       closeOnSubmit: false,
       handler: CheckStateDialog.#onSubmit
     },
     actions: {
+      close: CheckStateDialog.prototype._onClose,
       addTile: CheckStateDialog.#onAddTile,
       removeTile: CheckStateDialog.#onRemoveTile,
       addBranch: CheckStateDialog.#onAddBranch,
@@ -142,9 +143,31 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
           type: 'submit',
           icon: 'fa-solid fa-check',
           label: 'EMPUZZLES.Create'
+        },
+        {
+          type: 'button',
+          action: 'close',
+          icon: 'fa-solid fa-times',
+          label: 'EMPUZZLES.Cancel'
         }
       ]
     };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle dialog close (cancel button)
+   */
+  protected _onClose(): void {
+    // Close the dialog
+    this.close();
+
+    // Restore Tile Manager if it was minimized
+    const tileManager = getActiveTileManager();
+    if (tileManager) {
+      tileManager.maximize();
+    }
   }
 
   /* -------------------------------------------- */

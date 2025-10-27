@@ -18,14 +18,19 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     window: {
       contentClasses: ['standard-form'],
       icon: 'gi-lever',
-      title: 'EMPUZZLES.CreateSwitch'
+      title: 'EMPUZZLES.CreateSwitch',
+      resizable: true
     },
     position: {
-      width: 576
+      width: 576,
+      height: 800
     },
     form: {
       closeOnSubmit: false,
       handler: SwitchConfigDialog.#onSubmit
+    },
+    actions: {
+      close: SwitchConfigDialog.prototype._onClose
     }
   };
 
@@ -67,9 +72,31 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
           type: 'submit',
           icon: 'fa-solid fa-check',
           label: 'EMPUZZLES.Create'
+        },
+        {
+          type: 'button',
+          action: 'close',
+          icon: 'fa-solid fa-times',
+          label: 'EMPUZZLES.Cancel'
         }
       ]
     };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle dialog close (cancel button)
+   */
+  protected _onClose(): void {
+    // Close the dialog
+    this.close();
+
+    // Restore Tile Manager if it was minimized
+    const tileManager = getActiveTileManager();
+    if (tileManager) {
+      tileManager.maximize();
+    }
   }
 
   /* -------------------------------------------- */

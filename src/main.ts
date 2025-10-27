@@ -8,7 +8,7 @@ import packageInfo from '../package.json';
 
 // Module initialization
 Hooks.once('init', () => {
-  // Fun banner!
+  // Module initialization banner
   console.log(
     `%c
 ╔══════════════════════════════════════════════════════╗

@@ -1,8 +1,7 @@
-<form>
-  {{! Trap Type Selector }}
-  <div class="form-group">
-    <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
-    <select id="trapType" name="trapType">
+{{! Trap Type Selector }}
+<div class="form-group">
+  <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
+  <select id="trapType" name="trapType">
       {{#each trapTypeOptions as |option|}}
         <option value="{{option.value}}" {{#if (eq option.value ../trapType)}}selected{{/if}}>
           {{localize option.label}}
@@ -88,6 +87,35 @@
       {{/each}}
     </select>
     <p class="hint">{{localize "EMPUZZLES.TargetTypeHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="hiddenTrap" name="hiddenTrap" checked />
+      {{localize "EMPUZZLES.HiddenTrap"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.HiddenTrapHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
+    <div class="multiple-dropdown-select">
+      <div class="multiple-dropdown flexrow">
+        <div class="multiple-dropdown-content"></div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <ul class="dropdown-list">
+        {{#each effectOptions as |option|}}
+          <li class="multiple-dropdown-item" data-value="{{option.value}}">{{option.label}}</li>
+        {{/each}}
+      </ul>
+      <select id="additionalEffects" name="additionalEffects" multiple style="display: none;">
+        {{#each effectOptions as |option|}}
+          <option value="{{option.value}}">{{option.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsHint"}}</p>
   </div>
 
   {{! Image Trap - Result Type and Result-Specific Fields }}
@@ -446,4 +474,3 @@
       <p class="no-content">{{localize "EMPUZZLES.NoWallsSelected"}}</p>
     {{/if}}
   {{/if}}
-</form>

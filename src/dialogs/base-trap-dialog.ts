@@ -81,6 +81,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     form: {
       closeOnSubmit: false,
       handler: BaseTrapDialog.prototype._onSubmit
+    },
+    actions: {
+      close: BaseTrapDialog.prototype._onClose
     }
   };
 
@@ -215,6 +218,12 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
           type: 'submit',
           icon: 'fa-solid fa-check',
           label: 'EMPUZZLES.Create'
+        },
+        {
+          type: 'button',
+          action: 'close',
+          icon: 'fa-solid fa-times',
+          label: 'EMPUZZLES.Cancel'
         }
       ],
       // DMG trap item data
@@ -695,6 +704,26 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     });
 
     return fp.browse();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle dialog close (cancel button)
+   */
+  public _onClose(): void {
+    // Close the dialog
+    this.close();
+
+    // Restore Tile Manager if it was minimized
+    const tileManager = (ui as any).windows?.[
+      Object.keys((ui as any).windows).find((key: string) =>
+        (ui as any).windows[key]?.options?.id?.includes('tile-manager')
+      )
+    ];
+    if (tileManager) {
+      tileManager.maximize();
+    }
   }
 
   /* -------------------------------------------- */

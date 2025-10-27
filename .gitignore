@@ -31,3 +31,4 @@ scripts/main.js.bak
 # Environment
 .env
 .env.local
+/em-tile-utilities.lock

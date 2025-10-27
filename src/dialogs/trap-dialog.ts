@@ -100,16 +100,20 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     window: {
       contentClasses: ['standard-form'],
       icon: 'fa-solid fa-triangle-exclamation',
-      title: 'EMPUZZLES.CreateTrap'
+      title: 'EMPUZZLES.CreateTrap',
+      resizable: true
     },
     position: {
-      width: 520
+      width: 600,
+      height: 800
     },
     form: {
       closeOnSubmit: false,
       handler: TrapDialog.prototype._onSubmit
     },
     actions: {
+      // Dialog actions
+      close: TrapDialog.prototype._onClose,
       // DMG trap actions
       removeDmgTrapItem: TrapDialog.prototype._onRemoveDmgTrapItem,
       // Activating trap actions
@@ -445,6 +449,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
+    // Set up pill-based multiselect for additional effects
+    this._setupEffectMultiselect();
+
     // Set up action type select listeners for activating trap tiles
     const actionSelects = this.element.querySelectorAll('[data-action-select]');
     actionSelects.forEach((select: Element) => {
@@ -495,6 +502,130 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       });
     });
+  }
+
+  /* -------------------------------------------- */
+  /* Effect Multiselect (Pill-based)             */
+  /* -------------------------------------------- */
+
+  /**
+   * Set up the pill-based multiselect for additional effects (Monk's Active Tiles style)
+   */
+  protected _setupEffectMultiselect(): void {
+    const container = this.element.querySelector('.multiple-dropdown-select');
+    if (!container) return;
+
+    const dropdown = container.querySelector('.multiple-dropdown') as HTMLElement;
+    const content = container.querySelector('.multiple-dropdown-content') as HTMLElement;
+    const dropdownList = container.querySelector('.dropdown-list') as HTMLElement;
+    const selectElement = container.querySelector('#additionalEffects') as HTMLSelectElement;
+
+    if (!dropdown || !content || !dropdownList || !selectElement) return;
+
+    // Toggle dropdown list when clicking the dropdown area
+    dropdown.addEventListener('click', (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdownList.classList.toggle('open');
+    });
+
+    // Close dropdown when clicking outside
+    const closeDropdown = (e: Event) => {
+      if (!container.contains(e.target as Node)) {
+        dropdownList.classList.remove('open');
+      }
+    };
+    document.addEventListener('click', closeDropdown);
+
+    // Handle dropdown item clicks
+    const items = dropdownList.querySelectorAll('.multiple-dropdown-item');
+    items.forEach((item: Element) => {
+      item.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const value = (item as HTMLElement).dataset.value;
+        const label = item.textContent?.trim();
+        if (!value || !label) return;
+
+        // Check if already selected
+        if (item.classList.contains('selected')) return;
+
+        // Add pill
+        this._addEffectPill(content, selectElement, value, label);
+
+        // Mark item as selected
+        item.classList.add('selected');
+
+        // Select in hidden select element
+        const option = Array.from(selectElement.options).find(opt => opt.value === value);
+        if (option) {
+          option.selected = true;
+        }
+
+        // Close dropdown
+        dropdownList.classList.remove('open');
+      });
+    });
+  }
+
+  /**
+   * Add an effect pill to the container (Monk's Active Tiles style)
+   */
+  protected _addEffectPill(
+    container: HTMLElement,
+    selectElement: HTMLSelectElement,
+    value: string,
+    label: string
+  ): void {
+    const pill = document.createElement('div');
+    pill.className = 'multiple-dropdown-option flexrow';
+    pill.dataset.value = value;
+
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+    pill.appendChild(labelSpan);
+
+    const removeBtn = document.createElement('div');
+    removeBtn.className = 'remove-option';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.addEventListener('click', (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this._removeEffectPill(pill, selectElement, value);
+    });
+    pill.appendChild(removeBtn);
+
+    container.appendChild(pill);
+  }
+
+  /**
+   * Remove an effect pill from the container (Monk's Active Tiles style)
+   */
+  protected _removeEffectPill(
+    pill: HTMLElement,
+    selectElement: HTMLSelectElement,
+    value: string
+  ): void {
+    // Remove pill from DOM
+    pill.remove();
+
+    // Deselect in hidden select element
+    const option = Array.from(selectElement.options).find(opt => opt.value === value);
+    if (option) {
+      option.selected = false;
+    }
+
+    // Remove selected class from dropdown item
+    const dropdownList = this.element.querySelector('.dropdown-list');
+    if (dropdownList) {
+      const item = dropdownList.querySelector(
+        `.multiple-dropdown-item[data-value="${value}"]`
+      ) as HTMLElement;
+      if (item) {
+        item.classList.remove('selected');
+      }
+    }
   }
 
   /* -------------------------------------------- */
@@ -1072,6 +1203,24 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /* -------------------------------------------- */
+  /* Dialog Close Handler                         */
+  /* -------------------------------------------- */
+
+  /**
+   * Handle dialog close (cancel button)
+   */
+  protected _onClose(): void {
+    // Close the dialog
+    this.close();
+
+    // Restore Tile Manager if it was minimized
+    const tileManager = getActiveTileManager();
+    if (tileManager) {
+      tileManager.maximize();
+    }
+  }
+
+  /* -------------------------------------------- */
   /* Form Submission                              */
   /* -------------------------------------------- */
 
@@ -1582,8 +1731,21 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const targetType =
       ((form.querySelector('select[name="targetType"]') as HTMLSelectElement)
         ?.value as TrapTargetType) || TrapTargetType.WITHIN_TILE;
+    const hidden =
+      (form.querySelector('input[name="hiddenTrap"]') as HTMLInputElement)?.checked || false;
     const hasSavingThrow =
       (form.querySelector('input[name="hasSavingThrow"]') as HTMLInputElement)?.checked || false;
+
+    // Extract additional effects from multiselect
+    const additionalEffectsSelect = form.querySelector(
+      'select[name="additionalEffects"]'
+    ) as HTMLSelectElement;
+    const additionalEffects: string[] = [];
+    if (additionalEffectsSelect) {
+      for (const option of Array.from(additionalEffectsSelect.selectedOptions)) {
+        additionalEffects.push(option.value);
+      }
+    }
 
     const config: any = {
       name: name,
@@ -1591,6 +1753,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       sound: sound,
       minRequired: minRequired,
       targetType: targetType,
+      hidden: hidden,
+      additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
       hasSavingThrow: hasSavingThrow
     };
 

@@ -72,10 +72,14 @@ describe('SwitchConfigDialog', () => {
     it('should include buttons configuration', async () => {
       const context = await dialog._prepareContext({});
 
-      expect(context.buttons).toHaveLength(1);
+      expect(context.buttons).toHaveLength(2);
       expect(context.buttons[0].type).toBe('submit');
       expect(context.buttons[0].icon).toBe('fa-solid fa-check');
       expect(context.buttons[0].label).toBe('EMPUZZLES.Create');
+      expect(context.buttons[1].type).toBe('button');
+      expect(context.buttons[1].action).toBe('close');
+      expect(context.buttons[1].icon).toBe('fa-solid fa-times');
+      expect(context.buttons[1].label).toBe('EMPUZZLES.Cancel');
     });
 
     it('should use scene-based numbering for switch names', async () => {
