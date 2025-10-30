@@ -2,7 +2,7 @@
   "id": "em-tile-utilities",
   "title": "Dorman Lakely's Tile Utilities",
   "description": "Create interactive puzzles, traps, and environmental elements in seconds. Point-and-click tools for switches, pressure plates, lights, resets, and more—powered by Monk's Active Tiles.",
-  "version": "1.12.2",
+  "version": "1.12.3",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -37,8 +37,12 @@
       }
     ]
   },
-  "scripts": ["dist/main.js"],
-  "styles": ["styles/dialogs.css"],
+  "scripts": [
+    "dist/main.js"
+  ],
+  "styles": [
+    "styles/dialogs.css"
+  ],
   "languages": [
     {
       "lang": "en",
@@ -48,9 +52,19 @@
   ],
   "url": "https://github.com/jesshmusic/em-tile-utilities",
   "manifest": "https://github.com/jesshmusic/em-tile-utilities/releases/latest/download/module.json",
-  "download": "https://github.com/jesshmusic/em-tile-utilities/releases/download/v1.12.2/module.zip",
+  "download": "https://github.com/jesshmusic/em-tile-utilities/releases/download/v1.12.3/module.zip",
   "hotReload": {
-    "extensions": ["css", "hbs", "json", "js"],
-    "paths": ["dist", "styles", "templates", "lang"]
+    "extensions": [
+      "css",
+      "hbs",
+      "json",
+      "js"
+    ],
+    "paths": [
+      "dist",
+      "styles",
+      "templates",
+      "lang"
+    ]
   }
 }
