@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.3] - 2025-10-30
+
+### Added
+- rebrand to Dorman Lakely's Tile Utilities with wizard theme
+- add Tile Manager auto-restore after tile creation
+- add DMG trap item integration for trap dialogs
+
+### Fixed
+- test: fix failing tests for cancel button updates
+
+### Changed
+- quality of life fixes
+- simplify startup console messages
+- format code and update build info after merge
+
+
 ## [1.12.2] - 2025-10-27
 
 ### Added

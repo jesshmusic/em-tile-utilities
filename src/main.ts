@@ -10,33 +10,10 @@ import packageInfo from '../package.json';
 Hooks.once('init', () => {
   // Module initialization banner
   console.log(
-    `%c
-╔══════════════════════════════════════════════════════╗
-║                                                      ║
-║                         /^\\                          ║
-║                        /   \\                         ║
-║                       /_____\\                        ║
-║                      (  * *  )                       ║
-║                       \\_ - _/                        ║
-║                        _|_|_                         ║
-║                       /  |  \\                        ║
-║                      /   |   \\                       ║
-║                     /    |    \\                      ║
-║                    /     |     \\                     ║
-║                   /______|______\\                    ║
-║                         /_\\                          ║
-║                        /___\\                         ║
-║                       (_____)                        ║
-║                        |   |                         ║
-║                        |   |                         ║
-║                        |___|                         ║
-║                                                      ║
-╚══════════════════════════════════════════════════════╝
-🧙 Dorman Lakely's Tile Utilities v${packageInfo.version}
-Build #${buildInfo.buildNumber}
-
-    `,
-    'color: #9b59b6; font-weight: bold;'
+    "%c⚔️ Dorman Lakely's Tile Utilities %cv" + packageInfo.version + " %c(build " + buildInfo.buildNumber + ")",
+    'color: #d32f2f; font-weight: bold; font-size: 16px;',
+    'color: #ff9800; font-weight: bold; font-size: 14px;',
+    'color: #ffeb3b; font-weight: normal; font-size: 12px;'
   );
 
   // Register settings
@@ -146,8 +123,8 @@ Hooks.once('ready', () => {
   }
 
   console.log(
-    "%c🧩 Dorman Lakely's Tile Utilities %c✓ Ready!",
-    'color: #ff6b35; font-weight: bold; font-size: 14px;',
+    "%c⚔️ Dorman Lakely's Tile Utilities %c✓ Ready!",
+    'color: #d32f2f; font-weight: bold; font-size: 16px;',
     'color: #4caf50; font-weight: bold; font-size: 14px;'
   );
 });
