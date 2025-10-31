@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.4] - 2025-10-31
+
+### Other
+- Feat/combat trap (#13)
+
+
 ## [1.12.3] - 2025-10-30
 
 ### Changed
