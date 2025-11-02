@@ -76,7 +76,11 @@ export function registerHandlebarsHelpers(): void {
 export function registerHandlebarsPartials(): void {
   try {
     // Register saving-throw-section partial
-    const savingThrowPath = path.join(__dirname, '../..', 'templates/partials/saving-throw-section.hbs');
+    const savingThrowPath = path.join(
+      __dirname,
+      '../..',
+      'templates/partials/saving-throw-section.hbs'
+    );
     const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
     Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
   } catch (error) {
@@ -125,8 +129,6 @@ export async function renderDialogTemplate(
  */
 export function htmlContainsSelector(html: string, selector: string): boolean {
   // Simple regex-based check for common selectors
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
   if (selector.startsWith('select[name="')) {
     const name = selector.match(/name="([^"]+)"/)?.[1];
     return new RegExp(`<select[^>]*name="${name}"`, 'i').test(html);

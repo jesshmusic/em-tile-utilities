@@ -72,7 +72,7 @@ describe('TrapDialog Template Rendering Integration', () => {
       const values = getSelectOptionValues(html, 'resultType');
 
       // Filter out empty prompt option
-      const nonEmptyValues = values.filter((v) => v !== '');
+      const nonEmptyValues = values.filter(v => v !== '');
 
       // Verify all values match enum constants (not raw string literals)
       expect(nonEmptyValues).toContain(TrapResultType.DAMAGE);
@@ -90,7 +90,7 @@ describe('TrapDialog Template Rendering Integration', () => {
       const values = getSelectOptionValues(html, 'resultType');
 
       // Count how many options have value 'combat'
-      const combatOptions = values.filter((v) => v === 'combat');
+      const combatOptions = values.filter(v => v === 'combat');
 
       // Should only be ONE option with 'combat' value (from TrapResultType.COMBAT)
       // If bug exists, there might be duplicates or incorrect values
@@ -102,7 +102,7 @@ describe('TrapDialog Template Rendering Integration', () => {
       const labels = getSelectOptionLabels(html, 'resultType');
 
       // In test environment, localize helper returns keys as-is
-      const nonEmptyLabels = labels.filter((l) => l.trim() !== '' && !l.includes('Select'));
+      const nonEmptyLabels = labels.filter(l => l.trim() !== '' && !l.includes('Select'));
 
       expect(nonEmptyLabels).toContain('EMPUZZLES.ResultDamage');
       expect(nonEmptyLabels).toContain('EMPUZZLES.ResultTeleport');
@@ -116,14 +116,14 @@ describe('TrapDialog Template Rendering Integration', () => {
       const values = getSelectOptionValues(html, 'resultType');
 
       // Find combat value
-      const combatValue = values.find((v) => v === 'combat' || v === TrapResultType.COMBAT);
+      const combatValue = values.find(v => v === 'combat' || v === TrapResultType.COMBAT);
 
       // Verify it exists and matches the enum constant
       expect(combatValue).toBe(TrapResultType.COMBAT);
       expect(combatValue).toBe('combat'); // TrapResultType.COMBAT === 'combat'
 
       // Ensure only ONE combat option exists
-      const allCombatValues = values.filter((v) => v === 'combat');
+      const allCombatValues = values.filter(v => v === 'combat');
       expect(allCombatValues.length).toBe(1);
     });
   });

@@ -479,7 +479,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (resultTypeSelect) {
       resultTypeSelect.addEventListener('change', (event: Event) => {
         const value = (event.target as HTMLSelectElement).value;
-        this.resultType = value ? (value as TrapResultType) : undefined;
+
+        // Validate that value is a valid TrapResultType before assignment
+        if (Object.values(TrapResultType).includes(value as TrapResultType)) {
+          this.resultType = value as TrapResultType;
+        } else {
+          this.resultType = undefined;
+        }
+
         this.render();
       });
     }
@@ -1347,6 +1354,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Image trap validation
     if (this.trapType === TrapType.IMAGE) {
+      // Check result type is selected
+      if (!this.resultType) {
+        return { valid: false, message: 'Please select a result type!' };
+      }
+
       // Check triggered image for switch mode
       if (this.imageBehavior === ImageBehavior.SWITCH) {
         const triggeredImage = (
