@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0] - 2025-11-02
+
+### Added
+- add Phase 1 integration testing for template rendering
+
+### Fixed
+- test: fix reset-dialog height expectation to match 'auto' implementation
+- replace all 'combat' string literals with TrapResultType.COMBAT enum
+- improve Foundry API token handling in workflows (#15)
+- improve Foundry API token handling in workflows
+
+### Changed
+- implement GitHub Copilot suggestions for PR #16
+- update claude settings
+- include remaining changes for 1.12.5
+- bump version to 1.12.5
+
+### Other
+- Feat/combat trap (#13)
+
+
 ## [1.12.5] - 2025-11-02
 
 ### Fixed
