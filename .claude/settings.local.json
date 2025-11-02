@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run release:patch:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(curl:*)",
+      "Bash(https://api.github.com/repos/jesshmusic/em-tile-utilities/pulls )",
+      "Bash(/opt/homebrew/bin/gh --version)",
+      "Bash(/usr/local/bin/gh --version)",
+      "Bash(brew install:*)",
+      "Bash(/opt/homebrew/bin/gh auth login --web)",
+      "Bash(/opt/homebrew/bin/gh pr create:*)",
+      "Bash(git fetch:*)",
+      "Bash(/opt/homebrew/bin/gh pr view 16 --repo jesshmusic/em-tile-utilities --comments)",
+      "Bash(/opt/homebrew/bin/gh pr checks 16 --repo jesshmusic/em-tile-utilities)",
+      "Bash(/opt/homebrew/bin/gh pr diff:*)",
+      "Bash(/opt/homebrew/bin/gh api /repos/jesshmusic/em-tile-utilities/pulls/16/comments)",
+      "Bash(npm test)",
+      "Bash(npm test:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(/opt/homebrew/bin/gh run view 19014587459 --repo jesshmusic/em-tile-utilities --log-failed)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -169,54 +169,29 @@
       </div>
     {{/if}}
 
-    {{! Saving Throw Section - Hide for Combat result type }}
-    {{#unless (eq resultType "combat")}}
-      <div class="form-group">
-        <label>
-          <input type="checkbox" id="hasSavingThrow" name="hasSavingThrow" data-saving-throw-checkbox {{#if defaultHasSavingThrow}}checked{{/if}} {{#if hasDmgTrap}}disabled{{/if}} />
-          {{localize "EMPUZZLES.HasSavingThrow"}}
-        </label>
-        <p class="hint">{{localize "EMPUZZLES.HasSavingThrowHint"}}</p>
-      </div>
-
-      <div class="saving-throw-fields" style="display: none;">
-        <div class="form-group">
-          <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
-          <select id="savingThrow" name="savingThrow" {{#if hasDmgTrap}}disabled{{/if}}>
-            {{#each savingThrowOptions as |option|}}
-              {{#if ../defaultSavingThrow}}
-                <option value="{{option.value}}" {{#if (eq option.value ../defaultSavingThrow)}}selected{{/if}}>
-                  {{localize option.label}}
-                </option>
-              {{else}}
-                <option value="{{option.value}}" {{#if (eq option.value "ability:dex")}}selected{{/if}}>
-                  {{localize option.label}}
-                </option>
-              {{/if}}
-            {{/each}}
-          </select>
-          <p class="hint">{{localize "EMPUZZLES.SavingThrowHint"}}</p>
-        </div>
-
-        <div class="form-group">
-          <label for="dc">{{localize "EMPUZZLES.DC"}}</label>
-          {{#if defaultDC}}
-            <input type="number" id="dc" name="dc" value="{{defaultDC}}" min="1" max="30" data-dtype="Number" {{#if hasDmgTrap}}disabled{{/if}} />
-          {{else}}
-            <input type="number" id="dc" name="dc" value="14" min="1" max="30" data-dtype="Number" {{#if hasDmgTrap}}disabled{{/if}} />
-          {{/if}}
-          <p class="hint">{{localize "EMPUZZLES.DCHint"}}</p>
-        </div>
-
-        <div class="form-group">
-          <label>
-            <input type="checkbox" id="halfDamageOnSuccess" name="halfDamageOnSuccess" {{#if defaultHalfDamageOnSuccess}}checked{{/if}} {{#if hasDmgTrap}}disabled{{/if}} />
-            {{localize "EMPUZZLES.HalfDamageOnSuccess"}}
-          </label>
-          <p class="hint">{{localize "EMPUZZLES.HalfDamageOnSuccessHint"}}</p>
-        </div>
-      </div>
-    {{/unless}}
+    {{! Saving Throw Section - Show for damage and activeeffect only (not combat, teleport, or undefined) }}
+    {{#if (eq resultType "damage")}}
+      {{> partials/saving-throw-section
+        hasDefaults=true
+        canDisable=true
+        showHalfDamage=true
+        defaultHasSavingThrow=defaultHasSavingThrow
+        defaultSavingThrow=defaultSavingThrow
+        defaultDC=defaultDC
+        defaultHalfDamageOnSuccess=defaultHalfDamageOnSuccess
+        hasDmgTrap=hasDmgTrap
+        savingThrowOptions=savingThrowOptions
+      }}
+    {{/if}}
+    {{#if (eq resultType "activeeffect")}}
+      {{> partials/saving-throw-section
+        hasDefaults=false
+        canDisable=false
+        showHalfDamage=false
+        defaultHasSavingThrow=defaultHasSavingThrow
+        savingThrowOptions=savingThrowOptions
+      }}
+    {{/if}}
 
     {{#if (eq resultType "damage")}}
       <div class="form-group">

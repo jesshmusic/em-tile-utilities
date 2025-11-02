@@ -23,7 +23,8 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     },
     position: {
       width: 576,
-      height: 800
+      height: 'auto',
+      top: 100
     },
     form: {
       closeOnSubmit: false,

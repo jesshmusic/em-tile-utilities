@@ -31,7 +31,8 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     },
     position: {
       width: 600,
-      height: 750
+      height: 'auto',
+      top: 100
     },
     form: {
       closeOnSubmit: false,

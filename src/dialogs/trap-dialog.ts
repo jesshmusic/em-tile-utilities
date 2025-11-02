@@ -104,8 +104,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       resizable: true
     },
     position: {
-      width: 600,
-      height: 800
+      width: 700,
+      height: 'auto',
+      top: 100
     },
     form: {
       closeOnSubmit: false,
@@ -133,7 +134,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @inheritDoc */
   static PARTS = {
     form: {
-      template: 'modules/em-tile-utilities/templates/trap-config.hbs'
+      template: 'modules/em-tile-utilities/templates/trap-config.hbs',
+      root: true
     },
     footer: {
       template: 'modules/em-tile-utilities/templates/form-footer.hbs'
@@ -172,10 +174,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Prepare result type options
     const resultTypeOptions = [
+      { value: '', label: 'EMPUZZLES.ResultSelectPrompt' },
       { value: TrapResultType.DAMAGE, label: 'EMPUZZLES.ResultDamage' },
       { value: TrapResultType.TELEPORT, label: 'EMPUZZLES.ResultTeleport' },
       { value: TrapResultType.ACTIVE_EFFECT, label: 'EMPUZZLES.ResultActiveEffect' },
-      { value: 'combat', label: 'EMPUZZLES.ResultCombat' }
+      { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' }
     ];
 
     // Prepare target type options
@@ -195,14 +198,62 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ];
 
     // Prepare effect options (active effects from game system)
+    // Order by most common to least common for trap usage
+    // Only include core D&D 5e conditions and relevant trap effects (exclude MonksLittleDetails tracking effects)
+    const effectPriority = [
+      'poisoned',
+      'restrained',
+      'prone',
+      'blinded',
+      'frightened',
+      'stunned',
+      'paralyzed',
+      'incapacitated',
+      'grappled',
+      'deafened',
+      'charmed',
+      'slowed',
+      'exhaustion',
+      'burning',
+      'bleeding',
+      'unconscious',
+      'petrified',
+      'cursed',
+      'diseased',
+      'silenced',
+      'invisible',
+      'hasted',
+      'dead'
+    ];
+
     const effectOptions: any[] = [];
     const globalConfig = (globalThis as any).CONFIG;
     if (globalConfig?.statusEffects) {
+      // Create a map of effects by ID (lowercase for case-insensitive matching)
+      const effectsMap = new Map<string, any>();
       globalConfig.statusEffects.forEach((effect: any) => {
-        effectOptions.push({
-          value: effect.id || effect.name,
-          label: effect.label || effect.name
-        });
+        const id = (effect.id || effect.name || '').toLowerCase();
+        const label = effect.label || effect.name || '';
+
+        // Skip MonksLittleDetails effects (check both ID and label)
+        if (label.includes('MonksLittleDetails') || id.includes('monkslittledetails')) {
+          return;
+        }
+
+        // Only include effects in our priority list
+        if (effectPriority.includes(id)) {
+          effectsMap.set(id, {
+            value: effect.id || effect.name,
+            label: effect.label || effect.name
+          });
+        }
+      });
+
+      // Add effects in priority order
+      effectPriority.forEach(priorityId => {
+        if (effectsMap.has(priorityId)) {
+          effectOptions.push(effectsMap.get(priorityId));
+        }
       });
     }
 
@@ -306,12 +357,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Teleport state
       teleportX: this.teleportX,
       teleportY: this.teleportY,
+      // Validation state
+      canSubmit: this._canSubmit(),
       // Footer buttons
       buttons: [
         {
           type: 'submit',
           icon: 'fa-solid fa-check',
-          label: 'EMPUZZLES.Create'
+          label: 'EMPUZZLES.Create',
+          disabled: !this._canSubmit()
         },
         {
           type: 'button',
@@ -321,6 +375,31 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       ]
     };
+  }
+
+  /**
+   * Check if the form can be submitted
+   */
+  protected _canSubmit(): boolean {
+    // Activating trap: must have tiles selected
+    if (this.trapType === TrapType.ACTIVATING) {
+      return this.selectedTiles.size > 0;
+    }
+
+    // Image trap: must have result type selected
+    if (this.trapType === TrapType.IMAGE) {
+      if (!this.resultType) return false;
+
+      // Additional validation for specific result types
+      if (this.resultType === TrapResultType.COMBAT) {
+        return !!this.attackItemId;
+      }
+
+      // Other result types are valid once selected
+      return true;
+    }
+
+    return false;
   }
 
   /* -------------------------------------------- */
@@ -363,7 +442,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Set up attack item drop zone (for combat result type)
-    if (this.resultType === 'combat') {
+    if (this.resultType === TrapResultType.COMBAT) {
       const attackDropZone = this.element.querySelector('[data-attack-item-drop-zone]');
       if (attackDropZone) {
         attackDropZone.addEventListener('dragover', this._onDragOver.bind(this));
@@ -399,7 +478,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (resultTypeSelect) {
       resultTypeSelect.addEventListener('change', (event: Event) => {
-        this.resultType = (event.target as HTMLSelectElement).value as TrapResultType;
+        const value = (event.target as HTMLSelectElement).value;
+        this.resultType = value ? (value as TrapResultType) : undefined;
         this.render();
       });
     }
@@ -1286,7 +1366,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       }
 
-      if (this.resultType === 'combat' && !this.attackItemId) {
+      if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
         return {
           valid: false,
           message: 'Please drop a weapon or feature item for combat attacks!'
@@ -1463,7 +1543,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Extract result-specific config
     let trapConfig: TrapConfig | CombatTrapConfig;
 
-    if (this.resultType === 'combat') {
+    if (this.resultType === TrapResultType.COMBAT) {
       // Combat trap config
       const tokenVisible =
         (form.querySelector('input[name="tokenVisible"]') as HTMLInputElement)?.checked || false;
