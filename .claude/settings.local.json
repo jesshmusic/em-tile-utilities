@@ -24,7 +24,9 @@
       "Bash(/opt/homebrew/bin/gh pr diff:*)",
       "Bash(/opt/homebrew/bin/gh api /repos/jesshmusic/em-tile-utilities/pulls/16/comments)",
       "Bash(npm test)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(/opt/homebrew/bin/gh run view 19014587459 --repo jesshmusic/em-tile-utilities --log-failed)"
     ],
     "deny": [],
     "ask": []

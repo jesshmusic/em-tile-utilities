@@ -178,7 +178,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       { value: TrapResultType.DAMAGE, label: 'EMPUZZLES.ResultDamage' },
       { value: TrapResultType.TELEPORT, label: 'EMPUZZLES.ResultTeleport' },
       { value: TrapResultType.ACTIVE_EFFECT, label: 'EMPUZZLES.ResultActiveEffect' },
-      { value: 'combat', label: 'EMPUZZLES.ResultCombat' }
+      { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' }
     ];
 
     // Prepare target type options
@@ -233,16 +233,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const effectsMap = new Map<string, any>();
       globalConfig.statusEffects.forEach((effect: any) => {
         const id = (effect.id || effect.name || '').toLowerCase();
-        const fullId = effect.id || effect.name || '';
         const label = effect.label || effect.name || '';
 
         // Skip MonksLittleDetails effects (check both ID and label)
-        if (
-          fullId.includes('MonksLittleDetails') ||
-          label.includes('MonksLittleDetails') ||
-          fullId.startsWith('MonksLittleDetails.') ||
-          id.includes('monkslittledetails')
-        ) {
+        if (label.includes('MonksLittleDetails') || id.includes('monkslittledetails')) {
           return;
         }
 
@@ -397,7 +391,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       if (!this.resultType) return false;
 
       // Additional validation for specific result types
-      if (this.resultType === 'combat') {
+      if (this.resultType === TrapResultType.COMBAT) {
         return !!this.attackItemId;
       }
 
@@ -448,7 +442,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Set up attack item drop zone (for combat result type)
-    if (this.resultType === 'combat') {
+    if (this.resultType === TrapResultType.COMBAT) {
       const attackDropZone = this.element.querySelector('[data-attack-item-drop-zone]');
       if (attackDropZone) {
         attackDropZone.addEventListener('dragover', this._onDragOver.bind(this));
@@ -1372,7 +1366,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       }
 
-      if (this.resultType === 'combat' && !this.attackItemId) {
+      if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
         return {
           valid: false,
           message: 'Please drop a weapon or feature item for combat attacks!'
@@ -1549,7 +1543,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Extract result-specific config
     let trapConfig: TrapConfig | CombatTrapConfig;
 
-    if (this.resultType === 'combat') {
+    if (this.resultType === TrapResultType.COMBAT) {
       // Combat trap config
       const tokenVisible =
         (form.querySelector('input[name="tokenVisible"]') as HTMLInputElement)?.checked || false;
