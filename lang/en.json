@@ -99,6 +99,7 @@
     "SoundHint": "Sound effect played when the trap is triggered",
     "ResultType": "Result Type",
     "ResultTypeHint": "The type of result that occurs when the trap is triggered",
+    "ResultSelectPrompt": "-- Select Result Type --",
     "ResultDamage": "Save & Damage",
     "ResultTeleport": "Teleport",
     "ResultActiveEffect": "Add Active Effect",

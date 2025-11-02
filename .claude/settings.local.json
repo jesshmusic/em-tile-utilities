@@ -3,7 +3,14 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(npm run release:patch:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git remote get-url:*)"
     ],
     "deny": [],
     "ask": []
