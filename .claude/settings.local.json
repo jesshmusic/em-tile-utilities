@@ -28,7 +28,8 @@
       "WebFetch(domain:github.com)",
       "Bash(/opt/homebrew/bin/gh run view 19014587459 --repo jesshmusic/em-tile-utilities --log-failed)",
       "WebSearch",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run release:minor:*)"
     ],
     "deny": [],
     "ask": []
