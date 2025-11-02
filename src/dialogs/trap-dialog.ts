@@ -43,7 +43,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
    * Current result type (for image traps)
    */
-  protected resultType?: TrapResultType | 'combat';
+  protected resultType: TrapResultType = TrapResultType.DAMAGE;
 
   /**
    * Form state storage (to preserve state on re-render)
@@ -485,7 +485,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (resultTypeSelect) {
       resultTypeSelect.addEventListener('change', (event: Event) => {
         const value = (event.target as HTMLSelectElement).value;
-        this.resultType = value ? (value as TrapResultType | 'combat') : undefined;
+        this.resultType = value ? (value as TrapResultType) : undefined;
         this.render();
       });
     }
