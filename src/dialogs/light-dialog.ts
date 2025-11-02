@@ -23,7 +23,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     },
     position: {
       width: 600,
-      height: 800
+      height: 'auto',
+      top: 100
     },
     form: {
       closeOnSubmit: false,

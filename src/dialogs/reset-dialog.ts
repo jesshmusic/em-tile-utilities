@@ -169,7 +169,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     },
     position: {
       width: 800,
-      height: 700
+      height: 'auto',
+      top: 100
     },
     form: {
       closeOnSubmit: false,

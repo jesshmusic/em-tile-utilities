@@ -10,7 +10,11 @@ import packageInfo from '../package.json';
 Hooks.once('init', () => {
   // Module initialization banner
   console.log(
-    "%c⚔️ Dorman Lakely's Tile Utilities %cv" + packageInfo.version + " %c(build " + buildInfo.buildNumber + ")",
+    "%c⚔️ Dorman Lakely's Tile Utilities %cv" +
+      packageInfo.version +
+      ' %c(build ' +
+      buildInfo.buildNumber +
+      ')',
     'color: #d32f2f; font-weight: bold; font-size: 16px;',
     'color: #ff9800; font-weight: bold; font-size: 14px;',
     'color: #ffeb3b; font-weight: normal; font-size: 12px;'

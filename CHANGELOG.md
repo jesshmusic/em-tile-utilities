@@ -2,15 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.5] - 2025-11-02
+
+### Fixed
+
+- improve Foundry API token handling in workflows
+
+### Other
+
+- Feat/combat trap (#13)
+
 ## [1.12.4] - 2025-10-31
 
 ### Other
-- Feat/combat trap (#13)
 
+- Feat/combat trap (#13)
 
 ## [1.12.3] - 2025-10-30
 
 ### Changed
+
 - update startup logs to match consistent format with colored version/build numbers
 
 ## [1.12.2] - 2025-10-27
