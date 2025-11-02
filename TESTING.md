@@ -2,7 +2,7 @@
 
 ## Test Suite Status
 
-✅ **167 tests passing** across 7 test suites
+✅ **463 tests passing** across 14 test suites (including 19 integration tests)
 
 ## Coverage Report
 
@@ -81,6 +81,117 @@ Comprehensive coverage of tile creation functions:
 
 - ✅ Detects all video extensions (case-insensitive)
 - ✅ Doesn't misidentify image files as videos
+
+## Integration Tests (NEW) - 19 tests ✅
+
+**Purpose:** Catch bugs that unit tests miss by actually compiling and rendering Handlebars templates with real context data.
+
+### TrapDialog Template Rendering Integration
+
+These integration tests verify that the trap dialog template compiles correctly and renders the expected HTML structure. **These tests would have caught the production bug** where `'combat'` string literal was used instead of `TrapResultType.COMBAT` enum constant.
+
+#### Template Compilation (2 tests)
+
+- ✅ Template compiles without errors
+- ✅ Renders valid HTML output
+
+#### Critical Form Elements (5 tests)
+
+- ✅ Trap type select element exists
+- ✅ Image behavior select element exists
+- ✅ Result type select element exists
+- ✅ Trap name input exists
+- ✅ Starting image input exists
+
+#### Result Type Dropdown - CRITICAL BUG PREVENTION (4 tests)
+
+- ✅ **Has correct enum values** (would catch string literal bugs)
+- ✅ **No duplicate combat options** (regression prevention)
+- ✅ **Localization keys present** (prevents missing translations)
+- ✅ **Prevents combat string literal vs enum bug** (explicit regression test)
+
+#### Trap Type & Image Behavior Options (2 tests)
+
+- ✅ IMAGE and ACTIVATING trap types present
+- ✅ HIDE, SWITCH, and NOTHING behaviors present
+
+#### Conditional Rendering (2 tests)
+
+- ✅ Damage fields appear when damage result type selected
+- ✅ Combat fields appear when combat result type selected
+
+#### File Picker Buttons (1 test)
+
+- ✅ File picker buttons have correct data attributes
+
+#### Localization (1 test)
+
+- ✅ Uses EMPUZZLES localization namespace
+
+#### Template Syntax Validation (2 tests)
+
+- ✅ No undefined variables in rendered HTML
+- ✅ All HTML tags properly closed
+
+### Integration Test Helpers
+
+Located in `tests/helpers/template-helper.ts`:
+
+- **`loadTemplate(path)`** - Load `.hbs` files from disk
+- **`compileTemplate(source)`** - Compile Handlebars templates
+- **`registerHandlebarsHelpers()`** - Register Foundry helpers (`localize`, `eq`, `and`, `or`, `not`)
+- **`registerHandlebarsPartials()`** - Register partial templates
+- **`renderTemplate(path, context)`** - Render template with context
+- **`renderDialogTemplate(DialogClass)`** - Render dialog with `_prepareContext()` data
+- **`htmlContainsSelector(html, selector)`** - Check if HTML contains selector
+- **`getSelectOptionValues(html, name)`** - Extract option values from select
+- **`getSelectOptionLabels(html, name)`** - Extract option labels from select
+
+### Running Integration Tests
+
+```bash
+# Run all integration tests
+npm test -- tests/integration/
+
+# Run specific integration test
+npm test -- tests/integration/trap-dialog-rendering.test.ts
+
+# Watch mode for integration tests
+npm run test:watch -- tests/integration/
+```
+
+### Why Integration Tests Matter
+
+**Example: The Combat Enum Bug**
+
+Before integration tests, this bug passed all unit tests but failed in production:
+
+```typescript
+// Bug: Using string literal instead of enum
+const resultTypeOptions = [
+  { value: 'combat', label: 'EMPUZZLES.ResultCombat' }  // ❌ Wrong
+];
+
+// Fixed: Using enum constant
+const resultTypeOptions = [
+  { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' }  // ✅ Correct
+];
+```
+
+**What unit tests checked:**
+- ✅ `dialog.resultType` property exists
+- ✅ Context includes `resultTypeOptions` array
+
+**What unit tests MISSED:**
+- ❌ Template actually renders
+- ❌ Dropdown options match enum values
+- ❌ Conditional logic works with enum comparison
+
+**What integration tests catch:**
+- ✅ Template compiles without errors
+- ✅ Dropdown has correct option values
+- ✅ Only ONE 'combat' option exists (from enum)
+- ✅ Enum constants used consistently throughout
 
 ## Test Infrastructure
 

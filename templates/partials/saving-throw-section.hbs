@@ -12,7 +12,14 @@
 }}
 <div class="form-group">
   <label>
-    <input type="checkbox" id="hasSavingThrow" name="hasSavingThrow" data-saving-throw-checkbox {{#if defaultHasSavingThrow}}checked{{/if}} {{#if (and canDisable hasDmgTrap)}}disabled{{/if}} />
+    <input
+      type="checkbox"
+      id="hasSavingThrow"
+      name="hasSavingThrow"
+      data-saving-throw-checkbox
+      {{#if defaultHasSavingThrow}}checked{{/if}}
+      {{#if (and canDisable hasDmgTrap)}}disabled{{/if}}
+    />
     {{localize "EMPUZZLES.HasSavingThrow"}}
   </label>
   <p class="hint">{{localize "EMPUZZLES.HasSavingThrowHint"}}</p>
