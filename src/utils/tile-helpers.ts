@@ -875,6 +875,8 @@ export async function createTrapTile(
   // Build actions array
   const actions: any[] = [];
 
+  console.log("Dorman's Trap Tiles trap config", config);
+
   // Action 1: Handle trap visual response based on type
   if (config.tileActions && config.tileActions.length > 0) {
     // Activating trap: perform actions on other tiles
@@ -1196,7 +1198,7 @@ export async function createTrapTile(
         }
 
         // Teleport action (teleports tokens that failed saving throw if enabled, or all targets if not)
-        if (config.teleportConfig) {
+        if (config.teleportX !== undefined && config.teleportY !== undefined) {
           actions.push({
             action: 'teleport',
             data: {
@@ -1205,8 +1207,8 @@ export async function createTrapTile(
                 name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
               },
               location: {
-                x: config.teleportConfig.x,
-                y: config.teleportConfig.y,
+                x: config.teleportX,
+                y: config.teleportY,
                 sceneId: scene.id
               },
               position: 'random',

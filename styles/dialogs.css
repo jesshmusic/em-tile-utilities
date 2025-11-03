@@ -39,11 +39,13 @@
   z-index: 10;
 }
 
-.add-tile-btn {
+.trap-config .add-tile-btn,
+.reset-config .add-tile-btn {
   width: 100%;
 }
 
-.tile-list-container {
+.trap-config .tile-list-container,
+.reset-config .tile-list-container {
   max-height: 400px;
   overflow-y: auto;
   margin-top: 1rem;
@@ -52,20 +54,23 @@
   border-radius: 3px;
 }
 
-.tile-list-scroll {
+.trap-config .tile-list-scroll,
+.reset-config .tile-list-scroll {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.tile-entry {
+.trap-config .tile-entry,
+.reset-config .tile-entry {
   padding: 0.75rem;
   border: 1px solid var(--color-border-light-tertiary);
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.05);
 }
 
-.tile-header {
+.trap-config .tile-header,
+.reset-config .tile-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -74,20 +79,24 @@
   border-bottom: 1px solid var(--color-border-light-tertiary);
 }
 
-.tile-name {
+.trap-config .tile-name,
+.reset-config .tile-name {
   font-size: 1.1em;
 }
 
-.remove-tile {
+.trap-config .remove-tile,
+.reset-config .remove-tile {
   padding: 0.25rem 0.5rem;
   font-size: 0.9em;
 }
 
-.wall-door-section {
+.trap-config .wall-door-section,
+.reset-config .wall-door-section {
   margin-bottom: 0.75rem;
 }
 
-.wall-door-field {
+.trap-config .wall-door-field,
+.reset-config .wall-door-field {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -95,33 +104,59 @@
   margin-left: 1rem;
 }
 
-.wall-door-label {
+.trap-config .wall-door-label,
+.reset-config .wall-door-label {
   min-width: 150px;
   font-weight: bold;
   font-size: 0.9em;
 }
 
-.wall-door-select {
+.trap-config .wall-door-select,
+.reset-config .wall-door-select {
   flex: 1;
 }
 
-.settings-grid-1,
-.settings-grid-2,
-.settings-grid-3 {
+.trap-config .settings-grid-1,
+.trap-config .settings-grid-2,
+.trap-config .settings-grid-3,
+.switch-config .settings-grid-1,
+.switch-config .settings-grid-2,
+.switch-config .settings-grid-3,
+.light-config .settings-grid-1,
+.light-config .settings-grid-2,
+.light-config .settings-grid-3,
+.reset-config .settings-grid-1,
+.reset-config .settings-grid-2,
+.reset-config .settings-grid-3,
+.check-state-dialog .settings-grid-1,
+.check-state-dialog .settings-grid-2,
+.check-state-dialog .settings-grid-3 {
   display: grid;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
 
-.settings-grid-1 {
+.trap-config .settings-grid-1,
+.switch-config .settings-grid-1,
+.light-config .settings-grid-1,
+.reset-config .settings-grid-1,
+.check-state-dialog .settings-grid-1 {
   grid-template-columns: 1fr;
 }
 
-.settings-grid-2 {
+.trap-config .settings-grid-2,
+.switch-config .settings-grid-2,
+.light-config .settings-grid-2,
+.reset-config .settings-grid-2,
+.check-state-dialog .settings-grid-2 {
   grid-template-columns: 1fr 1fr;
 }
 
-.settings-grid-3 {
+.trap-config .settings-grid-3,
+.switch-config .settings-grid-3,
+.light-config .settings-grid-3,
+.reset-config .settings-grid-3,
+.check-state-dialog .settings-grid-3 {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
@@ -158,14 +193,26 @@
   width: 100%;
 }
 
-.position-hint {
+.trap-config .position-hint,
+.switch-config .position-hint,
+.light-config .position-hint,
+.reset-config .position-hint,
+.check-state-dialog .position-hint {
   font-size: 0.85em;
   color: var(--color-text-dark-secondary);
   font-style: italic;
 }
 
-.image-section,
-.variables-section {
+.trap-config .image-section,
+.trap-config .variables-section,
+.switch-config .image-section,
+.switch-config .variables-section,
+.light-config .image-section,
+.light-config .variables-section,
+.reset-config .image-section,
+.reset-config .variables-section,
+.check-state-dialog .image-section,
+.check-state-dialog .variables-section {
   margin-bottom: 0.75rem;
 }
 
@@ -180,23 +227,39 @@
   margin-bottom: 0.5rem;
 }
 
-.image-option {
+.trap-config .image-option,
+.switch-config .image-option,
+.light-config .image-option,
+.reset-config .image-option,
+.check-state-dialog .image-option {
   margin-left: 1rem;
   margin-bottom: 0.25rem;
 }
 
-.image-option label {
+.trap-config .image-option label,
+.switch-config .image-option label,
+.light-config .image-option label,
+.reset-config .image-option label,
+.check-state-dialog .image-option label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
 }
 
-.image-option input[type="radio"] {
+.trap-config .image-option input[type="radio"],
+.switch-config .image-option input[type="radio"],
+.light-config .image-option input[type="radio"],
+.reset-config .image-option input[type="radio"],
+.check-state-dialog .image-option input[type="radio"] {
   cursor: pointer;
 }
 
-.variable-field {
+.trap-config .variable-field,
+.switch-config .variable-field,
+.light-config .variable-field,
+.reset-config .variable-field,
+.check-state-dialog .variable-field {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -204,12 +267,20 @@
   margin-left: 1rem;
 }
 
-.variable-label {
+.trap-config .variable-label,
+.switch-config .variable-label,
+.light-config .variable-label,
+.reset-config .variable-label,
+.check-state-dialog .variable-label {
   min-width: 120px;
   font-weight: bold;
 }
 
-.variable-input {
+.trap-config .variable-input,
+.switch-config .variable-input,
+.light-config .variable-input,
+.reset-config .variable-input,
+.check-state-dialog .variable-input {
   flex: 1;
 }
 
@@ -253,7 +324,7 @@
   padding: 0.5rem;
 }
 
-.refresh-variables {
+.em-puzzles-variables-dialog .refresh-variables {
   margin-bottom: 1rem;
 }
 
@@ -289,7 +360,7 @@
   padding: 0.5rem;
 }
 
-.tile-manager-header {
+.tile-manager-container .tile-manager-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -301,20 +372,20 @@
   flex-shrink: 0;
 }
 
-.tile-count-info {
+.tile-manager-container .tile-count-info {
   flex: 1;
   white-space: nowrap;
 }
 
-.header-actions {
+.tile-manager-container .header-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
 }
 
-.refresh-tiles-btn,
-.view-variables-btn {
+.tile-manager-container .refresh-tiles-btn,
+.tile-manager-container .view-variables-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -327,18 +398,18 @@
   white-space: nowrap;
 }
 
-.refresh-tiles-btn:hover,
-.view-variables-btn:hover {
+.tile-manager-container .refresh-tiles-btn:hover,
+.tile-manager-container .view-variables-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: var(--color-border-light-highlight);
 }
 
-.refresh-tiles-btn i,
-.view-variables-btn i {
+.tile-manager-container .refresh-tiles-btn i,
+.tile-manager-container .view-variables-btn i {
   font-size: 0.9em;
 }
 
-.tile-creation-cards {
+.tile-manager-container .tile-creation-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
   gap: 0.75rem;
@@ -349,7 +420,7 @@
   flex-shrink: 0;
 }
 
-.create-tile-card {
+.tile-manager-container .create-tile-card {
   display: flex;
   align-items: stretch;
   gap: 0.75rem;
@@ -364,14 +435,14 @@
   min-height: 80px;
 }
 
-.create-tile-card:hover {
+.tile-manager-container .create-tile-card:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: var(--color-border-light-highlight);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.card-icon {
+.tile-manager-container .card-icon {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
@@ -384,11 +455,11 @@
   align-self: flex-start;
 }
 
-.card-icon i {
+.tile-manager-container .card-icon i {
   font-size: 2em;
 }
 
-.card-content {
+.tile-manager-container .card-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -397,14 +468,14 @@
   justify-content: center;
 }
 
-.card-title {
+.tile-manager-container .card-title {
   font-size: 1em;
   font-weight: 600;
   margin: 0;
   line-height: 1.2;
 }
 
-.card-description {
+.tile-manager-container .card-description {
   font-size: 0.85em;
   margin: 0;
   line-height: 1.3;
@@ -412,88 +483,88 @@
   opacity: 0.9;
 }
 
-.create-switch-card:hover {
+.tile-manager-container .create-switch-card:hover {
   background: rgba(100, 200, 255, 0.2);
   border-color: rgba(100, 200, 255, 0.5);
 }
 
-.create-switch-card:hover .card-icon {
+.tile-manager-container .create-switch-card:hover .card-icon {
   background: rgba(100, 200, 255, 0.3);
   border-color: rgba(100, 200, 255, 0.5);
 }
 
-.create-light-card:hover {
+.tile-manager-container .create-light-card:hover {
   background: rgba(255, 220, 100, 0.2);
   border-color: rgba(255, 220, 100, 0.5);
 }
 
-.create-light-card:hover .card-icon {
+.tile-manager-container .create-light-card:hover .card-icon {
   background: rgba(255, 220, 100, 0.3);
   border-color: rgba(255, 220, 100, 0.5);
 }
 
-.create-reset-card:hover {
+.tile-manager-container .create-reset-card:hover {
   background: rgba(255, 150, 100, 0.2);
   border-color: rgba(255, 150, 100, 0.5);
 }
 
-.create-reset-card:hover .card-icon {
+.tile-manager-container .create-reset-card:hover .card-icon {
   background: rgba(255, 150, 100, 0.3);
   border-color: rgba(255, 150, 100, 0.5);
 }
 
-.create-trap-card:hover {
+.tile-manager-container .create-trap-card:hover {
   background: rgba(200, 100, 150, 0.2);
   border-color: rgba(200, 100, 150, 0.5);
 }
 
-.create-trap-card:hover .card-icon {
+.tile-manager-container .create-trap-card:hover .card-icon {
   background: rgba(200, 100, 150, 0.3);
   border-color: rgba(200, 100, 150, 0.5);
 }
 
-.create-utility-card:hover {
+.tile-manager-container .create-utility-card:hover {
   background: rgba(150, 150, 200, 0.2);
   border-color: rgba(150, 150, 200, 0.5);
 }
 
-.create-utility-card:hover .card-icon {
+.tile-manager-container .create-utility-card:hover .card-icon {
   background: rgba(150, 150, 200, 0.3);
   border-color: rgba(150, 150, 200, 0.5);
 }
 
-.tile-manager-controls {
+.tile-manager-container .tile-manager-controls {
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
   flex-shrink: 0;
 }
 
-.search-group,
-.sort-group {
+.tile-manager-container .search-group,
+.tile-manager-container .sort-group {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.search-group {
+.tile-manager-container .search-group {
   flex: 1;
 }
 
-.search-input-wrapper {
+.tile-manager-container .search-input-wrapper {
   position: relative;
   flex: 1;
   display: flex;
   align-items: center;
 }
 
-.tile-search-input {
+.tile-manager-container .tile-search-input {
   flex: 1;
   padding: 0.4rem 2rem 0.4rem 0.4rem;
   width: 100%;
 }
 
-.search-clear-btn {
+.tile-manager-container .search-clear-btn {
   position: absolute;
   right: 0.25rem;
   top: 50%;
@@ -508,12 +579,12 @@
   transition: opacity 0.2s;
 }
 
-.search-clear-btn:hover {
+.tile-manager-container .search-clear-btn:hover {
   opacity: 1;
   color: var(--color-text-dark-primary);
 }
 
-.tile-sort-select {
+.tile-manager-container .tile-sort-select {
   padding: 0.4rem;
 }
 
@@ -543,14 +614,14 @@
   border-bottom: 1px solid var(--color-border-light-tertiary);
 }
 
-.tile-info {
+.tile-manager-container .tile-info {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
   flex: 1;
 }
 
-.tile-thumbnail {
+.tile-manager-container .tile-thumbnail {
   width: 48px;
   height: 48px;
   object-fit: cover;
@@ -559,7 +630,7 @@
   display: block;
 }
 
-.tile-details {
+.tile-manager-container .tile-details {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -571,7 +642,7 @@
   font-weight: bold;
 }
 
-.tile-meta {
+.tile-manager-container .tile-meta {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -579,12 +650,12 @@
   color: var(--color-text-dark-secondary);
 }
 
-.tile-actions {
+.tile-manager-container .tile-actions {
   display: flex;
   gap: 0.5rem;
 }
 
-.tile-action-btn {
+.tile-manager-container .tile-action-btn {
   padding: 0.35rem 0.6rem;
   font-size: 1em;
   cursor: pointer;
@@ -594,46 +665,46 @@
   transition: all 0.2s;
 }
 
-.tile-action-btn:hover {
+.tile-manager-container .tile-action-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: var(--color-border-light-highlight);
 }
 
-.tile-action-btn.delete-btn {
+.tile-manager-container .tile-action-btn.delete-btn {
   background: rgba(200, 50, 50, 0.2);
   border-color: rgba(200, 50, 50, 0.4);
   color: #ff6b6b;
 }
 
-.tile-action-btn.delete-btn:hover {
+.tile-manager-container .tile-action-btn.delete-btn:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
-.tile-action-btn.toggle-btn {
+.tile-manager-container .tile-action-btn.toggle-btn {
   background: rgba(150, 150, 150, 0.2);
   border-color: rgba(150, 150, 150, 0.4);
   color: #999;
 }
 
-.tile-action-btn.toggle-btn.active {
+.tile-manager-container .tile-action-btn.toggle-btn.active {
   background: rgba(100, 200, 100, 0.2);
   border-color: rgba(100, 200, 100, 0.4);
   color: #4caf50;
 }
 
-.tile-action-btn.toggle-btn:hover {
+.tile-manager-container .tile-action-btn.toggle-btn:hover {
   background: rgba(150, 150, 150, 0.3);
   border-color: rgba(150, 150, 150, 0.5);
 }
 
-.tile-action-btn.toggle-btn.active:hover {
+.tile-manager-container .tile-action-btn.toggle-btn.active:hover {
   background: rgba(100, 200, 100, 0.3);
   border-color: rgba(100, 200, 100, 0.5);
 }
 
-.tile-thumbnail-placeholder {
+.tile-manager-container .tile-thumbnail-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -641,13 +712,13 @@
   color: var(--color-text-dark-secondary);
 }
 
-.tile-status {
+.tile-manager-container .tile-status {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.status-badge {
+.tile-manager-container .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -658,34 +729,34 @@
   border: 1px solid rgba(100, 150, 200, 0.4);
 }
 
-.status-badge.monks-active {
+.tile-manager-container .status-badge.monks-active {
   background: rgba(100, 200, 100, 0.2);
   border-color: rgba(100, 200, 100, 0.4);
 }
 
-.status-badge.inactive {
+.tile-manager-container .status-badge.inactive {
   background: rgba(200, 150, 100, 0.2);
   border-color: rgba(200, 150, 100, 0.4);
 }
 
-.status-badge.hidden {
+.tile-manager-container .status-badge.hidden {
   background: rgba(150, 100, 200, 0.2);
   border-color: rgba(150, 100, 200, 0.4);
 }
 
-.status-badge.locked {
+.tile-manager-container .status-badge.locked {
   background: rgba(200, 100, 100, 0.2);
   border-color: rgba(200, 100, 100, 0.4);
 }
 
-.no-tiles-message {
+.tile-manager-container .no-tiles-message {
   text-align: center;
   padding: 2rem;
   color: var(--color-text-dark-secondary);
   font-style: italic;
 }
 
-.tile-variables {
+.tile-manager-container .tile-variables {
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border-light-tertiary);
@@ -694,11 +765,11 @@
   gap: 0.35rem;
 }
 
-.variable-item {
+.tile-manager-container .variable-item {
   font-size: 0.9em;
 }
 
-.variable-item code {
+.tile-manager-container .variable-item code {
   background: rgba(252, 231, 147, 0.2);
   border: 0;
   padding: 0.25rem 0.5rem;
@@ -708,7 +779,7 @@
 }
 
 /* Tile Tags Display */
-.tile-tags {
+.tile-manager-container .tile-tags {
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border-light-tertiary);
@@ -717,7 +788,7 @@
   gap: 0.5rem;
 }
 
-.tag-badge {
+.tile-manager-container .tag-badge {
   background: rgba(100, 150, 200, 0.2);
   border: 1px solid rgba(100, 150, 200, 0.4);
   padding: 0.25rem 0.5rem;
@@ -729,14 +800,14 @@
 }
 
 /* Tile Group Styles */
-.tile-group {
+.tile-manager-container .tile-group {
   margin-bottom: 1rem;
   border: 1px solid var(--color-border-light-tertiary);
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.02);
 }
 
-.group-header {
+.tile-manager-container .group-header {
   padding: 0.75rem 1rem;
   cursor: pointer;
   display: flex;
@@ -748,37 +819,37 @@
   user-select: none;
 }
 
-.group-header:hover {
+.tile-manager-container .group-header:hover {
   background: rgba(0, 0, 0, 0.1);
 }
 
-.group-toggle-icon {
+.tile-manager-container .group-toggle-icon {
   font-size: 0.85em;
   color: var(--color-text-dark-secondary);
   transition: transform 0.2s;
   min-width: 1em;
 }
 
-.group-name {
+.tile-manager-container .group-name {
   font-size: 1.1em;
   font-weight: bold;
   color: var(--color-text-light-heading);
 }
 
-.group-count {
+.tile-manager-container .group-count {
   font-size: 0.9em;
   color: var(--color-text-dark-secondary);
   font-weight: normal;
 }
 
-.group-tiles {
+.tile-manager-container .group-tiles {
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.tile-entry-grouped {
+.tile-manager-container .tile-entry-grouped {
   margin-left: 1rem;
   border-left: 3px solid rgba(100, 150, 200, 0.3);
 }
@@ -915,14 +986,16 @@ button .game-icon,
 }
 
 /* Wall/Door entry styles for activating trap dialog */
-.wall-list {
+.trap-config .wall-list,
+.reset-config .wall-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
 
-.wall-entry {
+.trap-config .wall-entry,
+.reset-config .wall-entry {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -932,7 +1005,8 @@ button .game-icon,
   background: rgba(0, 0, 0, 0.05);
 }
 
-.wall-info {
+.trap-config .wall-info,
+.reset-config .wall-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -940,35 +1014,41 @@ button .game-icon,
   min-width: 120px;
 }
 
-.wall-info i {
+.trap-config .wall-info i,
+.reset-config .wall-info i {
   font-size: 1.1em;
   color: var(--color-text-dark-secondary);
 }
 
-.wall-id {
+.trap-config .wall-id,
+.reset-config .wall-id {
   font-family: monospace;
   font-size: 0.9em;
 }
 
-.wall-state-selector {
+.trap-config .wall-state-selector,
+.reset-config .wall-state-selector {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex: 1;
 }
 
-.wall-state-selector label {
+.trap-config .wall-state-selector label,
+.reset-config .wall-state-selector label {
   font-weight: normal;
   white-space: nowrap;
   margin: 0;
 }
 
-.wall-state-selector select {
+.trap-config .wall-state-selector select,
+.reset-config .wall-state-selector select {
   flex: 1;
   max-width: 200px;
 }
 
-.remove-wall-button {
+.trap-config .remove-wall-button,
+.reset-config .remove-wall-button {
   padding: 0.35rem 0.6rem;
   font-size: 1em;
   cursor: pointer;
@@ -980,7 +1060,8 @@ button .game-icon,
   transition: all 0.2s;
 }
 
-.remove-wall-button:hover {
+.trap-config .remove-wall-button:hover,
+.reset-config .remove-wall-button:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
@@ -991,7 +1072,7 @@ button .game-icon,
   min-width: 200px;
 }
 
-.selected-tiles-list {
+.check-state-dialog .selected-tiles-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -1005,7 +1086,7 @@ button .game-icon,
   width: 100%;
 }
 
-.selected-tile-item {
+.check-state-dialog .selected-tile-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1019,7 +1100,7 @@ button .game-icon,
   width: 100%;
 }
 
-.selected-tile-item .tile-info {
+.check-state-dialog .selected-tile-item .tile-info {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1028,12 +1109,12 @@ button .game-icon,
   min-width: 0;
 }
 
-.selected-tile-item .tile-info strong {
+.check-state-dialog .selected-tile-item .tile-info strong {
   font-size: 1em;
   flex-shrink: 0;
 }
 
-.selected-tile-item .variables-list {
+.check-state-dialog .selected-tile-item .variables-list {
   display: flex;
   flex-wrap: nowrap;
   gap: 0.5rem;
@@ -1041,7 +1122,7 @@ button .game-icon,
   flex: 1;
 }
 
-.selected-tile-item .variables-list code {
+.check-state-dialog .selected-tile-item .variables-list code {
   background: rgba(100, 150, 200, 0.2);
   padding: 0.25rem 0.5rem;
   border-radius: 3px;
@@ -1051,7 +1132,7 @@ button .game-icon,
   white-space: nowrap;
 }
 
-.selected-tile-item .remove-tile {
+.check-state-dialog .selected-tile-item .remove-tile {
   padding: 0.35rem 0.6rem;
   font-size: 1em;
   cursor: pointer;
@@ -1064,25 +1145,25 @@ button .game-icon,
   flex-shrink: 0;
 }
 
-.selected-tile-item .remove-tile:hover {
+.check-state-dialog .selected-tile-item .remove-tile:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
 /* Branch Styles for Check State Dialog */
-.branches-section {
+.check-state-dialog .branches-section {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 2px solid var(--color-border-light-tertiary);
 }
 
-.add-branch-btn {
+.check-state-dialog .add-branch-btn {
   padding: 0.4rem 0.8rem;
   font-size: 0.9em;
 }
 
-.branches-list {
+.check-state-dialog .branches-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1092,14 +1173,14 @@ button .game-icon,
   padding-right: 0.5rem;
 }
 
-.branch-card {
+.check-state-dialog .branch-card {
   padding: 1rem;
   background: rgba(100, 150, 200, 0.1);
   border: 1px solid rgba(100, 150, 200, 0.3);
   border-radius: 5px;
 }
 
-.branch-header {
+.check-state-dialog .branch-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1108,14 +1189,14 @@ button .game-icon,
   border-bottom: 1px solid var(--color-border-light-tertiary);
 }
 
-.branch-name-input {
+.check-state-dialog .branch-name-input {
   flex: 1;
   font-weight: bold;
   font-size: 1.1em;
   padding: 0.35rem 0.5rem;
 }
 
-.remove-branch-btn {
+.check-state-dialog .remove-branch-btn {
   padding: 0.35rem 0.6rem;
   background: rgba(200, 50, 50, 0.2);
   border: 1px solid rgba(200, 50, 50, 0.4);
@@ -1125,33 +1206,33 @@ button .game-icon,
   transition: all 0.2s;
 }
 
-.remove-branch-btn:hover {
+.check-state-dialog .remove-branch-btn:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
-.branch-section {
+.check-state-dialog .branch-section {
   margin-bottom: 1rem;
   padding: 0.75rem;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
 
-.branch-section-header {
+.check-state-dialog .branch-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }
 
-.branch-section-header strong {
+.check-state-dialog .branch-section-header strong {
   font-size: 1em;
   color: var(--color-text-dark-primary);
 }
 
-.add-condition-btn,
-.add-action-btn {
+.check-state-dialog .add-condition-btn,
+.check-state-dialog .add-action-btn {
   padding: 0.25rem 0.5rem;
   font-size: 0.85em;
   background: rgba(100, 200, 100, 0.2);
@@ -1162,20 +1243,20 @@ button .game-icon,
   transition: all 0.2s;
 }
 
-.add-condition-btn:hover,
-.add-action-btn:hover {
+.check-state-dialog .add-condition-btn:hover,
+.check-state-dialog .add-action-btn:hover {
   background: rgba(100, 200, 100, 0.3);
   border-color: rgba(100, 200, 100, 0.5);
 }
 
-.conditions-list,
-.actions-list {
+.check-state-dialog .conditions-list,
+.check-state-dialog .actions-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.condition-item {
+.check-state-dialog .condition-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1186,13 +1267,13 @@ button .game-icon,
   flex-wrap: nowrap;
 }
 
-.condition-variable-select {
+.check-state-dialog .condition-variable-select {
   min-width: 120px;
   max-width: 180px;
   flex-shrink: 1;
 }
 
-.condition-equals {
+.check-state-dialog .condition-equals {
   font-weight: bold;
   font-size: 1.2em;
   color: var(--color-text-dark-primary);
@@ -1200,7 +1281,7 @@ button .game-icon,
   padding: 0 0.25rem;
 }
 
-.condition-value-radios {
+.check-state-dialog .condition-value-radios {
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -1208,7 +1289,7 @@ button .game-icon,
   flex-wrap: nowrap;
 }
 
-.condition-value-radio {
+.check-state-dialog .condition-value-radio {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -1220,27 +1301,27 @@ button .game-icon,
   transition: all 0.2s;
 }
 
-.condition-value-radio:hover {
+.check-state-dialog .condition-value-radio:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--color-border-light-highlight);
 }
 
-.condition-value-radio input[type='radio'] {
+.check-state-dialog .condition-value-radio input[type='radio'] {
   cursor: pointer;
   margin: 0;
 }
 
-.condition-value-radio span {
+.check-state-dialog .condition-value-radio span {
   font-weight: 500;
 }
 
-.condition-connector-select {
+.check-state-dialog .condition-connector-select {
   min-width: 80px;
   font-weight: bold;
 }
 
-.remove-condition-btn,
-.remove-action-btn {
+.check-state-dialog .remove-condition-btn,
+.check-state-dialog .remove-action-btn {
   padding: 0.25rem 0.5rem;
   background: rgba(200, 50, 50, 0.2);
   border: 1px solid rgba(200, 50, 50, 0.4);
@@ -1251,14 +1332,14 @@ button .game-icon,
   flex-shrink: 0;
 }
 
-.remove-condition-btn:hover,
-.remove-action-btn:hover {
+.check-state-dialog .remove-condition-btn:hover,
+.check-state-dialog .remove-action-btn:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
-.action-item {
+.check-state-dialog .action-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1269,21 +1350,21 @@ button .game-icon,
   flex-wrap: wrap;
 }
 
-.action-type-select {
+.check-state-dialog .action-type-select {
   min-width: 120px;
   max-width: 150px;
   flex-shrink: 1;
 }
 
-.action-target-select,
-.door-state-select {
+.check-state-dialog .action-target-select,
+.check-state-dialog .door-state-select {
   min-width: 120px;
   max-width: 180px;
   flex: 1;
 }
 
-.select-tile-btn,
-.select-wall-btn {
+.check-state-dialog .select-tile-btn,
+.check-state-dialog .select-wall-btn {
   padding: 0.4rem 0.8rem;
   background: rgba(100, 150, 200, 0.2);
   border: 1px solid rgba(100, 150, 200, 0.4);
@@ -1295,14 +1376,14 @@ button .game-icon,
   min-width: 150px;
 }
 
-.select-tile-btn:hover,
-.select-wall-btn:hover {
+.check-state-dialog .select-tile-btn:hover,
+.check-state-dialog .select-wall-btn:hover {
   background: rgba(100, 150, 200, 0.3);
   border-color: rgba(100, 150, 200, 0.5);
 }
 
 /* Item Drop Zone Styles (Combat Trap Dialog) */
-.item-drop-zone {
+.trap-config .item-drop-zone {
   min-height: 100px;
   padding: 1rem;
   border: 2px dashed var(--color-border-light-tertiary);
@@ -1312,13 +1393,13 @@ button .game-icon,
   cursor: pointer;
 }
 
-.item-drop-zone.drag-over {
+.trap-config .item-drop-zone.drag-over {
   background: rgba(100, 150, 200, 0.2);
   border-color: rgba(100, 150, 200, 0.5);
   border-style: solid;
 }
 
-.drop-placeholder {
+.trap-config .drop-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1328,18 +1409,18 @@ button .game-icon,
   text-align: center;
 }
 
-.drop-placeholder i {
+.trap-config .drop-placeholder i {
   font-size: 2em;
   opacity: 0.5;
 }
 
-.drop-placeholder p {
+.trap-config .drop-placeholder p {
   margin: 0;
   font-size: 0.9em;
   font-style: italic;
 }
 
-.dropped-item {
+.trap-config .dropped-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1349,7 +1430,7 @@ button .game-icon,
   border-radius: 3px;
 }
 
-.dropped-item img {
+.trap-config .dropped-item img {
   width: 48px;
   height: 48px;
   object-fit: cover;
@@ -1357,12 +1438,12 @@ button .game-icon,
   border: 1px solid var(--color-border-light-tertiary);
 }
 
-.dropped-item span {
+.trap-config .dropped-item span {
   flex: 1;
   font-weight: bold;
 }
 
-.dropped-item .remove-item {
+.trap-config .dropped-item .remove-item {
   padding: 0.35rem 0.6rem;
   font-size: 1em;
   cursor: pointer;
@@ -1374,18 +1455,18 @@ button .game-icon,
   transition: all 0.2s;
 }
 
-.dropped-item .remove-item:hover {
+.trap-config .dropped-item .remove-item:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
 /* DMG Trap Item Drop Zone Styles */
-.dmg-trap-section {
+.trap-config .dmg-trap-section {
   margin-bottom: 1rem;
 }
 
-.dmg-trap-item-drop-zone {
+.trap-config .dmg-trap-item-drop-zone {
   min-height: 80px;
   padding: 1rem;
   border: 2px dashed var(--color-border-light-tertiary);
@@ -1402,30 +1483,30 @@ button .game-icon,
   text-align: center;
 }
 
-.dmg-trap-item-drop-zone.drag-over {
+.trap-config .dmg-trap-item-drop-zone.drag-over {
   background: rgba(200, 100, 150, 0.2);
   border-color: rgba(200, 100, 150, 0.5);
   border-style: solid;
 }
 
-.dmg-trap-item-drop-zone i {
+.trap-config .dmg-trap-item-drop-zone i {
   font-size: 2em;
   opacity: 0.5;
 }
 
-.dmg-trap-item-drop-zone p {
+.trap-config .dmg-trap-item-drop-zone p {
   margin: 0;
   font-size: 0.9em;
   font-style: italic;
 }
 
-.dmg-trap-item-display {
+.trap-config .dmg-trap-item-display {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.dmg-trap-item-info {
+.trap-config .dmg-trap-item-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1435,7 +1516,7 @@ button .game-icon,
   border-radius: 3px;
 }
 
-.dmg-trap-item-image {
+.trap-config .dmg-trap-item-image {
   width: 48px;
   height: 48px;
   object-fit: cover;
@@ -1443,19 +1524,19 @@ button .game-icon,
   border: 1px solid var(--color-border-light-tertiary);
 }
 
-.dmg-trap-item-details {
+.trap-config .dmg-trap-item-details {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
 }
 
-.dmg-trap-item-name {
+.trap-config .dmg-trap-item-name {
   font-weight: bold;
   font-size: 1.1em;
 }
 
-.dmg-trap-remove-button {
+.trap-config .dmg-trap-remove-button {
   padding: 0.35rem 0.6rem;
   font-size: 0.9em;
   cursor: pointer;
@@ -1471,35 +1552,35 @@ button .game-icon,
   align-self: flex-start;
 }
 
-.dmg-trap-remove-button:hover {
+.trap-config .dmg-trap-remove-button:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
-.dmg-trap-activity-select-wrapper {
+.trap-config .dmg-trap-activity-select-wrapper {
   padding: 0.5rem 0.75rem;
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid var(--color-border-light-tertiary);
   border-radius: 3px;
 }
 
-.dmg-trap-activity-select-wrapper label {
+.trap-config .dmg-trap-activity-select-wrapper label {
   display: block;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
 
-.dmg-trap-activity-select-wrapper select {
+.trap-config .dmg-trap-activity-select-wrapper select {
   width: 100%;
 }
 
 /* Attack Item Styles (for Combat Traps) */
-.attack-item-section {
+.trap-config .attack-item-section {
   margin-bottom: 1rem;
 }
 
-.attack-item-drop-zone {
+.trap-config .attack-item-drop-zone {
   min-height: 80px;
   padding: 1rem;
   border: 2px dashed var(--color-border-light-tertiary);
@@ -1516,24 +1597,24 @@ button .game-icon,
   text-align: center;
 }
 
-.attack-item-drop-zone.drag-over {
+.trap-config .attack-item-drop-zone.drag-over {
   background: rgba(150, 100, 200, 0.2);
   border-color: rgba(150, 100, 200, 0.5);
   border-style: solid;
 }
 
-.attack-item-drop-zone i {
+.trap-config .attack-item-drop-zone i {
   font-size: 2em;
   opacity: 0.5;
 }
 
-.attack-item-drop-zone p {
+.trap-config .attack-item-drop-zone p {
   margin: 0;
   font-size: 0.9em;
   font-style: italic;
 }
 
-.attack-item-display {
+.trap-config .attack-item-display {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1543,7 +1624,7 @@ button .game-icon,
   border-radius: 3px;
 }
 
-.attack-item-image {
+.trap-config .attack-item-image {
   width: 48px;
   height: 48px;
   object-fit: cover;
@@ -1551,19 +1632,19 @@ button .game-icon,
   border: 1px solid var(--color-border-light-tertiary);
 }
 
-.attack-item-details {
+.trap-config .attack-item-details {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
 }
 
-.attack-item-name {
+.trap-config .attack-item-name {
   font-weight: bold;
   font-size: 1.1em;
 }
 
-.attack-item-remove-button {
+.trap-config .attack-item-remove-button {
   padding: 0.35rem 0.6rem;
   font-size: 0.9em;
   cursor: pointer;
@@ -1579,14 +1660,14 @@ button .game-icon,
   align-self: flex-start;
 }
 
-.attack-item-remove-button:hover {
+.trap-config .attack-item-remove-button:hover {
   background: rgba(200, 50, 50, 0.4);
   border-color: rgba(200, 50, 50, 0.6);
   color: #ff4444;
 }
 
 /* Token Configuration Styles */
-.token-config-section {
+.trap-config .token-config-section {
   padding: 0.75rem;
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid var(--color-border-light-tertiary);
@@ -1594,7 +1675,7 @@ button .game-icon,
   margin-top: 0.5rem;
 }
 
-.token-config-section .checkbox-label {
+.trap-config .token-config-section .checkbox-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1602,16 +1683,18 @@ button .game-icon,
   font-weight: bold;
 }
 
-.token-config-section .checkbox-label input[type="checkbox"] {
+.trap-config .token-config-section .checkbox-label input[type="checkbox"] {
   margin: 0;
 }
 
 /* Multiple Dropdown Select (Monk's Active Tiles Style) */
-.multiple-dropdown-select {
+.trap-config .multiple-dropdown-select,
+.check-state-dialog .multiple-dropdown-select {
   position: relative;
 }
 
-.multiple-dropdown {
+.trap-config .multiple-dropdown,
+.check-state-dialog .multiple-dropdown {
   height: var(--input-height, 28px);
   background: var(--color-cool-4, rgba(0, 0, 0, 0.05));
   border: 1px solid transparent;
@@ -1625,11 +1708,13 @@ button .game-icon,
   gap: 0.5rem;
 }
 
-.multiple-dropdown:hover {
+.trap-config .multiple-dropdown:hover,
+.check-state-dialog .multiple-dropdown:hover {
   outline: 1px solid var(--color-border-light-highlight);
 }
 
-.multiple-dropdown-content {
+.trap-config .multiple-dropdown-content,
+.check-state-dialog .multiple-dropdown-content {
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
@@ -1638,7 +1723,8 @@ button .game-icon,
   align-items: center;
 }
 
-.multiple-dropdown-option {
+.trap-config .multiple-dropdown-option,
+.check-state-dialog .multiple-dropdown-option {
   display: inline-flex;
   align-items: center;
   background-color: #333;
@@ -1649,11 +1735,13 @@ button .game-icon,
   font-size: 0.85em;
 }
 
-.multiple-dropdown-option span {
+.trap-config .multiple-dropdown-option span,
+.check-state-dialog .multiple-dropdown-option span {
   margin-right: 4px;
 }
 
-.multiple-dropdown-option .remove-option {
+.trap-config .multiple-dropdown-option .remove-option,
+.check-state-dialog .multiple-dropdown-option .remove-option {
   cursor: pointer;
   font-size: 20px;
   line-height: 1;
@@ -1661,18 +1749,21 @@ button .game-icon,
   color: #999;
 }
 
-.multiple-dropdown-option .remove-option:hover {
+.trap-config .multiple-dropdown-option .remove-option:hover,
+.check-state-dialog .multiple-dropdown-option .remove-option:hover {
   color: #fff;
 }
 
-.multiple-dropdown .fa-chevron-down {
+.trap-config .multiple-dropdown .fa-chevron-down,
+.check-state-dialog .multiple-dropdown .fa-chevron-down {
   font-size: 0.75em;
   color: var(--color-text-dark-secondary);
   flex-shrink: 0;
   margin-right: 4px;
 }
 
-.dropdown-list {
+.trap-config .dropdown-list,
+.check-state-dialog .dropdown-list {
   display: none;
   position: absolute;
   top: 100%;
@@ -1691,11 +1782,13 @@ button .game-icon,
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.dropdown-list.open {
+.trap-config .dropdown-list.open,
+.check-state-dialog .dropdown-list.open {
   display: block;
 }
 
-.multiple-dropdown-item {
+.trap-config .multiple-dropdown-item,
+.check-state-dialog .multiple-dropdown-item {
   padding: 4px 8px;
   min-height: 25px;
   cursor: pointer;
@@ -1705,13 +1798,14 @@ button .game-icon,
   transition: background-color 0.2s;
 }
 
-.multiple-dropdown-item:hover {
+.trap-config .multiple-dropdown-item:hover,
+.check-state-dialog .multiple-dropdown-item:hover {
   background-color: #1e90ff;
   color: #fff;
 }
 
-.multiple-dropdown-item.selected {
+.trap-config .multiple-dropdown-item.selected,
+.check-state-dialog .multiple-dropdown-item.selected {
   background-color: coral;
   color: #fff;
 }
-
