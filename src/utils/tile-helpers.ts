@@ -1201,13 +1201,13 @@ export async function createTrapTile(
             action: 'teleport',
             data: {
               entity: {
-                id: config.hasSavingThrow ? 'previous' : targetEntityId,
-                name: config.hasSavingThrow ? 'Current tokens' : targetEntityName
+                id: config.hasSavingThrow ? 'previous' : 'token',
+                name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
               },
               location: {
                 x: config.teleportConfig.x,
                 y: config.teleportConfig.y,
-                name: `[x:${config.teleportConfig.x} y:${config.teleportConfig.y}]`
+                sceneId: scene.id
               },
               remotesnap: true,
               animatepan: true
