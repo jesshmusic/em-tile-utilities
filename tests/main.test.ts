@@ -26,11 +26,11 @@ describe('Main Module', () => {
       expect(typeof initCallback).toBe('function');
     });
 
-    it('should register default ON image setting', () => {
+    it('should register default ON image setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -47,11 +47,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register default OFF image setting', () => {
+    it('should register default OFF image setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -65,11 +65,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register default sound setting', () => {
+    it('should register default sound setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -83,11 +83,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register default light ON image setting', () => {
+    it('should register default light ON image setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -101,11 +101,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register default light OFF image setting', () => {
+    it('should register default light OFF image setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -119,11 +119,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register default trap image setting', () => {
+    it('should register default trap image setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -137,11 +137,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register default trap triggered image setting', () => {
+    it('should register default trap triggered image setting', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       expect((global as any).game.settings.register).toHaveBeenCalledWith(
@@ -155,11 +155,11 @@ describe('Main Module', () => {
       );
     });
 
-    it('should register all settings with world scope', () => {
+    it('should register all settings with world scope', async () => {
       jest.clearAllMocks();
 
       if (initCallback) {
-        initCallback();
+        await initCallback();
       }
 
       const registerCalls = ((global as any).game.settings.register as any).mock.calls;
@@ -168,6 +168,26 @@ describe('Main Module', () => {
           expect(call[2].scope).toBe('world');
         }
       });
+    });
+
+    it('should load Handlebars partials during init', async () => {
+      jest.clearAllMocks();
+
+      if (initCallback) {
+        await initCallback();
+      }
+
+      // Verify loadTemplates was called
+      expect((global as any).loadTemplates).toHaveBeenCalled();
+
+      // Verify it was called with the saving-throw-section partial
+      const calls = ((global as any).loadTemplates as any).mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+
+      const partialPaths = calls[0][0];
+      expect(partialPaths).toContain(
+        'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
+      );
     });
   });
 

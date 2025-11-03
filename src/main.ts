@@ -7,7 +7,7 @@ import buildInfo from '../build-info.json';
 import packageInfo from '../package.json';
 
 // Module initialization
-Hooks.once('init', () => {
+Hooks.once('init', async () => {
   // Module initialization banner
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %cv" +
@@ -19,6 +19,11 @@ Hooks.once('init', () => {
     'color: #ff9800; font-weight: bold; font-size: 14px;',
     'color: #ffeb3b; font-weight: normal; font-size: 12px;'
   );
+
+  // Pre-load templates (including partials)
+  await loadTemplates([
+    'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
+  ]);
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {

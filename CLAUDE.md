@@ -407,6 +407,243 @@ git push -u origin feat/teleport-tile
 #    - Publishes to Foundry Package API
 ```
 
+## GitHub Workflows
+
+The project uses GitHub Actions for automated testing, building, and releases. All workflows are in `.github/workflows/`.
+
+### Workflow Overview
+
+```
+.github/workflows/
+├── test.yml          # Runs tests on PR and push
+├── auto-release.yml  # Creates releases on PR merge
+└── release.yml       # Manual release trigger
+```
+
+### test.yml - Automated Testing
+
+**Triggers:**
+- Pull requests to `main` or `develop`
+- Pushes to `main` or `develop`
+
+**Jobs:**
+
+1. **Run Tests** (Matrix: Node 18.x, 20.x)
+   - Checkout code
+   - Setup Node.js with cache
+   - Install dependencies (`npm ci`)
+   - Run tests (`npm run test:ci`)
+   - Upload coverage to Codecov (Node 20.x only)
+
+2. **Lint & Type Check**
+   - Checkout code
+   - Setup Node.js 20.x with cache
+   - Install dependencies (`npm ci`)
+   - Run build (`npm run build`)
+
+**Configuration:**
+
+```yaml
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:ci
+```
+
+**What it validates:**
+- All tests pass on multiple Node versions
+- Code builds without errors
+- Test coverage is tracked
+
+### auto-release.yml - Automated Releases
+
+**Triggers:**
+- Pull request merged to `main`
+
+**Workflow Steps:**
+
+1. **Checkout code** with full git history
+2. **Get version** from `package.json`
+3. **Verify version bump** - Fails if version wasn't incremented
+4. **Install dependencies** with `npm ci`
+5. **Build project** with `npm run build`
+6. **Create module.zip** with necessary files
+7. **Create git tag** (e.g., `v1.13.0`)
+8. **Push tag** to GitHub
+9. **Extract changelog** for this version
+10. **Create GitHub Release** with changelog and artifacts
+11. **Notify FoundryVTT API** about new version
+
+**Key Features:**
+- Only runs if PR was actually merged (not just closed)
+- Verifies version was bumped before proceeding
+- Automatically extracts relevant changelog section
+- Notifies Foundry Package API for automatic updates
+
+**Permissions Required:**
+- `contents: write` - To create tags and releases
+- `FOUNDRY_PACKAGE_TOKEN` secret - For Foundry API notification
+
+**What it does NOT do:**
+- Does not modify any code files
+- Does not commit anything to `main`
+- Only creates tags and releases from existing code
+
+### release.yml - Manual Releases
+
+**Triggers:**
+- Manual workflow dispatch from GitHub Actions UI
+
+**Use Cases:**
+- Testing release process
+- Recovering from failed auto-release
+- Creating releases for older versions
+
+**Workflow:**
+Same as auto-release.yml, but:
+- Triggered manually instead of on PR merge
+- Includes check to prevent duplicate tags
+- Useful for troubleshooting release issues
+
+**How to Use:**
+1. Go to Actions tab in GitHub
+2. Select "Manual Release" workflow
+3. Click "Run workflow"
+4. Select `main` branch
+5. Click green "Run workflow" button
+
+### GitHub Copilot PR Reviews
+
+The project uses GitHub Copilot for automated PR code review.
+
+**What Copilot Reviews:**
+- Code quality and best practices
+- Potential bugs and type safety issues
+- Performance concerns
+- Unused variables and dead code
+- File formatting and readability
+
+**Handling Copilot Suggestions:**
+
+When Copilot comments on your PR:
+
+1. **Read all suggestions carefully** - Even "nitpick" comments can be valuable
+2. **Evaluate each suggestion:**
+   - Does it improve code quality?
+   - Does it fix a real bug?
+   - Is it worth the change?
+
+3. **Implement accepted suggestions:**
+   ```bash
+   # Make fixes
+   git add .
+   git commit -m "fix: implement Copilot PR review suggestions"
+   git push
+   ```
+
+4. **Resolve Copilot comments:**
+
+   Use the GitHub CLI or GraphQL API to mark threads as resolved:
+
+   ```bash
+   # Get review thread IDs
+   gh api graphql -f query='
+   query {
+     repository(owner: "USER", name: "REPO") {
+       pullRequest(number: PR_NUMBER) {
+         reviewThreads(first: 10) {
+           nodes {
+             id
+             isResolved
+             comments(first: 1) {
+               nodes { path body }
+             }
+           }
+         }
+       }
+     }
+   }'
+
+   # Resolve threads
+   gh api graphql -f query='
+   mutation {
+     resolveReviewThread(input: {threadId: "THREAD_ID"}) {
+       thread { id isResolved }
+     }
+   }'
+   ```
+
+**Common Copilot Suggestions:**
+
+1. **Version mismatches** - package.json vs package-lock.json
+2. **Type safety issues** - Unsafe type assertions
+3. **Validation gaps** - Missing form validation
+4. **Code formatting** - Long lines, complex conditionals
+5. **Dead code** - Unused variables or imports
+
+**Best Practice:**
+- Address all Copilot suggestions before merging
+- Mark threads as resolved after implementing fixes
+- Document why you're NOT implementing a suggestion if you disagree
+
+### Workflow Permissions
+
+The `.claude/settings.local.json` file controls which bash commands can run without asking:
+
+**Auto-allowed (Read-only operations):**
+- `npm run build`, `lint`, `format`, `test`
+- `git status`, `git diff`, `git log`, `git fetch`
+- `gh pr view`, `gh pr checks`, `gh pr diff`
+- Web searches and fetches
+
+**Requires Approval (Destructive operations):**
+- `git add`, `git commit`, `git push`
+- `git rebase`, `git stash`, `git merge`
+- `npm install` (modifies package files)
+- `npm run release:*` (version bumps)
+- `gh pr create` (creates PRs)
+- `brew install` (system changes)
+
+**Why This Matters:**
+- Prevents accidental commits or pushes
+- Ensures you review changes before they're permanent
+- Gives you control over git history
+
+**Updating Permissions:**
+
+If you need to add a new command pattern:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(my-safe-command:*)"
+    ],
+    "ask": [
+      "Bash(my-destructive-command:*)"
+    ]
+  }
+}
+```
+
 ## Architecture
 
 ### File Structure
@@ -434,11 +671,20 @@ dist/main.js                  # Build output (IIFE bundle)
 
 ### Build System
 
-- **Rollup** bundles TypeScript → single IIFE at `dist/main.js`
-- Custom plugin `rollup-plugin-increment-build.mjs` increments build number
+- **Vite** bundles TypeScript → single IIFE at `dist/main.js`
+- Configuration in `vite.config.ts` with library mode (IIFE format for FoundryVTT)
+- Custom plugin in Vite config increments build number on each build
 - `build-info.json` tracks build number (auto-generated)
+- Source maps enabled with inline sources for debugging
 - Scripts: `npm run build`, `npm run watch`, `npm run clean`
 - Release scripts: `npm run release:patch|minor|major`
+
+**Key Vite Configuration:**
+- Library mode with `formats: ['iife']` for FoundryVTT compatibility
+- Global name: `EMPuzzlesAndTrapTiles`
+- Watch mode: `vite build --watch` for development
+- TypeScript support built-in (no plugin needed)
+- JSON imports natively supported
 
 ## Foundry VTT v13 Patterns
 
@@ -1124,7 +1370,7 @@ monksData.files;
 npm run watch  # Auto-rebuild on file changes
 ```
 
-### Testing Workflow
+### Manual Testing Workflow
 
 1. Run `npm run watch`
 2. Make changes in `src/`
@@ -1135,6 +1381,243 @@ npm run watch  # Auto-rebuild on file changes
 
 ```typescript
 console.log('%c🧩 Debug:', 'color: #ff6b35;', data);
+```
+
+### Automated Testing
+
+The project uses Jest with ts-jest for comprehensive testing coverage.
+
+**Test Suite Overview:**
+- **463 total tests** (444 unit + 19 integration)
+- **14 test suites**
+- Test files: `tests/**/*.test.ts`
+
+**Running Tests:**
+
+```bash
+npm test                 # Run all tests once
+npm run test:watch       # Watch mode for development
+npm run test:coverage    # Generate coverage report
+npm run test:ci          # CI mode (for GitHub Actions)
+```
+
+**Test Organization:**
+
+```
+tests/
+├── dialogs/                     # Unit tests for dialog classes
+│   ├── switch-dialog.test.ts
+│   ├── light-dialog.test.ts
+│   ├── trap-dialog.test.ts
+│   └── ...
+├── utils/                       # Unit tests for utilities
+│   └── tile-helpers.test.ts
+├── integration/                 # Integration tests
+│   └── trap-dialog-rendering.test.ts
+├── helpers/                     # Test utilities
+│   └── template-helper.ts       # Handlebars rendering helpers
+└── mocks/                       # Mock system
+    └── foundry.ts               # Foundry VTT mocks
+```
+
+### Unit Testing
+
+**Purpose:** Test individual functions and classes in isolation
+
+**Example:**
+```typescript
+import { createSwitchTile } from '../src/utils/tile-helpers';
+
+describe('createSwitchTile', () => {
+  it('should create tile with correct structure', () => {
+    const config = {
+      name: 'Test Switch',
+      variableName: 'test_var',
+      onImage: 'on.png',
+      offImage: 'off.png',
+      sound: 'click.ogg'
+    };
+
+    const tile = createSwitchTile(mockScene, config, 0, 0);
+
+    expect(tile.flags['monks-active-tiles'].name).toBe('Test Switch');
+    expect(tile.flags['monks-active-tiles'].variables).toHaveProperty('test_var');
+  });
+});
+```
+
+**Best Practices:**
+- Test public APIs, not implementation details
+- Use descriptive test names (what it should do, not what it tests)
+- Follow AAA pattern: Arrange, Act, Assert
+- Mock external dependencies (Foundry globals, canvas, etc.)
+
+### Integration Testing
+
+**Purpose:** Test how components work together, especially template rendering
+
+**Why Integration Tests Matter:**
+
+Integration tests catch bugs that unit tests miss by actually compiling and rendering templates with real context data. These tests would have caught the production bug where `'combat'` string literal was used instead of `TrapResultType.COMBAT` enum constant.
+
+**Example of Bug Prevention:**
+
+```typescript
+// This bug passed unit tests but failed in production
+const resultTypeOptions = [
+  { value: 'combat', label: 'EMPUZZLES.ResultCombat' }  // ❌ String literal
+];
+
+// Integration test catches this by validating rendered HTML
+it('should have correct enum values in dropdown', async () => {
+  const html = await renderDialogTemplate(TrapDialog);
+  const values = getSelectOptionValues(html, 'resultType');
+
+  // This test FAILS with string literal, PASSES with enum
+  expect(values).toContain(TrapResultType.COMBAT);
+});
+```
+
+**Integration Test Structure:**
+
+```typescript
+import { renderDialogTemplate, getSelectOptionValues } from '../helpers/template-helper';
+import { TrapDialog } from '../../src/dialogs/trap-dialog';
+
+describe('TrapDialog Template Rendering', () => {
+  it('should compile template without errors', async () => {
+    const html = await renderDialogTemplate(TrapDialog);
+    expect(html).toBeTruthy();
+  });
+
+  it('should have correct enum values', async () => {
+    const html = await renderDialogTemplate(TrapDialog);
+    const values = getSelectOptionValues(html, 'resultType');
+
+    expect(values).toContain(TrapResultType.DAMAGE);
+    expect(values).toContain(TrapResultType.COMBAT);
+  });
+});
+```
+
+**Template Test Helpers:**
+
+Located in `tests/helpers/template-helper.ts`:
+
+```typescript
+// Load and compile Handlebars templates
+export function loadTemplate(templatePath: string): string
+export function compileTemplate(templateSource: string): HandlebarsTemplateDelegate
+export function registerHandlebarsHelpers(): void
+export function registerHandlebarsPartials(): void
+
+// Render templates with context
+export function renderTemplate(templatePath: string, context: any): string
+export async function renderDialogTemplate(dialogClass: any): Promise<string>
+
+// HTML validation utilities
+export function htmlContainsSelector(html: string, selector: string): boolean
+export function getSelectOptionValues(html: string, selectName: string): string[]
+export function getSelectOptionLabels(html: string, selectName: string): string[]
+```
+
+### Mock System
+
+**Foundry VTT Mocks:**
+
+Located in `tests/mocks/foundry.ts`, provides complete Foundry global mocks:
+
+```typescript
+import { mockFoundry, createMockScene, createMockTile } from '../mocks/foundry';
+
+beforeEach(() => {
+  mockFoundry();  // Sets up game, canvas, ui, etc.
+});
+
+const scene = createMockScene();
+const tile = createMockTile({ x: 100, y: 200 });
+```
+
+**Available Mock Factories:**
+- `mockFoundry()` - Sets up all Foundry globals
+- `createMockScene()` - Creates test scenes with tiles
+- `createMockTile()` - Creates mock tile documents
+- `createMockLight()` - Creates mock light documents
+
+### Test Coverage
+
+**Current Coverage:**
+- Overall: 34% statements, 26.61% branches, 33.64% functions
+- Core utilities (tile-helpers.ts): 83% statements, 100% functions
+- Variables viewer: 97% statements, 94% branches
+
+**Viewing Coverage:**
+
+```bash
+npm run test:coverage  # Generates coverage/lcov-report/index.html
+open coverage/lcov-report/index.html  # View in browser
+```
+
+**Coverage Goals:**
+- Critical paths (tile creation): >80%
+- Dialog classes: >60%
+- Utilities: >80%
+
+### CI/CD Testing
+
+Tests run automatically via GitHub Actions on:
+- Every pull request to `main` or `develop`
+- Every push to `main` or `develop`
+
+See `.github/workflows/test.yml` for configuration.
+
+**Test Matrix:**
+- Node.js 18.x
+- Node.js 20.x
+
+**Workflow:**
+1. Checkout code
+2. Setup Node.js
+3. Install dependencies (`npm ci`)
+4. Run tests (`npm run test:ci`)
+5. Upload coverage to Codecov (Node 20.x only)
+
+### Adding New Tests
+
+**For Unit Tests:**
+
+1. Create test file: `tests/path/to/my-feature.test.ts`
+2. Import dependencies and mocks
+3. Write describe blocks for feature areas
+4. Write it blocks for specific behaviors
+5. Run `npm test` to verify
+
+**For Integration Tests:**
+
+1. Create test file: `tests/integration/my-dialog-rendering.test.ts`
+2. Import template helpers
+3. Test template compilation
+4. Test critical form elements
+5. Test conditional rendering
+6. Test localization keys
+
+**Example Integration Test:**
+
+```typescript
+import { renderDialogTemplate, htmlContainsSelector } from '../helpers/template-helper';
+import { MyDialog } from '../../src/dialogs/my-dialog';
+
+describe('MyDialog Template Rendering', () => {
+  it('should compile template', async () => {
+    const html = await renderDialogTemplate(MyDialog);
+    expect(html).toBeTruthy();
+  });
+
+  it('should render required fields', async () => {
+    const html = await renderDialogTemplate(MyDialog);
+    expect(htmlContainsSelector(html, 'input[name="myField"]')).toBe(true);
+  });
+});
 ```
 
 ## Common Gotchas

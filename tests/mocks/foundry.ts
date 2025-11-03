@@ -137,6 +137,11 @@ export function mockFoundry() {
   (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
     browse: jest.fn()
   }));
+
+  // Mock loadTemplates (Foundry template loader)
+  (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {
+    return Promise.resolve();
+  });
 }
 
 /**

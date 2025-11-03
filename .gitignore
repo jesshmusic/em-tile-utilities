@@ -32,3 +32,4 @@ scripts/main.js.bak
 .env
 .env.local
 /em-tile-utilities.lock
+/GITHUB-WORKFLOWS-AND-TESTING-GUIDE.md

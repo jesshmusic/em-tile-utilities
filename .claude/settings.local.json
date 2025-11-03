@@ -22,7 +22,10 @@
       "Bash(/opt/homebrew/bin/gh api:*)",
       "Bash(/opt/homebrew/bin/gh run view:*)",
       "WebFetch(domain:github.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cat:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run clean:*)"
     ],
     "deny": [],
     "ask": [
