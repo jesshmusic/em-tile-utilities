@@ -125,19 +125,36 @@
   grid-template-columns: 1fr 1fr 1fr;
 }
 
-.field-group {
+/* Namespace field styles to prevent conflicts */
+.trap-config .field-group,
+.switch-config .field-group,
+.light-config .field-group,
+.reset-config .field-group,
+.check-state-dialog .field-group {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.field-label {
+.trap-config .field-label,
+.switch-config .field-label,
+.light-config .field-label,
+.reset-config .field-label,
+.check-state-dialog .field-label {
   font-weight: bold;
   font-size: 0.9em;
 }
 
-.field-input,
-.field-select {
+.trap-config .field-input,
+.trap-config .field-select,
+.switch-config .field-input,
+.switch-config .field-select,
+.light-config .field-input,
+.light-config .field-select,
+.reset-config .field-input,
+.reset-config .field-select,
+.check-state-dialog .field-input,
+.check-state-dialog .field-select {
   width: 100%;
 }
 
@@ -152,7 +169,12 @@
   margin-bottom: 0.75rem;
 }
 
-.section-label {
+/* Namespace section label to prevent conflicts */
+.trap-config .section-label,
+.switch-config .section-label,
+.light-config .section-label,
+.reset-config .section-label,
+.check-state-dialog .section-label {
   display: block;
   font-weight: bold;
   margin-bottom: 0.5rem;
@@ -191,14 +213,25 @@
   flex: 1;
 }
 
-.radio-option {
+/* Namespace radio options to prevent conflicts */
+.trap-config .radio-option,
+.switch-config .radio-option,
+.light-config .radio-option,
+.reset-config .radio-option,
+.check-state-dialog .radio-option {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   margin-right: 1rem;
 }
 
-.checkbox-label {
+/* Namespace checkbox labels to prevent conflicts with other Foundry UI */
+.trap-config .checkbox-label,
+.switch-config .checkbox-label,
+.light-config .checkbox-label,
+.reset-config .checkbox-label,
+.check-state-dialog .checkbox-label,
+.token-config-section .checkbox-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -206,7 +239,12 @@
   font-weight: normal;
 }
 
-.checkbox-label input[type="checkbox"] {
+.trap-config .checkbox-label input[type="checkbox"],
+.switch-config .checkbox-label input[type="checkbox"],
+.light-config .checkbox-label input[type="checkbox"],
+.reset-config .checkbox-label input[type="checkbox"],
+.check-state-dialog .checkbox-label input[type="checkbox"],
+.token-config-section .checkbox-label input[type="checkbox"] {
   cursor: pointer;
 }
 
