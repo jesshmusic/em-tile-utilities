@@ -10,6 +10,19 @@ declare global {
   const FilePicker: typeof FilePickerClass;
   const PIXI: typeof PIXINamespace;
 
+  /**
+   * Load and register Handlebars templates (including partials)
+   */
+  function loadTemplates(paths: string[]): Promise<void>;
+
+  /**
+   * Handlebars template engine
+   */
+  const Handlebars: {
+    registerPartial(name: string, template: string): void;
+    compile(template: string): (context: any) => string;
+  };
+
   interface Game {
     modules: Collection<Module>;
     settings: ClientSettings;

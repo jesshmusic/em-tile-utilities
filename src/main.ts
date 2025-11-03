@@ -7,7 +7,7 @@ import buildInfo from '../build-info.json';
 import packageInfo from '../package.json';
 
 // Module initialization
-Hooks.once('init', () => {
+Hooks.once('init', async () => {
   // Module initialization banner
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %cv" +
@@ -19,6 +19,32 @@ Hooks.once('init', () => {
     'color: #ff9800; font-weight: bold; font-size: 14px;',
     'color: #ffeb3b; font-weight: normal; font-size: 12px;'
   );
+
+  // Pre-load templates
+  const SAVING_THROW_SECTION_PARTIAL_PATH =
+    'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
+  await loadTemplates([SAVING_THROW_SECTION_PARTIAL_PATH]);
+
+  // Register Handlebars partials manually
+  // IMPORTANT: loadTemplates() only preloads template files for caching.
+  // It does NOT register Handlebars partials automatically (verified by integration tests).
+  // We must explicitly register partials with Handlebars.registerPartial() for them to work.
+  try {
+    const response = await fetch(SAVING_THROW_SECTION_PARTIAL_PATH);
+    if (!response.ok) {
+      console.error(
+        `[em-tile-utilities] Failed to load partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
+      );
+    } else {
+      const partialTemplate = await response.text();
+      (Handlebars as any).registerPartial('partials/saving-throw-section', partialTemplate);
+    }
+  } catch (err) {
+    console.error(
+      `[em-tile-utilities] Error fetching partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}.`,
+      err
+    );
+  }
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {

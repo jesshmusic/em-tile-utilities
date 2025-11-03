@@ -137,6 +137,30 @@ export function mockFoundry() {
   (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
     browse: jest.fn()
   }));
+
+  // Mock loadTemplates (Foundry template loader)
+  (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {
+    return Promise.resolve();
+  });
+
+  // Mock Handlebars
+  (global as any).Handlebars = {
+    registerPartial: jest.fn(),
+    compile: jest.fn((template: string) => {
+      return (context: any) => template;
+    }),
+    partials: {}
+  };
+
+  // Mock fetch for loading partials
+  (global as any).fetch = jest.fn(async (url: string) => {
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => '<div>Mock partial content</div>'
+    };
+  });
 }
 
 /**

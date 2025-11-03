@@ -1217,7 +1217,8 @@ describe('tile-helpers', () => {
         damageOnFail: '',
         flavorText: '',
         sound: '',
-        teleportConfig: { x: 500, y: 600 },
+        teleportX: 500,
+        teleportY: 600,
         hideTrapOnTrigger: true
       };
 
@@ -1230,6 +1231,8 @@ describe('tile-helpers', () => {
       // Should have teleport action
       const teleportAction = actions.find((a: any) => a.action === 'teleport');
       expect(teleportAction).toBeDefined();
+      expect(teleportAction.data.location.x).toBe(500);
+      expect(teleportAction.data.location.y).toBe(600);
     });
 
     it('should create trap with active effect result type', async () => {
@@ -1456,7 +1459,8 @@ describe('tile-helpers', () => {
         damageOnFail: '',
         flavorText: 'You fall into a pit!',
         sound: '',
-        teleportConfig: { x: 1000, y: 2000 },
+        teleportX: 1000,
+        teleportY: 2000,
         hideTrapOnTrigger: true
       };
 

@@ -819,10 +819,15 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     };
 
     // Add teleport config if result type is TELEPORT
-    if (resultType === TrapResultType.TELEPORT && teleportX && teleportY) {
+    // Use class properties directly instead of form values for reliability
+    if (
+      resultType === TrapResultType.TELEPORT &&
+      this.teleportX !== undefined &&
+      this.teleportY !== undefined
+    ) {
       baseTrapConfig.teleportConfig = {
-        x: parseInt(teleportX),
-        y: parseInt(teleportY)
+        x: this.teleportX,
+        y: this.teleportY
       };
     }
 

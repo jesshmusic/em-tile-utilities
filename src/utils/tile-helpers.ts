@@ -1,10 +1,10 @@
 import type {
-  SwitchConfig,
-  ResetTileConfig,
-  LightConfig,
-  TrapConfig,
+  CheckStateConfig,
   CombatTrapConfig,
-  CheckStateConfig
+  LightConfig,
+  ResetTileConfig,
+  SwitchConfig,
+  TrapConfig
 } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
 
@@ -1196,21 +1196,27 @@ export async function createTrapTile(
         }
 
         // Teleport action (teleports tokens that failed saving throw if enabled, or all targets if not)
-        if (config.teleportConfig) {
+        if (config.teleportX !== undefined && config.teleportY !== undefined) {
           actions.push({
             action: 'teleport',
             data: {
               entity: {
-                id: config.hasSavingThrow ? 'previous' : targetEntityId,
-                name: config.hasSavingThrow ? 'Current tokens' : targetEntityName
+                id: config.hasSavingThrow ? 'previous' : 'token',
+                name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
               },
               location: {
-                x: config.teleportConfig.x,
-                y: config.teleportConfig.y,
-                name: `[x:${config.teleportConfig.x} y:${config.teleportConfig.y}]`
+                x: config.teleportX,
+                y: config.teleportY,
+                sceneId: scene.id
               },
+              position: 'random',
               remotesnap: true,
-              animatepan: true
+              animatepan: false,
+              triggerremote: false,
+              deletesource: false,
+              preservesettings: false,
+              avoidtokens: true,
+              colour: '#00e1ff'
             },
             id: foundry.utils.randomID()
           });
@@ -1394,8 +1400,7 @@ export async function createCheckStateTile(
     // Process each branch
     config.branches.forEach((branch, branchIndex) => {
       // Sanitize branch name for use as anchor tag
-      const sanitizedName = branch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-      const branchAnchor = sanitizedName;
+      const branchAnchor = branch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
       const nextBranch = config.branches[branchIndex + 1];
       const nextBranchAnchor = nextBranch
         ? nextBranch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()

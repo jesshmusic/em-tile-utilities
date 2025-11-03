@@ -43,7 +43,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
    * Current result type (for image traps)
    */
-  protected resultType: TrapResultType = TrapResultType.DAMAGE;
+  protected resultType?: TrapResultType;
 
   /**
    * Form state storage (to preserve state on re-render)
