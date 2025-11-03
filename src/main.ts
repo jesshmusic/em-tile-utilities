@@ -20,10 +20,17 @@ Hooks.once('init', async () => {
     'color: #ffeb3b; font-weight: normal; font-size: 12px;'
   );
 
-  // Pre-load templates (including partials)
+  // Pre-load templates
   await loadTemplates([
     'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
   ]);
+
+  // Register Handlebars partials manually
+  // loadTemplates() only preloads, we need to register partials explicitly
+  const partialPath = 'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
+  const response = await fetch(partialPath);
+  const partialTemplate = await response.text();
+  (Handlebars as any).registerPartial('partials/saving-throw-section', partialTemplate);
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {

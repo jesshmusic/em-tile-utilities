@@ -142,6 +142,22 @@ export function mockFoundry() {
   (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {
     return Promise.resolve();
   });
+
+  // Mock Handlebars
+  (global as any).Handlebars = {
+    registerPartial: jest.fn(),
+    compile: jest.fn((template: string) => {
+      return (context: any) => template;
+    }),
+    partials: {}
+  };
+
+  // Mock fetch for loading partials
+  (global as any).fetch = jest.fn(async (url: string) => {
+    return {
+      text: async () => '<div>Mock partial content</div>'
+    };
+  });
 }
 
 /**

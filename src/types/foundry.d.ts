@@ -15,6 +15,14 @@ declare global {
    */
   function loadTemplates(paths: string[]): Promise<void>;
 
+  /**
+   * Handlebars template engine
+   */
+  const Handlebars: {
+    registerPartial(name: string, template: string): void;
+    compile(template: string): (context: any) => string;
+  };
+
   interface Game {
     modules: Collection<Module>;
     settings: ClientSettings;

@@ -181,11 +181,22 @@ describe('Main Module', () => {
       expect((global as any).loadTemplates).toHaveBeenCalled();
 
       // Verify it was called with the saving-throw-section partial
-      const calls = ((global as any).loadTemplates as any).mock.calls;
-      expect(calls.length).toBeGreaterThan(0);
+      const loadCalls = ((global as any).loadTemplates as any).mock.calls;
+      expect(loadCalls.length).toBeGreaterThan(0);
 
-      const partialPaths = calls[0][0];
+      const partialPaths = loadCalls[0][0];
       expect(partialPaths).toContain(
+        'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
+      );
+
+      // CRITICAL: Verify the partial was registered with Handlebars
+      expect((global as any).Handlebars.registerPartial).toHaveBeenCalledWith(
+        'partials/saving-throw-section',
+        expect.any(String)
+      );
+
+      // Verify fetch was called to load the partial content
+      expect((global as any).fetch).toHaveBeenCalledWith(
         'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
       );
     });
