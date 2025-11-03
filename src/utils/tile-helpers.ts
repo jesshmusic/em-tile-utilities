@@ -1,10 +1,10 @@
 import type {
-  SwitchConfig,
-  ResetTileConfig,
-  LightConfig,
-  TrapConfig,
+  CheckStateConfig,
   CombatTrapConfig,
-  CheckStateConfig
+  LightConfig,
+  ResetTileConfig,
+  SwitchConfig,
+  TrapConfig
 } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
 
@@ -875,8 +875,6 @@ export async function createTrapTile(
   // Build actions array
   const actions: any[] = [];
 
-  console.log("Dorman's Trap Tiles trap config", config);
-
   // Action 1: Handle trap visual response based on type
   if (config.tileActions && config.tileActions.length > 0) {
     // Activating trap: perform actions on other tiles
@@ -1402,8 +1400,7 @@ export async function createCheckStateTile(
     // Process each branch
     config.branches.forEach((branch, branchIndex) => {
       // Sanitize branch name for use as anchor tag
-      const sanitizedName = branch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-      const branchAnchor = sanitizedName;
+      const branchAnchor = branch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
       const nextBranch = config.branches[branchIndex + 1];
       const nextBranchAnchor = nextBranch
         ? nextBranch.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
