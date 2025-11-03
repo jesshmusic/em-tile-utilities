@@ -26,7 +26,9 @@ Hooks.once('init', async () => {
   await loadTemplates([SAVING_THROW_SECTION_PARTIAL_PATH]);
 
   // Register Handlebars partials manually
-  // loadTemplates() only preloads, we need to register partials explicitly
+  // IMPORTANT: loadTemplates() only preloads template files for caching.
+  // It does NOT register Handlebars partials automatically (verified by integration tests).
+  // We must explicitly register partials with Handlebars.registerPartial() for them to work.
   const partialPath = SAVING_THROW_SECTION_PARTIAL_PATH;
   const response = await fetch(partialPath);
   const partialTemplate = await response.text();

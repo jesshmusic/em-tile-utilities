@@ -19,6 +19,13 @@ function incrementBuildPlugin() {
         const content = fs.readFileSync(buildInfoPath, 'utf-8');
         try {
           buildInfo = JSON.parse(content);
+          // Validate buildNumber property
+          if (typeof buildInfo.buildNumber !== 'number') {
+            console.warn(
+              'build-info.json is missing a valid buildNumber property. Resetting build number to 0.'
+            );
+            buildInfo = { buildNumber: 0 };
+          }
         } catch (err) {
           console.error(
             `Error parsing build-info.json: ${(err as Error).message}. Resetting build number to 0.`
@@ -50,6 +57,7 @@ export default defineConfig({
     // Library mode for IIFE output (required for FoundryVTT)
     lib: {
       entry: resolve(__dirname, 'src/main.ts'),
+      // IMPORTANT: This global name must not conflict with other FoundryVTT modules
       name: 'EMPuzzlesAndTrapTiles', // Global variable name for IIFE
       formats: ['iife'], // Critical for FoundryVTT compatibility
       fileName: () => 'main.js' // Output filename
