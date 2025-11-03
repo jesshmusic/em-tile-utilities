@@ -1209,8 +1209,14 @@ export async function createTrapTile(
                 y: config.teleportConfig.y,
                 sceneId: scene.id
               },
+              position: 'random',
               remotesnap: true,
-              animatepan: true
+              animatepan: false,
+              triggerremote: false,
+              deletesource: false,
+              preservesettings: false,
+              avoidtokens: true,
+              colour: '#00e1ff'
             },
             id: foundry.utils.randomID()
           });
