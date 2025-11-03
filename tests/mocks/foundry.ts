@@ -155,6 +155,9 @@ export function mockFoundry() {
   // Mock fetch for loading partials
   (global as any).fetch = jest.fn(async (url: string) => {
     return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
       text: async () => '<div>Mock partial content</div>'
     };
   });
