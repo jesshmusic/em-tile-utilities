@@ -17,7 +17,14 @@ function incrementBuildPlugin() {
       // Read existing build info
       if (fs.existsSync(buildInfoPath)) {
         const content = fs.readFileSync(buildInfoPath, 'utf-8');
-        buildInfo = JSON.parse(content);
+        try {
+          buildInfo = JSON.parse(content);
+        } catch (err) {
+          console.error(
+            `Error parsing build-info.json: ${(err as Error).message}. Resetting build number to 0.`
+          );
+          buildInfo = { buildNumber: 0 };
+        }
       }
 
       // Increment build number

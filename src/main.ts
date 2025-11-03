@@ -21,11 +21,13 @@ Hooks.once('init', async () => {
   );
 
   // Pre-load templates
-  await loadTemplates(['modules/em-tile-utilities/templates/partials/saving-throw-section.hbs']);
+  const SAVING_THROW_SECTION_PARTIAL_PATH =
+    'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
+  await loadTemplates([SAVING_THROW_SECTION_PARTIAL_PATH]);
 
   // Register Handlebars partials manually
   // loadTemplates() only preloads, we need to register partials explicitly
-  const partialPath = 'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
+  const partialPath = SAVING_THROW_SECTION_PARTIAL_PATH;
   const response = await fetch(partialPath);
   const partialTemplate = await response.text();
   (Handlebars as any).registerPartial('partials/saving-throw-section', partialTemplate);
