@@ -28,7 +28,7 @@ function incrementBuildPlugin() {
           }
         } catch (err) {
           console.error(
-            `Error parsing build-info.json: ${(err as Error).message}. Resetting build number to 0.`
+            `Error parsing ${buildInfoPath}: ${(err as Error).message}. Resetting build number to 0.`
           );
           buildInfo = { buildNumber: 0 };
         }
