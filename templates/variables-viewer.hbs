@@ -1,7 +1,12 @@
 <div class="em-puzzles-variables-dialog">
-  <button type="button" class="refresh-variables" data-action="refresh">
-    <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
-  </button>
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+    <button type="button" class="refresh-variables" data-action="refresh">
+      <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
+    </button>
+    <button type="button" data-action="showHelp" title="How to use variables">
+      <i class="fas fa-question-circle"></i> {{localize "EMPUZZLES.Help"}}
+    </button>
+  </div>
 
   <div style="max-height: 500px; overflow-y: auto;">
     {{#if hasVariables}}

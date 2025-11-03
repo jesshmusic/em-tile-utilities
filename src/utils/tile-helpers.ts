@@ -4,6 +4,7 @@ import type {
   LightConfig,
   ResetTileConfig,
   SwitchConfig,
+  TeleportTileConfig,
   TrapConfig
 } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
@@ -127,6 +128,28 @@ function generateUniqueLightTag(lightName: string): string {
  */
 function generateUniqueTrapTag(trapName: string, trapType: string): string {
   return generateUniqueEMTag(trapName + ' ' + trapType);
+}
+
+/**
+ * Show Tagger dialog for a tile with warning about EM-generated tags
+ * @param tile - The tile document to show tags for
+ * @param appliedTag - The EM tag that was automatically applied
+ */
+async function showTaggerWithWarning(tile: any, appliedTag: string): Promise<void> {
+  if (!(game as any).modules.get('tagger')?.active) {
+    return;
+  }
+
+  // Show notification about the applied tag
+  ui.notifications.info(
+    `Tile tagged with "${appliedTag}". You can add additional tags using the tile's configuration. Warning: Do not delete EM-generated tags as they are used for tile management.`,
+    { permanent: false }
+  );
+
+  // Wait a moment then open the tile's configuration sheet where Tagger field is shown
+  setTimeout(() => {
+    tile.sheet?.render(true);
+  }, 500);
 }
 
 /**
@@ -328,6 +351,7 @@ export async function createSwitchTile(
     const Tagger = (globalThis as any).Tagger;
     const switchTag = generateUniqueEMTag(config.name);
     await Tagger.setTags(tile, [switchTag]);
+    await showTaggerWithWarning(tile, switchTag);
   }
 }
 
@@ -607,6 +631,7 @@ export async function createResetTile(
     const Tagger = (globalThis as any).Tagger;
     const resetTag = generateUniqueEMTag(config.name);
     await Tagger.setTags(tile, [resetTag]);
+    await showTaggerWithWarning(tile, resetTag);
   }
 }
 
@@ -847,6 +872,147 @@ export async function createLightTile(
         await Tagger.setTags(overlayTile, [lightGroupTag]);
       }
     }
+
+    // Show warning about the tag
+    await showTaggerWithWarning(mainTile, lightGroupTag);
+  }
+}
+
+/**
+ * Create a standalone teleport tile
+ */
+export async function createTeleportTile(
+  scene: Scene,
+  config: TeleportTileConfig,
+  x?: number,
+  y?: number
+): Promise<void> {
+  const gridSize = (canvas as any).grid.size;
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+
+  // Generate unique tag
+  const tag = generateUniqueEMTag(scene, 'Teleport');
+
+  // Build actions array
+  const actions: any[] = [];
+
+  // Add saving throw if enabled
+  if (config.hasSavingThrow) {
+    actions.push({
+      action: 'monks-tokenbar.requestroll',
+      data: {
+        entity: {
+          id: 'token',
+          name: 'Triggering Token'
+        },
+        request: config.savingThrow,
+        dc: config.dc.toString(),
+        flavor: config.flavorText || 'Make a saving throw to resist teleportation!',
+        rollmode: 'roll',
+        silent: false,
+        fastforward: false,
+        usetokens: 'fail',
+        continue: 'failed'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Add teleport action
+  actions.push({
+    action: 'teleport',
+    data: {
+      entity: {
+        id: config.hasSavingThrow ? 'previous' : 'token',
+        name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
+      },
+      location: {
+        x: config.teleportX,
+        y: config.teleportY,
+        sceneId: config.teleportSceneId
+      },
+      position: 'random',
+      remotesnap: true,
+      animatepan: false,
+      triggerremote: false,
+      deletesource: false,
+      preservesettings: false,
+      avoidtokens: true,
+      colour: '#00e1ff',
+      // Player confirmation handled by Monk's Active Tiles
+      confirm: config.requireConfirmation ? 'confirm' : null
+    },
+    id: foundry.utils.randomID()
+  });
+
+  // Create tile data
+  const tileData = {
+    texture: {
+      src: config.tileImage,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: 'fill',
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: '#ffffff',
+      alphaThreshold: 0.75
+    },
+    width: gridSize,
+    height: gridSize,
+    x: tileX,
+    y: tileY,
+    elevation: 0,
+    sort: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: config.hidden,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      'monks-active-tiles': {
+        name: config.name,
+        active: true,
+        record: false,
+        restriction: 'all',
+        controlled: 'all',
+        trigger: ['enter'],
+        allowpaused: false,
+        usealpha: false,
+        pointer: true,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: [
+          {
+            id: foundry.utils.randomID(),
+            name: config.tileImage,
+            selected: true
+          }
+        ],
+        variables: {}
+      }
+    },
+    visible: true,
+    img: config.tileImage
+  };
+
+  // Create the tile
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+  console.log(`Teleport tile "${config.name}" created with tag: ${tag}`);
+
+  // Tag the tile if Tagger module is active
+  if (game.modules.get('tagger')?.active) {
+    const Tagger = (game.modules.get('tagger') as any).api;
+    await Tagger.setTags(tile, [tag]);
+    await showTaggerWithWarning(tile, tag);
   }
 }
 
@@ -1357,6 +1523,7 @@ export async function createTrapTile(
     const Tagger = (globalThis as any).Tagger;
     const trapTag = generateUniqueTrapTag(config.name, trapType);
     await Tagger.setTags(tile, [trapTag]);
+    await showTaggerWithWarning(tile, trapTag);
   }
 }
 
@@ -1623,6 +1790,7 @@ export async function createCheckStateTile(
     const Tagger = (globalThis as any).Tagger;
     const checkStateTag = generateUniqueEMTag(config.name);
     await Tagger.setTags(tile, [checkStateTag]);
+    await showTaggerWithWarning(tile, checkStateTag);
   }
 }
 
@@ -1985,5 +2153,6 @@ export async function createCombatTrapTile(
     const Tagger = (globalThis as any).Tagger;
     const trapTag = generateUniqueTrapTag(config.name, 'combat');
     await Tagger.setTags(tile, [trapTag]);
+    await showTaggerWithWarning(tile, trapTag);
   }
 }

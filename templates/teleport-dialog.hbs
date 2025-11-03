@@ -1,0 +1,95 @@
+<div class='form-group'>
+  <label for='tileName'>{{localize 'EMPUZZLES.TileName'}}</label>
+  <input type='text' name='tileName' value='{{tileName}}' />
+  <p class='hint'>{{localize 'EMPUZZLES.TileNameHint'}}</p>
+</div>
+
+<div class='form-group'>
+  <label for='tileImage'>{{localize 'EMPUZZLES.TileImage'}}</label>
+  <div class='file-picker-group'>
+    <input type='text' name='tileImage' value='{{tileImage}}' />
+    <button type='button' class='file-picker' data-target='tileImage' data-type='imagevideo'>
+      <i class='fas fa-file-image'></i>
+    </button>
+  </div>
+  <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
+</div>
+
+<div class='form-group'>
+  <label>
+    <input type='checkbox' name='hidden' {{#if hidden}}checked{{/if}} />
+    {{localize 'EMPUZZLES.HiddenTile'}}
+  </label>
+  <p class='hint'>{{localize 'EMPUZZLES.HiddenTileHint'}}</p>
+</div>
+
+<div class='form-group'>
+  <label for='targetScene'>{{localize 'EMPUZZLES.TargetScene'}}</label>
+  <select name='targetScene'>
+    {{#each scenes as |scene|}}
+      <option value='{{scene.id}}' {{#if (eq scene.id ../selectedSceneId)}}selected{{/if}}>
+        {{scene.name}}
+      </option>
+    {{/each}}
+  </select>
+  <p class='hint'>{{localize 'EMPUZZLES.TargetSceneHint'}}</p>
+</div>
+
+<div class='form-group'>
+  <button type='button' data-action='selectPosition' class='select-position-btn'>
+    <i class='fas fa-crosshairs'></i>
+    {{localize 'EMPUZZLES.SelectPosition'}}
+  </button>
+  {{#if teleportX}}
+    <p class='position-display'>
+      <strong>{{localize 'EMPUZZLES.Destination'}}:</strong>
+      X: {{teleportX}}, Y: {{teleportY}}
+      {{#if teleportSceneId}}
+        (Scene: {{lookup (lookup scenes 'id') teleportSceneId 'name'}})
+      {{/if}}
+    </p>
+  {{else}}
+    <p class='hint'>{{localize 'EMPUZZLES.SelectPositionHint'}}</p>
+  {{/if}}
+</div>
+
+<div class='form-group'>
+  <label>
+    <input type='checkbox' name='requireConfirmation' {{#if requireConfirmation}}checked{{/if}} />
+    {{localize 'EMPUZZLES.RequireConfirmation'}}
+  </label>
+  <p class='hint'>{{localize 'EMPUZZLES.RequireConfirmationHint'}}</p>
+</div>
+
+<div class='form-group'>
+  <label>
+    <input type='checkbox' name='hasSavingThrow' {{#if hasSavingThrow}}checked{{/if}} />
+    {{localize 'EMPUZZLES.EnableSavingThrow'}}
+  </label>
+  <p class='hint'>{{localize 'EMPUZZLES.SavingThrowHint'}}</p>
+</div>
+
+{{#if hasSavingThrow}}
+  <div class='form-group'>
+    <label for='savingThrow'>{{localize 'EMPUZZLES.SavingThrow'}}</label>
+    <select name='savingThrow'>
+      <option value='ability:dex'>{{localize 'EMPUZZLES.DexteritySave'}}</option>
+      <option value='ability:str'>{{localize 'EMPUZZLES.StrengthSave'}}</option>
+      <option value='ability:con'>{{localize 'EMPUZZLES.ConstitutionSave'}}</option>
+      <option value='ability:int'>{{localize 'EMPUZZLES.IntelligenceSave'}}</option>
+      <option value='ability:wis'>{{localize 'EMPUZZLES.WisdomSave'}}</option>
+      <option value='ability:cha'>{{localize 'EMPUZZLES.CharismaSave'}}</option>
+    </select>
+  </div>
+
+  <div class='form-group'>
+    <label for='dc'>{{localize 'EMPUZZLES.DC'}}</label>
+    <input type='number' name='dc' value='15' min='1' max='30' />
+  </div>
+
+  <div class='form-group'>
+    <label for='flavorText'>{{localize 'EMPUZZLES.FlavorText'}}</label>
+    <input type='text' name='flavorText' value='{{flavorText}}' />
+    <p class='hint'>{{localize 'EMPUZZLES.FlavorTextHint'}}</p>
+  </div>
+{{/if}}

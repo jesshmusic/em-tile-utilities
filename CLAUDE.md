@@ -423,6 +423,7 @@ The project uses GitHub Actions for automated testing, building, and releases. A
 ### test.yml - Automated Testing
 
 **Triggers:**
+
 - Pull requests to `main` or `develop`
 - Pushes to `main` or `develop`
 
@@ -448,9 +449,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test:
@@ -469,6 +470,7 @@ jobs:
 ```
 
 **What it validates:**
+
 - All tests pass on multiple Node versions
 - Code builds without errors
 - Test coverage is tracked
@@ -476,6 +478,7 @@ jobs:
 ### auto-release.yml - Automated Releases
 
 **Triggers:**
+
 - Pull request merged to `main`
 
 **Workflow Steps:**
@@ -493,16 +496,19 @@ jobs:
 11. **Notify FoundryVTT API** about new version
 
 **Key Features:**
+
 - Only runs if PR was actually merged (not just closed)
 - Verifies version was bumped before proceeding
 - Automatically extracts relevant changelog section
 - Notifies Foundry Package API for automatic updates
 
 **Permissions Required:**
+
 - `contents: write` - To create tags and releases
 - `FOUNDRY_PACKAGE_TOKEN` secret - For Foundry API notification
 
 **What it does NOT do:**
+
 - Does not modify any code files
 - Does not commit anything to `main`
 - Only creates tags and releases from existing code
@@ -510,20 +516,24 @@ jobs:
 ### release.yml - Manual Releases
 
 **Triggers:**
+
 - Manual workflow dispatch from GitHub Actions UI
 
 **Use Cases:**
+
 - Testing release process
 - Recovering from failed auto-release
 - Creating releases for older versions
 
 **Workflow:**
 Same as auto-release.yml, but:
+
 - Triggered manually instead of on PR merge
 - Includes check to prevent duplicate tags
 - Useful for troubleshooting release issues
 
 **How to Use:**
+
 1. Go to Actions tab in GitHub
 2. Select "Manual Release" workflow
 3. Click "Run workflow"
@@ -535,6 +545,7 @@ Same as auto-release.yml, but:
 The project uses GitHub Copilot for automated PR code review.
 
 **What Copilot Reviews:**
+
 - Code quality and best practices
 - Potential bugs and type safety issues
 - Performance concerns
@@ -552,6 +563,7 @@ When Copilot comments on your PR:
    - Is it worth the change?
 
 3. **Implement accepted suggestions:**
+
    ```bash
    # Make fixes
    git add .
@@ -600,6 +612,7 @@ When Copilot comments on your PR:
 5. **Dead code** - Unused variables or imports
 
 **Best Practice:**
+
 - Address all Copilot suggestions before merging
 - Mark threads as resolved after implementing fixes
 - Document why you're NOT implementing a suggestion if you disagree
@@ -609,12 +622,14 @@ When Copilot comments on your PR:
 The `.claude/settings.local.json` file controls which bash commands can run without asking:
 
 **Auto-allowed (Read-only operations):**
+
 - `npm run build`, `lint`, `format`, `test`
 - `git status`, `git diff`, `git log`, `git fetch`
 - `gh pr view`, `gh pr checks`, `gh pr diff`
 - Web searches and fetches
 
 **Requires Approval (Destructive operations):**
+
 - `git add`, `git commit`, `git push`
 - `git rebase`, `git stash`, `git merge`
 - `npm install` (modifies package files)
@@ -623,6 +638,7 @@ The `.claude/settings.local.json` file controls which bash commands can run with
 - `brew install` (system changes)
 
 **Why This Matters:**
+
 - Prevents accidental commits or pushes
 - Ensures you review changes before they're permanent
 - Gives you control over git history
@@ -634,12 +650,8 @@ If you need to add a new command pattern:
 ```json
 {
   "permissions": {
-    "allow": [
-      "Bash(my-safe-command:*)"
-    ],
-    "ask": [
-      "Bash(my-destructive-command:*)"
-    ]
+    "allow": ["Bash(my-safe-command:*)"],
+    "ask": ["Bash(my-destructive-command:*)"]
   }
 }
 ```
@@ -680,6 +692,7 @@ dist/main.js                  # Build output (IIFE bundle)
 - Release scripts: `npm run release:patch|minor|major`
 
 **Key Vite Configuration:**
+
 - Library mode with `formats: ['iife']` for FoundryVTT compatibility
 - Global name: `EMPuzzlesAndTrapTiles`
 - Watch mode: `vite build --watch` for development
@@ -1388,6 +1401,7 @@ console.log('%c🧩 Debug:', 'color: #ff6b35;', data);
 The project uses Jest with ts-jest for comprehensive testing coverage.
 
 **Test Suite Overview:**
+
 - **463 total tests** (444 unit + 19 integration)
 - **14 test suites**
 - Test files: `tests/**/*.test.ts`
@@ -1425,6 +1439,7 @@ tests/
 **Purpose:** Test individual functions and classes in isolation
 
 **Example:**
+
 ```typescript
 import { createSwitchTile } from '../src/utils/tile-helpers';
 
@@ -1447,6 +1462,7 @@ describe('createSwitchTile', () => {
 ```
 
 **Best Practices:**
+
 - Test public APIs, not implementation details
 - Use descriptive test names (what it should do, not what it tests)
 - Follow AAA pattern: Arrange, Act, Assert
@@ -1465,7 +1481,7 @@ Integration tests catch bugs that unit tests miss by actually compiling and rend
 ```typescript
 // This bug passed unit tests but failed in production
 const resultTypeOptions = [
-  { value: 'combat', label: 'EMPUZZLES.ResultCombat' }  // ❌ String literal
+  { value: 'combat', label: 'EMPUZZLES.ResultCombat' } // ❌ String literal
 ];
 
 // Integration test catches this by validating rendered HTML
@@ -1506,19 +1522,19 @@ Located in `tests/helpers/template-helper.ts`:
 
 ```typescript
 // Load and compile Handlebars templates
-export function loadTemplate(templatePath: string): string
-export function compileTemplate(templateSource: string): HandlebarsTemplateDelegate
-export function registerHandlebarsHelpers(): void
-export function registerHandlebarsPartials(): void
+export function loadTemplate(templatePath: string): string;
+export function compileTemplate(templateSource: string): HandlebarsTemplateDelegate;
+export function registerHandlebarsHelpers(): void;
+export function registerHandlebarsPartials(): void;
 
 // Render templates with context
-export function renderTemplate(templatePath: string, context: any): string
-export async function renderDialogTemplate(dialogClass: any): Promise<string>
+export function renderTemplate(templatePath: string, context: any): string;
+export async function renderDialogTemplate(dialogClass: any): Promise<string>;
 
 // HTML validation utilities
-export function htmlContainsSelector(html: string, selector: string): boolean
-export function getSelectOptionValues(html: string, selectName: string): string[]
-export function getSelectOptionLabels(html: string, selectName: string): string[]
+export function htmlContainsSelector(html: string, selector: string): boolean;
+export function getSelectOptionValues(html: string, selectName: string): string[];
+export function getSelectOptionLabels(html: string, selectName: string): string[];
 ```
 
 ### Mock System
@@ -1531,7 +1547,7 @@ Located in `tests/mocks/foundry.ts`, provides complete Foundry global mocks:
 import { mockFoundry, createMockScene, createMockTile } from '../mocks/foundry';
 
 beforeEach(() => {
-  mockFoundry();  // Sets up game, canvas, ui, etc.
+  mockFoundry(); // Sets up game, canvas, ui, etc.
 });
 
 const scene = createMockScene();
@@ -1539,6 +1555,7 @@ const tile = createMockTile({ x: 100, y: 200 });
 ```
 
 **Available Mock Factories:**
+
 - `mockFoundry()` - Sets up all Foundry globals
 - `createMockScene()` - Creates test scenes with tiles
 - `createMockTile()` - Creates mock tile documents
@@ -1547,6 +1564,7 @@ const tile = createMockTile({ x: 100, y: 200 });
 ### Test Coverage
 
 **Current Coverage:**
+
 - Overall: 34% statements, 26.61% branches, 33.64% functions
 - Core utilities (tile-helpers.ts): 83% statements, 100% functions
 - Variables viewer: 97% statements, 94% branches
@@ -1559,6 +1577,7 @@ open coverage/lcov-report/index.html  # View in browser
 ```
 
 **Coverage Goals:**
+
 - Critical paths (tile creation): >80%
 - Dialog classes: >60%
 - Utilities: >80%
@@ -1566,16 +1585,19 @@ open coverage/lcov-report/index.html  # View in browser
 ### CI/CD Testing
 
 Tests run automatically via GitHub Actions on:
+
 - Every pull request to `main` or `develop`
 - Every push to `main` or `develop`
 
 See `.github/workflows/test.yml` for configuration.
 
 **Test Matrix:**
+
 - Node.js 18.x
 - Node.js 20.x
 
 **Workflow:**
+
 1. Checkout code
 2. Setup Node.js
 3. Install dependencies (`npm ci`)

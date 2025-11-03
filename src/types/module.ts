@@ -147,6 +147,23 @@ export interface ResetTileConfig {
   tilesToReset: TileResetState[];
 }
 
+/**
+ * Configuration for standalone teleport tile
+ */
+export interface TeleportTileConfig {
+  name: string;
+  tileImage: string;
+  hidden: boolean;
+  teleportX: number;
+  teleportY: number;
+  teleportSceneId: string;
+  requireConfirmation: boolean;
+  hasSavingThrow: boolean;
+  savingThrow: string;
+  dc: number;
+  flavorText: string;
+}
+
 export interface WallDoorState {
   entityId: string;
   entityName: string;

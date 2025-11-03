@@ -169,25 +169,28 @@ Before integration tests, this bug passed all unit tests but failed in productio
 ```typescript
 // Bug: Using string literal instead of enum
 const resultTypeOptions = [
-  { value: 'combat', label: 'EMPUZZLES.ResultCombat' }  // ❌ Wrong
+  { value: 'combat', label: 'EMPUZZLES.ResultCombat' } // ❌ Wrong
 ];
 
 // Fixed: Using enum constant
 const resultTypeOptions = [
-  { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' }  // ✅ Correct
+  { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' } // ✅ Correct
 ];
 ```
 
 **What unit tests checked:**
+
 - ✅ `dialog.resultType` property exists
 - ✅ Context includes `resultTypeOptions` array
 
 **What unit tests MISSED:**
+
 - ❌ Template actually renders
 - ❌ Dropdown options match enum values
 - ❌ Conditional logic works with enum comparison
 
 **What integration tests catch:**
+
 - ✅ Template compiles without errors
 - ✅ Dropdown has correct option values
 - ✅ Only ONE 'combat' option exists (from enum)

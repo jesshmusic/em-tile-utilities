@@ -1459,6 +1459,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     let previewGraphics: any = null;
 
     const onMouseDown = (event: any) => {
+      // Only respond to clicks on empty canvas, not existing tiles
+      // This prevents moving existing tiles when trying to create new ones
+      // Check if we clicked on an existing tile - if so, ignore the event
+      if (event.target?.document?.documentName === 'Tile') {
+        return;
+      }
+
       const position = event.data.getLocalPosition((canvas as any).tiles);
       // Don't snap during drag - use raw position
       startPos = { x: position.x, y: position.y };
@@ -1730,6 +1737,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     let previewGraphics: any = null;
 
     const onMouseDown = (event: any) => {
+      // Only respond to clicks on empty canvas, not existing tiles
+      // This prevents moving existing tiles when trying to create new ones
+      // Check if we clicked on an existing tile - if so, ignore the event
+      if (event.target?.document?.documentName === 'Tile') {
+        return;
+      }
+
       const position = event.data.getLocalPosition((canvas as any).tiles);
       // Don't snap during drag - use raw position
       startPos = { x: position.x, y: position.y };
