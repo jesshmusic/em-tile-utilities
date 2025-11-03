@@ -37,13 +37,11 @@ describe('Dialog Rendering Integration Tests', () => {
       // This test verifies that the dialog REQUIRES partials
 
       const dialog = new TrapDialog();
+      // Set resultType to "damage" so the saving throw partial is used
+      (dialog as any).resultType = 'damage';
 
       // Get template path
-      const templatePath = path.join(
-        __dirname,
-        '../..',
-        'templates/trap-config.hbs'
-      );
+      const templatePath = path.join(__dirname, '../..', 'templates/trap-config.hbs');
       const templateSource = fs.readFileSync(templatePath, 'utf8');
 
       // Compile template WITHOUT registering partials
@@ -72,13 +70,11 @@ describe('Dialog Rendering Integration Tests', () => {
 
       // Step 2: Create dialog instance
       const dialog = new TrapDialog();
+      // Set resultType to "damage" so the saving throw partial is used
+      (dialog as any).resultType = 'damage';
 
       // Step 3: Get template
-      const templatePath = path.join(
-        __dirname,
-        '../..',
-        'templates/trap-config.hbs'
-      );
+      const templatePath = path.join(__dirname, '../..', 'templates/trap-config.hbs');
       const templateSource = fs.readFileSync(templatePath, 'utf8');
 
       // Step 4: Compile template
@@ -104,11 +100,7 @@ describe('Dialog Rendering Integration Tests', () => {
 
     it('should verify partial is actually used in template', () => {
       // This test ensures the template actually uses the partial
-      const templatePath = path.join(
-        __dirname,
-        '../..',
-        'templates/trap-config.hbs'
-      );
+      const templatePath = path.join(__dirname, '../..', 'templates/trap-config.hbs');
       const templateSource = fs.readFileSync(templatePath, 'utf8');
 
       // Check that template references the partial
@@ -157,12 +149,7 @@ describe('Dialog Rendering Integration Tests', () => {
 
       requiredPartials.forEach(partial => {
         // Verify the partial file exists
-        const localPath = path.join(
-          __dirname,
-          '../..',
-          'templates',
-          partial.name + '.hbs'
-        );
+        const localPath = path.join(__dirname, '../..', 'templates', partial.name + '.hbs');
         expect(fs.existsSync(localPath)).toBe(true);
 
         // Verify each template that uses it actually exists
@@ -192,6 +179,8 @@ describe('Dialog Rendering Integration Tests', () => {
 
       // Step 2: Create dialog (simulating user action)
       const dialog = new TrapDialog();
+      // Set resultType to "damage" so the saving throw partial is used
+      (dialog as any).resultType = 'damage';
 
       // Step 3: Prepare context (what ApplicationV2 does)
       const context = await dialog._prepareContext({});
@@ -201,7 +190,11 @@ describe('Dialog Rendering Integration Tests', () => {
       expect(templatePath).toBe('modules/em-tile-utilities/templates/trap-config.hbs');
 
       // Step 5: Load template
-      const fullPath = path.join(__dirname, '../..', templatePath.replace(/^modules\/em-tile-utilities\//, ''));
+      const fullPath = path.join(
+        __dirname,
+        '../..',
+        templatePath.replace(/^modules\/em-tile-utilities\//, '')
+      );
       const templateSource = fs.readFileSync(fullPath, 'utf8');
 
       // Step 6: Compile template (what Foundry does)
@@ -223,13 +216,11 @@ describe('Dialog Rendering Integration Tests', () => {
       // This test ensures we get a clear error message when partial is missing
 
       const dialog = new TrapDialog();
+      // Set resultType to "damage" so the saving throw partial is used
+      (dialog as any).resultType = 'damage';
       const context = await dialog._prepareContext({});
 
-      const templatePath = path.join(
-        __dirname,
-        '../..',
-        'templates/trap-config.hbs'
-      );
+      const templatePath = path.join(__dirname, '../..', 'templates/trap-config.hbs');
       const templateSource = fs.readFileSync(templatePath, 'utf8');
       const template = Handlebars.compile(templateSource);
 

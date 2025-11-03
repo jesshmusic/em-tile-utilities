@@ -21,9 +21,7 @@ Hooks.once('init', async () => {
   );
 
   // Pre-load templates
-  await loadTemplates([
-    'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
-  ]);
+  await loadTemplates(['modules/em-tile-utilities/templates/partials/saving-throw-section.hbs']);
 
   // Register Handlebars partials manually
   // loadTemplates() only preloads, we need to register partials explicitly

@@ -13,6 +13,8 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import Handlebars from 'handlebars';
 import { renderTemplate, registerHandlebarsHelpers } from '../helpers/template-helper';
+import fs from 'fs';
+import path from 'path';
 
 describe('Handlebars Partial Registration', () => {
   beforeEach(() => {
@@ -30,9 +32,6 @@ describe('Handlebars Partial Registration', () => {
     it('should fail to render trap-config template without registered partials', () => {
       // This test ensures that if partials aren't registered,
       // the template will fail. This catches the runtime error.
-
-      const fs = require('fs');
-      const path = require('path');
 
       // Load template directly without using renderTemplate helper
       // (which auto-registers partials)
@@ -57,8 +56,6 @@ describe('Handlebars Partial Registration', () => {
 
     it('should succeed to render trap-config template WITH registered partials', () => {
       // First, manually register the partial (simulating loadTemplates())
-      const fs = require('fs');
-      const path = require('path');
       const savingThrowPath = path.join(
         __dirname,
         '../..',
@@ -87,26 +84,16 @@ describe('Handlebars Partial Registration', () => {
       // This test documents which partials must be registered via loadTemplates()
       // in the module's init hook (src/main.ts)
 
-      const requiredPartials = [
-        'partials/saving-throw-section'
-      ];
+      const requiredPartials = ['partials/saving-throw-section'];
 
       // If you add new partials, add them to this list and update src/main.ts
       expect(requiredPartials.length).toBeGreaterThan(0);
 
       // Verify the partial files exist
-      const fs = require('fs');
-      const path = require('path');
-
       requiredPartials.forEach(partialName => {
         // partialName is like 'partials/saving-throw-section'
         // Convert to file path: 'templates/partials/saving-throw-section.hbs'
-        const partialPath = path.join(
-          __dirname,
-          '../..',
-          'templates',
-          partialName + '.hbs'
-        );
+        const partialPath = path.join(__dirname, '../..', 'templates', partialName + '.hbs');
 
         expect(fs.existsSync(partialPath)).toBe(true);
       });
@@ -118,8 +105,6 @@ describe('Handlebars Partial Registration', () => {
       // This test helps identify which templates require partials
       // so we can ensure proper registration
 
-      const fs = require('fs');
-      const path = require('path');
       const templatesDir = path.join(__dirname, '../..', 'templates');
 
       const trapConfigPath = path.join(templatesDir, 'trap-config.hbs');
@@ -153,9 +138,7 @@ describe('Handlebars Partial Registration', () => {
         'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
       ];
 
-      const expectedPartialNames = [
-        'partials/saving-throw-section'
-      ];
+      const expectedPartialNames = ['partials/saving-throw-section'];
 
       // Verify each loadTemplates path corresponds to a partial name
       loadTemplatesPaths.forEach((loadPath, index) => {

@@ -97,27 +97,6 @@
     <p class="hint">{{localize "EMPUZZLES.HiddenTrapHint"}}</p>
   </div>
 
-  <div class="form-group">
-    <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
-    <div class="multiple-dropdown-select">
-      <div class="multiple-dropdown flexrow">
-        <div class="multiple-dropdown-content"></div>
-        <i class="fas fa-chevron-down"></i>
-      </div>
-      <ul class="dropdown-list">
-        {{#each effectOptions as |option|}}
-          <li class="multiple-dropdown-item" data-value="{{option.value}}">{{option.label}}</li>
-        {{/each}}
-      </ul>
-      <select id="additionalEffects" name="additionalEffects" multiple style="display: none;">
-        {{#each effectOptions as |option|}}
-          <option value="{{option.value}}">{{option.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-    <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsHint"}}</p>
-  </div>
-
   {{! Image Trap - Result Type and Result-Specific Fields }}
   {{#if (eq trapType "image")}}
     <div class="form-group">
@@ -208,6 +187,27 @@
         <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
         <textarea id="flavorText" name="flavorText" rows="3" placeholder="{{localize 'EMPUZZLES.FlavorTextPlaceholder'}}"></textarea>
         <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
+        <div class="multiple-dropdown-select">
+          <div class="multiple-dropdown flexrow">
+            <div class="multiple-dropdown-content"></div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <ul class="dropdown-list">
+            {{#each effectOptions as |option|}}
+              <li class="multiple-dropdown-item" data-value="{{option.value}}">{{option.label}}</li>
+            {{/each}}
+          </ul>
+          <select id="additionalEffects" name="additionalEffects" multiple style="display: none;">
+            {{#each effectOptions as |option|}}
+              <option value="{{option.value}}">{{option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsDamageHint"}}</p>
       </div>
     {{/if}}
 
@@ -320,6 +320,27 @@
         <label for="maxTriggers">{{localize "EMPUZZLES.MaxTriggers"}}</label>
         <input type="number" id="maxTriggers" name="maxTriggers" value="0" min="0" data-dtype="Number" />
         <p class="hint">{{localize "EMPUZZLES.MaxTriggersHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
+        <div class="multiple-dropdown-select">
+          <div class="multiple-dropdown flexrow">
+            <div class="multiple-dropdown-content"></div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <ul class="dropdown-list">
+            {{#each effectOptions as |option|}}
+              <li class="multiple-dropdown-item" data-value="{{option.value}}">{{option.label}}</li>
+            {{/each}}
+          </ul>
+          <select id="additionalEffects" name="additionalEffects" multiple style="display: none;">
+            {{#each effectOptions as |option|}}
+              <option value="{{option.value}}">{{option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsCombatHint"}}</p>
       </div>
     {{/if}}
   {{/if}}

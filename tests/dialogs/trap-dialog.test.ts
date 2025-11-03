@@ -44,8 +44,8 @@ describe('TrapDialog', () => {
       expect((dialog as any).imageBehavior).toBe('nothing');
     });
 
-    it('should initialize with DAMAGE result type by default', () => {
-      expect((dialog as any).resultType).toBe(TrapResultType.DAMAGE);
+    it('should initialize with NO default result type', () => {
+      expect((dialog as any).resultType).toBeUndefined();
     });
 
     it('should initialize with empty selectedTiles map', () => {
@@ -121,7 +121,7 @@ describe('TrapDialog', () => {
 
       expect(context.trapType).toBe('image');
       expect(context.imageBehavior).toBe('nothing');
-      expect(context.resultType).toBe(TrapResultType.DAMAGE);
+      expect(context.resultType).toBeUndefined();
     });
   });
 
@@ -154,6 +154,7 @@ describe('TrapDialog', () => {
 
   describe('result type selection', () => {
     it('should support DAMAGE result', () => {
+      (dialog as any).resultType = TrapResultType.DAMAGE;
       expect((dialog as any).resultType).toBe(TrapResultType.DAMAGE);
     });
 

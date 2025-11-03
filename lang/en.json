@@ -112,6 +112,8 @@
     "HiddenTrapHint": "When checked, the trap tile will be hidden from players until triggered",
     "AdditionalEffects": "Additional Effects (Optional)",
     "AdditionalEffectsHint": "Select additional status effects to apply when the trap is triggered (separate from result type)",
+    "AdditionalEffectsDamageHint": "Select additional status effects to apply on a failed saving throw",
+    "AdditionalEffectsCombatHint": "Select additional status effects to apply after the attack roll",
     "TeleportDestination": "Teleport Destination",
     "SelectPosition": "Select Position",
     "SelectedPosition": "Selected Position",
