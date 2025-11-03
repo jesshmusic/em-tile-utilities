@@ -76,13 +76,6 @@ export default defineConfig({
         if (warning.code === 'THIS_IS_UNDEFINED') return;
         warn(warning);
       }
-    },
-
-    // Watch mode configuration
-    watch: {
-      include: 'src/**',
-      clearScreen: false,
-      buildDelay: 100
     }
   },
 
