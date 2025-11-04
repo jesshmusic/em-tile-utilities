@@ -310,19 +310,72 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Minimize dialog so user can see canvas
     this.minimize();
 
-    ui.notifications.info('Click on the canvas to place the teleport tile...');
+    ui.notifications.info('Drag on the canvas to place and size the teleport tile...');
 
-    // Set up one-time click handler for tile placement
-    const handler = async (clickEvent: any) => {
-      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+    // Set up drag-to-place handlers
+    let startPos: { x: number; y: number } | null = null;
+    let previewGraphics: any = null;
+
+    const onMouseDown = (event: any) => {
+      // Only respond to clicks on empty canvas, not existing tiles
+      // Check if we clicked on an existing tile - if so, ignore the event
+      if (event.target?.document?.documentName === 'Tile') {
+        return;
+      }
+
+      const position = event.data.getLocalPosition((canvas as any).tiles);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      startPos = { x: snapped.x, y: snapped.y };
+
+      // Create preview rectangle
+      previewGraphics = (canvas as any).controls.addChild(new (PIXI as any).Graphics());
+      previewGraphics.lineStyle(2, 0xff9800, 1);
+      previewGraphics.drawRect(startPos.x, startPos.y, 0, 0);
+    };
+
+    const onMouseMove = (event: any) => {
+      if (!startPos || !previewGraphics) return;
+
+      const position = event.data.getLocalPosition((canvas as any).tiles);
       const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
-      await createTeleportTile(scene, config, snapped.x, snapped.y);
+      const width = Math.abs(snapped.x - startPos.x);
+      const height = Math.abs(snapped.y - startPos.y);
+      const x = Math.min(startPos.x, snapped.x);
+      const y = Math.min(startPos.y, snapped.y);
+
+      previewGraphics.clear();
+      previewGraphics.lineStyle(2, 0xff9800, 1);
+      previewGraphics.drawRect(x, y, width, height);
+    };
+
+    const onMouseUp = async (event: any) => {
+      if (!startPos) return;
+
+      const position = event.data.getLocalPosition((canvas as any).tiles);
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+
+      const width = Math.abs(snapped.x - startPos.x);
+      const height = Math.abs(snapped.y - startPos.y);
+      const x = Math.min(startPos.x, snapped.x);
+      const y = Math.min(startPos.y, snapped.y);
+
+      // Clean up preview
+      if (previewGraphics) {
+        previewGraphics.clear();
+        (canvas as any).controls.removeChild(previewGraphics);
+        previewGraphics = null;
+      }
+
+      // Remove handlers
+      (canvas as any).stage.off('pointerdown', onMouseDown);
+      (canvas as any).stage.off('pointermove', onMouseMove);
+      (canvas as any).stage.off('pointerup', onMouseUp);
+
+      // Create tile with specified dimensions
+      await createTeleportTile(scene, config, x, y, width, height);
 
       ui.notifications.info(`Teleport tile "${config.name}" created!`);
-
-      // Remove click handler
-      (canvas as any).stage.off('click', handler);
 
       // Close this dialog
       this.close();
@@ -334,7 +387,9 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     };
 
-    (canvas as any).stage.on('click', handler);
+    (canvas as any).stage.on('pointerdown', onMouseDown);
+    (canvas as any).stage.on('pointermove', onMouseMove);
+    (canvas as any).stage.on('pointerup', onMouseUp);
   }
 }
 

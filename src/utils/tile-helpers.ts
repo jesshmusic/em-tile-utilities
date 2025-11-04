@@ -142,14 +142,12 @@ async function showTaggerWithWarning(tile: any, appliedTag: string): Promise<voi
 
   // Show notification about the applied tag
   ui.notifications.info(
-    `Tile tagged with "${appliedTag}". You can add additional tags using the tile's configuration. Warning: Do not delete EM-generated tags as they are used for tile management.`,
+    `Tile tagged with "${appliedTag}". You can view and edit tags in the tile's configuration. Warning: Do not delete EM-generated tags as they are used for tile management.`,
     { permanent: false }
   );
 
-  // Wait a moment then open the tile's configuration sheet where Tagger field is shown
-  setTimeout(() => {
-    tile.sheet?.render(true);
-  }, 500);
+  // Note: We don't auto-open the tile sheet anymore as it interferes with canvas interaction
+  // Users can right-click the tile to open configuration if they want to edit tags
 }
 
 /**
@@ -885,11 +883,15 @@ export async function createTeleportTile(
   scene: Scene,
   config: TeleportTileConfig,
   x?: number,
-  y?: number
+  y?: number,
+  width?: number,
+  height?: number
 ): Promise<void> {
   const gridSize = (canvas as any).grid.size;
   const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
   const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+  const tileWidth = width ?? gridSize;
+  const tileHeight = height ?? gridSize;
 
   // Generate unique tag
   const tag = generateUniqueEMTag(scene, 'Teleport');
@@ -959,8 +961,8 @@ export async function createTeleportTile(
       tint: '#ffffff',
       alphaThreshold: 0.75
     },
-    width: gridSize,
-    height: gridSize,
+    width: tileWidth,
+    height: tileHeight,
     x: tileX,
     y: tileY,
     elevation: 0,
