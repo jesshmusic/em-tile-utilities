@@ -1127,35 +1127,15 @@ export async function createTeleportTile(
         });
       }
 
-      // Add saving throw if enabled (same as original)
-      if (config.hasSavingThrow) {
-        returnActions.push({
-          action: 'monks-tokenbar.requestroll',
-          data: {
-            entity: {
-              id: 'token',
-              name: 'Triggering Token'
-            },
-            request: config.savingThrow,
-            dc: config.dc.toString(),
-            flavor: config.flavorText || 'Make a saving throw to resist teleportation!',
-            rollmode: 'roll',
-            silent: false,
-            fastforward: false,
-            usetokens: 'fail',
-            continue: 'failed'
-          },
-          id: foundry.utils.randomID()
-        });
-      }
+      // Return teleport does NOT require a saving throw (you already passed it to get here)
 
       // Add return teleport action (back to source scene and position)
       returnActions.push({
         action: 'teleport',
         data: {
           entity: {
-            id: config.hasSavingThrow ? 'previous' : 'token',
-            name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
+            id: 'token',
+            name: 'Triggering Token'
           },
           location: {
             x: tileX,
@@ -1166,7 +1146,7 @@ export async function createTeleportTile(
           remotesnap: true,
           animatepan: false,
           triggerremote: false,
-          deletesource: false, // Never delete source on return teleport
+          deletesource: config.deleteSourceToken, // Use same delete token setting as main teleport
           preservesettings: false,
           avoidtokens: true,
           colour: '#00e1ff',
