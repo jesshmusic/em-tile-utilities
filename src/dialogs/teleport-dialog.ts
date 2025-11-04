@@ -223,16 +223,25 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
     const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
 
-    if (!tagInput || !tagsContainer || !hiddenInput) return;
+    console.log(`🧩 Dorman Lakely's Tile Utilities: _addTagsFromInput called`);
+    console.log(`🧩 Elements found:`, { tagInput, tagsContainer, hiddenInput });
+
+    if (!tagInput || !tagsContainer || !hiddenInput) {
+      console.log(`🧩 Missing elements, returning early`);
+      return;
+    }
 
     // Parse comma-separated tags from input
     const inputValue = tagInput.value.trim();
+    console.log(`🧩 Input value:`, inputValue);
     if (!inputValue) return;
 
     const newTags = inputValue
       .split(',')
       .map(t => t.trim())
       .filter(t => t.length > 0);
+
+    console.log(`🧩 Parsed tags:`, newTags);
 
     // Add each tag as a chip
     newTags.forEach(tag => this._addTagChip(tag, tagsContainer, hiddenInput));
@@ -245,11 +254,17 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Add a tag chip to the display (matches Tagger structure)
    */
   private _addTagChip(tag: string, container: HTMLElement, hiddenInput: HTMLInputElement): void {
+    console.log(`🧩 Dorman Lakely's Tile Utilities: _addTagChip called with tag:`, tag);
+
     // Check if tag already exists
     const existingTags = Array.from(container.querySelectorAll('.tag')).map(
       el => (el as HTMLElement).querySelector('span')?.textContent || ''
     );
-    if (existingTags.includes(tag)) return;
+    console.log(`🧩 Existing tags:`, existingTags);
+    if (existingTags.includes(tag)) {
+      console.log(`🧩 Tag already exists, skipping`);
+      return;
+    }
 
     // Create tag element matching Tagger structure
     const tagElement = document.createElement('div');
@@ -261,6 +276,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const removeButton = document.createElement('i');
     removeButton.className = 'fas fa-times';
     removeButton.onclick = () => {
+      console.log(`🧩 Removing tag:`, tag);
       tagElement.remove();
       this._updateHiddenInput(container, hiddenInput);
     };
@@ -268,6 +284,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     tagElement.appendChild(tagLabel);
     tagElement.appendChild(removeButton);
     container.appendChild(tagElement);
+    console.log(`🧩 Tag chip added to container`);
 
     // Update hidden input
     this._updateHiddenInput(container, hiddenInput);
@@ -280,7 +297,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const tags = Array.from(container.querySelectorAll('.tag')).map(
       el => (el as HTMLElement).querySelector('span')?.textContent || ''
     );
-    hiddenInput.value = tags.filter(t => t.length > 0).join(',');
+    const tagValue = tags.filter(t => t.length > 0).join(',');
+    console.log(`🧩 Dorman Lakely's Tile Utilities: Updating hidden input with:`, tagValue);
+    hiddenInput.value = tagValue;
+    console.log(`🧩 Hidden input value is now:`, hiddenInput.value);
   }
 
   /* -------------------------------------------- */
@@ -445,6 +465,9 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const data = formData.object;
+
+    console.log(`🧩 Dorman Lakely's Tile Utilities: Form data:`, data);
+    console.log(`🧩 Dorman Lakely's Tile Utilities: customTags from form:`, data.customTags);
 
     // Validate teleport destination
     if (this.teleportX === undefined || this.teleportY === undefined || !this.teleportSceneId) {
