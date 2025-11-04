@@ -1019,8 +1019,12 @@ export async function createTeleportTile(
 
   // Create return teleport tile if requested
   if (config.createReturnTeleport) {
-    const destinationScene = (game as any).scenes.get(config.teleportSceneId);
-    if (destinationScene) {
+    try {
+      const destinationScene = (game as any).scenes.get(config.teleportSceneId);
+      if (!destinationScene) {
+        ui.notifications.warn('Could not find destination scene for return teleport.');
+        return;
+      }
       const returnTag = generateUniqueEMTag('Return Teleport');
 
       // Build return actions (teleport back to source)
@@ -1143,6 +1147,9 @@ export async function createTeleportTile(
       }
 
       ui.notifications.info(`Return teleport tile created at destination.`);
+    } catch (error) {
+      console.error('Error creating return teleport tile:', error);
+      ui.notifications.error(`Failed to create return teleport tile: ${error}`);
     }
   }
 }
