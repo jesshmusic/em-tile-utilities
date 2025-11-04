@@ -74,6 +74,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Read current form values if the element exists (for re-renders)
     let hasSavingThrow = false;
     let requireConfirmation = false;
+    let deleteSourceToken = false;
+    let createReturnTeleport = false;
     if (this.element) {
       const hasSavingThrowCheckbox = this.element.querySelector(
         'input[name="hasSavingThrow"]'
@@ -81,9 +83,25 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const requireConfirmationCheckbox = this.element.querySelector(
         'input[name="requireConfirmation"]'
       ) as HTMLInputElement;
+      const deleteSourceTokenCheckbox = this.element.querySelector(
+        'input[name="deleteSourceToken"]'
+      ) as HTMLInputElement;
+      const createReturnTeleportCheckbox = this.element.querySelector(
+        'input[name="createReturnTeleport"]'
+      ) as HTMLInputElement;
       hasSavingThrow = hasSavingThrowCheckbox?.checked || false;
       requireConfirmation = requireConfirmationCheckbox?.checked || false;
+      deleteSourceToken = deleteSourceTokenCheckbox?.checked || false;
+      createReturnTeleport = createReturnTeleportCheckbox?.checked || false;
     }
+
+    // Get the selected teleport scene name
+    const teleportSceneName = this.teleportSceneId
+      ? scenes.find(s => s.id === this.teleportSceneId)?.name
+      : null;
+
+    // Determine if teleporting to a different scene
+    const isDifferentScene = this.teleportSceneId && this.teleportSceneId !== currentScene?.id;
 
     return {
       ...context,
@@ -91,11 +109,16 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       tileImage: 'icons/svg/trap.svg',
       scenes: scenes,
       selectedSceneId: currentScene?.id || (scenes.length > 0 ? scenes[0].id : null),
+      currentSceneId: currentScene?.id,
       teleportX: this.teleportX,
       teleportY: this.teleportY,
       teleportSceneId: this.teleportSceneId,
+      teleportSceneName: teleportSceneName,
+      isDifferentScene: isDifferentScene,
       hasSavingThrow: hasSavingThrow,
       requireConfirmation: requireConfirmation,
+      deleteSourceToken: deleteSourceToken,
+      createReturnTeleport: createReturnTeleport,
       buttons: [
         {
           type: 'submit',
@@ -301,6 +324,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportY: this.teleportY,
       teleportSceneId: this.teleportSceneId,
       requireConfirmation: data.requireConfirmation || false,
+      deleteSourceToken: data.deleteSourceToken || false,
+      createReturnTeleport: data.createReturnTeleport || false,
       hasSavingThrow: data.hasSavingThrow || false,
       savingThrow: data.savingThrow || 'dex',
       dc: parseInt(data.dc) || 15,

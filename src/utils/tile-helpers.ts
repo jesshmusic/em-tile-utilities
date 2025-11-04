@@ -938,7 +938,7 @@ export async function createTeleportTile(
       remotesnap: true,
       animatepan: false,
       triggerremote: false,
-      deletesource: false,
+      deletesource: config.deleteSourceToken,
       preservesettings: false,
       avoidtokens: true,
       colour: '#00e1ff',
@@ -1015,6 +1015,135 @@ export async function createTeleportTile(
     const Tagger = (game.modules.get('tagger') as any).api;
     await Tagger.setTags(tile, [tag]);
     await showTaggerWithWarning(tile, tag);
+  }
+
+  // Create return teleport tile if requested
+  if (config.createReturnTeleport) {
+    const destinationScene = (game as any).scenes.get(config.teleportSceneId);
+    if (destinationScene) {
+      const returnTag = generateUniqueEMTag('Return Teleport');
+
+      // Build return actions (teleport back to source)
+      const returnActions: any[] = [];
+
+      // Add saving throw if enabled (same as original)
+      if (config.hasSavingThrow) {
+        returnActions.push({
+          action: 'monks-tokenbar.requestroll',
+          data: {
+            entity: {
+              id: 'token',
+              name: 'Triggering Token'
+            },
+            request: config.savingThrow,
+            dc: config.dc.toString(),
+            flavor: config.flavorText || 'Make a saving throw to resist teleportation!',
+            rollmode: 'roll',
+            silent: false,
+            fastforward: false,
+            usetokens: 'fail',
+            continue: 'failed'
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+
+      // Add return teleport action (back to source scene and position)
+      returnActions.push({
+        action: 'teleport',
+        data: {
+          entity: {
+            id: config.hasSavingThrow ? 'previous' : 'token',
+            name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
+          },
+          location: {
+            x: tileX,
+            y: tileY,
+            sceneId: scene.id
+          },
+          position: 'random',
+          remotesnap: true,
+          animatepan: false,
+          triggerremote: false,
+          deletesource: false, // Never delete source on return teleport
+          preservesettings: false,
+          avoidtokens: true,
+          colour: '#00e1ff',
+          confirm: config.requireConfirmation ? 'confirm' : null
+        },
+        id: foundry.utils.randomID()
+      });
+
+      // Create return tile data (1x1 grid tile)
+      const returnTileData = {
+        texture: {
+          src: config.tileImage,
+          anchorX: 0.5,
+          anchorY: 0.5,
+          fit: 'fill',
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          tint: '#ffffff',
+          alphaThreshold: 0.75
+        },
+        width: gridSize, // 1x1 tile
+        height: gridSize,
+        x: config.teleportX,
+        y: config.teleportY,
+        elevation: 0,
+        sort: 0,
+        occlusion: { mode: 0, alpha: 0 },
+        rotation: 0,
+        alpha: 1,
+        hidden: config.hidden, // Same visibility as original
+        locked: false,
+        restrictions: { light: false, weather: false },
+        video: { loop: true, autoplay: true, volume: 0 },
+        flags: {
+          'monks-active-tiles': {
+            name: `Return: ${config.name}`,
+            active: true,
+            record: false,
+            restriction: 'all',
+            controlled: 'all',
+            trigger: ['enter'],
+            allowpaused: false,
+            usealpha: false,
+            pointer: true,
+            vision: true,
+            pertoken: false,
+            minrequired: null,
+            cooldown: null,
+            chance: 100,
+            fileindex: 0,
+            actions: returnActions,
+            files: [
+              {
+                id: foundry.utils.randomID(),
+                name: config.tileImage,
+                selected: true
+              }
+            ],
+            variables: {}
+          }
+        },
+        visible: true,
+        img: config.tileImage
+      };
+
+      // Create the return tile on destination scene
+      const [returnTile] = await destinationScene.createEmbeddedDocuments('Tile', [returnTileData]);
+      console.log(`Return teleport tile "Return: ${config.name}" created with tag: ${returnTag}`);
+
+      // Tag the return tile if Tagger module is active
+      if (game.modules.get('tagger')?.active) {
+        const Tagger = (game.modules.get('tagger') as any).api;
+        await Tagger.setTags(returnTile, [returnTag]);
+      }
+
+      ui.notifications.info(`Return teleport tile created at destination.`);
+    }
   }
 }
 

@@ -16,7 +16,10 @@
       "WebSearch",
       "Bash(cat:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npm run clean:*)"
+      "Bash(npm run clean:*)",
+      "WebFetch(domain:foundryvtt.com)",
+      "Bash(pkill:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": [

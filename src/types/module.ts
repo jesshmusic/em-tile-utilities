@@ -158,6 +158,8 @@ export interface TeleportTileConfig {
   teleportY: number;
   teleportSceneId: string;
   requireConfirmation: boolean;
+  deleteSourceToken: boolean;
+  createReturnTeleport: boolean;
   hasSavingThrow: boolean;
   savingThrow: string;
   dc: number;
