@@ -348,7 +348,18 @@ export async function createSwitchTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
     const switchTag = generateUniqueEMTag(config.name);
-    await Tagger.setTags(tile, [switchTag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [switchTag]; // Start with EM tag
+    if (config.customTags && config.customTags.trim()) {
+      const customTagArray = config.customTags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+      allTags.push(...customTagArray);
+    }
+
+    await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, switchTag);
   }
 }
@@ -628,7 +639,18 @@ export async function createResetTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
     const resetTag = generateUniqueEMTag(config.name);
-    await Tagger.setTags(tile, [resetTag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [resetTag]; // Start with EM tag
+    if (config.customTags && config.customTags.trim()) {
+      const customTagArray = config.customTags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+      allTags.push(...customTagArray);
+    }
+
+    await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, resetTag);
   }
 }
@@ -890,17 +912,27 @@ export async function createLightTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
 
-    // Tag the main tile
-    await Tagger.setTags(mainTile, [lightGroupTag]);
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [lightGroupTag]; // Start with EM tag
+    if (config.customTags && config.customTags.trim()) {
+      const customTagArray = config.customTags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+      allTags.push(...customTagArray);
+    }
 
-    // Tag the light source
-    await Tagger.setTags(light, [lightGroupTag]);
+    // Tag the main tile with all tags
+    await Tagger.setTags(mainTile, allTags);
+
+    // Tag the light source with all tags
+    await Tagger.setTags(light, allTags);
 
     // Tag the overlay tile if it was created
     if (overlayTileId) {
       const overlayTile = scene.tiles.get(overlayTileId);
       if (overlayTile) {
-        await Tagger.setTags(overlayTile, [lightGroupTag]);
+        await Tagger.setTags(overlayTile, allTags);
       }
     }
 
@@ -908,7 +940,7 @@ export async function createLightTile(
     if (soundId) {
       const sound = (scene as any).sounds.get(soundId);
       if (sound) {
-        await Tagger.setTags(sound, [lightGroupTag]);
+        await Tagger.setTags(sound, allTags);
       }
     }
 
@@ -1760,7 +1792,18 @@ export async function createTrapTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
     const trapTag = generateUniqueTrapTag(config.name, trapType);
-    await Tagger.setTags(tile, [trapTag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [trapTag]; // Start with EM tag
+    if (config.customTags && config.customTags.trim()) {
+      const customTagArray = config.customTags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+      allTags.push(...customTagArray);
+    }
+
+    await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, trapTag);
   }
 }

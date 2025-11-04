@@ -64,12 +64,21 @@ describe('Handlebars Partial Registration', () => {
       const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
       Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
 
+      const customTagsPath = path.join(
+        __dirname,
+        '../..',
+        'templates/partials/custom-tags-section.hbs'
+      );
+      const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
+      Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
+
       const context = {
         trapName: 'Test Trap',
         trapType: 'image',
         imageBehavior: 'hide',
         resultType: 'damage',
-        startingImage: 'icons/svg/trap.svg'
+        startingImage: 'icons/svg/trap.svg',
+        customTags: ''
       };
 
       // Now rendering should succeed
@@ -84,7 +93,7 @@ describe('Handlebars Partial Registration', () => {
       // This test documents which partials must be registered via loadTemplates()
       // in the module's init hook (src/main.ts)
 
-      const requiredPartials = ['partials/saving-throw-section'];
+      const requiredPartials = ['partials/saving-throw-section', 'partials/custom-tags-section'];
 
       // If you add new partials, add them to this list and update src/main.ts
       expect(requiredPartials.length).toBeGreaterThan(0);

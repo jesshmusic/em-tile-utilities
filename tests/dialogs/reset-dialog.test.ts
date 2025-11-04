@@ -460,7 +460,8 @@ describe('ResetTileConfigDialog Extended Tests', () => {
     it('should set up file picker button handlers', () => {
       const mockButton = { onclick: null };
       dialog.element = {
-        querySelectorAll: jest.fn().mockReturnValue([mockButton])
+        querySelectorAll: jest.fn().mockReturnValue([mockButton]),
+        querySelector: jest.fn().mockReturnValue(null) // For tag input elements
       } as any;
 
       dialog._onRender({}, {});

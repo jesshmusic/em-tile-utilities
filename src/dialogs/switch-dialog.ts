@@ -1,5 +1,6 @@
 import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -10,6 +11,8 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  * @mixes HandlebarsApplication
  */
 export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+  private tagInputManager?: TagInputManager;
+
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     id: 'em-puzzles-switch-config',
@@ -31,7 +34,9 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       handler: SwitchConfigDialog.#onSubmit
     },
     actions: {
-      close: SwitchConfigDialog.prototype._onClose
+      close: SwitchConfigDialog.prototype._onClose,
+      addTag: SwitchConfigDialog.#onAddTag,
+      confirmTags: SwitchConfigDialog.#onConfirmTags
     }
   };
 
@@ -61,6 +66,15 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     const nextNumber = getNextTileNumber('Switch');
     const nextSwitchId = `switch_${nextNumber}`;
 
+    // Read current form values if the element exists (for re-renders)
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
+
     return {
       ...context,
       switchName: `Switch ${nextNumber}`,
@@ -68,6 +82,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       onImage: defaultOnImage,
       offImage: defaultOffImage,
       sound: defaultSound,
+      customTags: customTags,
       buttons: [
         {
           type: 'submit',
@@ -111,6 +126,12 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     filePickerButtons.forEach((button: Element) => {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
+
+    // Set up tag input functionality
+    if (this.element) {
+      this.tagInputManager = new TagInputManager(this.element);
+      this.tagInputManager.initialize();
+    }
   }
 
   /* -------------------------------------------- */
@@ -142,6 +163,25 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     });
 
     return fp.browse();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click
+   */
+  static #onAddTag(this: SwitchConfigDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle confirm tags button click
+   */
+  static #onConfirmTags(this: SwitchConfigDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+    this.tagInputManager?.showConfirmation();
   }
 
   /* -------------------------------------------- */
@@ -188,7 +228,8 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
           variableName: data.variableName,
           onImage: data.onImage,
           offImage: data.offImage,
-          sound: data.sound
+          sound: data.sound,
+          customTags: data.customTags || ''
         },
         snapped.x,
         snapped.y

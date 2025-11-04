@@ -59,14 +59,22 @@ describe('Dialog Rendering Integration Tests', () => {
     it('should SUCCESS to render WITH partial registration', async () => {
       // This test simulates what main.ts should do at init
 
-      // Step 1: Load and register the partial (like main.ts does)
-      const partialPath = path.join(
+      // Step 1: Load and register the partials (like main.ts does)
+      const savingThrowPath = path.join(
         __dirname,
         '../..',
         'templates/partials/saving-throw-section.hbs'
       );
-      const partialSource = fs.readFileSync(partialPath, 'utf8');
-      Handlebars.registerPartial('partials/saving-throw-section', partialSource);
+      const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
+      Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
+
+      const customTagsPath = path.join(
+        __dirname,
+        '../..',
+        'templates/partials/custom-tags-section.hbs'
+      );
+      const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
+      Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
 
       // Step 2: Create dialog instance
       const dialog = new TrapDialog();
@@ -168,14 +176,22 @@ describe('Dialog Rendering Integration Tests', () => {
     it('should simulate the full ApplicationV2 render cycle', async () => {
       // This test simulates what happens when ApplicationV2 renders a dialog
 
-      // Step 1: Register partial (simulating init hook)
-      const partialPath = path.join(
+      // Step 1: Register partials (simulating init hook)
+      const savingThrowPath = path.join(
         __dirname,
         '../..',
         'templates/partials/saving-throw-section.hbs'
       );
-      const partialSource = fs.readFileSync(partialPath, 'utf8');
-      Handlebars.registerPartial('partials/saving-throw-section', partialSource);
+      const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
+      Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
+
+      const customTagsPath = path.join(
+        __dirname,
+        '../..',
+        'templates/partials/custom-tags-section.hbs'
+      );
+      const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
+      Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
 
       // Step 2: Create dialog (simulating user action)
       const dialog = new TrapDialog();

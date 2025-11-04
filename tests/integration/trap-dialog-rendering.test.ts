@@ -9,8 +9,11 @@
  * TrapResultType.COMBAT enum bug that occurred in production.
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, beforeAll } from '@jest/globals';
 import { mockFoundry } from '../mocks/foundry';
+import * as fs from 'fs';
+import * as path from 'path';
+import Handlebars from 'handlebars';
 
 // Set up Foundry mocks before importing dialogs
 mockFoundry();
@@ -26,6 +29,25 @@ import {
 } from '../helpers/template-helper';
 
 describe('TrapDialog Template Rendering Integration', () => {
+  // Register required partials before all tests
+  beforeAll(() => {
+    const savingThrowPath = path.join(
+      __dirname,
+      '../..',
+      'templates/partials/saving-throw-section.hbs'
+    );
+    const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
+    Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
+
+    const customTagsPath = path.join(
+      __dirname,
+      '../..',
+      'templates/partials/custom-tags-section.hbs'
+    );
+    const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
+    Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
+  });
+
   describe('Template Compilation', () => {
     it('should compile template without errors', async () => {
       await expect(renderDialogTemplate(TrapDialog)).resolves.toBeDefined();

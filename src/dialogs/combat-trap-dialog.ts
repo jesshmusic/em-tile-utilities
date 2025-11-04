@@ -1,6 +1,7 @@
 import type { CombatTrapConfig } from '../types/module';
 import { TrapTargetType } from '../types/module';
 import { createCombatTrapTile, getNextTileNumber } from '../utils/tile-helpers';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -11,6 +12,8 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  * @mixes HandlebarsApplicationMixin
  */
 export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+  private tagInputManager?: TagInputManager;
+
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     id: 'em-puzzles-combat-trap-config',
@@ -29,7 +32,9 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       handler: CombatTrapDialog.prototype._onSubmit
     },
     actions: {
-      selectTokenPosition: CombatTrapDialog.prototype._onSelectTokenPosition
+      selectTokenPosition: CombatTrapDialog.prototype._onSelectTokenPosition,
+      addTag: CombatTrapDialog.#onAddTag,
+      confirmTags: CombatTrapDialog.#onConfirmTags
     }
   };
 
@@ -57,6 +62,15 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     // Generate trap name based on existing traps in scene
     const nextNumber = getNextTileNumber('Combat Trap');
 
+    // Get custom tags from form if available
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
+
     return {
       ...context,
       trapName: `Combat Trap ${nextNumber}`,
@@ -75,6 +89,7 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       tokenImage: '',
       tokenX: null,
       tokenY: null,
+      customTags: customTags,
       buttons: [
         {
           type: 'submit',
@@ -127,6 +142,12 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
           tokenImageGroup.style.display = 'none';
         }
       });
+    }
+
+    // Set up tag input functionality
+    if (this.element) {
+      this.tagInputManager = new TagInputManager(this.element);
+      this.tagInputManager.initialize();
     }
   }
 
@@ -315,6 +336,7 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const tokenY = (form.querySelector('input[name="tokenY"]') as HTMLInputElement)?.value;
     const maxTriggers = (form.querySelector('input[name="maxTriggers"]') as HTMLInputElement)
       ?.value;
+    const customTags = (form.querySelector('input[name="customTags"]') as HTMLInputElement)?.value;
 
     // Validate required fields
     if (!trapName) {
@@ -347,7 +369,8 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       tokenImage: tokenImage || undefined,
       tokenX: tokenX ? parseInt(tokenX) : undefined,
       tokenY: tokenY ? parseInt(tokenY) : undefined,
-      maxTriggers: maxTriggersNum
+      maxTriggers: maxTriggersNum,
+      customTags: customTags || ''
     };
 
     // Close the dialog
@@ -430,6 +453,25 @@ export class CombatTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     (canvas as any).stage.on('mousedown', onMouseDown);
     (canvas as any).stage.on('mousemove', onMouseMove);
     (canvas as any).stage.on('mouseup', onMouseUp);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click
+   */
+  static #onAddTag(this: CombatTrapDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle confirm tags button click
+   */
+  static #onConfirmTags(this: CombatTrapDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+    this.tagInputManager?.showConfirmation();
   }
 }
 

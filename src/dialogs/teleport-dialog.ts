@@ -1,6 +1,7 @@
 import { createTeleportTile, getNextTileNumber } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import type { TeleportTileConfig } from '../types/module';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -15,6 +16,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected teleportX?: number;
   protected teleportY?: number;
   protected teleportSceneId?: string;
+  private tagInputManager?: TagInputManager;
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -198,141 +200,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Set up tag input functionality
-    console.log(`🧩 About to call _initializeTagInput`);
-    this._initializeTagInput();
-    console.log(`🧩 Finished calling _initializeTagInput`);
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Initialize tag input field with Tagger-style chip UI
-   */
-  private _initializeTagInput(): void {
-    console.log(`🧩 _initializeTagInput: Starting initialization`);
-    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
-    const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
-    const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
-
-    console.log(`🧩 _initializeTagInput: Found elements:`, {
-      tagInput,
-      tagsContainer,
-      hiddenInput
-    });
-
-    if (!tagInput || !tagsContainer || !hiddenInput) {
-      console.log(`🧩 _initializeTagInput: Missing elements, exiting early`);
-      return;
+    if (this.element) {
+      this.tagInputManager = new TagInputManager(this.element);
+      this.tagInputManager.initialize();
     }
-
-    // Initialize existing tags
-    const existingTags = hiddenInput.value
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
-    console.log(`🧩 _initializeTagInput: Existing tags to initialize:`, existingTags);
-    existingTags.forEach(tag => this._addTagChip(tag, tagsContainer, hiddenInput));
-
-    // Handle Enter key to add tags
-    console.log(`🧩 _initializeTagInput: Adding keydown listener to tag input`);
-    tagInput.addEventListener('keydown', (event: KeyboardEvent) => {
-      console.log(`🧩 Key pressed in tag input:`, event.key);
-      if (event.key === 'Enter') {
-        console.log(`🧩 Enter key detected, calling _addTagsFromInput`);
-        event.preventDefault();
-        this._addTagsFromInput();
-      }
-    });
-    console.log(`🧩 _initializeTagInput: Initialization complete`);
-  }
-
-  /**
-   * Parse tags from the text input and add them as chips
-   */
-  private _addTagsFromInput(): void {
-    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
-    const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
-    const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
-
-    console.log(`🧩 Dorman Lakely's Tile Utilities: _addTagsFromInput called`);
-    console.log(`🧩 Elements found:`, { tagInput, tagsContainer, hiddenInput });
-
-    if (!tagInput || !tagsContainer || !hiddenInput) {
-      console.log(`🧩 Missing elements, returning early`);
-      return;
-    }
-
-    // Parse comma-separated tags from input
-    const inputValue = tagInput.value.trim();
-    console.log(`🧩 Input value:`, inputValue);
-    if (!inputValue) return;
-
-    const newTags = inputValue
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
-    console.log(`🧩 Parsed tags:`, newTags);
-
-    // Add each tag as a chip
-    newTags.forEach(tag => this._addTagChip(tag, tagsContainer, hiddenInput));
-
-    // Clear the input
-    tagInput.value = '';
-  }
-
-  /**
-   * Add a tag chip to the display (matches Tagger structure)
-   */
-  private _addTagChip(tag: string, container: HTMLElement, hiddenInput: HTMLInputElement): void {
-    console.log(`🧩 Dorman Lakely's Tile Utilities: _addTagChip called with tag:`, tag);
-
-    // Check if tag already exists
-    const existingTags = Array.from(container.querySelectorAll('.tag')).map(
-      el => (el as HTMLElement).querySelector('span')?.textContent || ''
-    );
-    console.log(`🧩 Existing tags:`, existingTags);
-    if (existingTags.includes(tag)) {
-      console.log(`🧩 Tag already exists, skipping`);
-      return;
-    }
-
-    // Create tag element matching Tagger structure
-    const tagElement = document.createElement('div');
-    tagElement.className = 'tag';
-
-    const tagLabel = document.createElement('span');
-    tagLabel.textContent = tag;
-
-    const removeButton = document.createElement('i');
-    removeButton.className = 'fas fa-times';
-    removeButton.onclick = () => {
-      console.log(`🧩 Removing tag:`, tag);
-      tagElement.remove();
-      this._updateHiddenInput(container, hiddenInput);
-    };
-
-    tagElement.appendChild(tagLabel);
-    tagElement.appendChild(removeButton);
-    container.appendChild(tagElement);
-    console.log(`🧩 Tag chip added to container`);
-
-    // Update hidden input
-    this._updateHiddenInput(container, hiddenInput);
-  }
-
-  /**
-   * Update the hidden input with current tags
-   */
-  private _updateHiddenInput(container: HTMLElement, hiddenInput: HTMLInputElement): void {
-    const tags = Array.from(container.querySelectorAll('.tag')).map(
-      el => (el as HTMLElement).querySelector('span')?.textContent || ''
-    );
-    const tagValue = tags.filter(t => t.length > 0).join(',');
-    console.log(`🧩 Dorman Lakely's Tile Utilities: Updating hidden input with:`, tagValue);
-    hiddenInput.value = tagValue;
-    console.log(`🧩 Hidden input value is now:`, hiddenInput.value);
   }
 
   /* -------------------------------------------- */
@@ -459,8 +330,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle add tag button click
    */
   static #onAddTag(this: TeleportDialog): void {
-    console.log(`🧩 #onAddTag called - button clicked`);
-    this._addTagsFromInput();
+    this.tagInputManager?.addTagsFromInput();
   }
 
   /* -------------------------------------------- */
@@ -469,19 +339,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle confirm tags button click
    */
   static #onConfirmTags(this: TeleportDialog): void {
-    console.log(`🧩 #onConfirmTags called - checkmark button clicked`);
-    // Parse and add any remaining tags from input
-    this._addTagsFromInput();
-
-    // Optional: Show confirmation notification
-    const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
-    if (hiddenInput && hiddenInput.value) {
-      const tagCount = hiddenInput.value.split(',').filter(t => t.trim()).length;
-      console.log(`🧩 Tag count: ${tagCount}, value: ${hiddenInput.value}`);
-      ui.notifications.info(`${tagCount} tag(s) ready to be applied.`);
-    } else {
-      console.log(`🧩 No tags in hidden input or hidden input not found`);
-    }
+    this.tagInputManager?.addTagsFromInput();
+    this.tagInputManager?.showConfirmation();
   }
 
   /* -------------------------------------------- */
