@@ -103,7 +103,7 @@ Hooks.once('init', async () => {
     scope: 'world',
     config: true,
     type: String,
-    default: 'icons/svg/trap.svg',
+    default: 'icons/environment/traps/trap-jaw-tan.webp',
     filePicker: 'imagevideo'
   });
 

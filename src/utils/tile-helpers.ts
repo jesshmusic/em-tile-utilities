@@ -1982,7 +1982,7 @@ export async function createCombatTrapTile(
     name: `${config.name} (Trap)`,
     type: 'npc',
     folder: folderId,
-    img: (item as any).img || 'icons/svg/trap.svg',
+    img: (item as any).img || 'icons/environment/traps/trap-jaw-tan.webp',
     prototypeToken: {
       texture: {
         src: tokenImg
@@ -2230,7 +2230,7 @@ export async function createCombatTrapTile(
   });
 
   // Use default trap image if none provided (for hidden traps)
-  const defaultTrapImage = 'icons/svg/trap.svg';
+  const defaultTrapImage = 'icons/environment/traps/trap-jaw-tan.webp';
   const startingImage = config.startingImage || defaultTrapImage;
   const isHidden = !config.startingImage; // Hide if no image provided
 

@@ -117,7 +117,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       ...context,
       tileName: `Teleport ${nextNumber}`,
-      tileImage: 'icons/svg/trap.svg',
+      tileImage: 'icons/magic/movement/portal-vortex-orange.webp',
       scenes: scenes,
       selectedSceneId: selectedSceneId,
       currentSceneId: currentScene?.id,

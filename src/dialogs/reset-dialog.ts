@@ -154,7 +154,7 @@ function calculateStartingPosition(tile: any): { x: number; y: number; rotation:
 export class ResetTileConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   selectedTiles: Map<string, SelectedTileData> = new Map();
   resetName: string = 'Reset Tile';
-  resetTileImage: string = 'icons/svg/clockwork.svg';
+  resetTileImage: string = 'icons/skills/trades/academics-investigation-puzzles.webp';
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -537,7 +537,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     const resetTileImageRaw = data.resetTileImage;
     const resetTileImage =
       (typeof resetTileImageRaw === 'string' ? resetTileImageRaw.trim() : '') ||
-      'icons/svg/clockwork.svg';
+      'icons/skills/trades/academics-investigation-puzzles.webp';
 
     // Check if the image has a valid file extension
     const validExtensions = [
