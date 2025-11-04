@@ -446,6 +446,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle add tag button click
    */
   static #onAddTag(this: TeleportDialog): void {
+    console.log(`🧩 #onAddTag called - button clicked`);
     this._addTagsFromInput();
   }
 
@@ -455,6 +456,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle confirm tags button click
    */
   static #onConfirmTags(this: TeleportDialog): void {
+    console.log(`🧩 #onConfirmTags called - checkmark button clicked`);
     // Parse and add any remaining tags from input
     this._addTagsFromInput();
 
@@ -462,7 +464,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
     if (hiddenInput && hiddenInput.value) {
       const tagCount = hiddenInput.value.split(',').filter(t => t.trim()).length;
+      console.log(`🧩 Tag count: ${tagCount}, value: ${hiddenInput.value}`);
       ui.notifications.info(`${tagCount} tag(s) ready to be applied.`);
+    } else {
+      console.log(`🧩 No tags in hidden input or hidden input not found`);
     }
   }
 
