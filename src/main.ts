@@ -313,14 +313,33 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
       if (isReturnTeleport) {
         console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting return teleport "${entity.name}" (${entity.id})`
+          `🧩 Dorman Lakely's Tile Utilities: Found return teleport "${entity.name}" (${entity.id})`
         );
-        try {
-          await entity.delete();
-        } catch (error) {
-          console.warn(
-            `🧩 Dorman Lakely's Tile Utilities: Could not delete return teleport (may already be deleted):`,
-            error
+
+        // Ask user for confirmation before deleting return teleport
+        const confirmed = await (Dialog as any).confirm({
+          title: 'Delete Return Teleport?',
+          content: `<p>This teleport has a return tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
+          yes: () => true,
+          no: () => false,
+          defaultYes: true
+        });
+
+        if (confirmed) {
+          console.log(
+            `🧩 Dorman Lakely's Tile Utilities: User confirmed - deleting return teleport "${entity.name}"`
+          );
+          try {
+            await entity.delete();
+          } catch (error) {
+            console.warn(
+              `🧩 Dorman Lakely's Tile Utilities: Could not delete return teleport (may already be deleted):`,
+              error
+            );
+          }
+        } else {
+          console.log(
+            `🧩 Dorman Lakely's Tile Utilities: User cancelled - keeping return teleport "${entity.name}"`
           );
         }
       }
@@ -391,14 +410,33 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
       if (isMainTeleport) {
         console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting main teleport "${entity.name}" (${entity.id})`
+          `🧩 Dorman Lakely's Tile Utilities: Found main teleport "${entity.name}" (${entity.id})`
         );
-        try {
-          await entity.delete();
-        } catch (error) {
-          console.warn(
-            `🧩 Dorman Lakely's Tile Utilities: Could not delete main teleport (may already be deleted):`,
-            error
+
+        // Ask user for confirmation before deleting main teleport
+        const confirmed = await (Dialog as any).confirm({
+          title: 'Delete Main Teleport?',
+          content: `<p>This return teleport has a main tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
+          yes: () => true,
+          no: () => false,
+          defaultYes: true
+        });
+
+        if (confirmed) {
+          console.log(
+            `🧩 Dorman Lakely's Tile Utilities: User confirmed - deleting main teleport "${entity.name}"`
+          );
+          try {
+            await entity.delete();
+          } catch (error) {
+            console.warn(
+              `🧩 Dorman Lakely's Tile Utilities: Could not delete main teleport (may already be deleted):`,
+              error
+            );
+          }
+        } else {
+          console.log(
+            `🧩 Dorman Lakely's Tile Utilities: User cancelled - keeping main teleport "${entity.name}"`
           );
         }
       }
