@@ -267,8 +267,9 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 });
 
 /**
- * Clean up return teleport tiles when main teleport tiles are deleted
- * Uses Tagger to find and delete related return teleport tiles
+ * Clean up associated teleport tiles when any teleport tile is deleted
+ * Handles both main → return and return → main deletion
+ * Uses Tagger to find and delete related teleport tiles
  */
 Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
   // Check if Tagger is available
@@ -286,13 +287,12 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
   if (!hasTeleportActions) return;
 
-  // Process each tag to clean up related return teleport tiles
+  // Case 1: Main teleport being deleted → delete return teleports
   for (const teleportTag of tags) {
-    // Only process EM-Teleport tags (not EM-Return-Teleport)
     if (!teleportTag.startsWith('EM-Teleport-')) continue;
 
     console.log(
-      `🧩 Dorman Lakely's Tile Utilities: Cleaning up return teleports for "${teleportTag}"`
+      `🧩 Dorman Lakely's Tile Utilities: Main teleport deleted, cleaning up return teleports for "${teleportTag}"`
     );
 
     // Find all tiles with the same tag across all scenes
@@ -301,18 +301,67 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
       caseInsensitive: false
     });
 
-    // Delete all related return teleport tiles except the tile being deleted
+    // Delete all related return teleport tiles
     for (const entity of taggedTiles) {
-      if (entity.id === tile.id) continue; // Skip the main teleport tile being deleted
+      if (entity.id === tile.id) continue; // Skip the tile being deleted
       if (entity.documentName !== 'Tile') continue; // Only process tiles
 
-      // Check if it's a return teleport (has "Return:" in the name or has EM-Return-Teleport tag)
       const entityTags = Tagger.getTags(entity);
-      const isReturnTeleport = entityTags?.some((tag: string) => tag.startsWith('EM-Return-Teleport-'));
+      const isReturnTeleport = entityTags?.some((tag: string) =>
+        tag.startsWith('EM-Return-Teleport-')
+      );
 
       if (isReturnTeleport) {
         console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting return teleport tile "${entity.name}" (${entity.id})`
+          `🧩 Dorman Lakely's Tile Utilities: Deleting return teleport "${entity.name}" (${entity.id})`
+        );
+        await entity.delete();
+      }
+    }
+  }
+
+  // Case 2: Return teleport being deleted → delete main teleport
+  for (const returnTag of tags) {
+    if (!returnTag.startsWith('EM-Return-Teleport-')) continue;
+
+    console.log(
+      `🧩 Dorman Lakely's Tile Utilities: Return teleport deleted, finding main teleport for "${returnTag}"`
+    );
+
+    // The return teleport is tagged with BOTH its return tag AND the main teleport's tag
+    // Find the main teleport tag on this return tile
+    const mainTeleportTag = tags.find((t: string) => t.startsWith('EM-Teleport-'));
+
+    if (!mainTeleportTag) {
+      console.log(
+        `🧩 Dorman Lakely's Tile Utilities: No main teleport tag found on return teleport`
+      );
+      continue;
+    }
+
+    console.log(
+      `🧩 Dorman Lakely's Tile Utilities: Found main teleport tag "${mainTeleportTag}", searching for main teleport`
+    );
+
+    // Find all tiles with the main teleport tag
+    const taggedTiles = Tagger.getByTag(mainTeleportTag, {
+      scenes: Array.from((game as any).scenes),
+      caseInsensitive: false
+    });
+
+    // Delete the main teleport tile (the one that's NOT a return teleport)
+    for (const entity of taggedTiles) {
+      if (entity.id === tile.id) continue; // Skip the return tile being deleted
+      if (entity.documentName !== 'Tile') continue; // Only process tiles
+
+      const entityTags = Tagger.getTags(entity);
+      const isMainTeleport = !entityTags?.some((tag: string) =>
+        tag.startsWith('EM-Return-Teleport-')
+      );
+
+      if (isMainTeleport) {
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Deleting main teleport "${entity.name}" (${entity.id})`
         );
         await entity.delete();
       }

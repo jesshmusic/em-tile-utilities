@@ -1165,10 +1165,31 @@ export async function createTeleportTile(
       console.log(`Return teleport tile "Return: ${config.name}" created with tag: ${returnTag}`);
 
       // Tag the return tile if Tagger module is active
-      // Use BOTH the main teleport's tag AND the return tag for proper cleanup
+      // Use BOTH the main teleport's tag AND the return tag, plus any custom tags
       if ((game as any).modules.get('tagger')?.active) {
         const Tagger = (globalThis as any).Tagger;
-        await Tagger.setTags(returnTile, [tag, returnTag]); // Include main teleport tag for linking
+
+        // Build tag array: main tag + return tag + custom tags
+        const returnTileTags = [tag, returnTag];
+
+        // Add custom tags to return tile as well
+        if (config.customTags && config.customTags.trim()) {
+          const customTagArray = config.customTags
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t.length > 0);
+          returnTileTags.push(...customTagArray);
+          console.log(
+            `🧩 Dorman Lakely's Tile Utilities: Adding custom tags to return tile:`,
+            customTagArray
+          );
+        }
+
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Return tile tags:`,
+          returnTileTags
+        );
+        await Tagger.setTags(returnTile, returnTileTags);
       }
 
       ui.notifications.info(
