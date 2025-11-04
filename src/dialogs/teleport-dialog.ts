@@ -156,6 +156,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
 
+    console.log(`🧩 Dorman Lakely's Tile Utilities: _onRender called`);
+
     // Set up file picker button handlers
     const filePickerButtons = this.element.querySelectorAll('.file-picker');
     filePickerButtons.forEach((button: Element) => {
@@ -183,7 +185,9 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Set up tag input functionality
+    console.log(`🧩 About to call _initializeTagInput`);
     this._initializeTagInput();
+    console.log(`🧩 Finished calling _initializeTagInput`);
   }
 
   /* -------------------------------------------- */
@@ -192,11 +196,21 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Initialize tag input field with Tagger-style chip UI
    */
   private _initializeTagInput(): void {
+    console.log(`🧩 _initializeTagInput: Starting initialization`);
     const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
     const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
     const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
 
-    if (!tagInput || !tagsContainer || !hiddenInput) return;
+    console.log(`🧩 _initializeTagInput: Found elements:`, {
+      tagInput,
+      tagsContainer,
+      hiddenInput
+    });
+
+    if (!tagInput || !tagsContainer || !hiddenInput) {
+      console.log(`🧩 _initializeTagInput: Missing elements, exiting early`);
+      return;
+    }
 
     // Initialize existing tags
     const existingTags = hiddenInput.value
@@ -204,15 +218,20 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       .map(t => t.trim())
       .filter(t => t.length > 0);
 
+    console.log(`🧩 _initializeTagInput: Existing tags to initialize:`, existingTags);
     existingTags.forEach(tag => this._addTagChip(tag, tagsContainer, hiddenInput));
 
     // Handle Enter key to add tags
+    console.log(`🧩 _initializeTagInput: Adding keydown listener to tag input`);
     tagInput.addEventListener('keydown', (event: KeyboardEvent) => {
+      console.log(`🧩 Key pressed in tag input:`, event.key);
       if (event.key === 'Enter') {
+        console.log(`🧩 Enter key detected, calling _addTagsFromInput`);
         event.preventDefault();
         this._addTagsFromInput();
       }
     });
+    console.log(`🧩 _initializeTagInput: Initialization complete`);
   }
 
   /**

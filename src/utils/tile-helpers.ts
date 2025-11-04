@@ -1010,10 +1010,9 @@ export async function createTeleportTile(
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
   console.log(`Teleport tile "${config.name}" created with tag: ${tag}`);
 
-  // Tag the tile if Tagger module is active and API is available
-  const taggerModule = game.modules.get('tagger');
-  if (taggerModule?.active && (taggerModule as any).api) {
-    const Tagger = (taggerModule as any).api;
+  // Tag the tile if Tagger module is active
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
     const allTags = [tag]; // Start with EM tag
@@ -1165,11 +1164,10 @@ export async function createTeleportTile(
       const [returnTile] = await destinationScene.createEmbeddedDocuments('Tile', [returnTileData]);
       console.log(`Return teleport tile "Return: ${config.name}" created with tag: ${returnTag}`);
 
-      // Tag the return tile if Tagger module is active and API is available
+      // Tag the return tile if Tagger module is active
       // Use BOTH the main teleport's tag AND the return tag for proper cleanup
-      const returnTaggerModule = game.modules.get('tagger');
-      if (returnTaggerModule?.active && (returnTaggerModule as any).api) {
-        const Tagger = (returnTaggerModule as any).api;
+      if ((game as any).modules.get('tagger')?.active) {
+        const Tagger = (globalThis as any).Tagger;
         await Tagger.setTags(returnTile, [tag, returnTag]); // Include main teleport tag for linking
       }
 
