@@ -76,6 +76,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     let requireConfirmation = false;
     let deleteSourceToken = false;
     let createReturnTeleport = false;
+    let selectedSceneId = currentScene?.id || (scenes.length > 0 ? scenes[0].id : null);
+
     if (this.element) {
       const hasSavingThrowCheckbox = this.element.querySelector(
         'input[name="hasSavingThrow"]'
@@ -89,10 +91,19 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const createReturnTeleportCheckbox = this.element.querySelector(
         'input[name="createReturnTeleport"]'
       ) as HTMLInputElement;
+      const targetSceneSelect = this.element.querySelector(
+        'select[name="targetScene"]'
+      ) as HTMLSelectElement;
+
       hasSavingThrow = hasSavingThrowCheckbox?.checked || false;
       requireConfirmation = requireConfirmationCheckbox?.checked || false;
       deleteSourceToken = deleteSourceTokenCheckbox?.checked || false;
       createReturnTeleport = createReturnTeleportCheckbox?.checked || false;
+
+      // Read the selected scene from the dropdown (for re-renders)
+      if (targetSceneSelect?.value) {
+        selectedSceneId = targetSceneSelect.value;
+      }
     }
 
     // Get the selected teleport scene name
@@ -100,15 +111,15 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       ? scenes.find(s => s.id === this.teleportSceneId)?.name
       : null;
 
-    // Determine if teleporting to a different scene
-    const isDifferentScene = this.teleportSceneId && this.teleportSceneId !== currentScene?.id;
+    // Determine if teleporting to a different scene (based on dropdown selection)
+    const isDifferentScene = selectedSceneId !== currentScene?.id;
 
     return {
       ...context,
       tileName: `Teleport ${nextNumber}`,
       tileImage: 'icons/svg/trap.svg',
       scenes: scenes,
-      selectedSceneId: currentScene?.id || (scenes.length > 0 ? scenes[0].id : null),
+      selectedSceneId: selectedSceneId,
       currentSceneId: currentScene?.id,
       teleportX: this.teleportX,
       teleportY: this.teleportY,
@@ -148,6 +159,16 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     filePickerButtons.forEach((button: Element) => {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
+
+    // Set up target scene dropdown to re-render when changed (for delete source token option)
+    const targetSceneSelect = this.element.querySelector(
+      'select[name="targetScene"]'
+    ) as HTMLSelectElement;
+    if (targetSceneSelect) {
+      targetSceneSelect.addEventListener('change', () => {
+        this.render();
+      });
+    }
 
     // Set up saving throw checkbox to re-render when toggled
     const hasSavingThrowCheckbox = this.element.querySelector(
