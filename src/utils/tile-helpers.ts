@@ -1014,7 +1014,19 @@ export async function createTeleportTile(
   const taggerModule = game.modules.get('tagger');
   if (taggerModule?.active && (taggerModule as any).api) {
     const Tagger = (taggerModule as any).api;
-    await Tagger.setTags(tile, [tag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [tag]; // Start with EM tag
+    if (config.customTags && config.customTags.trim()) {
+      // Tagger will handle parsing comma-separated values, but we'll do it here for consistency
+      const customTagArray = config.customTags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+      allTags.push(...customTagArray);
+    }
+
+    await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, tag);
   }
 
@@ -1144,10 +1156,11 @@ export async function createTeleportTile(
       console.log(`Return teleport tile "Return: ${config.name}" created with tag: ${returnTag}`);
 
       // Tag the return tile if Tagger module is active and API is available
+      // Use BOTH the main teleport's tag AND the return tag for proper cleanup
       const returnTaggerModule = game.modules.get('tagger');
       if (returnTaggerModule?.active && (returnTaggerModule as any).api) {
         const Tagger = (returnTaggerModule as any).api;
-        await Tagger.setTags(returnTile, [returnTag]);
+        await Tagger.setTags(returnTile, [tag, returnTag]); // Include main teleport tag for linking
       }
 
       ui.notifications.info(

@@ -350,7 +350,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       hasSavingThrow: data.hasSavingThrow || false,
       savingThrow: data.savingThrow || 'dex',
       dc: parseInt(data.dc) || 15,
-      flavorText: data.flavorText || ''
+      flavorText: data.flavorText || '',
+      customTags: data.customTags || ''
     };
 
     // Minimize dialog so user can see canvas

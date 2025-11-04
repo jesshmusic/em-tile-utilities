@@ -265,3 +265,57 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
     }
   }
 });
+
+/**
+ * Clean up return teleport tiles when main teleport tiles are deleted
+ * Uses Tagger to find and delete related return teleport tiles
+ */
+Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+  // Check if Tagger is available
+  if (!(game as any).modules.get('tagger')?.active) return;
+
+  const Tagger = (globalThis as any).Tagger;
+
+  // Get tags from this tile
+  const tags = Tagger.getTags(tile);
+  if (!tags || tags.length === 0) return;
+
+  // Check if this tile has teleport actions
+  const monksData = tile.flags?.['monks-active-tiles'];
+  const hasTeleportActions = monksData?.actions?.some((action: any) => action.action === 'teleport');
+
+  if (!hasTeleportActions) return;
+
+  // Process each tag to clean up related return teleport tiles
+  for (const teleportTag of tags) {
+    // Only process EM-Teleport tags (not EM-Return-Teleport)
+    if (!teleportTag.startsWith('EM-Teleport-')) continue;
+
+    console.log(
+      `🧩 Dorman Lakely's Tile Utilities: Cleaning up return teleports for "${teleportTag}"`
+    );
+
+    // Find all tiles with the same tag across all scenes
+    const taggedTiles = Tagger.getByTag(teleportTag, {
+      scenes: Array.from((game as any).scenes),
+      caseInsensitive: false
+    });
+
+    // Delete all related return teleport tiles except the tile being deleted
+    for (const entity of taggedTiles) {
+      if (entity.id === tile.id) continue; // Skip the main teleport tile being deleted
+      if (entity.documentName !== 'Tile') continue; // Only process tiles
+
+      // Check if it's a return teleport (has "Return:" in the name or has EM-Return-Teleport tag)
+      const entityTags = Tagger.getTags(entity);
+      const isReturnTeleport = entityTags?.some((tag: string) => tag.startsWith('EM-Return-Teleport-'));
+
+      if (isReturnTeleport) {
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Deleting return teleport tile "${entity.name}" (${entity.id})`
+        );
+        await entity.delete();
+      }
+    }
+  }
+});

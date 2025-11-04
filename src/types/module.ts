@@ -164,6 +164,7 @@ export interface TeleportTileConfig {
   savingThrow: string;
   dc: number;
   flavorText: string;
+  customTags?: string;
 }
 
 export interface WallDoorState {
