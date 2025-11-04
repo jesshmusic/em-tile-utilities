@@ -121,6 +121,10 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
 
+    if (!this.element) {
+      return;
+    }
+
     // Activate file picker buttons
     const filePickerButtons = this.element.querySelectorAll('.file-picker');
     filePickerButtons.forEach((button: Element) => {
@@ -128,10 +132,8 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     });
 
     // Set up tag input functionality
-    if (this.element) {
-      this.tagInputManager = new TagInputManager(this.element);
-      this.tagInputManager.initialize();
-    }
+    this.tagInputManager = new TagInputManager(this.element);
+    this.tagInputManager.initialize();
   }
 
   /* -------------------------------------------- */
