@@ -414,8 +414,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           tileManager.maximize();
         }
       } catch (error) {
-        console.error('Error creating teleport tile:', error);
-        ui.notifications.error(`Failed to create teleport tile: ${error}`);
+        console.error("Dorman Lakely's Tile Utilities | Error creating teleport tile:", error);
+        ui.notifications.error(
+          `Dorman Lakely's Tile Utilities | Failed to create teleport tile: ${error}`
+        );
 
         // Still try to close the dialog even if creation failed
         this.close();

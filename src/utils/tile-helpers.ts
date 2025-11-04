@@ -1022,7 +1022,9 @@ export async function createTeleportTile(
     try {
       const destinationScene = (game as any).scenes.get(config.teleportSceneId);
       if (!destinationScene) {
-        ui.notifications.warn('Could not find destination scene for return teleport.');
+        ui.notifications.warn(
+          "Dorman Lakely's Tile Utilities | Could not find destination scene for return teleport."
+        );
         return;
       }
       const returnTag = generateUniqueEMTag('Return Teleport');
@@ -1146,10 +1148,14 @@ export async function createTeleportTile(
         await Tagger.setTags(returnTile, [returnTag]);
       }
 
-      ui.notifications.info(`Return teleport tile created at destination.`);
+      ui.notifications.info(
+        `Dorman Lakely's Tile Utilities | Return teleport tile created at destination.`
+      );
     } catch (error) {
-      console.error('Error creating return teleport tile:', error);
-      ui.notifications.error(`Failed to create return teleport tile: ${error}`);
+      console.error("Dorman Lakely's Tile Utilities | Error creating return teleport tile:", error);
+      ui.notifications.error(
+        `Dorman Lakely's Tile Utilities | Failed to create return teleport tile: ${error}`
+      );
     }
   }
 }
