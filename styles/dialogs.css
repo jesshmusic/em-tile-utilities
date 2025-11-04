@@ -1809,3 +1809,101 @@ button .game-icon,
   background-color: coral;
   color: #fff;
 }
+
+/* ========================================
+   Tagger-Style Tag Input (Namespaced)
+   ======================================== */
+
+.em-puzzles .tagger-input-container {
+  border: 1px solid #7a7971;
+  border-radius: 3px;
+  padding: 8px;
+  margin: 8px 0;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.em-puzzles .tagger-input-container legend {
+  font-weight: bold;
+  padding: 0 4px;
+  color: #f0f0e0;
+}
+
+.em-puzzles .tagger-input-container .form-group {
+  margin: 0;
+}
+
+.em-puzzles .tags-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-height: 32px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid #5a5a52;
+  border-radius: 3px;
+}
+
+.em-puzzles .tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+  color: #fff;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+}
+
+.em-puzzles .tag-chip:hover {
+  background: linear-gradient(135deg, #5aadff 0%, #4588cc 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.em-puzzles .tag-chip span {
+  pointer-events: none;
+}
+
+.em-puzzles .tag-chip i {
+  cursor: pointer;
+  font-size: 10px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.em-puzzles .tag-chip i:hover {
+  opacity: 1;
+}
+
+.em-puzzles .tag-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #7a7971;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  color: #f0f0e0;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.em-puzzles .tag-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+  box-shadow: 0 0 4px rgba(74, 158, 255, 0.5);
+}
+
+.em-puzzles .tag-input::placeholder {
+  color: #999;
+  opacity: 0.7;
+}
+
+.em-puzzles .tagger-input-container .hint {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-size: 11px;
+  color: #ccc;
+}

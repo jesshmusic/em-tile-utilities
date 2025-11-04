@@ -179,6 +179,85 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
       });
     }
+
+    // Set up tag input functionality
+    this._initializeTagInput();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Initialize tag input field with Tagger-style chip UI
+   */
+  private _initializeTagInput(): void {
+    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
+    const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
+    const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
+
+    if (!tagInput || !tagsContainer || !hiddenInput) return;
+
+    // Initialize existing tags
+    const existingTags = hiddenInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+
+    existingTags.forEach(tag => this._addTagChip(tag, tagsContainer, hiddenInput));
+
+    // Handle Enter key to add tags
+    tagInput.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const tagValue = tagInput.value.trim();
+        if (tagValue) {
+          this._addTagChip(tagValue, tagsContainer, hiddenInput);
+          tagInput.value = '';
+        }
+      }
+    });
+  }
+
+  /**
+   * Add a tag chip to the display
+   */
+  private _addTagChip(tag: string, container: HTMLElement, hiddenInput: HTMLInputElement): void {
+    // Check if tag already exists
+    const existingTags = Array.from(container.querySelectorAll('[data-tag-value]')).map(
+      el => (el as HTMLElement).dataset.tagValue
+    );
+    if (existingTags.includes(tag)) return;
+
+    // Create tag chip
+    const tagChip = document.createElement('div');
+    tagChip.className = 'tag-chip';
+    tagChip.dataset.tagValue = tag;
+
+    const tagLabel = document.createElement('span');
+    tagLabel.textContent = tag;
+
+    const removeButton = document.createElement('i');
+    removeButton.className = 'fas fa-times';
+    removeButton.onclick = () => {
+      tagChip.remove();
+      this._updateHiddenInput(container, hiddenInput);
+    };
+
+    tagChip.appendChild(tagLabel);
+    tagChip.appendChild(removeButton);
+    container.appendChild(tagChip);
+
+    // Update hidden input
+    this._updateHiddenInput(container, hiddenInput);
+  }
+
+  /**
+   * Update the hidden input with current tags
+   */
+  private _updateHiddenInput(container: HTMLElement, hiddenInput: HTMLInputElement): void {
+    const tags = Array.from(container.querySelectorAll('[data-tag-value]')).map(
+      el => (el as HTMLElement).dataset.tagValue
+    );
+    hiddenInput.value = tags.join(',');
   }
 
   /* -------------------------------------------- */
