@@ -15,21 +15,17 @@
   <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
 </div>
 
-<fieldset class='tagger-input-container'>
-  <legend>{{localize 'EMPUZZLES.CustomTags'}} (press enter to complete)</legend>
-  <div class='tagger-input-wrapper'>
-    <textarea class='tagger-textarea' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}'></textarea>
-    <div class='tagger-buttons'>
-      <button type='button' class='tagger-add-btn' data-action='addTag'>
-        <i class='fas fa-tag'></i> Add tags
-      </button>
-      <button type='button' class='tagger-confirm-btn' data-action='confirmTags'>
-        <i class='fas fa-check'></i>
-      </button>
-    </div>
+<fieldset class='tagger'>
+  <legend>Tagger (press enter to complete)</legend>
+  <div class='form-group'>
+    <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
+    <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
+    <button type='button' data-action='addTag'>Add tags</button>
+    <button type='button' data-action='confirmTags'>
+      <i class='fas fa-check'></i>
+    </button>
   </div>
-  <div class='tagger-chips-container' data-tags-container></div>
-  <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
+  <div class='tag-container' data-tags-container></div>
   <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
 </fieldset>
 

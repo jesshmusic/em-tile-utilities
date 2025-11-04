@@ -1811,180 +1811,73 @@ button .game-icon,
 }
 
 /* ========================================
-   Tagger-Style Tag Input (Namespaced)
+   Tagger Tag Input (Using Tagger's CSS)
    ======================================== */
 
-.em-puzzles .tagger-input-container {
-  border: 1px solid #7a7971;
-  border-radius: 3px;
-  padding: 10px;
-  margin: 8px 0;
-  background: rgba(0, 0, 0, 0.15);
+/* Tagger fieldset within em-puzzles dialogs */
+.em-puzzles fieldset.tagger {
+  margin: 5px 0;
+  flex: auto;
 }
 
-.em-puzzles .tagger-input-container legend {
-  font-weight: bold;
-  padding: 0 6px;
-  color: #f0f0e0;
-  font-size: 13px;
-}
-
-/* Input wrapper - contains textarea and buttons side by side */
-.em-puzzles .tagger-input-wrapper {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-/* Large dark textarea for tag input */
-.em-puzzles .tagger-textarea {
-  flex: 1;
-  min-height: 80px;
-  padding: 8px 10px;
-  border: 1px solid #5a5a52;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.3);
-  color: #f0f0e0;
-  font-family: inherit;
-  font-size: 14px;
-  resize: vertical;
-  line-height: 1.4;
-}
-
-.em-puzzles .tagger-textarea:focus {
-  outline: none;
-  border-color: #4a9eff;
-  box-shadow: 0 0 6px rgba(74, 158, 255, 0.4);
-}
-
-.em-puzzles .tagger-textarea::placeholder {
-  color: #999;
-  opacity: 0.6;
-}
-
-/* Button container */
-.em-puzzles .tagger-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Add tags button */
-.em-puzzles .tagger-add-btn {
-  padding: 8px 12px;
-  border: 1px solid #7a7971;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #555 0%, #333 100%);
-  color: #f0f0e0;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.em-puzzles .tagger-add-btn:hover {
-  background: linear-gradient(180deg, #666 0%, #444 100%);
-  border-color: #999;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
-}
-
-.em-puzzles .tagger-add-btn:active {
-  background: linear-gradient(180deg, #333 0%, #222 100%);
-}
-
-/* Confirm button (checkmark) */
-.em-puzzles .tagger-confirm-btn {
-  padding: 8px 12px;
-  border: 1px solid #7a7971;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #4a9eff 0%, #357abd 100%);
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.em-puzzles .tagger-confirm-btn:hover {
-  background: linear-gradient(180deg, #5aadff 0%, #4588cc 100%);
-  box-shadow: 0 0 6px rgba(74, 158, 255, 0.4);
-}
-
-.em-puzzles .tagger-confirm-btn:active {
-  background: linear-gradient(180deg, #357abd 0%, #2a6299 100%);
-}
-
-/* Chips container below input */
-.em-puzzles .tagger-chips-container {
+.em-puzzles fieldset.tagger .tag-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  min-height: 36px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid #5a5a52;
-  border-radius: 3px;
-  margin-bottom: 8px;
 }
 
-.em-puzzles .tagger-chips-container:empty {
+.em-puzzles fieldset.tagger .tag-container .tag {
+  padding: 5px 5px 5px 8px;
+  border: 1px solid rgb(155, 155, 155);
+  color: black;
+  margin: 3px 3px 3px 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  border-radius: 5px;
+  background: #eeede0;
 }
 
-.em-puzzles .tagger-chips-container:empty::before {
-  content: "Tags will appear here";
-  color: #777;
-  font-size: 12px;
-  font-style: italic;
+.em-puzzles fieldset.tagger .tag-container .tag.dropping {
+  background: #c6eaa7;
 }
 
-/* Tag chips */
-.em-puzzles .tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
-  color: #fff;
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
-}
-
-.em-puzzles .tag-chip:hover {
-  background: linear-gradient(135deg, #5aadff 0%, #4588cc 100%);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.em-puzzles .tag-chip span {
-  pointer-events: none;
-}
-
-.em-puzzles .tag-chip i {
+.em-puzzles fieldset.tagger .tag-container .tag > * {
   cursor: pointer;
-  font-size: 10px;
-  opacity: 0.8;
-  transition: opacity 0.2s;
 }
 
-.em-puzzles .tag-chip i:hover {
-  opacity: 1;
+.em-puzzles fieldset.tagger .tag-container .tag span:hover {
+  color: #834100;
 }
 
-.em-puzzles .tagger-input-container .hint {
+.em-puzzles fieldset.tagger .tag-container .tag i {
+  font-size: 1rem;
+  padding: 0 5px;
+}
+
+.em-puzzles fieldset.tagger .tag-container .tag i:hover {
+  color: #e30f0f;
+}
+
+.em-puzzles fieldset.tagger .tag-container .tag:has(i:hover) {
+  background-color: #ffb6b6;
+}
+
+.em-puzzles fieldset.tagger .tag-container .tag:has(span:hover) {
+  background-color: #fffdd4;
+}
+
+.em-puzzles fieldset.tagger .form-group button {
+  flex: 0;
+  height: 28px;
+  width: 28px;
+  line-height: inherit;
+  font-size: 0.75rem;
+  margin-left: 10px;
+}
+
+/* Hint text below Tagger fieldset */
+.em-puzzles fieldset.tagger + .hint {
   margin-top: 4px;
-  margin-bottom: 0;
+  margin-bottom: 8px;
   font-size: 11px;
   color: #aaa;
   line-height: 1.3;

@@ -192,7 +192,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Initialize tag input field with Tagger-style chip UI
    */
   private _initializeTagInput(): void {
-    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLTextAreaElement;
+    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
     const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
     const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
 
@@ -216,10 +216,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Parse tags from the textarea input and add them as chips
+   * Parse tags from the text input and add them as chips
    */
   private _addTagsFromInput(): void {
-    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLTextAreaElement;
+    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
     const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
     const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
 
@@ -242,19 +242,18 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Add a tag chip to the display
+   * Add a tag chip to the display (matches Tagger structure)
    */
   private _addTagChip(tag: string, container: HTMLElement, hiddenInput: HTMLInputElement): void {
     // Check if tag already exists
-    const existingTags = Array.from(container.querySelectorAll('[data-tag-value]')).map(
-      el => (el as HTMLElement).dataset.tagValue
+    const existingTags = Array.from(container.querySelectorAll('.tag')).map(
+      el => (el as HTMLElement).querySelector('span')?.textContent || ''
     );
     if (existingTags.includes(tag)) return;
 
-    // Create tag chip
-    const tagChip = document.createElement('div');
-    tagChip.className = 'tag-chip';
-    tagChip.dataset.tagValue = tag;
+    // Create tag element matching Tagger structure
+    const tagElement = document.createElement('div');
+    tagElement.className = 'tag';
 
     const tagLabel = document.createElement('span');
     tagLabel.textContent = tag;
@@ -262,13 +261,13 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const removeButton = document.createElement('i');
     removeButton.className = 'fas fa-times';
     removeButton.onclick = () => {
-      tagChip.remove();
+      tagElement.remove();
       this._updateHiddenInput(container, hiddenInput);
     };
 
-    tagChip.appendChild(tagLabel);
-    tagChip.appendChild(removeButton);
-    container.appendChild(tagChip);
+    tagElement.appendChild(tagLabel);
+    tagElement.appendChild(removeButton);
+    container.appendChild(tagElement);
 
     // Update hidden input
     this._updateHiddenInput(container, hiddenInput);
@@ -278,10 +277,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Update the hidden input with current tags
    */
   private _updateHiddenInput(container: HTMLElement, hiddenInput: HTMLInputElement): void {
-    const tags = Array.from(container.querySelectorAll('[data-tag-value]')).map(
-      el => (el as HTMLElement).dataset.tagValue
+    const tags = Array.from(container.querySelectorAll('.tag')).map(
+      el => (el as HTMLElement).querySelector('span')?.textContent || ''
     );
-    hiddenInput.value = tags.join(',');
+    hiddenInput.value = tags.filter(t => t.length > 0).join(',');
   }
 
   /* -------------------------------------------- */
