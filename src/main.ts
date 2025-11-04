@@ -256,6 +256,11 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
           `🧩 Dorman Lakely's Tile Utilities: Deleting light source "${entity.id}" from light group`
         );
         await entity.delete();
+      } else if (entity.documentName === 'AmbientSound') {
+        console.log(
+          `🧩 Dorman Lakely's Tile Utilities: Deleting ambient sound "${entity.id}" from light group`
+        );
+        await entity.delete();
       } else if (entity.documentName === 'Tile') {
         console.log(
           `🧩 Dorman Lakely's Tile Utilities: Deleting overlay tile "${entity.id}" from light group`
@@ -283,7 +288,9 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
   // Check if this tile has teleport actions
   const monksData = tile.flags?.['monks-active-tiles'];
-  const hasTeleportActions = monksData?.actions?.some((action: any) => action.action === 'teleport');
+  const hasTeleportActions = monksData?.actions?.some(
+    (action: any) => action.action === 'teleport'
+  );
 
   if (!hasTeleportActions) return;
 
@@ -386,7 +393,9 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
     // Delete the main teleport tile (the one that's NOT a return teleport)
     for (const entity of taggedTiles) {
-      console.log(`🧩 Checking entity: ${entity.name} (${entity.id}), documentName: ${entity.documentName}`);
+      console.log(
+        `🧩 Checking entity: ${entity.name} (${entity.id}), documentName: ${entity.documentName}`
+      );
 
       if (entity.id === tile.id) {
         console.log(`🧩 Skipping - this is the return tile being deleted`);
@@ -401,9 +410,7 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
       const entityTags = Tagger.getTags(entity);
       console.log(`🧩 Entity tags:`, entityTags);
 
-      const hasReturnTag = entityTags?.some((tag: string) =>
-        tag.startsWith('EM-Return-Teleport-')
-      );
+      const hasReturnTag = entityTags?.some((tag: string) => tag.startsWith('EM-Return-Teleport-'));
       const isMainTeleport = !hasReturnTag;
 
       console.log(`🧩 Has return tag: ${hasReturnTag}, Is main teleport: ${isMainTeleport}`);

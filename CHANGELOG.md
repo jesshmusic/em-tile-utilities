@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0] - 2025-11-04
+
+### Added
+
+- add sound field to teleport and light interfaces and templates
+- add confirmation dialog before deleting paired teleport tiles
+- fix: add error handling for bidirectional teleport deletion to prevent race conditions
+- fix: match Tagger button styling and add action logging
+- debug: add extensive console logging for tag input
+- use Tagger's exact HTML structure and CSS
+- implement Tagger-style tag input interface
+- implement Tagger-style tag chip input for custom tags
+- add custom tags input field to teleport dialog
+- update default tile images to more descriptive icons
+- fix: add proper null check for Tagger API before usage
+- make delete source token option reactive to scene dropdown changes
+- fix: add module name prefix to all error messages
+- fix: add error handling and debug logging to teleport dialog
+- fix: add error handling for return teleport creation
+- add delete source token and return teleport options
+- implement drag-to-size placement for teleport tiles
+- add teleport dialog and workflow enhancements
+- improve trap dialog UX, enhance build system, and implement Copilot suggestions (#18)
+
+### Fixed
+
+- preserve customTags value across dialog re-renders in teleport dialog
+- apply custom tags to return teleports and handle bidirectional deletion
+- use globalThis.Tagger instead of module.api for tag creation
+- correct TypeScript type errors in tile-helpers
+- configure TypeScript to recognize Foundry global types
+
 ## [1.14.0] - 2025-11-03
 
 ### Added

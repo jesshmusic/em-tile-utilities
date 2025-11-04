@@ -692,6 +692,25 @@ export async function createLightTile(
   // Uses the light name in PascalCase with incrementing numbers if needed
   const lightGroupTag = generateUniqueLightTag(config.name);
 
+  // Create AmbientSound if sound is provided
+  let soundId: string | null = null;
+  if (config.sound && config.sound.trim() !== '') {
+    const soundData = {
+      x: tileX + gridSize / 2,
+      y: tileY + gridSize / 2,
+      radius: config.soundRadius || 40,
+      path: config.sound,
+      repeat: true,
+      volume: config.soundVolume ?? 0.5,
+      walls: true,
+      easing: true,
+      hidden: !config.useDarkness // Start hidden for click-based, audible for darkness-based
+    };
+
+    const [sound] = await scene.createEmbeddedDocuments('AmbientSound', [soundData]);
+    soundId = (sound as any).id;
+  }
+
   // Create overlay tile if enabled
   let overlayTileId: string | null = null;
   if (config.useOverlay && config.overlayImage) {
@@ -778,6 +797,20 @@ export async function createLightTile(
       },
       id: foundry.utils.randomID()
     });
+
+    // Toggle the sound if enabled
+    if (soundId) {
+      actions.push({
+        action: 'activate',
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.AmbientSound.${soundId}`
+          },
+          activate: 'toggle'
+        },
+        id: foundry.utils.randomID()
+      });
+    }
 
     // Toggle overlay tile if enabled
     if (overlayTileId) {
@@ -871,6 +904,14 @@ export async function createLightTile(
       }
     }
 
+    // Tag the sound source if it was created
+    if (soundId) {
+      const sound = (scene as any).sounds.get(soundId);
+      if (sound) {
+        await Tagger.setTags(sound, [lightGroupTag]);
+      }
+    }
+
     // Show warning about the tag
     await showTaggerWithWarning(mainTile, lightGroupTag);
   }
@@ -898,6 +939,25 @@ export async function createTeleportTile(
 
   // Build actions array
   const actions: any[] = [];
+
+  // Play sound if provided
+  if (config.sound && config.sound.trim() !== '') {
+    actions.push({
+      action: 'playsound',
+      data: {
+        audiofile: config.sound,
+        audiofor: 'everyone',
+        volume: 1,
+        loop: false,
+        fade: 0.25,
+        scenerestrict: false,
+        prevent: false,
+        delay: false,
+        playlist: true
+      },
+      id: foundry.utils.randomID()
+    });
+  }
 
   // Add saving throw if enabled
   if (config.hasSavingThrow) {
@@ -1016,10 +1076,7 @@ export async function createTeleportTile(
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
     const allTags = [tag]; // Start with EM tag
-    console.log(
-      `🧩 Dorman Lakely's Tile Utilities: customTags from config:`,
-      config.customTags
-    );
+    console.log(`🧩 Dorman Lakely's Tile Utilities: customTags from config:`, config.customTags);
     if (config.customTags && config.customTags.trim()) {
       // Tagger will handle parsing comma-separated values, but we'll do it here for consistency
       const customTagArray = config.customTags
@@ -1027,10 +1084,7 @@ export async function createTeleportTile(
         .map(t => t.trim())
         .filter(t => t.length > 0);
       allTags.push(...customTagArray);
-      console.log(
-        `🧩 Dorman Lakely's Tile Utilities: Adding custom tags:`,
-        customTagArray
-      );
+      console.log(`🧩 Dorman Lakely's Tile Utilities: Adding custom tags:`, customTagArray);
     }
 
     console.log(`🧩 Dorman Lakely's Tile Utilities: All tags to apply:`, allTags);
@@ -1053,6 +1107,25 @@ export async function createTeleportTile(
 
       // Build return actions (teleport back to source)
       const returnActions: any[] = [];
+
+      // Play sound if provided
+      if (config.sound && config.sound.trim() !== '') {
+        returnActions.push({
+          action: 'playsound',
+          data: {
+            audiofile: config.sound,
+            audiofor: 'everyone',
+            volume: 1,
+            loop: false,
+            fade: 0.25,
+            scenerestrict: false,
+            prevent: false,
+            delay: false,
+            playlist: true
+          },
+          id: foundry.utils.randomID()
+        });
+      }
 
       // Add saving throw if enabled (same as original)
       if (config.hasSavingThrow) {
@@ -1185,10 +1258,7 @@ export async function createTeleportTile(
           );
         }
 
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Return tile tags:`,
-          returnTileTags
-        );
+        console.log(`🧩 Dorman Lakely's Tile Utilities: Return tile tags:`, returnTileTags);
         await Tagger.setTags(returnTile, returnTileTags);
       }
 

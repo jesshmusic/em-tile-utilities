@@ -52,9 +52,10 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
-    // Get default images from settings
+    // Get default images and sound from settings
     const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultLightOffImage');
     const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultLightOnImage');
+    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
 
     return {
       ...context,
@@ -69,6 +70,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       colorIntensity: 0.5,
       useOverlay: false,
       overlayImage: '',
+      sound: defaultSound,
+      soundRadius: 40,
+      soundVolume: 0.5,
       buttons: [
         {
           type: 'submit',
@@ -265,7 +269,10 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
           lightColor: data.lightColor || '#ffffff',
           colorIntensity: parseFloat(data.colorIntensity) || 0.5,
           useOverlay: data.useOverlay === true,
-          overlayImage: data.overlayImage || ''
+          overlayImage: data.overlayImage || '',
+          sound: data.sound || '',
+          soundRadius: parseInt(data.soundRadius) || 40,
+          soundVolume: parseFloat(data.soundVolume) || 0.5
         },
         snapped.x,
         snapped.y

@@ -20,6 +20,7 @@ export interface LightConfig {
   overlayImage?: string;
   sound?: string;
   soundRadius?: number;
+  soundVolume?: number;
 }
 
 /**
