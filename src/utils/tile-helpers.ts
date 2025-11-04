@@ -1010,9 +1010,10 @@ export async function createTeleportTile(
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
   console.log(`Teleport tile "${config.name}" created with tag: ${tag}`);
 
-  // Tag the tile if Tagger module is active
-  if (game.modules.get('tagger')?.active) {
-    const Tagger = (game.modules.get('tagger') as any).api;
+  // Tag the tile if Tagger module is active and API is available
+  const taggerModule = game.modules.get('tagger');
+  if (taggerModule?.active && (taggerModule as any).api) {
+    const Tagger = (taggerModule as any).api;
     await Tagger.setTags(tile, [tag]);
     await showTaggerWithWarning(tile, tag);
   }
@@ -1142,9 +1143,10 @@ export async function createTeleportTile(
       const [returnTile] = await destinationScene.createEmbeddedDocuments('Tile', [returnTileData]);
       console.log(`Return teleport tile "Return: ${config.name}" created with tag: ${returnTag}`);
 
-      // Tag the return tile if Tagger module is active
-      if (game.modules.get('tagger')?.active) {
-        const Tagger = (game.modules.get('tagger') as any).api;
+      // Tag the return tile if Tagger module is active and API is available
+      const returnTaggerModule = game.modules.get('tagger');
+      if (returnTaggerModule?.active && (returnTaggerModule as any).api) {
+        const Tagger = (returnTaggerModule as any).api;
         await Tagger.setTags(returnTile, [returnTag]);
       }
 
