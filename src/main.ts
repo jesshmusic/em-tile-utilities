@@ -315,27 +315,41 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
         console.log(
           `🧩 Dorman Lakely's Tile Utilities: Deleting return teleport "${entity.name}" (${entity.id})`
         );
-        await entity.delete();
+        try {
+          await entity.delete();
+        } catch (error) {
+          console.warn(
+            `🧩 Dorman Lakely's Tile Utilities: Could not delete return teleport (may already be deleted):`,
+            error
+          );
+        }
       }
     }
   }
 
   // Case 2: Return teleport being deleted → delete main teleport
+  console.log(`🧩 Dorman Lakely's Tile Utilities: Checking for return teleport deletion`);
+  console.log(`🧩 All tags on this tile:`, tags);
+
   for (const returnTag of tags) {
     if (!returnTag.startsWith('EM-Return-Teleport-')) continue;
 
     console.log(
       `🧩 Dorman Lakely's Tile Utilities: Return teleport deleted, finding main teleport for "${returnTag}"`
     );
+    console.log(`🧩 All tags on return tile:`, tags);
 
     // The return teleport is tagged with BOTH its return tag AND the main teleport's tag
     // Find the main teleport tag on this return tile
     const mainTeleportTag = tags.find((t: string) => t.startsWith('EM-Teleport-'));
 
+    console.log(`🧩 Looking for main teleport tag, found:`, mainTeleportTag);
+
     if (!mainTeleportTag) {
       console.log(
         `🧩 Dorman Lakely's Tile Utilities: No main teleport tag found on return teleport`
       );
+      console.log(`🧩 Tags array was:`, tags);
       continue;
     }
 
@@ -349,21 +363,44 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
       caseInsensitive: false
     });
 
+    console.log(`🧩 Found ${taggedTiles.length} tiles with tag "${mainTeleportTag}"`);
+
     // Delete the main teleport tile (the one that's NOT a return teleport)
     for (const entity of taggedTiles) {
-      if (entity.id === tile.id) continue; // Skip the return tile being deleted
-      if (entity.documentName !== 'Tile') continue; // Only process tiles
+      console.log(`🧩 Checking entity: ${entity.name} (${entity.id}), documentName: ${entity.documentName}`);
+
+      if (entity.id === tile.id) {
+        console.log(`🧩 Skipping - this is the return tile being deleted`);
+        continue;
+      }
+
+      if (entity.documentName !== 'Tile') {
+        console.log(`🧩 Skipping - not a tile (${entity.documentName})`);
+        continue;
+      }
 
       const entityTags = Tagger.getTags(entity);
-      const isMainTeleport = !entityTags?.some((tag: string) =>
+      console.log(`🧩 Entity tags:`, entityTags);
+
+      const hasReturnTag = entityTags?.some((tag: string) =>
         tag.startsWith('EM-Return-Teleport-')
       );
+      const isMainTeleport = !hasReturnTag;
+
+      console.log(`🧩 Has return tag: ${hasReturnTag}, Is main teleport: ${isMainTeleport}`);
 
       if (isMainTeleport) {
         console.log(
           `🧩 Dorman Lakely's Tile Utilities: Deleting main teleport "${entity.name}" (${entity.id})`
         );
-        await entity.delete();
+        try {
+          await entity.delete();
+        } catch (error) {
+          console.warn(
+            `🧩 Dorman Lakely's Tile Utilities: Could not delete main teleport (may already be deleted):`,
+            error
+          );
+        }
       }
     }
   }
