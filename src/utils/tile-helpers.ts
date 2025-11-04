@@ -894,7 +894,7 @@ export async function createTeleportTile(
   const tileHeight = height ?? gridSize;
 
   // Generate unique tag
-  const tag = generateUniqueEMTag(scene, 'Teleport');
+  const tag = generateUniqueEMTag('Teleport');
 
   // Build actions array
   const actions: any[] = [];
