@@ -78,6 +78,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     let requireConfirmation = false;
     let deleteSourceToken = false;
     let createReturnTeleport = false;
+    let customTags = '';
     let selectedSceneId = currentScene?.id || (scenes.length > 0 ? scenes[0].id : null);
 
     if (this.element) {
@@ -96,11 +97,15 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const targetSceneSelect = this.element.querySelector(
         'select[name="targetScene"]'
       ) as HTMLSelectElement;
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
 
       hasSavingThrow = hasSavingThrowCheckbox?.checked || false;
       requireConfirmation = requireConfirmationCheckbox?.checked || false;
       deleteSourceToken = deleteSourceTokenCheckbox?.checked || false;
       createReturnTeleport = createReturnTeleportCheckbox?.checked || false;
+      customTags = customTagsInput?.value || '';
 
       // Read the selected scene from the dropdown (for re-renders)
       if (targetSceneSelect?.value) {
@@ -132,6 +137,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       requireConfirmation: requireConfirmation,
       deleteSourceToken: deleteSourceToken,
       createReturnTeleport: createReturnTeleport,
+      customTags: customTags,
       buttons: [
         {
           type: 'submit',
