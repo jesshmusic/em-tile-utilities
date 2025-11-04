@@ -398,17 +398,27 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (canvas as any).stage.off('pointerup', onMouseUp);
 
       // Create tile with specified dimensions
-      await createTeleportTile(scene, config, x, y, width, height);
+      try {
+        await createTeleportTile(scene, config, x, y, width, height);
+        console.log('Teleport tile created successfully, closing dialog...');
 
-      ui.notifications.info(`Teleport tile "${config.name}" created!`);
+        ui.notifications.info(`Teleport tile "${config.name}" created!`);
 
-      // Close this dialog
-      this.close();
+        // Close this dialog
+        this.close();
+        console.log('Dialog close called');
 
-      // Restore Tile Manager if it was minimized
-      const tileManager = getActiveTileManager();
-      if (tileManager) {
-        tileManager.maximize();
+        // Restore Tile Manager if it was minimized
+        const tileManager = getActiveTileManager();
+        if (tileManager) {
+          tileManager.maximize();
+        }
+      } catch (error) {
+        console.error('Error creating teleport tile:', error);
+        ui.notifications.error(`Failed to create teleport tile: ${error}`);
+
+        // Still try to close the dialog even if creation failed
+        this.close();
       }
     };
 
