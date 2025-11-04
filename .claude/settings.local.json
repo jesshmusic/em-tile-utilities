@@ -19,7 +19,8 @@
       "Bash(npm run clean:*)",
       "WebFetch(domain:foundryvtt.com)",
       "Bash(pkill:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": [

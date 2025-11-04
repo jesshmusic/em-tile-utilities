@@ -38,6 +38,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     },
     actions: {
       selectPosition: TeleportDialog.#onSelectPosition,
+      addTag: TeleportDialog.#onAddTag,
+      confirmTags: TeleportDialog.#onConfirmTags,
       close: TeleportDialog.prototype._onClose
     }
   };
@@ -190,7 +192,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Initialize tag input field with Tagger-style chip UI
    */
   private _initializeTagInput(): void {
-    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLInputElement;
+    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLTextAreaElement;
     const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
     const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
 
@@ -208,13 +210,35 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     tagInput.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
         event.preventDefault();
-        const tagValue = tagInput.value.trim();
-        if (tagValue) {
-          this._addTagChip(tagValue, tagsContainer, hiddenInput);
-          tagInput.value = '';
-        }
+        this._addTagsFromInput();
       }
     });
+  }
+
+  /**
+   * Parse tags from the textarea input and add them as chips
+   */
+  private _addTagsFromInput(): void {
+    const tagInput = this.element.querySelector('[data-tag-input]') as HTMLTextAreaElement;
+    const tagsContainer = this.element.querySelector('[data-tags-container]') as HTMLElement;
+    const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
+
+    if (!tagInput || !tagsContainer || !hiddenInput) return;
+
+    // Parse comma-separated tags from input
+    const inputValue = tagInput.value.trim();
+    if (!inputValue) return;
+
+    const newTags = inputValue
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+
+    // Add each tag as a chip
+    newTags.forEach(tag => this._addTagChip(tag, tagsContainer, hiddenInput));
+
+    // Clear the input
+    tagInput.value = '';
   }
 
   /**
@@ -376,6 +400,32 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
     (canvas as any).stage.on('click', handler);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click
+   */
+  static #onAddTag(this: TeleportDialog): void {
+    this._addTagsFromInput();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle confirm tags button click
+   */
+  static #onConfirmTags(this: TeleportDialog): void {
+    // Parse and add any remaining tags from input
+    this._addTagsFromInput();
+
+    // Optional: Show confirmation notification
+    const hiddenInput = this.element.querySelector('[data-tags-hidden]') as HTMLInputElement;
+    if (hiddenInput && hiddenInput.value) {
+      const tagCount = hiddenInput.value.split(',').filter(t => t.trim()).length;
+      ui.notifications.info(`${tagCount} tag(s) ready to be applied.`);
+    }
   }
 
   /* -------------------------------------------- */
