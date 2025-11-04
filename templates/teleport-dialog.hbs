@@ -15,6 +15,17 @@
   <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
 </div>
 
+<div class='form-group'>
+  <label for='sound'>{{localize 'EMPUZZLES.TeleportSound'}}</label>
+  <div class='file-picker-group'>
+    <input type='text' name='sound' value='{{sound}}' />
+    <button type='button' class='file-picker' data-target='sound' data-type='audio'>
+      <i class='fas fa-file-audio'></i>
+    </button>
+  </div>
+  <p class='hint'>{{localize 'EMPUZZLES.TeleportSoundHint'}}</p>
+</div>
+
 <fieldset class='tagger'>
   <legend>Tagger (press enter to complete)</legend>
   <div class='form-group'>

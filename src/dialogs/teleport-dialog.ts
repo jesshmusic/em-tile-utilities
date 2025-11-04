@@ -64,6 +64,9 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Generate teleport name
     const nextNumber = getNextTileNumber('Teleport');
 
+    // Get default sound from settings
+    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
+
     // Get all scenes for selection dropdown
     const scenes = Array.from((game as any).scenes).map((scene: any) => ({
       id: scene.id,
@@ -79,6 +82,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     let deleteSourceToken = false;
     let createReturnTeleport = false;
     let customTags = '';
+    let sound = defaultSound;
     let selectedSceneId = currentScene?.id || (scenes.length > 0 ? scenes[0].id : null);
 
     if (this.element) {
@@ -100,12 +104,14 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const customTagsInput = this.element.querySelector(
         'input[name="customTags"]'
       ) as HTMLInputElement;
+      const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
 
       hasSavingThrow = hasSavingThrowCheckbox?.checked || false;
       requireConfirmation = requireConfirmationCheckbox?.checked || false;
       deleteSourceToken = deleteSourceTokenCheckbox?.checked || false;
       createReturnTeleport = createReturnTeleportCheckbox?.checked || false;
       customTags = customTagsInput?.value || '';
+      sound = soundInput?.value || defaultSound;
 
       // Read the selected scene from the dropdown (for re-renders)
       if (targetSceneSelect?.value) {
@@ -125,6 +131,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       ...context,
       tileName: `Teleport ${nextNumber}`,
       tileImage: 'icons/magic/movement/portal-vortex-orange.webp',
+      sound: sound,
       scenes: scenes,
       selectedSceneId: selectedSceneId,
       currentSceneId: currentScene?.id,
@@ -532,7 +539,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       savingThrow: data.savingThrow || 'dex',
       dc: parseInt(data.dc) || 15,
       flavorText: data.flavorText || '',
-      customTags: data.customTags || ''
+      customTags: data.customTags || '',
+      sound: data.sound || ''
     };
 
     // Minimize dialog so user can see canvas

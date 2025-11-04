@@ -18,6 +18,8 @@ export interface LightConfig {
   colorIntensity: number;
   useOverlay: boolean;
   overlayImage?: string;
+  sound?: string;
+  soundRadius?: number;
 }
 
 /**
@@ -165,6 +167,7 @@ export interface TeleportTileConfig {
   dc: number;
   flavorText: string;
   customTags?: string;
+  sound?: string;
 }
 
 export interface WallDoorState {
