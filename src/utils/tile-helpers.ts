@@ -1100,15 +1100,13 @@ export async function createTeleportTile(
 
   // Create the tile
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
-  console.log(`Teleport tile "${config.name}" created with tag: ${tag}`);
-
   // Tag the tile if Tagger module is active
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
     const allTags = [tag]; // Start with EM tag
-    console.log(`🧩 Dorman Lakely's Tile Utilities: customTags from config:`, config.customTags);
+
     if (config.customTags && config.customTags.trim()) {
       // Tagger will handle parsing comma-separated values, but we'll do it here for consistency
       const customTagArray = config.customTags
@@ -1116,12 +1114,9 @@ export async function createTeleportTile(
         .map(t => t.trim())
         .filter(t => t.length > 0);
       allTags.push(...customTagArray);
-      console.log(`🧩 Dorman Lakely's Tile Utilities: Adding custom tags:`, customTagArray);
     }
 
-    console.log(`🧩 Dorman Lakely's Tile Utilities: All tags to apply:`, allTags);
     await Tagger.setTags(tile, allTags);
-    console.log(`🧩 Dorman Lakely's Tile Utilities: Tags set successfully`);
     await showTaggerWithWarning(tile, tag);
   }
 
@@ -1247,8 +1242,6 @@ export async function createTeleportTile(
 
       // Create the return tile on destination scene
       const [returnTile] = await destinationScene.createEmbeddedDocuments('Tile', [returnTileData]);
-      console.log(`Return teleport tile "Return: ${config.name}" created with tag: ${returnTag}`);
-
       // Tag the return tile if Tagger module is active
       // Use BOTH the main teleport's tag AND the return tag, plus any custom tags
       if ((game as any).modules.get('tagger')?.active) {
@@ -1264,13 +1257,8 @@ export async function createTeleportTile(
             .map(t => t.trim())
             .filter(t => t.length > 0);
           returnTileTags.push(...customTagArray);
-          console.log(
-            `🧩 Dorman Lakely's Tile Utilities: Adding custom tags to return tile:`,
-            customTagArray
-          );
         }
 
-        console.log(`🧩 Dorman Lakely's Tile Utilities: Return tile tags:`, returnTileTags);
         await Tagger.setTags(returnTile, returnTileTags);
       }
 

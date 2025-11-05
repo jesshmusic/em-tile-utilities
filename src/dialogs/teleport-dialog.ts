@@ -18,6 +18,14 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected teleportSceneId?: string;
   private tagInputManager?: TagInputManager;
 
+  /** Canvas event handlers for drag-to-place (need cleanup on close) */
+  private canvasHandlers?: {
+    onMouseDown: (event: any) => void;
+    onMouseMove: (event: any) => void;
+    onMouseUp: (event: any) => Promise<void>;
+    previewGraphics: any;
+  };
+
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     id: 'em-puzzles-teleport-config',
@@ -171,7 +179,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
 
-    console.log(`🧩 Dorman Lakely's Tile Utilities: _onRender called`);
 
     // Set up file picker button handlers
     const filePickerButtons = this.element.querySelectorAll('.file-picker');
@@ -240,6 +247,21 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle dialog close (cancel button)
    */
   protected _onClose(): void {
+    // Clean up canvas event handlers if they exist
+    if (this.canvasHandlers) {
+      (canvas as any).stage.off('pointerdown', this.canvasHandlers.onMouseDown);
+      (canvas as any).stage.off('pointermove', this.canvasHandlers.onMouseMove);
+      (canvas as any).stage.off('pointerup', this.canvasHandlers.onMouseUp);
+
+      // Clean up preview graphics if it exists
+      if (this.canvasHandlers.previewGraphics) {
+        this.canvasHandlers.previewGraphics.clear();
+        (canvas as any).controls.removeChild(this.canvasHandlers.previewGraphics);
+      }
+
+      this.canvasHandlers = undefined;
+    }
+
     // Close the dialog
     this.close();
 
@@ -362,8 +384,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const data = formData.object;
 
-    console.log(`🧩 Dorman Lakely's Tile Utilities: Form data:`, data);
-    console.log(`🧩 Dorman Lakely's Tile Utilities: customTags from form:`, data.customTags);
 
     // Validate teleport destination
     if (this.teleportX === undefined || this.teleportY === undefined || !this.teleportSceneId) {
@@ -409,7 +429,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Set up drag-to-place handlers
     let startPos: { x: number; y: number } | null = null;
-    let previewGraphics: any = null;
 
     const onMouseDown = (event: any) => {
       // Only respond to clicks on empty canvas, not existing tiles
@@ -423,13 +442,17 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       startPos = { x: snapped.x, y: snapped.y };
 
       // Create preview rectangle
-      previewGraphics = (canvas as any).controls.addChild(new (PIXI as any).Graphics());
-      previewGraphics.lineStyle(2, 0xff9800, 1);
-      previewGraphics.drawRect(startPos.x, startPos.y, 0, 0);
+      if (this.canvasHandlers) {
+        this.canvasHandlers.previewGraphics = (canvas as any).controls.addChild(
+          new (PIXI as any).Graphics()
+        );
+        this.canvasHandlers.previewGraphics.lineStyle(2, 0xff9800, 1);
+        this.canvasHandlers.previewGraphics.drawRect(startPos.x, startPos.y, 0, 0);
+      }
     };
 
     const onMouseMove = (event: any) => {
-      if (!startPos || !previewGraphics) return;
+      if (!startPos || !this.canvasHandlers?.previewGraphics) return;
 
       const position = event.data.getLocalPosition((canvas as any).tiles);
       const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
@@ -439,9 +462,9 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const x = Math.min(startPos.x, snapped.x);
       const y = Math.min(startPos.y, snapped.y);
 
-      previewGraphics.clear();
-      previewGraphics.lineStyle(2, 0xff9800, 1);
-      previewGraphics.drawRect(x, y, width, height);
+      this.canvasHandlers.previewGraphics.clear();
+      this.canvasHandlers.previewGraphics.lineStyle(2, 0xff9800, 1);
+      this.canvasHandlers.previewGraphics.drawRect(x, y, width, height);
     };
 
     const onMouseUp = async (event: any) => {
@@ -456,10 +479,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const y = Math.min(startPos.y, snapped.y);
 
       // Clean up preview
-      if (previewGraphics) {
-        previewGraphics.clear();
-        (canvas as any).controls.removeChild(previewGraphics);
-        previewGraphics = null;
+      if (this.canvasHandlers?.previewGraphics) {
+        this.canvasHandlers.previewGraphics.clear();
+        (canvas as any).controls.removeChild(this.canvasHandlers.previewGraphics);
+        this.canvasHandlers.previewGraphics = null;
       }
 
       // Remove handlers
@@ -467,16 +490,17 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (canvas as any).stage.off('pointermove', onMouseMove);
       (canvas as any).stage.off('pointerup', onMouseUp);
 
+      // Clear stored handlers
+      this.canvasHandlers = undefined;
+
       // Create tile with specified dimensions
       try {
         await createTeleportTile(scene, config, x, y, width, height);
-        console.log('Teleport tile created successfully, closing dialog...');
 
         ui.notifications.info(`Teleport tile "${config.name}" created!`);
 
         // Close this dialog
         this.close();
-        console.log('Dialog close called');
 
         // Restore Tile Manager if it was minimized
         const tileManager = getActiveTileManager();
@@ -492,6 +516,14 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         // Still try to close the dialog even if creation failed
         this.close();
       }
+    };
+
+    // Store handlers for cleanup
+    this.canvasHandlers = {
+      onMouseDown,
+      onMouseMove,
+      onMouseUp,
+      previewGraphics: null
     };
 
     (canvas as any).stage.on('pointerdown', onMouseDown);

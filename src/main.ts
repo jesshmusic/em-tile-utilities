@@ -200,9 +200,15 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
 });
 
 /**
- * Clean up trap actors and tokens when combat trap tiles are deleted
+ * Track pending deletion confirmations to prevent race conditions
+ * when multiple related tiles are deleted simultaneously
  */
-Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+const pendingDeletionConfirmations = new Set<string>();
+
+/**
+ * Helper: Clean up trap actors and tokens when combat trap tiles are deleted
+ */
+async function cleanupCombatTrap(tile: any): Promise<void> {
   const actorId = tile.flags?.['monks-active-tiles']?.['em-trap-actor-id'];
 
   if (actorId) {
@@ -213,9 +219,6 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
     if (tokenId) {
       const token = scene.tokens.get(tokenId);
       if (token) {
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting trap token "${token.name}" (${tokenId})`
-        );
         await token.delete();
       }
       await scene.unsetFlag('em-tile-utilities', `trap-token-${actorId}`);
@@ -224,19 +227,16 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
     // Delete the actor
     const actor = (game as any).actors.get(actorId);
     if (actor) {
-      console.log(
-        `🧩 Dorman Lakely's Tile Utilities: Deleting trap actor "${actor.name}" (${actorId})`
-      );
       await actor.delete();
     }
   }
-});
+}
 
 /**
- * Clean up light sources and overlay tiles when light tiles are deleted
+ * Helper: Clean up light sources and overlay tiles when light tiles are deleted
  * Uses Tagger to find and delete related entities
  */
-Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+async function cleanupLightTile(tile: any): Promise<void> {
   // Check if Tagger is available
   if (!(game as any).modules.get('tagger')?.active) return;
 
@@ -258,8 +258,6 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
 
   // Process each tag to clean up related entities
   for (const lightGroupTag of tags) {
-    console.log(`🧩 Dorman Lakely's Tile Utilities: Cleaning up light group "${lightGroupTag}"`);
-
     // Find all entities with the same tag in this scene
     const taggedEntities = Tagger.getByTag(lightGroupTag, {
       scenes: [scene],
@@ -271,31 +269,22 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
       if (entity.id === tile.id) continue; // Skip the tile being deleted
 
       if (entity.documentName === 'AmbientLight') {
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting light source "${entity.id}" from light group`
-        );
         await entity.delete();
       } else if (entity.documentName === 'AmbientSound') {
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting ambient sound "${entity.id}" from light group`
-        );
         await entity.delete();
       } else if (entity.documentName === 'Tile') {
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Deleting overlay tile "${entity.id}" from light group`
-        );
         await entity.delete();
       }
     }
   }
-});
+}
 
 /**
- * Clean up associated teleport tiles when any teleport tile is deleted
+ * Helper: Clean up associated teleport tiles when any teleport tile is deleted
  * Handles both main → return and return → main deletion
  * Uses Tagger to find and delete related teleport tiles
  */
-Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+async function cleanupTeleportTile(tile: any): Promise<void> {
   // Check if Tagger is available
   if (!(game as any).modules.get('tagger')?.active) return;
 
@@ -314,13 +303,10 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
   if (!hasTeleportActions) return;
 
   // Case 1: Main teleport being deleted → delete return teleports
-  for (const teleportTag of tags) {
-    if (!teleportTag.startsWith('EM-Teleport-')) continue;
+  // Use filter instead of find to handle edge case of multiple teleport tags
+  const mainTeleportTags = tags.filter((t: string) => t.startsWith('EM-Teleport-'));
 
-    console.log(
-      `🧩 Dorman Lakely's Tile Utilities: Main teleport deleted, cleaning up return teleports for "${teleportTag}"`
-    );
-
+  for (const teleportTag of mainTeleportTags) {
     // Find all tiles with the same tag across all scenes
     const taggedTiles = Tagger.getByTag(teleportTag, {
       scenes: Array.from((game as any).scenes),
@@ -332,140 +318,120 @@ Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
       if (entity.id === tile.id) continue; // Skip the tile being deleted
       if (entity.documentName !== 'Tile') continue; // Only process tiles
 
+      // Prevent duplicate confirmations by checking if this entity is already pending
+      if (pendingDeletionConfirmations.has(entity.id)) continue;
+
       const entityTags = Tagger.getTags(entity);
       const isReturnTeleport = entityTags?.some((tag: string) =>
         tag.startsWith('EM-Return-Teleport-')
       );
 
       if (isReturnTeleport) {
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Found return teleport "${entity.name}" (${entity.id})`
-        );
+        // Mark this entity as pending confirmation
+        pendingDeletionConfirmations.add(entity.id);
 
-        // Ask user for confirmation before deleting return teleport
-        const confirmed = await (Dialog as any).confirm({
-          title: 'Delete Return Teleport?',
-          content: `<p>This teleport has a return tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
-          yes: () => true,
-          no: () => false,
-          defaultYes: true
-        });
+        try {
+          // Ask user for confirmation before deleting return teleport
+          const confirmed = await (Dialog as any).confirm({
+            title: 'Delete Return Teleport?',
+            content: `<p>This teleport has a return tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
+            yes: () => true,
+            no: () => false,
+            defaultYes: true
+          });
 
-        if (confirmed) {
-          console.log(
-            `🧩 Dorman Lakely's Tile Utilities: User confirmed - deleting return teleport "${entity.name}"`
-          );
-          try {
-            await entity.delete();
-          } catch (error) {
-            console.warn(
-              `🧩 Dorman Lakely's Tile Utilities: Could not delete return teleport (may already be deleted):`,
-              error
-            );
+          if (confirmed) {
+            try {
+              await entity.delete();
+            } catch (error) {
+              console.warn(
+                `🧩 Dorman Lakely's Tile Utilities: Could not delete return teleport (may already be deleted):`,
+                error
+              );
+            }
           }
-        } else {
-          console.log(
-            `🧩 Dorman Lakely's Tile Utilities: User cancelled - keeping return teleport "${entity.name}"`
-          );
+        } finally {
+          // Always remove from pending set when done
+          pendingDeletionConfirmations.delete(entity.id);
         }
       }
     }
   }
 
   // Case 2: Return teleport being deleted → delete main teleport
-  console.log(`🧩 Dorman Lakely's Tile Utilities: Checking for return teleport deletion`);
-  console.log(`🧩 All tags on this tile:`, tags);
-
   for (const returnTag of tags) {
     if (!returnTag.startsWith('EM-Return-Teleport-')) continue;
 
-    console.log(
-      `🧩 Dorman Lakely's Tile Utilities: Return teleport deleted, finding main teleport for "${returnTag}"`
-    );
-    console.log(`🧩 All tags on return tile:`, tags);
-
     // The return teleport is tagged with BOTH its return tag AND the main teleport's tag
-    // Find the main teleport tag on this return tile
-    const mainTeleportTag = tags.find((t: string) => t.startsWith('EM-Teleport-'));
+    // Use filter instead of find to handle edge case of multiple main teleport tags
+    const mainTeleportTags = tags.filter((t: string) => t.startsWith('EM-Teleport-'));
 
-    console.log(`🧩 Looking for main teleport tag, found:`, mainTeleportTag);
+    for (const mainTeleportTag of mainTeleportTags) {
+      // Find all tiles with the main teleport tag
+      const taggedTiles = Tagger.getByTag(mainTeleportTag, {
+        scenes: Array.from((game as any).scenes),
+        caseInsensitive: false
+      });
 
-    if (!mainTeleportTag) {
-      console.log(
-        `🧩 Dorman Lakely's Tile Utilities: No main teleport tag found on return teleport`
-      );
-      console.log(`🧩 Tags array was:`, tags);
-      continue;
-    }
+      // Delete the main teleport tile (the one that's NOT a return teleport)
+      for (const entity of taggedTiles) {
+        if (entity.id === tile.id) continue; // Skip the return tile being deleted
+        if (entity.documentName !== 'Tile') continue; // Only process tiles
 
-    console.log(
-      `🧩 Dorman Lakely's Tile Utilities: Found main teleport tag "${mainTeleportTag}", searching for main teleport`
-    );
+        // Prevent duplicate confirmations by checking if this entity is already pending
+        if (pendingDeletionConfirmations.has(entity.id)) continue;
 
-    // Find all tiles with the main teleport tag
-    const taggedTiles = Tagger.getByTag(mainTeleportTag, {
-      scenes: Array.from((game as any).scenes),
-      caseInsensitive: false
-    });
-
-    console.log(`🧩 Found ${taggedTiles.length} tiles with tag "${mainTeleportTag}"`);
-
-    // Delete the main teleport tile (the one that's NOT a return teleport)
-    for (const entity of taggedTiles) {
-      console.log(
-        `🧩 Checking entity: ${entity.name} (${entity.id}), documentName: ${entity.documentName}`
-      );
-
-      if (entity.id === tile.id) {
-        console.log(`🧩 Skipping - this is the return tile being deleted`);
-        continue;
-      }
-
-      if (entity.documentName !== 'Tile') {
-        console.log(`🧩 Skipping - not a tile (${entity.documentName})`);
-        continue;
-      }
-
-      const entityTags = Tagger.getTags(entity);
-      console.log(`🧩 Entity tags:`, entityTags);
-
-      const hasReturnTag = entityTags?.some((tag: string) => tag.startsWith('EM-Return-Teleport-'));
-      const isMainTeleport = !hasReturnTag;
-
-      console.log(`🧩 Has return tag: ${hasReturnTag}, Is main teleport: ${isMainTeleport}`);
-
-      if (isMainTeleport) {
-        console.log(
-          `🧩 Dorman Lakely's Tile Utilities: Found main teleport "${entity.name}" (${entity.id})`
+        const entityTags = Tagger.getTags(entity);
+        const hasReturnTag = entityTags?.some((tag: string) =>
+          tag.startsWith('EM-Return-Teleport-')
         );
+        const isMainTeleport = !hasReturnTag;
 
-        // Ask user for confirmation before deleting main teleport
-        const confirmed = await (Dialog as any).confirm({
-          title: 'Delete Main Teleport?',
-          content: `<p>This return teleport has a main tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
-          yes: () => true,
-          no: () => false,
-          defaultYes: true
-        });
+        if (isMainTeleport) {
+          // Mark this entity as pending confirmation
+          pendingDeletionConfirmations.add(entity.id);
 
-        if (confirmed) {
-          console.log(
-            `🧩 Dorman Lakely's Tile Utilities: User confirmed - deleting main teleport "${entity.name}"`
-          );
           try {
-            await entity.delete();
-          } catch (error) {
-            console.warn(
-              `🧩 Dorman Lakely's Tile Utilities: Could not delete main teleport (may already be deleted):`,
-              error
-            );
+            // Ask user for confirmation before deleting main teleport
+            const confirmed = await (Dialog as any).confirm({
+              title: 'Delete Main Teleport?',
+              content: `<p>This return teleport has a main tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
+              yes: () => true,
+              no: () => false,
+              defaultYes: true
+            });
+
+            if (confirmed) {
+              try {
+                await entity.delete();
+              } catch (error) {
+                console.warn(
+                  `🧩 Dorman Lakely's Tile Utilities: Could not delete main teleport (may already be deleted):`,
+                  error
+                );
+              }
+            }
+          } finally {
+            // Always remove from pending set when done
+            pendingDeletionConfirmations.delete(entity.id);
           }
-        } else {
-          console.log(
-            `🧩 Dorman Lakely's Tile Utilities: User cancelled - keeping main teleport "${entity.name}"`
-          );
         }
       }
     }
   }
+}
+
+/**
+ * Consolidated tile deletion cleanup hook
+ * Dispatches to appropriate cleanup function based on tile type
+ */
+Hooks.on('preDeleteTile', async (tile: any, _options: any, _userId: string) => {
+  // Always try combat trap cleanup first (has specific flag check)
+  await cleanupCombatTrap(tile);
+
+  // Then try light tile cleanup (requires Tagger)
+  await cleanupLightTile(tile);
+
+  // Finally try teleport tile cleanup (requires Tagger)
+  await cleanupTeleportTile(tile);
 });

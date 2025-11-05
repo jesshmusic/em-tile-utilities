@@ -2,7 +2,7 @@
  * Tests for teleport-dialog.ts
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { mockFoundry, createMockScene } from '../mocks/foundry';
 
 // Mock foundry before importing

@@ -20,7 +20,8 @@
       "WebFetch(domain:foundryvtt.com)",
       "Bash(pkill:*)",
       "Bash(npx tsc:*)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(/opt/homebrew/bin/gh api \"/repos/jesshmusic/em-tile-utilities/pulls/19/comments\" --jq '.[] | {path: .path, line: .line, body: .body, user: .user.login}')"
     ],
     "deny": [],
     "ask": [
