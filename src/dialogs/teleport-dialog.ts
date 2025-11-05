@@ -179,7 +179,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
 
-
     // Set up file picker button handlers
     const filePickerButtons = this.element.querySelectorAll('.file-picker');
     filePickerButtons.forEach((button: Element) => {
@@ -384,7 +383,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const data = formData.object;
 
-
     // Validate teleport destination
     if (this.teleportX === undefined || this.teleportY === undefined || !this.teleportSceneId) {
       ui.notifications.warn('Please select a teleport destination first.');
@@ -431,8 +429,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     let startPos: { x: number; y: number } | null = null;
 
     const onMouseDown = (event: any) => {
-      // Only respond to clicks on empty canvas, not existing tiles
-      // Check if we clicked on an existing tile - if so, ignore the event
+      // Ignore clicks on existing tiles to prevent moving them during creation
       if (event.target?.document?.documentName === 'Tile') {
         return;
       }

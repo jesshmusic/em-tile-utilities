@@ -142,12 +142,30 @@ async function showTaggerWithWarning(tile: any, appliedTag: string): Promise<voi
 
   // Show notification about the applied tag
   ui.notifications.info(
-    `Tile tagged with "${appliedTag}". You can view and edit tags in the tile's configuration. Warning: Do not delete EM-generated tags as they are used for tile management.`,
-    { permanent: false }
+    `Tile tagged with "${appliedTag}". Warning: Do not remove EM-generated tags.`,
+    {
+      permanent: false
+    }
   );
 
   // Note: We don't auto-open the tile sheet anymore as it interferes with canvas interaction
   // Users can right-click the tile to open configuration if they want to edit tags
+}
+
+/**
+ * Parse custom tags from a comma-separated string
+ * @param customTags - Comma-separated string of tags
+ * @returns Array of trimmed, non-empty tags
+ */
+function parseCustomTags(customTags: string | undefined): string[] {
+  if (!customTags || !customTags.trim()) {
+    return [];
+  }
+
+  return customTags
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
 }
 
 /**
@@ -350,14 +368,7 @@ export async function createSwitchTile(
     const switchTag = generateUniqueEMTag(config.name);
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [switchTag]; // Start with EM tag
-    if (config.customTags && config.customTags.trim()) {
-      const customTagArray = config.customTags
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-      allTags.push(...customTagArray);
-    }
+    const allTags = [switchTag, ...parseCustomTags(config.customTags)];
 
     await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, switchTag);
@@ -641,14 +652,7 @@ export async function createResetTile(
     const resetTag = generateUniqueEMTag(config.name);
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [resetTag]; // Start with EM tag
-    if (config.customTags && config.customTags.trim()) {
-      const customTagArray = config.customTags
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-      allTags.push(...customTagArray);
-    }
+    const allTags = [resetTag, ...parseCustomTags(config.customTags)];
 
     await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, resetTag);
@@ -726,7 +730,7 @@ export async function createLightTile(
       volume: config.soundVolume ?? 0.5,
       walls: true,
       easing: true,
-      hidden: !config.useDarkness // Start hidden for click-based, audible for darkness-based
+      hidden: !config.useDarkness // Hide sound initially for click-based lights, visible for darkness-based lights
     };
 
     const [sound] = await scene.createEmbeddedDocuments('AmbientSound', [soundData]);
@@ -913,14 +917,7 @@ export async function createLightTile(
     const Tagger = (globalThis as any).Tagger;
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [lightGroupTag]; // Start with EM tag
-    if (config.customTags && config.customTags.trim()) {
-      const customTagArray = config.customTags
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-      allTags.push(...customTagArray);
-    }
+    const allTags = [lightGroupTag, ...parseCustomTags(config.customTags)];
 
     // Tag the main tile with all tags
     await Tagger.setTags(mainTile, allTags);
@@ -1105,16 +1102,7 @@ export async function createTeleportTile(
     const Tagger = (globalThis as any).Tagger;
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [tag]; // Start with EM tag
-
-    if (config.customTags && config.customTags.trim()) {
-      // Tagger will handle parsing comma-separated values, but we'll do it here for consistency
-      const customTagArray = config.customTags
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-      allTags.push(...customTagArray);
-    }
+    const allTags = [tag, ...parseCustomTags(config.customTags)];
 
     await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, tag);
@@ -1248,16 +1236,7 @@ export async function createTeleportTile(
         const Tagger = (globalThis as any).Tagger;
 
         // Build tag array: main tag + return tag + custom tags
-        const returnTileTags = [tag, returnTag];
-
-        // Add custom tags to return tile as well
-        if (config.customTags && config.customTags.trim()) {
-          const customTagArray = config.customTags
-            .split(',')
-            .map(t => t.trim())
-            .filter(t => t.length > 0);
-          returnTileTags.push(...customTagArray);
-        }
+        const returnTileTags = [tag, returnTag, ...parseCustomTags(config.customTags)];
 
         await Tagger.setTags(returnTile, returnTileTags);
       }
@@ -1782,14 +1761,7 @@ export async function createTrapTile(
     const trapTag = generateUniqueTrapTag(config.name, trapType);
 
     // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [trapTag]; // Start with EM tag
-    if (config.customTags && config.customTags.trim()) {
-      const customTagArray = config.customTags
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-      allTags.push(...customTagArray);
-    }
+    const allTags = [trapTag, ...parseCustomTags(config.customTags)];
 
     await Tagger.setTags(tile, allTags);
     await showTaggerWithWarning(tile, trapTag);

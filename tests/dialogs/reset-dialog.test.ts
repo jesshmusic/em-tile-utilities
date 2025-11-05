@@ -65,7 +65,9 @@ describe('ResetTileConfigDialog', () => {
     });
 
     it('should initialize with default resetTileImage', () => {
-      expect(dialog.resetTileImage).toBe('icons/skills/trades/academics-investigation-puzzles.webp');
+      expect(dialog.resetTileImage).toBe(
+        'icons/skills/trades/academics-investigation-puzzles.webp'
+      );
     });
   });
 
@@ -86,7 +88,9 @@ describe('ResetTileConfigDialog', () => {
     it('should include resetTileImage in context', async () => {
       const context = await dialog._prepareContext({});
 
-      expect(context.resetTileImage).toBe('icons/skills/trades/academics-investigation-puzzles.webp');
+      expect(context.resetTileImage).toBe(
+        'icons/skills/trades/academics-investigation-puzzles.webp'
+      );
     });
 
     it('should include buttons configuration', async () => {
@@ -409,7 +413,9 @@ describe('ResetTileConfigDialog', () => {
 
   describe('default values', () => {
     it('should use default image if none specified', () => {
-      expect(dialog.resetTileImage).toBe('icons/skills/trades/academics-investigation-puzzles.webp');
+      expect(dialog.resetTileImage).toBe(
+        'icons/skills/trades/academics-investigation-puzzles.webp'
+      );
     });
 
     it('should use default name if none specified', () => {

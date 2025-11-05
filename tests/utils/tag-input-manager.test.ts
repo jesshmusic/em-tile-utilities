@@ -251,7 +251,9 @@ describe('TagInputManager', () => {
 
       tagInputManager.showConfirmation();
 
-      expect((global as any).ui.notifications.info).toHaveBeenCalledWith('2 tag(s) ready to be applied.');
+      expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
+        '2 tag(s) ready to be applied.'
+      );
     });
 
     it('should not show notification if no tags', () => {

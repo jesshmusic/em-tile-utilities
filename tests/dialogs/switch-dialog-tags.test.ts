@@ -127,7 +127,9 @@ describe('SwitchConfigDialog Tag Action Handlers', () => {
       expect(tagChips.length).toBe(2);
 
       // Verify confirmation was shown
-      expect((global as any).ui.notifications.info).toHaveBeenCalledWith('2 tag(s) ready to be applied.');
+      expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
+        '2 tag(s) ready to be applied.'
+      );
     });
 
     it('should handle case when tagInputManager is not initialized', () => {
