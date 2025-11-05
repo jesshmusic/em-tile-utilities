@@ -2,20 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0] - 2025-11-04
+
+### Added
+
+- add sound field to teleport and light interfaces and templates
+- add confirmation dialog before deleting paired teleport tiles
+- fix: add error handling for bidirectional teleport deletion to prevent race conditions
+- fix: match Tagger button styling and add action logging
+- debug: add extensive console logging for tag input
+- use Tagger's exact HTML structure and CSS
+- implement Tagger-style tag input interface
+- implement Tagger-style tag chip input for custom tags
+- add custom tags input field to teleport dialog
+- update default tile images to more descriptive icons
+- fix: add proper null check for Tagger API before usage
+- make delete source token option reactive to scene dropdown changes
+- fix: add module name prefix to all error messages
+- fix: add error handling and debug logging to teleport dialog
+- fix: add error handling for return teleport creation
+- add delete source token and return teleport options
+- implement drag-to-size placement for teleport tiles
+- add teleport dialog and workflow enhancements
+- improve trap dialog UX, enhance build system, and implement Copilot suggestions (#18)
+
+### Fixed
+
+- preserve customTags value across dialog re-renders in teleport dialog
+- apply custom tags to return teleports and handle bidirectional deletion
+- use globalThis.Tagger instead of module.api for tag creation
+- correct TypeScript type errors in tile-helpers
+- configure TypeScript to recognize Foundry global types
+
 ## [1.14.0] - 2025-11-03
 
 ### Added
+
 - fix: properly register Handlebars partials and add comprehensive integration tests
 - migrate from Rollup to Vite and fix partial registration
 - add Phase 1 integration testing for template rendering
 
 ### Fixed
+
 - implement Copilot PR review suggestions
 - test: fix reset-dialog height expectation to match 'auto' implementation
 - replace all 'combat' string literals with TrapResultType.COMBAT enum
 - improve Foundry API token handling in workflows
 
 ### Changed
+
 - reorganize permissions to require approval for destructive commands
 - update permissions for pr checks
 - bump version to 1.13.0
@@ -24,27 +59,29 @@ All notable changes to this project will be documented in this file.
 - include remaining changes for 1.12.5
 - bump version to 1.12.5
 
-
 ## [1.13.0] - 2025-11-02
 
 ### Added
+
 - add Phase 1 integration testing for template rendering
 
 ### Fixed
+
 - test: fix reset-dialog height expectation to match 'auto' implementation
 - replace all 'combat' string literals with TrapResultType.COMBAT enum
 - improve Foundry API token handling in workflows (#15)
 - improve Foundry API token handling in workflows
 
 ### Changed
+
 - implement GitHub Copilot suggestions for PR #16
 - update claude settings
 - include remaining changes for 1.12.5
 - bump version to 1.12.5
 
 ### Other
-- Feat/combat trap (#13)
 
+- Feat/combat trap (#13)
 
 ## [1.12.5] - 2025-11-02
 

@@ -42,9 +42,9 @@ declare global {
   }
 
   interface Notifications {
-    info(message: string): void;
-    warn(message: string): void;
-    error(message: string): void;
+    info(message: string, options?: { permanent?: boolean }): void;
+    warn(message: string, options?: { permanent?: boolean }): void;
+    error(message: string, options?: { permanent?: boolean }): void;
   }
 
   interface Foundry {

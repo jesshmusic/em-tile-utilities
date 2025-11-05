@@ -131,7 +131,7 @@ describe('Main Module', () => {
         'defaultTrapImage',
         expect.objectContaining({
           name: 'Default Trap Image',
-          default: 'icons/svg/trap.svg',
+          default: 'icons/environment/traps/trap-jaw-tan.webp',
           filePicker: 'imagevideo'
         })
       );

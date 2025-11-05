@@ -4,6 +4,7 @@ export interface SwitchConfig {
   onImage: string;
   offImage: string;
   sound: string;
+  customTags?: string;
 }
 
 export interface LightConfig {
@@ -18,6 +19,10 @@ export interface LightConfig {
   colorIntensity: number;
   useOverlay: boolean;
   overlayImage?: string;
+  sound?: string;
+  soundRadius?: number;
+  soundVolume?: number;
+  customTags?: string;
 }
 
 /**
@@ -114,6 +119,7 @@ export interface TrapConfig {
   dmgTrapActivityId?: string; // ID of selected activity
   dmgTrapItemName?: string; // Name for display
   dmgTrapItemImg?: string; // Image for display
+  customTags?: string;
 }
 
 /**
@@ -138,6 +144,7 @@ export interface CombatTrapConfig {
   // For activating trap type
   tileActions?: TileAction[]; // Optional: tile actions with configurations
   wallActions?: WallAction[]; // Optional: wall/door actions
+  customTags?: string; // Optional: Custom tags for Tagger module
 }
 
 export interface ResetTileConfig {
@@ -145,6 +152,28 @@ export interface ResetTileConfig {
   image: string;
   varsToReset: Record<string, any>;
   tilesToReset: TileResetState[];
+  customTags?: string;
+}
+
+/**
+ * Configuration for standalone teleport tile
+ */
+export interface TeleportTileConfig {
+  name: string;
+  tileImage: string;
+  hidden: boolean;
+  teleportX: number;
+  teleportY: number;
+  teleportSceneId: string;
+  requireConfirmation: boolean;
+  deleteSourceToken: boolean;
+  createReturnTeleport: boolean;
+  hasSavingThrow: boolean;
+  savingThrow: string;
+  dc: number;
+  flavorText: string;
+  customTags?: string;
+  sound?: string;
 }
 
 export interface WallDoorState {

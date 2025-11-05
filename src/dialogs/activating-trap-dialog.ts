@@ -37,6 +37,8 @@ export class ActivatingTrapDialog extends BaseTrapDialog {
     ...BaseTrapDialog.DEFAULT_OPTIONS,
     actions: {
       close: BaseTrapDialog.prototype._onClose,
+      addTag: ActivatingTrapDialog.prototype._handleAddTag,
+      confirmTags: ActivatingTrapDialog.prototype._handleConfirmTags,
       addTile: ActivatingTrapDialog.prototype._onAddTile,
       removeTile: ActivatingTrapDialog.prototype._onRemoveTile,
       selectMovePosition: ActivatingTrapDialog.prototype._onSelectMovePosition,

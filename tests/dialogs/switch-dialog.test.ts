@@ -171,7 +171,8 @@ describe('SwitchConfigDialog', () => {
       const mockButton2 = { onclick: null, className: 'file-picker' };
 
       const mockElement = {
-        querySelectorAll: jest.fn().mockReturnValue([mockButton1, mockButton2])
+        querySelectorAll: jest.fn().mockReturnValue([mockButton1, mockButton2]),
+        querySelector: jest.fn().mockReturnValue(null) // For tag input elements
       };
 
       dialog.element = mockElement as any;
@@ -185,7 +186,10 @@ describe('SwitchConfigDialog', () => {
     });
 
     it('should call super._onRender', () => {
-      dialog.element = { querySelectorAll: jest.fn().mockReturnValue([]) } as any;
+      dialog.element = {
+        querySelectorAll: jest.fn().mockReturnValue([]),
+        querySelector: jest.fn().mockReturnValue(null) // For tag input elements
+      } as any;
 
       // Just verify it doesn't throw
       expect(() => dialog._onRender({}, {})).not.toThrow();

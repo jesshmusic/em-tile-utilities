@@ -21,7 +21,8 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
       width: 700
     },
     actions: {
-      refresh: SceneVariablesViewer.#onRefresh
+      refresh: SceneVariablesViewer.#onRefresh,
+      showHelp: SceneVariablesViewer.#onShowHelp
     }
   };
 
@@ -132,6 +133,51 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
    */
   static async #onRefresh(this: SceneVariablesViewer): Promise<void> {
     await this.render();
+  }
+
+  static async #onShowHelp(): Promise<void> {
+    const content = `
+      <div style="padding: 1rem;">
+        <h2 style="margin-top: 0;">What are Scene Variables?</h2>
+        <p>Scene variables are values that are stored within a scene and persist between sessions. They're created and managed by Monk's Active Tiles.</p>
+
+        <h3>How Switches Create Variables</h3>
+        <p>When you create a switch tile, it automatically creates a scene variable with an ON/OFF state. This variable can be referenced by name in other tiles' actions.</p>
+
+        <h3>How to Reference Variables</h3>
+        <p>Use Handlebars syntax to reference variables in action fields:</p>
+        <ul>
+          <li><code>{{variable.switchName}}</code> - Gets the value of a variable</li>
+          <li><code>{{not variable.switchName}}</code> - Inverts a boolean value</li>
+        </ul>
+
+        <h3>Check State Tiles</h3>
+        <p>Check state tiles monitor variables and execute different actions based on their values. They can be used to create complex conditional logic for puzzles.</p>
+
+        <h3>Common Patterns</h3>
+        <ul>
+          <li><strong>Door States:</strong> Track if a door is open or closed</li>
+          <li><strong>Puzzle Progress:</strong> Track which switches have been activated</li>
+          <li><strong>Quest Flags:</strong> Mark objectives as complete</li>
+          <li><strong>Conditional Effects:</strong> Apply different effects based on game state</li>
+        </ul>
+
+        <h3>Learn More</h3>
+        <p>For more information about Monk's Active Tiles and variables, see the <a href="https://github.com/ironmonk88/monks-active-tiles" target="_blank">Monk's Active Tiles documentation</a>.</p>
+      </div>
+    `;
+
+    new (Dialog as any)({
+      title: 'How to Use Scene Variables',
+      content: content,
+      buttons: {
+        close: {
+          icon: '<i class="fas fa-times"></i>',
+          label: 'Close'
+        }
+      },
+      default: 'close'
+    }).render(true);
   }
 }
 

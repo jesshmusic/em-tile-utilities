@@ -1,6 +1,7 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
 import { createResetTile } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -154,7 +155,8 @@ function calculateStartingPosition(tile: any): { x: number; y: number; rotation:
 export class ResetTileConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   selectedTiles: Map<string, SelectedTileData> = new Map();
   resetName: string = 'Reset Tile';
-  resetTileImage: string = 'icons/svg/clockwork.svg';
+  resetTileImage: string = 'icons/skills/trades/academics-investigation-puzzles.webp';
+  private tagInputManager?: TagInputManager;
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -179,7 +181,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     actions: {
       close: ResetTileConfigDialog.prototype._onClose,
       addTile: ResetTileConfigDialog.#onAddTile,
-      removeTile: ResetTileConfigDialog.#onRemoveTile
+      removeTile: ResetTileConfigDialog.#onRemoveTile,
+      addTag: ResetTileConfigDialog.#onAddTag,
+      confirmTags: ResetTileConfigDialog.#onConfirmTags
     }
   };
 
@@ -254,12 +258,22 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       });
     });
 
+    // Read current form values if the element exists (for re-renders)
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
+
     return {
       ...context,
       resetName: this.resetName,
       resetTileImage: this.resetTileImage,
       tiles: tiles,
       hasTiles: tiles.length > 0,
+      customTags: customTags,
       buttons: [
         {
           type: 'submit',
@@ -303,6 +317,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     filePickerButtons.forEach((button: Element) => {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
+
+    // Set up tag input functionality
+    if (this.element) {
+      this.tagInputManager = new TagInputManager(this.element);
+      this.tagInputManager.initialize();
+    }
   }
 
   /* -------------------------------------------- */
@@ -358,6 +378,25 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         this.resetTileImage = imageInput.value;
       }
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click
+   */
+  static #onAddTag(this: ResetTileConfigDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle confirm tags button click
+   */
+  static #onConfirmTags(this: ResetTileConfigDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+    this.tagInputManager?.showConfirmation();
   }
 
   /* -------------------------------------------- */
@@ -537,7 +576,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     const resetTileImageRaw = data.resetTileImage;
     const resetTileImage =
       (typeof resetTileImageRaw === 'string' ? resetTileImageRaw.trim() : '') ||
-      'icons/svg/clockwork.svg';
+      'icons/skills/trades/academics-investigation-puzzles.webp';
 
     // Check if the image has a valid file extension
     const validExtensions = [
@@ -584,7 +623,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
           name: data.resetName || 'Reset Tile',
           image: resetTileImage,
           varsToReset: varsToReset,
-          tilesToReset: tilesToReset
+          tilesToReset: tilesToReset,
+          customTags: data.customTags || ''
         },
         snapped.x,
         snapped.y

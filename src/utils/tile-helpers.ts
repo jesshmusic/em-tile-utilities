@@ -4,6 +4,7 @@ import type {
   LightConfig,
   ResetTileConfig,
   SwitchConfig,
+  TeleportTileConfig,
   TrapConfig
 } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
@@ -127,6 +128,44 @@ function generateUniqueLightTag(lightName: string): string {
  */
 function generateUniqueTrapTag(trapName: string, trapType: string): string {
   return generateUniqueEMTag(trapName + ' ' + trapType);
+}
+
+/**
+ * Show Tagger dialog for a tile with warning about EM-generated tags
+ * @param tile - The tile document to show tags for
+ * @param appliedTag - The EM tag that was automatically applied
+ */
+async function showTaggerWithWarning(tile: any, appliedTag: string): Promise<void> {
+  if (!(game as any).modules.get('tagger')?.active) {
+    return;
+  }
+
+  // Show notification about the applied tag
+  ui.notifications.info(
+    `Tile tagged with "${appliedTag}". Warning: Do not remove EM-generated tags.`,
+    {
+      permanent: false
+    }
+  );
+
+  // Note: We don't auto-open the tile sheet anymore as it interferes with canvas interaction
+  // Users can right-click the tile to open configuration if they want to edit tags
+}
+
+/**
+ * Parse custom tags from a comma-separated string
+ * @param customTags - Comma-separated string of tags
+ * @returns Array of trimmed, non-empty tags
+ */
+function parseCustomTags(customTags: string | undefined): string[] {
+  if (!customTags || !customTags.trim()) {
+    return [];
+  }
+
+  return customTags
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
 }
 
 /**
@@ -327,7 +366,12 @@ export async function createSwitchTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
     const switchTag = generateUniqueEMTag(config.name);
-    await Tagger.setTags(tile, [switchTag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [switchTag, ...parseCustomTags(config.customTags)];
+
+    await Tagger.setTags(tile, allTags);
+    await showTaggerWithWarning(tile, switchTag);
   }
 }
 
@@ -606,7 +650,12 @@ export async function createResetTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
     const resetTag = generateUniqueEMTag(config.name);
-    await Tagger.setTags(tile, [resetTag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [resetTag, ...parseCustomTags(config.customTags)];
+
+    await Tagger.setTags(tile, allTags);
+    await showTaggerWithWarning(tile, resetTag);
   }
 }
 
@@ -668,6 +717,25 @@ export async function createLightTile(
   // Generate a unique tag for this light group (for Tagger integration)
   // Uses the light name in PascalCase with incrementing numbers if needed
   const lightGroupTag = generateUniqueLightTag(config.name);
+
+  // Create AmbientSound if sound is provided
+  let soundId: string | null = null;
+  if (config.sound && config.sound.trim() !== '') {
+    const soundData = {
+      x: tileX + gridSize / 2,
+      y: tileY + gridSize / 2,
+      radius: config.soundRadius || 40,
+      path: config.sound,
+      repeat: true,
+      volume: config.soundVolume ?? 0.5,
+      walls: true,
+      easing: true,
+      hidden: !config.useDarkness // Hide sound initially for click-based lights, visible for darkness-based lights
+    };
+
+    const [sound] = await scene.createEmbeddedDocuments('AmbientSound', [soundData]);
+    soundId = (sound as any).id;
+  }
 
   // Create overlay tile if enabled
   let overlayTileId: string | null = null;
@@ -756,6 +824,20 @@ export async function createLightTile(
       id: foundry.utils.randomID()
     });
 
+    // Toggle the sound if enabled
+    if (soundId) {
+      actions.push({
+        action: 'activate',
+        data: {
+          entity: {
+            id: `Scene.${scene.id}.AmbientSound.${soundId}`
+          },
+          activate: 'toggle'
+        },
+        id: foundry.utils.randomID()
+      });
+    }
+
     // Toggle overlay tile if enabled
     if (overlayTileId) {
       actions.push({
@@ -834,18 +916,339 @@ export async function createLightTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
 
-    // Tag the main tile
-    await Tagger.setTags(mainTile, [lightGroupTag]);
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [lightGroupTag, ...parseCustomTags(config.customTags)];
 
-    // Tag the light source
-    await Tagger.setTags(light, [lightGroupTag]);
+    // Tag the main tile with all tags
+    await Tagger.setTags(mainTile, allTags);
+
+    // Tag the light source with all tags
+    await Tagger.setTags(light, allTags);
 
     // Tag the overlay tile if it was created
     if (overlayTileId) {
       const overlayTile = scene.tiles.get(overlayTileId);
       if (overlayTile) {
-        await Tagger.setTags(overlayTile, [lightGroupTag]);
+        await Tagger.setTags(overlayTile, allTags);
       }
+    }
+
+    // Tag the sound source if it was created
+    if (soundId) {
+      const sound = (scene as any).sounds.get(soundId);
+      if (sound) {
+        await Tagger.setTags(sound, allTags);
+      }
+    }
+
+    // Show warning about the tag
+    await showTaggerWithWarning(mainTile, lightGroupTag);
+  }
+}
+
+/**
+ * Create a standalone teleport tile
+ */
+export async function createTeleportTile(
+  scene: Scene,
+  config: TeleportTileConfig,
+  x?: number,
+  y?: number,
+  width?: number,
+  height?: number
+): Promise<void> {
+  const gridSize = (canvas as any).grid.size;
+  const tileX = x ?? canvas.scene.dimensions.sceneWidth / 2;
+  const tileY = y ?? canvas.scene.dimensions.sceneHeight / 2;
+  const tileWidth = width ?? gridSize;
+  const tileHeight = height ?? gridSize;
+
+  // Generate unique tag
+  const tag = generateUniqueEMTag('Teleport');
+
+  // Build actions array
+  const actions: any[] = [];
+
+  // Play sound if provided
+  if (config.sound && config.sound.trim() !== '') {
+    actions.push({
+      action: 'playsound',
+      data: {
+        audiofile: config.sound,
+        audiofor: 'everyone',
+        volume: 1,
+        loop: false,
+        fade: 0.25,
+        scenerestrict: false,
+        prevent: false,
+        delay: false,
+        playlist: true
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Add saving throw if enabled
+  if (config.hasSavingThrow) {
+    actions.push({
+      action: 'monks-tokenbar.requestroll',
+      data: {
+        entity: {
+          id: 'token',
+          name: 'Triggering Token'
+        },
+        request: config.savingThrow,
+        dc: config.dc.toString(),
+        flavor: config.flavorText || 'Make a saving throw to resist teleportation!',
+        rollmode: 'roll',
+        silent: false,
+        fastforward: false,
+        usetokens: 'fail',
+        continue: 'failed'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Add teleport action
+  actions.push({
+    action: 'teleport',
+    data: {
+      entity: {
+        id: config.hasSavingThrow ? 'previous' : 'token',
+        name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
+      },
+      location: {
+        x: config.teleportX,
+        y: config.teleportY,
+        sceneId: config.teleportSceneId
+      },
+      position: 'random',
+      remotesnap: true,
+      animatepan: false,
+      triggerremote: false,
+      deletesource: config.deleteSourceToken,
+      preservesettings: false,
+      avoidtokens: true,
+      colour: '#00e1ff',
+      // Player confirmation handled by Monk's Active Tiles
+      confirm: config.requireConfirmation ? 'confirm' : null
+    },
+    id: foundry.utils.randomID()
+  });
+
+  // Create tile data
+  const tileData = {
+    texture: {
+      src: config.tileImage,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      fit: 'fill',
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      tint: '#ffffff',
+      alphaThreshold: 0.75
+    },
+    width: tileWidth,
+    height: tileHeight,
+    x: tileX,
+    y: tileY,
+    elevation: 0,
+    sort: 0,
+    occlusion: { mode: 0, alpha: 0 },
+    rotation: 0,
+    alpha: 1,
+    hidden: config.hidden,
+    locked: false,
+    restrictions: { light: false, weather: false },
+    video: { loop: true, autoplay: true, volume: 0 },
+    flags: {
+      'monks-active-tiles': {
+        name: config.name,
+        active: true,
+        record: false,
+        restriction: 'all',
+        controlled: 'all',
+        trigger: ['enter'],
+        allowpaused: false,
+        usealpha: false,
+        pointer: true,
+        vision: true,
+        pertoken: false,
+        minrequired: null,
+        cooldown: null,
+        chance: 100,
+        fileindex: 0,
+        actions: actions,
+        files: [
+          {
+            id: foundry.utils.randomID(),
+            name: config.tileImage,
+            selected: true
+          }
+        ],
+        variables: {}
+      }
+    },
+    visible: true,
+    img: config.tileImage
+  };
+
+  // Create the tile
+  const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
+  // Tag the tile if Tagger module is active
+  if ((game as any).modules.get('tagger')?.active) {
+    const Tagger = (globalThis as any).Tagger;
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [tag, ...parseCustomTags(config.customTags)];
+
+    await Tagger.setTags(tile, allTags);
+    await showTaggerWithWarning(tile, tag);
+  }
+
+  // Create return teleport tile if requested
+  if (config.createReturnTeleport) {
+    try {
+      const destinationScene = (game as any).scenes.get(config.teleportSceneId);
+      if (!destinationScene) {
+        ui.notifications.warn(
+          "Dorman Lakely's Tile Utilities | Could not find destination scene for return teleport."
+        );
+        return;
+      }
+      const returnTag = generateUniqueEMTag('Return Teleport');
+
+      // Build return actions (teleport back to source)
+      const returnActions: any[] = [];
+
+      // Play sound if provided
+      if (config.sound && config.sound.trim() !== '') {
+        returnActions.push({
+          action: 'playsound',
+          data: {
+            audiofile: config.sound,
+            audiofor: 'everyone',
+            volume: 1,
+            loop: false,
+            fade: 0.25,
+            scenerestrict: false,
+            prevent: false,
+            delay: false,
+            playlist: true
+          },
+          id: foundry.utils.randomID()
+        });
+      }
+
+      // Return teleport does NOT require a saving throw (you already passed it to get here)
+
+      // Add return teleport action (back to source scene and position)
+      returnActions.push({
+        action: 'teleport',
+        data: {
+          entity: {
+            id: 'token',
+            name: 'Triggering Token'
+          },
+          location: {
+            x: tileX,
+            y: tileY,
+            sceneId: scene.id
+          },
+          position: 'random',
+          remotesnap: true,
+          animatepan: false,
+          triggerremote: false,
+          deletesource: config.deleteSourceToken, // Use same delete token setting as main teleport
+          preservesettings: false,
+          avoidtokens: true,
+          colour: '#00e1ff',
+          confirm: config.requireConfirmation ? 'confirm' : null
+        },
+        id: foundry.utils.randomID()
+      });
+
+      // Create return tile data (1x1 grid tile)
+      const returnTileData = {
+        texture: {
+          src: config.tileImage,
+          anchorX: 0.5,
+          anchorY: 0.5,
+          fit: 'fill',
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          tint: '#ffffff',
+          alphaThreshold: 0.75
+        },
+        width: gridSize, // 1x1 tile
+        height: gridSize,
+        x: config.teleportX,
+        y: config.teleportY,
+        elevation: 0,
+        sort: 0,
+        occlusion: { mode: 0, alpha: 0 },
+        rotation: 0,
+        alpha: 1,
+        hidden: config.hidden, // Same visibility as original
+        locked: false,
+        restrictions: { light: false, weather: false },
+        video: { loop: true, autoplay: true, volume: 0 },
+        flags: {
+          'monks-active-tiles': {
+            name: `Return: ${config.name}`,
+            active: true,
+            record: false,
+            restriction: 'all',
+            controlled: 'all',
+            trigger: ['enter'],
+            allowpaused: false,
+            usealpha: false,
+            pointer: true,
+            vision: true,
+            pertoken: false,
+            minrequired: null,
+            cooldown: null,
+            chance: 100,
+            fileindex: 0,
+            actions: returnActions,
+            files: [
+              {
+                id: foundry.utils.randomID(),
+                name: config.tileImage,
+                selected: true
+              }
+            ],
+            variables: {}
+          }
+        },
+        visible: true,
+        img: config.tileImage
+      };
+
+      // Create the return tile on destination scene
+      const [returnTile] = await destinationScene.createEmbeddedDocuments('Tile', [returnTileData]);
+      // Tag the return tile if Tagger module is active
+      // Use BOTH the main teleport's tag AND the return tag, plus any custom tags
+      if ((game as any).modules.get('tagger')?.active) {
+        const Tagger = (globalThis as any).Tagger;
+
+        // Build tag array: main tag + return tag + custom tags
+        const returnTileTags = [tag, returnTag, ...parseCustomTags(config.customTags)];
+
+        await Tagger.setTags(returnTile, returnTileTags);
+      }
+
+      ui.notifications.info(
+        `Dorman Lakely's Tile Utilities | Return teleport tile created at destination.`
+      );
+    } catch (error) {
+      console.error("Dorman Lakely's Tile Utilities | Error creating return teleport tile:", error);
+      ui.notifications.error(
+        `Dorman Lakely's Tile Utilities | Failed to create return teleport tile: ${error}`
+      );
     }
   }
 }
@@ -1356,7 +1759,12 @@ export async function createTrapTile(
   if ((game as any).modules.get('tagger')?.active) {
     const Tagger = (globalThis as any).Tagger;
     const trapTag = generateUniqueTrapTag(config.name, trapType);
-    await Tagger.setTags(tile, [trapTag]);
+
+    // Parse custom tags (comma-separated) and combine with auto-generated tag
+    const allTags = [trapTag, ...parseCustomTags(config.customTags)];
+
+    await Tagger.setTags(tile, allTags);
+    await showTaggerWithWarning(tile, trapTag);
   }
 }
 
@@ -1623,6 +2031,7 @@ export async function createCheckStateTile(
     const Tagger = (globalThis as any).Tagger;
     const checkStateTag = generateUniqueEMTag(config.name);
     await Tagger.setTags(tile, [checkStateTag]);
+    await showTaggerWithWarning(tile, checkStateTag);
   }
 }
 
@@ -1668,7 +2077,7 @@ export async function createCombatTrapTile(
     name: `${config.name} (Trap)`,
     type: 'npc',
     folder: folderId,
-    img: (item as any).img || 'icons/svg/trap.svg',
+    img: (item as any).img || 'icons/environment/traps/trap-jaw-tan.webp',
     prototypeToken: {
       texture: {
         src: tokenImg
@@ -1916,7 +2325,7 @@ export async function createCombatTrapTile(
   });
 
   // Use default trap image if none provided (for hidden traps)
-  const defaultTrapImage = 'icons/svg/trap.svg';
+  const defaultTrapImage = 'icons/environment/traps/trap-jaw-tan.webp';
   const startingImage = config.startingImage || defaultTrapImage;
   const isHidden = !config.startingImage; // Hide if no image provided
 
@@ -1985,5 +2394,6 @@ export async function createCombatTrapTile(
     const Tagger = (globalThis as any).Tagger;
     const trapTag = generateUniqueTrapTag(config.name, 'combat');
     await Tagger.setTags(tile, [trapTag]);
+    await showTaggerWithWarning(tile, trapTag);
   }
 }

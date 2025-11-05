@@ -1,0 +1,13 @@
+<fieldset class='tagger'>
+  <legend>{{localize 'EMPUZZLES.TaggerLegend'}}</legend>
+  <div class='form-group'>
+    <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
+    <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
+    <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
+    <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
+      <i class='fas fa-check'></i>
+    </button>
+  </div>
+  <div class='tag-container' data-tags-container></div>
+  <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
+</fieldset>

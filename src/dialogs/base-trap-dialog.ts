@@ -1,6 +1,7 @@
 import type { TrapConfig } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
 import { createTrapTile, getNextTileNumber } from '../utils/tile-helpers';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -27,6 +28,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   protected dmgTrapActivityId?: string;
   protected dmgTrapItemData?: any;
   protected dmgTrapActivities?: any[];
+
+  // Tag input manager
+  protected tagInputManager?: TagInputManager;
 
   /**
    * Get the trap type identifier (e.g., 'disappearing', 'switching', 'activating')
@@ -83,7 +87,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       handler: BaseTrapDialog.prototype._onSubmit
     },
     actions: {
-      close: BaseTrapDialog.prototype._onClose
+      close: BaseTrapDialog.prototype._onClose,
+      addTag: BaseTrapDialog.prototype._handleAddTag,
+      confirmTags: BaseTrapDialog.prototype._handleConfirmTags
     }
   };
 
@@ -183,11 +189,21 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       }
     }
 
+    // Read current form values if the element exists (for re-renders)
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
+
     const baseContext = {
       ...context,
       trapName: `Trap ${nextNumber}`,
       defaultSound: defaultSound,
       defaultTrapImage: this.customStartingImage || defaultTrapImage,
+      customTags: customTags,
       resultTypeOptions: [
         { value: TrapResultType.DAMAGE, label: 'EMPUZZLES.ResultDamage' },
         { value: TrapResultType.TELEPORT, label: 'EMPUZZLES.ResultTeleport' },
@@ -367,6 +383,12 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       }
     }
 
+    // Set up tag input functionality
+    if (this.element) {
+      this.tagInputManager = new TagInputManager(this.element);
+      this.tagInputManager.initialize();
+    }
+
     // Let derived class handle additional rendering
     this._onRenderTypeSpecific(context, options);
   }
@@ -441,6 +463,25 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
    */
   protected _onRenderTypeSpecific(_context: any, _options: any): void {
     // Override in derived classes if needed
+  }
+
+  /* -------------------------------------------- */
+  /* Tag Input Handling                          */
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click (instance method for actions)
+   */
+  protected _handleAddTag(): void {
+    this.tagInputManager?.addTagsFromInput();
+  }
+
+  /**
+   * Handle confirm tags button click (instance method for actions)
+   */
+  protected _handleConfirmTags(): void {
+    this.tagInputManager?.addTagsFromInput();
+    this.tagInputManager?.showConfirmation();
   }
 
   /* -------------------------------------------- */

@@ -93,6 +93,24 @@ describe('LightConfigDialog', () => {
       expect(context.colorIntensity).toBe(0.5);
     });
 
+    it('should include default sound from settings', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.sound).toBe('sounds/doors/industrial/unlock.ogg');
+    });
+
+    it('should include default sound radius', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.soundRadius).toBe(40);
+    });
+
+    it('should include default sound volume', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.soundVolume).toBe(0.5);
+    });
+
     it('should include buttons configuration', async () => {
       const context = await dialog._prepareContext({});
 

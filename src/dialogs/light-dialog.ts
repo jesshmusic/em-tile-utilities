@@ -1,5 +1,6 @@
 import { createLightTile } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -10,6 +11,8 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  * @mixes HandlebarsApplication
  */
 export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+  private tagInputManager?: TagInputManager;
+
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     id: 'em-puzzles-light-config',
@@ -31,7 +34,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       handler: LightConfigDialog.#onSubmit
     },
     actions: {
-      close: LightConfigDialog.prototype._onClose
+      close: LightConfigDialog.prototype._onClose,
+      addTag: LightConfigDialog.#onAddTag,
+      confirmTags: LightConfigDialog.#onConfirmTags
     }
   };
 
@@ -52,9 +57,19 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
-    // Get default images from settings
+    // Get default images and sound from settings
     const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultLightOffImage');
     const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultLightOnImage');
+    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
+
+    // Read current form values if the element exists (for re-renders)
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
 
     return {
       ...context,
@@ -69,6 +84,10 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       colorIntensity: 0.5,
       useOverlay: false,
       overlayImage: '',
+      sound: defaultSound,
+      soundRadius: 40,
+      soundVolume: 0.5,
+      customTags: customTags,
       buttons: [
         {
           type: 'submit',
@@ -151,6 +170,12 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       overlayToggle.addEventListener('change', toggleOverlaySettings);
     }
 
+    // Set up tag input functionality
+    if (this.element) {
+      this.tagInputManager = new TagInputManager(this.element);
+      this.tagInputManager.initialize();
+    }
+
     // Handle range slider value updates
     const rangeInputs = this.element.querySelectorAll('input[type="range"][data-update-display]');
     rangeInputs.forEach((input: Element) => {
@@ -221,6 +246,25 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
+   * Handle add tag button click
+   */
+  static #onAddTag(this: LightConfigDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle confirm tags button click
+   */
+  static #onConfirmTags(this: LightConfigDialog): void {
+    this.tagInputManager?.addTagsFromInput();
+    this.tagInputManager?.showConfirmation();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle form submission
    */
   static async #onSubmit(
@@ -265,7 +309,11 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
           lightColor: data.lightColor || '#ffffff',
           colorIntensity: parseFloat(data.colorIntensity) || 0.5,
           useOverlay: data.useOverlay === true,
-          overlayImage: data.overlayImage || ''
+          overlayImage: data.overlayImage || '',
+          sound: data.sound || '',
+          soundRadius: parseInt(data.soundRadius) || 40,
+          soundVolume: parseFloat(data.soundVolume) || 0.5,
+          customTags: data.customTags || ''
         },
         snapped.x,
         snapped.y

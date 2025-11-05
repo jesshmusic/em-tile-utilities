@@ -2,6 +2,7 @@ import { showSwitchDialog } from './switch-dialog';
 import { showLightDialog } from './light-dialog';
 import { showResetTileDialog } from './reset-dialog';
 import { showTrapDialog } from './trap-dialog';
+import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
@@ -38,6 +39,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createLight: TileManagerDialog.#onCreateLight,
       createReset: TileManagerDialog.#onCreateReset,
       createTrap: TileManagerDialog.#onCreateTrap,
+      createTeleport: TileManagerDialog.#onCreateTeleport,
       createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
@@ -419,6 +421,21 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     event.preventDefault();
     this.minimize();
     showTrapDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create teleport tile button click
+   */
+  static async #onCreateTeleport(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showTeleportDialog();
   }
 
   /* -------------------------------------------- */
