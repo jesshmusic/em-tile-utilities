@@ -327,6 +327,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       };
     }
 
+    // Preserve custom tags value across re-renders
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
+
     return {
       ...context,
       // Basic info
@@ -371,6 +380,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Teleport state
       teleportX: this.teleportX,
       teleportY: this.teleportY,
+      // Custom tags (preserved across re-renders)
+      customTags: customTags,
       // Validation state
       canSubmit: this._canSubmit(),
       // Feature availability
