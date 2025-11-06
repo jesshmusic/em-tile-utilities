@@ -2,14 +2,20 @@
  * Tests for tile-helpers.ts
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { mockFoundry, createMockScene } from '../mocks/foundry';
+
+// Set up Foundry mocks before importing
+mockFoundry();
+
+import * as TileHelpers from '../../src/utils/tile-helpers';
 import {
   createSwitchTile,
   createLightTile,
   createResetTile,
-  createTrapTile
+  createTrapTile,
+  hasMonksTokenBar
 } from '../../src/utils/tile-helpers';
-import { createMockScene } from '../mocks/foundry';
 import type {
   SwitchConfig,
   LightConfig,
@@ -642,6 +648,220 @@ describe('tile-helpers', () => {
     });
   });
 
+  describe('createTeleportTile', () => {
+    let mockScene: any;
+    let teleportConfig: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      (global as any).canvas.scene = mockScene;
+
+      teleportConfig = {
+        name: 'Teleport 1',
+        tileImage: 'icons/svg/up.svg',
+        teleportX: 500,
+        teleportY: 600,
+        teleportSceneId: null,
+        sound: 'sounds/doors/industrial/unlock.ogg',
+        hasSavingThrow: false,
+        savingThrow: 'save:dex',
+        dc: 15,
+        flavorText: '',
+        deleteSourceToken: false,
+        createReturn: false,
+        customTags: ''
+      };
+    });
+
+    it('should create a teleport tile with correct data structure', async () => {
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith(
+        'Tile',
+        expect.arrayContaining([
+          expect.objectContaining({
+            texture: expect.objectContaining({
+              src: 'icons/svg/up.svg'
+            }),
+            x: 200,
+            y: 200
+          })
+        ])
+      );
+    });
+
+    it('should include Monk Active Tiles configuration', async () => {
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const monksData = tileData.flags['monks-active-tiles'];
+
+      expect(monksData).toBeDefined();
+      expect(monksData.name).toBe('Teleport 1');
+      expect(monksData.active).toBe(true);
+      expect(monksData.trigger).toContain('enter');
+    });
+
+    it('should create teleport action to destination', async () => {
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const teleportAction = actions.find((a: any) => a.action === 'teleport');
+      expect(teleportAction).toBeDefined();
+      expect(teleportAction.data.location.x).toBe(500);
+      expect(teleportAction.data.location.y).toBe(600);
+    });
+
+    it('should include sound action when sound is provided', async () => {
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const soundAction = actions.find((a: any) => a.action === 'playsound');
+      expect(soundAction).toBeDefined();
+      expect(soundAction.data.audiofile).toBe('sounds/doors/industrial/unlock.ogg');
+    });
+
+    it('should not include sound action when sound is empty', async () => {
+      teleportConfig.sound = '';
+
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const soundAction = actions.find((a: any) => a.action === 'playsound');
+      expect(soundAction).toBeUndefined();
+    });
+
+    it('should include saving throw action when hasSavingThrow is true', async () => {
+      teleportConfig.hasSavingThrow = true;
+      teleportConfig.savingThrow = 'save:dex';
+      teleportConfig.dc = 15;
+
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(savingThrowAction).toBeDefined();
+      expect(savingThrowAction.data.rollmode).toBe('roll');
+      expect(savingThrowAction.data.request).toBe('save:dex');
+    });
+
+    it('should NOT include saving throw when Monk Token Bar is unavailable', async () => {
+      // Mock game.modules.get to return undefined for monks-tokenbar
+      const originalModulesGet = (global as any).game.modules.get;
+      (global as any).game.modules.get = (id: string) => {
+        if (id === 'monks-tokenbar') {
+          return undefined; // Module not available
+        }
+        if (id === 'tagger') {
+          return { active: true };
+        }
+        return undefined;
+      };
+
+      teleportConfig.hasSavingThrow = true;
+      teleportConfig.savingThrow = 'save:dex';
+      teleportConfig.dc = 15;
+
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(savingThrowAction).toBeUndefined();
+
+      // Restore original mock
+      (global as any).game.modules.get = originalModulesGet;
+    });
+
+    it('should support scene change teleportation', async () => {
+      teleportConfig.teleportSceneId = 'target-scene-id';
+
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const teleportAction = actions.find((a: any) => a.action === 'teleport');
+      expect(teleportAction.data.location.sceneId).toBe('target-scene-id');
+    });
+
+    it('should apply custom tags when provided', async () => {
+      teleportConfig.customTags = 'tag1,tag2,tag3';
+      (global as any).Tagger = {
+        setTags: jest.fn()
+      };
+
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      // Should be called with the tile and an array containing the EM tag plus custom tags
+      expect((global as any).Tagger.setTags).toHaveBeenCalled();
+      const callArgs = (global as any).Tagger.setTags.mock.calls[0];
+      const tags = callArgs[1];
+      expect(tags).toContain('tag1');
+      expect(tags).toContain('tag2');
+      expect(tags).toContain('tag3');
+    });
+
+    it('should create return teleport when createReturnTeleport is true', async () => {
+      teleportConfig.createReturnTeleport = true;
+      teleportConfig.teleportSceneId = 'destination-scene-id';
+
+      // Mock destination scene
+      const mockDestinationScene = {
+        id: 'destination-scene-id',
+        createEmbeddedDocuments: jest.fn(async () => [{ id: 'return-tile-id' }])
+      };
+
+      // Mock game.scenes.get to return the destination scene
+      (global as any).game.scenes.get = jest.fn((id: string) => {
+        if (id === 'destination-scene-id') {
+          return mockDestinationScene;
+        }
+        return undefined;
+      });
+
+      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      await createTeleportTile(mockScene, teleportConfig, 200, 200);
+
+      // Should create main tile on source scene
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
+
+      // Should create return tile on destination scene
+      expect(mockDestinationScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
+
+      // Verify return tile has correct name
+      const returnTileData = (mockDestinationScene.createEmbeddedDocuments as any).mock
+        .calls[0][1][0];
+      expect(returnTileData.flags['monks-active-tiles'].name).toContain('Return:');
+    });
+  });
+
   describe('createCheckStateTile', () => {
     let mockScene: any;
 
@@ -1264,7 +1484,40 @@ describe('tile-helpers', () => {
       expect(effectAction).toBeDefined();
     });
 
-    it('should include saving throw when hasSavingThrow is true', async () => {
+    it("should detect Monk's Token Bar as available when mocked", () => {
+      // Mock hasMonksTokenBar to return true for this test
+      const spy = jest.spyOn(TileHelpers, 'hasMonksTokenBar').mockReturnValue(true);
+      expect(hasMonksTokenBar()).toBe(true);
+      spy.mockRestore();
+    });
+  });
+
+  describe("trap creation without Monk's Token Bar", () => {
+    let mockScene: any;
+    let originalModulesGet: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+
+      // Override modules.get to make monks-tokenbar unavailable
+      originalModulesGet = (global as any).game.modules.get;
+      (global as any).game.modules.get = (id: string) => {
+        if (id === 'monks-tokenbar') {
+          return undefined; // Module not available
+        }
+        if (id === 'tagger') {
+          return { active: true };
+        }
+        return undefined;
+      };
+    });
+
+    afterEach(() => {
+      // Restore original mock
+      (global as any).game.modules.get = originalModulesGet;
+    });
+
+    it("should NOT include saving throw actions when Monk's Token Bar is unavailable", async () => {
       const config: TrapConfig = {
         name: 'Save Trap',
         startingImage: 'path/to/trap.png',
@@ -1287,9 +1540,48 @@ describe('tile-helpers', () => {
       const tileData = tileCall[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      // Should have saving throw action when hasSavingThrow is true
+      // Should NOT have saving throw action when Monk's Token Bar is not available
       const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
-      expect(saveAction).toBeDefined();
+      expect(saveAction).toBeUndefined();
+
+      // Should still have damage actions directly (no saving throw)
+      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtActions.length).toBeGreaterThan(0);
+    });
+
+    it("should create trap with damage flow but no saving throw when Monk's Token Bar is unavailable", async () => {
+      const config: TrapConfig = {
+        name: 'Save Trap',
+        startingImage: 'trap.png',
+        triggeredImage: 'triggered.png',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: true,
+        minRequired: 1,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '3d6',
+        flavorText: 'A trap triggers!',
+        sound: 'trap.ogg',
+        hideTrapOnTrigger: false
+      };
+
+      await createTrapTile(mockScene, config, 300, 300);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should NOT have saving throw action when Monk's Token Bar is unavailable
+      const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(saveAction).toBeUndefined();
+
+      // Should have hurt/heal action for damage (applied directly)
+      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtActions.length).toBeGreaterThan(0);
+
+      // Should still have sound and flavor text in other actions
+      const soundAction = actions.find((a: any) => a.action === 'playsound');
+      expect(soundAction).toBeDefined();
     });
   });
 
@@ -1408,41 +1700,6 @@ describe('tile-helpers', () => {
       expect(lightData.config.alpha).toBe(0.8);
       expect(lightData.config.dim).toBe(40);
       expect(lightData.config.bright).toBe(20);
-    });
-
-    it('should create trap with saving throw flow', async () => {
-      const config: TrapConfig = {
-        name: 'Save Trap',
-        startingImage: 'trap.png',
-        triggeredImage: 'triggered.png',
-        resultType: TrapResultType.DAMAGE,
-        targetType: TrapTargetType.TRIGGERING,
-        hasSavingThrow: true,
-        minRequired: 1,
-        savingThrow: 'dex',
-        dc: 15,
-        damageOnFail: '3d6',
-        flavorText: 'A trap triggers!',
-        sound: 'trap.ogg',
-        hideTrapOnTrigger: false
-      };
-
-      await createTrapTile(mockScene, config, 300, 300);
-
-      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
-      const actions = tileData.flags['monks-active-tiles'].actions;
-
-      // Should have saving throw action
-      const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
-      expect(saveAction).toBeDefined();
-      expect(saveAction.data.request).toBe('dex');
-
-      // Should have hurt/heal action for damage
-      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
-      expect(hurtActions.length).toBeGreaterThan(0);
-
-      // Should have flavor text in saving throw
-      expect(saveAction.data.flavor).toBe('A trap triggers!');
     });
 
     it('should create trap with teleport and hide behavior', async () => {

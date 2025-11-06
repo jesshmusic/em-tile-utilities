@@ -1,4 +1,4 @@
-import { createTeleportTile, getNextTileNumber } from '../utils/tile-helpers';
+import { createTeleportTile, getNextTileNumber, hasMonksTokenBar } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import type { TeleportTileConfig } from '../types/module';
 import { TagInputManager } from '../utils/tag-input-manager';
@@ -155,6 +155,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       deleteSourceToken: deleteSourceToken,
       createReturnTeleport: createReturnTeleport,
       customTags: customTags,
+      hasMonksTokenBar: hasMonksTokenBar(),
       buttons: [
         {
           type: 'submit',
@@ -351,7 +352,12 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle add tag button click
    */
   static #onAddTag(this: TeleportDialog): void {
-    this.tagInputManager?.addTagsFromInput();
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
   }
 
   /* -------------------------------------------- */
@@ -360,8 +366,13 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle confirm tags button click
    */
   static #onConfirmTags(this: TeleportDialog): void {
-    this.tagInputManager?.addTagsFromInput();
-    this.tagInputManager?.showConfirmation();
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+    this.tagInputManager.showConfirmation();
   }
 
   /* -------------------------------------------- */

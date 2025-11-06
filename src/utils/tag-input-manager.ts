@@ -32,6 +32,9 @@ export class TagInputManager {
       .map(t => t.trim())
       .filter(t => t.length > 0);
 
+    // Clear hidden input before adding chips (each addTagChip will rebuild it)
+    hiddenInput.value = '';
+
     existingTags.forEach(tag => this.addTagChip(tag));
 
     // Handle Enter key to add tags
@@ -82,10 +85,11 @@ export class TagInputManager {
       return;
     }
 
-    // Check if tag already exists
-    const existingTags = Array.from(tagsContainer.querySelectorAll('.tag')).map(
-      el => (el as HTMLElement).querySelector('span')?.textContent || ''
-    );
+    // Check if tag already exists by checking hidden input (more efficient than DOM queries)
+    const existingTags = hiddenInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
 
     if (existingTags.includes(tag)) {
       return;

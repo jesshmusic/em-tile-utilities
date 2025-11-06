@@ -49,10 +49,10 @@ export function mockFoundry() {
   };
 
   // Mock game object
-  (global as any).game = {
+  const mockGameObject = {
     modules: {
       get: jest.fn((id: string) => ({
-        active: id === 'monks-active-tiles'
+        active: id === 'monks-active-tiles' || id === 'monks-tokenbar' || id === 'tagger'
       }))
     },
     settings: {
@@ -78,6 +78,10 @@ export function mockFoundry() {
     },
     scenes: new Map()
   };
+
+  // Assign to both global and globalThis for maximum compatibility
+  (global as any).game = mockGameObject;
+  (globalThis as any).game = mockGameObject;
 
   // Mock PIXI.Graphics
   (global as any).PIXI = {
@@ -137,6 +141,14 @@ export function mockFoundry() {
   (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
     browse: jest.fn()
   }));
+
+  // Mock Tagger (3rd party module API)
+  (globalThis as any).Tagger = {
+    getTags: jest.fn(() => []),
+    setTags: jest.fn(async () => {}),
+    hasTags: jest.fn(() => false),
+    getByTag: jest.fn(() => [])
+  };
 
   // Mock loadTemplates (Foundry template loader)
   (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {

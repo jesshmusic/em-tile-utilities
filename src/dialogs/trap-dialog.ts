@@ -1,7 +1,13 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
 import { TrapTargetType, TrapResultType } from '../types/module';
-import { createTrapTile, createCombatTrapTile, getNextTileNumber } from '../utils/tile-helpers';
+import {
+  createTrapTile,
+  createCombatTrapTile,
+  getNextTileNumber,
+  hasMonksTokenBar
+} from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -90,6 +96,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected teleportX?: number;
   protected teleportY?: number;
 
+  /**
+   * Tag input manager for custom tags
+   */
+  private tagInputManager?: TagInputManager;
+
   /* -------------------------------------------- */
 
   /** @inheritDoc */
@@ -127,7 +138,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       selectTeleportPosition: TrapDialog.prototype._onSelectTeleportPosition,
       // Combat trap actions
       removeAttackItem: TrapDialog.prototype._onRemoveAttackItem,
-      selectTokenPosition: TrapDialog.prototype._onSelectTokenPosition
+      selectTokenPosition: TrapDialog.prototype._onSelectTokenPosition,
+      // Tag actions
+      addTag: TrapDialog.prototype._onAddTag,
+      confirmTags: TrapDialog.prototype._onConfirmTags
     }
   };
 
@@ -313,6 +327,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       };
     }
 
+    // Preserve custom tags value across re-renders
+    let customTags = '';
+    if (this.element) {
+      const customTagsInput = this.element.querySelector(
+        'input[name="customTags"]'
+      ) as HTMLInputElement;
+      customTags = customTagsInput?.value || '';
+    }
+
     return {
       ...context,
       // Basic info
@@ -357,8 +380,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Teleport state
       teleportX: this.teleportX,
       teleportY: this.teleportY,
+      // Custom tags (preserved across re-renders)
+      customTags: customTags,
       // Validation state
       canSubmit: this._canSubmit(),
+      // Feature availability
+      hasMonksTokenBar: hasMonksTokenBar(),
       // Footer buttons
       buttons: [
         {
@@ -402,6 +429,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     return false;
   }
 
+  /**
+   * Check if tile dimensions are valid (minimum 10 pixels)
+   * @param width - Tile width in pixels
+   * @param height - Tile height in pixels
+   * @returns True if dimensions are valid
+   */
+  protected static _isValidTileSize(width: number, height: number): boolean {
+    return width > 10 && height > 10;
+  }
+
   /* -------------------------------------------- */
 
   /** @inheritDoc */
@@ -413,6 +450,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     filePickerButtons.forEach((button: Element) => {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
+
+    // Set up tag input functionality
+    this.tagInputManager = new TagInputManager(this.element);
+    this.tagInputManager.initialize();
 
     // Track changes to starting image input
     const startingImageInput = this.element.querySelector(
@@ -1308,6 +1349,35 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /* -------------------------------------------- */
+  /* Tag Input Handlers                           */
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click
+   */
+  protected _onAddTag(_event: Event, _target: HTMLElement): void {
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+  }
+
+  /**
+   * Handle confirm tags button click
+   */
+  protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+    this.tagInputManager.showConfirmation();
+  }
+
+  /* -------------------------------------------- */
   /* Form Submission                              */
   /* -------------------------------------------- */
 
@@ -1508,7 +1578,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const y = Math.min(startPos.y, position.y);
 
       // Only create if there's a valid size (minimum 10 pixels)
-      if (width > 10 && height > 10) {
+      if (TrapDialog._isValidTileSize(width, height)) {
         // Create the activating trap tile with the exact dragged dimensions (no snapping)
         await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
 
@@ -1636,7 +1706,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const y = Math.min(startPos.y, position.y);
 
         // Only create if there's a valid size (minimum 10 pixels)
-        if (width > 10 && height > 10) {
+        if (TrapDialog._isValidTileSize(width, height)) {
           // Create the combat trap tile with the exact dragged dimensions (no snapping)
           await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
 
@@ -1784,7 +1854,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const y = Math.min(startPos.y, position.y);
 
       // Only create if there's a valid size (minimum 10 pixels)
-      if (width > 10 && height > 10) {
+      if (TrapDialog._isValidTileSize(width, height)) {
         // Create the trap tile with the exact dragged dimensions (no snapping)
         await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
 
@@ -1849,6 +1919,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
+    // Extract custom tags
+    const customTags =
+      (form.querySelector('input[name="customTags"]') as HTMLInputElement)?.value || '';
+
     const config: any = {
       name: name,
       startingImage: startingImage,
@@ -1857,7 +1931,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetType: targetType,
       hidden: hidden,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
-      hasSavingThrow: hasSavingThrow
+      hasSavingThrow: hasSavingThrow,
+      customTags: customTags
     };
 
     // Add saving throw fields if enabled

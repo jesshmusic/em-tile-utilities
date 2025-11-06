@@ -64,8 +64,9 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 ## 📋 Requirements
 
 - **FoundryVTT v13** or higher
-- **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** (required dependency)
-- **[Monk's Token Bar](https://foundryvtt.com/packages/monks-tokenbar)** (required dependency)
+- **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** (required)
+- **[Tagger](https://foundryvtt.com/packages/tagger)** (required)
+- **[Monk's Token Bar](https://foundryvtt.com/packages/monks-tokenbar)** (optional, for saving throw features in traps and teleports)
 
 ---
 
@@ -77,7 +78,8 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 2. Go to **Add-on Modules** → **Install Module**
 3. Search for "**Dorman Lakely's Tile Utilities**"
 4. Click **Install**
-5. Enable **Monk's Active Tiles**, **Monk's Token Bar**, and **Dorman Lakely's Tile Utilities** in your world
+5. Enable **Monk's Active Tiles**, **Tagger**, and **Dorman Lakely's Tile Utilities** in your world
+6. _(Optional)_ Enable **Monk's Token Bar** if you want to use saving throw features in traps and teleports
 
 ### First Use
 

@@ -21,7 +21,14 @@
       "Bash(pkill:*)",
       "Bash(npx tsc:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(/opt/homebrew/bin/gh api \"/repos/jesshmusic/em-tile-utilities/pulls/19/comments\" --jq '.[] | {path: .path, line: .line, body: .body, user: .user.login}')"
+      "Bash(/opt/homebrew/bin/gh api \"/repos/jesshmusic/em-tile-utilities/pulls/19/comments\" --jq '.[] | {path: .path, line: .line, body: .body, user: .user.login}')",
+      "Bash(/opt/homebrew/bin/gh api:*)",
+      "Bash(for id in 2492196707 2492196720 2492196727 2492196739 2492196745)",
+      "Bash(do)",
+      "Bash(done)",
+      "Bash(/opt/homebrew/bin/gh pr list --head feat/teleport-dialog-and-enhancements)",
+      "Bash(/opt/homebrew/bin/gh pr checks 20 --repo jesshmusic/em-tile-utilities)",
+      "Bash(/opt/homebrew/bin/gh run view:*)"
     ],
     "deny": [],
     "ask": [

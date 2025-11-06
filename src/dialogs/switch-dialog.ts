@@ -31,12 +31,12 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     },
     form: {
       closeOnSubmit: false,
-      handler: SwitchConfigDialog.#onSubmit
+      handler: SwitchConfigDialog.prototype._onSubmit
     },
     actions: {
       close: SwitchConfigDialog.prototype._onClose,
-      addTag: SwitchConfigDialog.#onAddTag,
-      confirmTags: SwitchConfigDialog.#onConfirmTags
+      addTag: SwitchConfigDialog.prototype._onAddTag,
+      confirmTags: SwitchConfigDialog.prototype._onConfirmTags
     }
   };
 
@@ -172,8 +172,13 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   /**
    * Handle add tag button click
    */
-  static #onAddTag(this: SwitchConfigDialog): void {
-    this.tagInputManager?.addTagsFromInput();
+  protected _onAddTag(_event: Event, _target: HTMLElement): void {
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
   }
 
   /* -------------------------------------------- */
@@ -181,9 +186,14 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   /**
    * Handle confirm tags button click
    */
-  static #onConfirmTags(this: SwitchConfigDialog): void {
-    this.tagInputManager?.addTagsFromInput();
-    this.tagInputManager?.showConfirmation();
+  protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+    this.tagInputManager.showConfirmation();
   }
 
   /* -------------------------------------------- */
@@ -194,8 +204,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
    * @param {HTMLFormElement} _form - The form element
    * @param {FormDataExtended} formData - The form data
    */
-  static async #onSubmit(
-    this: SwitchConfigDialog,
+  protected async _onSubmit(
     _event: SubmitEvent,
     _form: HTMLFormElement,
     formData: any

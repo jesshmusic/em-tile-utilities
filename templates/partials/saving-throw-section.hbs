@@ -9,7 +9,9 @@
   - defaultHalfDamageOnSuccess: boolean - Default half damage checked state
   - hasDmgTrap: boolean - Whether a DMG trap is selected
   - savingThrowOptions: array - Available saving throw options
+  - hasMonksTokenBar: boolean - Whether Monk's Token Bar module is active
 }}
+{{#if hasMonksTokenBar}}
 <div class="form-group">
   <label>
     <input
@@ -64,3 +66,14 @@
     </div>
   {{/if}}
 </div>
+{{else}}
+<div class="form-group" style="background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 0.75rem; margin-bottom: 1rem;">
+  <p style="margin: 0; color: #ff9800;">
+    <i class="fa-solid fa-circle-info"></i>
+    <strong>{{localize "EMPUZZLES.SavingThrowUnavailable"}}</strong>
+  </p>
+  <p style="margin: 0.5rem 0 0 0; font-size: 0.9em;">
+    {{localize "EMPUZZLES.SavingThrowUnavailableHint"}}
+  </p>
+</div>
+{{/if}}

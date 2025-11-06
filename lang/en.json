@@ -101,6 +101,8 @@
     "HasSavingThrowHint": "When checked, targets must make a saving throw before the result is applied",
     "SavingThrow": "Saving Throw",
     "SavingThrowHint": "The type of saving throw required to avoid the trap",
+    "SavingThrowUnavailable": "Saving Throw Features Unavailable",
+    "SavingThrowUnavailableHint": "Install and enable Monk's Token Bar to use saving throw mechanics for traps and teleports. All other features will work without it.",
     "StrengthSave": "Strength Save",
     "DexteritySave": "Dexterity Save",
     "ConstitutionSave": "Constitution Save",

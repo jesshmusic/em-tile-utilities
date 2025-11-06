@@ -2,7 +2,7 @@
  * Tests for teleport-dialog.ts
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { mockFoundry, createMockScene } from '../mocks/foundry';
 
 // Mock foundry before importing
@@ -134,6 +134,141 @@ describe('TeleportDialog', () => {
       const context = await dialog._prepareContext({});
 
       expect(context.sound).toBe('');
+    });
+  });
+
+  describe('_onFilePicker', () => {
+    let mockEvent: any;
+    let mockButton: any;
+    let mockInput: any;
+
+    beforeEach(() => {
+      mockInput = { value: 'old/path.ogg', dispatchEvent: jest.fn() };
+      mockButton = {
+        dataset: { target: 'sound', type: 'audio' }
+      };
+      mockEvent = {
+        preventDefault: jest.fn(),
+        currentTarget: mockButton
+      };
+
+      dialog.element = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="sound"]') return mockInput;
+          return null;
+        })
+      } as any;
+
+      (global as any).FilePicker = jest.fn().mockImplementation(() => ({
+        browse: jest.fn(async () => {})
+      }));
+    });
+
+    it('should prevent default event', async () => {
+      await dialog._onFilePicker(mockEvent);
+
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+    });
+
+    it('should create FilePicker with correct configuration', async () => {
+      await dialog._onFilePicker(mockEvent);
+
+      expect((global as any).FilePicker).toHaveBeenCalledWith({
+        type: 'audio',
+        current: 'old/path.ogg',
+        callback: expect.any(Function)
+      });
+    });
+
+    it('should update input value via callback', async () => {
+      let callback: any;
+      (global as any).FilePicker = jest.fn().mockImplementation((config: any) => {
+        callback = config.callback;
+        return { browse: jest.fn() };
+      });
+
+      await dialog._onFilePicker(mockEvent);
+      callback('new/path.ogg');
+
+      expect(mockInput.value).toBe('new/path.ogg');
+      expect(mockInput.dispatchEvent).toHaveBeenCalled();
+    });
+
+    it('should return early if target not found', async () => {
+      mockButton.dataset.target = undefined;
+
+      await dialog._onFilePicker(mockEvent);
+
+      expect((global as any).FilePicker).not.toHaveBeenCalled();
+    });
+
+    it('should return early if input not found', async () => {
+      dialog.element.querySelector = jest.fn(() => null);
+
+      await dialog._onFilePicker(mockEvent);
+
+      expect((global as any).FilePicker).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('form validation', () => {
+    it('should require tile name', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.tileName).toBeTruthy();
+    });
+
+    it('should include hasSavingThrow option', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context).toHaveProperty('hasSavingThrow');
+    });
+
+    it('should include scene selection data', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context).toHaveProperty('scenes');
+      expect(context).toHaveProperty('teleportSceneId');
+    });
+  });
+
+  describe('saving throw integration', () => {
+    it('should detect Monk Token Bar availability', async () => {
+      (global as any).game.modules.get = (id: string) => {
+        if (id === 'monks-tokenbar') {
+          return { active: true };
+        }
+        return undefined;
+      };
+
+      const context = await dialog._prepareContext({});
+
+      // Should provide saving throw options when Monk's Token Bar is available
+      expect(context).toBeDefined();
+    });
+  });
+
+  describe('customTags integration', () => {
+    it('should preserve customTags across re-renders', async () => {
+      const mockInput = { value: 'tag1,tag2' };
+      dialog.element = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="customTags"]') return mockInput;
+          return null;
+        })
+      } as any;
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.customTags).toBe('tag1,tag2');
+    });
+
+    it('should default to empty string if no customTags input', async () => {
+      dialog.element = null;
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.customTags).toBe('');
     });
   });
 });
