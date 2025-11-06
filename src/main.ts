@@ -159,8 +159,7 @@ Hooks.once('ready', () => {
 
   if (!game.modules.get('monks-tokenbar')?.active) {
     ui.notifications.warn(
-      "Tile Utilities: Monk's Token Bar is not active. Saving throw features will be unavailable for traps and teleports.",
-      { permanent: false }
+      "Tile Utilities: Monk's Token Bar is not active. Saving throw features will be unavailable for traps and teleports."
     );
   }
 
@@ -204,6 +203,17 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
  * when multiple related tiles are deleted simultaneously
  */
 const pendingDeletionConfirmations = new Set<string>();
+
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ * @param str - The string to escape
+ * @returns The escaped string safe for HTML insertion
+ */
+function escapeHtml(str: string): string {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 /**
  * Helper: Clean up trap actors and tokens when combat trap tiles are deleted
@@ -334,7 +344,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
           // Ask user for confirmation before deleting return teleport
           const confirmed = await (Dialog as any).confirm({
             title: 'Delete Return Teleport?',
-            content: `<p>This teleport has a return tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
+            content: `<p>This teleport has a return tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
             yes: () => true,
             no: () => false,
             defaultYes: true
@@ -395,7 +405,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
             // Ask user for confirmation before deleting main teleport
             const confirmed = await (Dialog as any).confirm({
               title: 'Delete Main Teleport?',
-              content: `<p>This return teleport has a main tile: <strong>"${entity.name}"</strong></p><p>Do you want to delete it as well?</p>`,
+              content: `<p>This return teleport has a main tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
               yes: () => true,
               no: () => false,
               defaultYes: true

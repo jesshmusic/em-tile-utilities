@@ -14,8 +14,8 @@ import { TrapResultType, TrapTargetType } from '../types/module';
  * @returns true if Monk's Token Bar is available, false otherwise
  */
 export function hasMonksTokenBar(): boolean {
-  // Use globalThis for better test compatibility
-  const g = (globalThis as any).game || (global as any).game || (window as any)?.game || game;
+  // Use globalThis.game for test compatibility, fall back to global game
+  const g = (globalThis as any).game || game;
   return !!g?.modules?.get('monks-tokenbar')?.active;
 }
 
@@ -152,10 +152,7 @@ async function showTaggerWithWarning(tile: any, appliedTag: string): Promise<voi
 
   // Show notification about the applied tag
   ui.notifications.info(
-    `Tile tagged with "${appliedTag}". Warning: Do not remove EM-generated tags.`,
-    {
-      permanent: false
-    }
+    `Tile tagged with "${appliedTag}". Warning: Do not remove EM-generated tags.`
   );
 
   // Note: We don't auto-open the tile sheet anymore as it interferes with canvas interaction

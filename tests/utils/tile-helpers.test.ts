@@ -2,7 +2,7 @@
  * Tests for tile-helpers.ts
  */
 
-import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { mockFoundry, createMockScene } from '../mocks/foundry';
 
 // Set up Foundry mocks before importing

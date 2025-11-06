@@ -352,7 +352,12 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle add tag button click
    */
   static #onAddTag(this: TeleportDialog): void {
-    this.tagInputManager?.addTagsFromInput();
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
   }
 
   /* -------------------------------------------- */
@@ -361,8 +366,13 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle confirm tags button click
    */
   static #onConfirmTags(this: TeleportDialog): void {
-    this.tagInputManager?.addTagsFromInput();
-    this.tagInputManager?.showConfirmation();
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+    this.tagInputManager.showConfirmation();
   }
 
   /* -------------------------------------------- */
