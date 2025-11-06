@@ -1,4 +1,4 @@
-import { createTeleportTile, getNextTileNumber } from '../utils/tile-helpers';
+import { createTeleportTile, getNextTileNumber, hasMonksTokenBar } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import type { TeleportTileConfig } from '../types/module';
 import { TagInputManager } from '../utils/tag-input-manager';
@@ -155,6 +155,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       deleteSourceToken: deleteSourceToken,
       createReturnTeleport: createReturnTeleport,
       customTags: customTags,
+      hasMonksTokenBar: hasMonksTokenBar(),
       buttons: [
         {
           type: 'submit',

@@ -10,6 +10,16 @@ import type {
 import { TrapResultType, TrapTargetType } from '../types/module';
 
 /**
+ * Check if Monk's Token Bar module is installed and active
+ * @returns true if Monk's Token Bar is available, false otherwise
+ */
+export function hasMonksTokenBar(): boolean {
+  // Use globalThis for better test compatibility
+  const g = (globalThis as any).game || (global as any).game || (window as any)?.game || game;
+  return !!g?.modules?.get('monks-tokenbar')?.active;
+}
+
+/**
  * Count tiles in the current scene that match a specific name pattern
  * Used for auto-generating unique tile names based on existing tiles
  * @param baseName - The base name to search for (e.g., "Switch", "Trap", "Light")
@@ -988,8 +998,8 @@ export async function createTeleportTile(
     });
   }
 
-  // Add saving throw if enabled
-  if (config.hasSavingThrow) {
+  // Add saving throw if enabled and Monk's Token Bar is available
+  if (config.hasSavingThrow && hasMonksTokenBar()) {
     actions.push({
       action: 'monks-tokenbar.requestroll',
       data: {
@@ -1011,12 +1021,13 @@ export async function createTeleportTile(
   }
 
   // Add teleport action
+  const hasSavingThrowAction = config.hasSavingThrow && hasMonksTokenBar();
   actions.push({
     action: 'teleport',
     data: {
       entity: {
-        id: config.hasSavingThrow ? 'previous' : 'token',
-        name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
+        id: hasSavingThrowAction ? 'previous' : 'token',
+        name: hasSavingThrowAction ? 'Current tokens' : 'Triggering Token'
       },
       location: {
         x: config.teleportX,
@@ -1415,8 +1426,8 @@ export async function createTrapTile(
 
     switch (config.resultType) {
       case TrapResultType.DAMAGE:
-        // Add saving throw if enabled
-        if (config.hasSavingThrow) {
+        // Add saving throw if enabled and Monk's Token Bar is available
+        if (config.hasSavingThrow && hasMonksTokenBar()) {
           if (config.halfDamageOnSuccess) {
             // Half damage on success: use filterrequest to branch logic
             // 1. Request the save (auto-roll with fastforward)
@@ -1576,8 +1587,8 @@ export async function createTrapTile(
         break;
 
       case TrapResultType.TELEPORT:
-        // Add saving throw if enabled
-        if (config.hasSavingThrow) {
+        // Add saving throw if enabled and Monk's Token Bar is available
+        if (config.hasSavingThrow && hasMonksTokenBar()) {
           actions.push({
             action: 'monks-tokenbar.requestroll',
             data: {
@@ -1599,13 +1610,14 @@ export async function createTrapTile(
         }
 
         // Teleport action (teleports tokens that failed saving throw if enabled, or all targets if not)
+        const hasTeleportSave = config.hasSavingThrow && hasMonksTokenBar();
         if (config.teleportX !== undefined && config.teleportY !== undefined) {
           actions.push({
             action: 'teleport',
             data: {
               entity: {
-                id: config.hasSavingThrow ? 'previous' : 'token',
-                name: config.hasSavingThrow ? 'Current tokens' : 'Triggering Token'
+                id: hasTeleportSave ? 'previous' : 'token',
+                name: hasTeleportSave ? 'Current tokens' : 'Triggering Token'
               },
               location: {
                 x: config.teleportX,
@@ -1627,8 +1639,8 @@ export async function createTrapTile(
         break;
 
       case TrapResultType.ACTIVE_EFFECT:
-        // Add saving throw if enabled
-        if (config.hasSavingThrow) {
+        // Add saving throw if enabled and Monk's Token Bar is available
+        if (config.hasSavingThrow && hasMonksTokenBar()) {
           actions.push({
             action: 'monks-tokenbar.requestroll',
             data: {

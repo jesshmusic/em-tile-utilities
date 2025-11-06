@@ -1,7 +1,13 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
 import { TrapTargetType, TrapResultType } from '../types/module';
-import { createTrapTile, createCombatTrapTile, getNextTileNumber } from '../utils/tile-helpers';
+import {
+  createTrapTile,
+  createCombatTrapTile,
+  getNextTileNumber,
+  hasMonksTokenBar
+} from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
+import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -90,6 +96,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected teleportX?: number;
   protected teleportY?: number;
 
+  /**
+   * Tag input manager for custom tags
+   */
+  private tagInputManager?: TagInputManager;
+
   /* -------------------------------------------- */
 
   /** @inheritDoc */
@@ -127,7 +138,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       selectTeleportPosition: TrapDialog.prototype._onSelectTeleportPosition,
       // Combat trap actions
       removeAttackItem: TrapDialog.prototype._onRemoveAttackItem,
-      selectTokenPosition: TrapDialog.prototype._onSelectTokenPosition
+      selectTokenPosition: TrapDialog.prototype._onSelectTokenPosition,
+      // Tag actions
+      addTag: TrapDialog.prototype._onAddTag,
+      confirmTags: TrapDialog.prototype._onConfirmTags
     }
   };
 
@@ -359,6 +373,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportY: this.teleportY,
       // Validation state
       canSubmit: this._canSubmit(),
+      // Feature availability
+      hasMonksTokenBar: hasMonksTokenBar(),
       // Footer buttons
       buttons: [
         {
@@ -413,6 +429,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     filePickerButtons.forEach((button: Element) => {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
+
+    // Set up tag input functionality
+    this.tagInputManager = new TagInputManager(this.element);
+    this.tagInputManager.initialize();
 
     // Track changes to starting image input
     const startingImageInput = this.element.querySelector(
@@ -1305,6 +1325,35 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (tileManager) {
       tileManager.maximize();
     }
+  }
+
+  /* -------------------------------------------- */
+  /* Tag Input Handlers                           */
+  /* -------------------------------------------- */
+
+  /**
+   * Handle add tag button click
+   */
+  protected _onAddTag(_event: Event, _target: HTMLElement): void {
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+  }
+
+  /**
+   * Handle confirm tags button click
+   */
+  protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
+    if (!this.tagInputManager) {
+      console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
+      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      return;
+    }
+    this.tagInputManager.addTagsFromInput();
+    this.tagInputManager.showConfirmation();
   }
 
   /* -------------------------------------------- */

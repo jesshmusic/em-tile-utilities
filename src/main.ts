@@ -158,10 +158,10 @@ Hooks.once('ready', () => {
   }
 
   if (!game.modules.get('monks-tokenbar')?.active) {
-    ui.notifications.error(
-      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Monk's Token Bar to be installed and active."
+    ui.notifications.warn(
+      "Tile Utilities: Monk's Token Bar is not active. Saving throw features will be unavailable for traps and teleports.",
+      { permanent: false }
     );
-    return;
   }
 
   if (!game.modules.get('tagger')?.active) {
