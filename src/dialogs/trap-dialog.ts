@@ -429,6 +429,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     return false;
   }
 
+  /**
+   * Check if tile dimensions are valid (minimum 10 pixels)
+   * @param width - Tile width in pixels
+   * @param height - Tile height in pixels
+   * @returns True if dimensions are valid
+   */
+  protected static _isValidTileSize(width: number, height: number): boolean {
+    return width > 10 && height > 10;
+  }
+
   /* -------------------------------------------- */
 
   /** @inheritDoc */
@@ -1568,7 +1578,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const y = Math.min(startPos.y, position.y);
 
       // Only create if there's a valid size (minimum 10 pixels)
-      if (width > 10 && height > 10) {
+      if (TrapDialog._isValidTileSize(width, height)) {
         // Create the activating trap tile with the exact dragged dimensions (no snapping)
         await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
 
@@ -1696,7 +1706,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const y = Math.min(startPos.y, position.y);
 
         // Only create if there's a valid size (minimum 10 pixels)
-        if (width > 10 && height > 10) {
+        if (TrapDialog._isValidTileSize(width, height)) {
           // Create the combat trap tile with the exact dragged dimensions (no snapping)
           await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
 
@@ -1844,7 +1854,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const y = Math.min(startPos.y, position.y);
 
       // Only create if there's a valid size (minimum 10 pixels)
-      if (width > 10 && height > 10) {
+      if (TrapDialog._isValidTileSize(width, height)) {
         // Create the trap tile with the exact dragged dimensions (no snapping)
         await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
 
