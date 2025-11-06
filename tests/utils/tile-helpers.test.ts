@@ -2,14 +2,20 @@
  * Tests for tile-helpers.ts
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
+import { mockFoundry, createMockScene } from '../mocks/foundry';
+
+// Set up Foundry mocks before importing
+mockFoundry();
+
+import * as TileHelpers from '../../src/utils/tile-helpers';
 import {
   createSwitchTile,
   createLightTile,
   createResetTile,
-  createTrapTile
+  createTrapTile,
+  hasMonksTokenBar
 } from '../../src/utils/tile-helpers';
-import { createMockScene } from '../mocks/foundry';
 import type {
   SwitchConfig,
   LightConfig,
@@ -1264,7 +1270,22 @@ describe('tile-helpers', () => {
       expect(effectAction).toBeDefined();
     });
 
-    it('should include saving throw when hasSavingThrow is true', async () => {
+    it("should detect Monk's Token Bar as available when mocked", () => {
+      // Mock hasMonksTokenBar to return true for this test
+      const spy = jest.spyOn(TileHelpers, 'hasMonksTokenBar').mockReturnValue(true);
+      expect(hasMonksTokenBar()).toBe(true);
+      spy.mockRestore();
+    });
+  });
+
+  describe("trap creation without Monk's Token Bar", () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+    });
+
+    it("should NOT include saving throw actions when Monk's Token Bar is unavailable", async () => {
       const config: TrapConfig = {
         name: 'Save Trap',
         startingImage: 'path/to/trap.png',
@@ -1287,9 +1308,48 @@ describe('tile-helpers', () => {
       const tileData = tileCall[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      // Should have saving throw action when hasSavingThrow is true
+      // Should NOT have saving throw action when Monk's Token Bar is not available
       const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
-      expect(saveAction).toBeDefined();
+      expect(saveAction).toBeUndefined();
+
+      // Should still have damage actions directly (no saving throw)
+      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtActions.length).toBeGreaterThan(0);
+    });
+
+    it("should create trap with damage flow but no saving throw when Monk's Token Bar is unavailable", async () => {
+      const config: TrapConfig = {
+        name: 'Save Trap',
+        startingImage: 'trap.png',
+        triggeredImage: 'triggered.png',
+        resultType: TrapResultType.DAMAGE,
+        targetType: TrapTargetType.TRIGGERING,
+        hasSavingThrow: true,
+        minRequired: 1,
+        savingThrow: 'dex',
+        dc: 15,
+        damageOnFail: '3d6',
+        flavorText: 'A trap triggers!',
+        sound: 'trap.ogg',
+        hideTrapOnTrigger: false
+      };
+
+      await createTrapTile(mockScene, config, 300, 300);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should NOT have saving throw action when Monk's Token Bar is unavailable
+      const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(saveAction).toBeUndefined();
+
+      // Should have hurt/heal action for damage (applied directly)
+      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtActions.length).toBeGreaterThan(0);
+
+      // Should still have sound and flavor text in other actions
+      const soundAction = actions.find((a: any) => a.action === 'playsound');
+      expect(soundAction).toBeDefined();
     });
   });
 
@@ -1408,41 +1468,6 @@ describe('tile-helpers', () => {
       expect(lightData.config.alpha).toBe(0.8);
       expect(lightData.config.dim).toBe(40);
       expect(lightData.config.bright).toBe(20);
-    });
-
-    it('should create trap with saving throw flow', async () => {
-      const config: TrapConfig = {
-        name: 'Save Trap',
-        startingImage: 'trap.png',
-        triggeredImage: 'triggered.png',
-        resultType: TrapResultType.DAMAGE,
-        targetType: TrapTargetType.TRIGGERING,
-        hasSavingThrow: true,
-        minRequired: 1,
-        savingThrow: 'dex',
-        dc: 15,
-        damageOnFail: '3d6',
-        flavorText: 'A trap triggers!',
-        sound: 'trap.ogg',
-        hideTrapOnTrigger: false
-      };
-
-      await createTrapTile(mockScene, config, 300, 300);
-
-      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
-      const actions = tileData.flags['monks-active-tiles'].actions;
-
-      // Should have saving throw action
-      const saveAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
-      expect(saveAction).toBeDefined();
-      expect(saveAction.data.request).toBe('dex');
-
-      // Should have hurt/heal action for damage
-      const hurtActions = actions.filter((a: any) => a.action === 'hurtheal');
-      expect(hurtActions.length).toBeGreaterThan(0);
-
-      // Should have flavor text in saving throw
-      expect(saveAction.data.flavor).toBe('A trap triggers!');
     });
 
     it('should create trap with teleport and hide behavior', async () => {

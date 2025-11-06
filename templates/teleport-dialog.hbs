@@ -104,35 +104,47 @@
   <p class='hint'>{{localize 'EMPUZZLES.CreateReturnTeleportHint'}}</p>
 </div>
 
-<div class='form-group'>
-  <label>
-    <input type='checkbox' name='hasSavingThrow' {{#if hasSavingThrow}}checked{{/if}} />
-    {{localize 'EMPUZZLES.EnableSavingThrow'}}
-  </label>
-  <p class='hint'>{{localize 'EMPUZZLES.SavingThrowHint'}}</p>
-</div>
-
-{{#if hasSavingThrow}}
+{{#if hasMonksTokenBar}}
   <div class='form-group'>
-    <label for='savingThrow'>{{localize 'EMPUZZLES.SavingThrow'}}</label>
-    <select name='savingThrow'>
-      <option value='ability:dex'>{{localize 'EMPUZZLES.DexteritySave'}}</option>
-      <option value='ability:str'>{{localize 'EMPUZZLES.StrengthSave'}}</option>
-      <option value='ability:con'>{{localize 'EMPUZZLES.ConstitutionSave'}}</option>
-      <option value='ability:int'>{{localize 'EMPUZZLES.IntelligenceSave'}}</option>
-      <option value='ability:wis'>{{localize 'EMPUZZLES.WisdomSave'}}</option>
-      <option value='ability:cha'>{{localize 'EMPUZZLES.CharismaSave'}}</option>
-    </select>
+    <label>
+      <input type='checkbox' name='hasSavingThrow' {{#if hasSavingThrow}}checked{{/if}} />
+      {{localize 'EMPUZZLES.EnableSavingThrow'}}
+    </label>
+    <p class='hint'>{{localize 'EMPUZZLES.SavingThrowHint'}}</p>
   </div>
 
-  <div class='form-group'>
-    <label for='dc'>{{localize 'EMPUZZLES.DC'}}</label>
-    <input type='number' name='dc' value='15' min='1' max='30' />
-  </div>
+  {{#if hasSavingThrow}}
+    <div class='form-group'>
+      <label for='savingThrow'>{{localize 'EMPUZZLES.SavingThrow'}}</label>
+      <select name='savingThrow'>
+        <option value='ability:dex'>{{localize 'EMPUZZLES.DexteritySave'}}</option>
+        <option value='ability:str'>{{localize 'EMPUZZLES.StrengthSave'}}</option>
+        <option value='ability:con'>{{localize 'EMPUZZLES.ConstitutionSave'}}</option>
+        <option value='ability:int'>{{localize 'EMPUZZLES.IntelligenceSave'}}</option>
+        <option value='ability:wis'>{{localize 'EMPUZZLES.WisdomSave'}}</option>
+        <option value='ability:cha'>{{localize 'EMPUZZLES.CharismaSave'}}</option>
+      </select>
+    </div>
 
-  <div class='form-group'>
-    <label for='flavorText'>{{localize 'EMPUZZLES.FlavorText'}}</label>
-    <input type='text' name='flavorText' value='{{flavorText}}' />
-    <p class='hint'>{{localize 'EMPUZZLES.FlavorTextHint'}}</p>
+    <div class='form-group'>
+      <label for='dc'>{{localize 'EMPUZZLES.DC'}}</label>
+      <input type='number' name='dc' value='15' min='1' max='30' />
+    </div>
+
+    <div class='form-group'>
+      <label for='flavorText'>{{localize 'EMPUZZLES.FlavorText'}}</label>
+      <input type='text' name='flavorText' value='{{flavorText}}' />
+      <p class='hint'>{{localize 'EMPUZZLES.FlavorTextHint'}}</p>
+    </div>
+  {{/if}}
+{{else}}
+  <div class='form-group' style='background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 0.75rem; margin-bottom: 1rem;'>
+    <p style='margin: 0; color: #ff9800;'>
+      <i class='fa-solid fa-info-circle'></i>
+      <strong>{{localize 'EMPUZZLES.SavingThrowUnavailable'}}</strong>
+    </p>
+    <p style='margin: 0.5rem 0 0 0; font-size: 0.9em;'>
+      {{localize 'EMPUZZLES.SavingThrowUnavailableHint'}}
+    </p>
   </div>
 {{/if}}
