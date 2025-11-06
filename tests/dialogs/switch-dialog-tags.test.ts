@@ -74,13 +74,25 @@ describe('SwitchConfigDialog Tag Action Handlers', () => {
     });
 
     it('should handle case when tagInputManager is not initialized', () => {
+      // Mock ui.notifications.error
+      (global as any).ui = {
+        notifications: {
+          error: jest.fn()
+        }
+      };
+
       // Ensure no tagInputManager
       (dialog as any).tagInputManager = undefined;
 
       const addTagHandler = (SwitchConfigDialog as any).DEFAULT_OPTIONS.actions.addTag;
 
-      // Should not throw even if tagInputManager is undefined (due to optional chaining)
+      // Should not throw even if tagInputManager is undefined
       expect(() => addTagHandler.call(dialog)).not.toThrow();
+
+      // Verify error notification was shown
+      expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
+        'Tag manager not initialized. Please report this issue.'
+      );
     });
   });
 
@@ -89,7 +101,8 @@ describe('SwitchConfigDialog Tag Action Handlers', () => {
       // Mock ui.notifications
       (global as any).ui = {
         notifications: {
-          info: jest.fn()
+          info: jest.fn(),
+          error: jest.fn()
         }
       };
     });
@@ -140,6 +153,11 @@ describe('SwitchConfigDialog Tag Action Handlers', () => {
 
       // Should not throw even if tagInputManager is undefined
       expect(() => confirmTagsHandler.call(dialog)).not.toThrow();
+
+      // Verify error notification was shown
+      expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
+        'Tag manager not initialized. Please report this issue.'
+      );
     });
   });
 
