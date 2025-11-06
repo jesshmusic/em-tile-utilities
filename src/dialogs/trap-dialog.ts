@@ -1909,6 +1909,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
+    // Extract custom tags
+    const customTags =
+      (form.querySelector('input[name="customTags"]') as HTMLInputElement)?.value || '';
+
     const config: any = {
       name: name,
       startingImage: startingImage,
@@ -1917,7 +1921,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetType: targetType,
       hidden: hidden,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
-      hasSavingThrow: hasSavingThrow
+      hasSavingThrow: hasSavingThrow,
+      customTags: customTags
     };
 
     // Add saving throw fields if enabled
