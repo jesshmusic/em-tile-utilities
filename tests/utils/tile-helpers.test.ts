@@ -2,7 +2,7 @@
  * Tests for tile-helpers.ts
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { mockFoundry, createMockScene } from '../mocks/foundry';
 
 // Set up Foundry mocks before importing
@@ -1494,9 +1494,27 @@ describe('tile-helpers', () => {
 
   describe("trap creation without Monk's Token Bar", () => {
     let mockScene: any;
+    let originalModulesGet: any;
 
     beforeEach(() => {
       mockScene = createMockScene();
+
+      // Override modules.get to make monks-tokenbar unavailable
+      originalModulesGet = (global as any).game.modules.get;
+      (global as any).game.modules.get = (id: string) => {
+        if (id === 'monks-tokenbar') {
+          return undefined; // Module not available
+        }
+        if (id === 'tagger') {
+          return { active: true };
+        }
+        return undefined;
+      };
+    });
+
+    afterEach(() => {
+      // Restore original mock
+      (global as any).game.modules.get = originalModulesGet;
     });
 
     it("should NOT include saving throw actions when Monk's Token Bar is unavailable", async () => {
