@@ -32,6 +32,9 @@ export class TagInputManager {
       .map(t => t.trim())
       .filter(t => t.length > 0);
 
+    // Clear hidden input before adding chips (each addTagChip will rebuild it)
+    hiddenInput.value = '';
+
     existingTags.forEach(tag => this.addTagChip(tag));
 
     // Handle Enter key to add tags
