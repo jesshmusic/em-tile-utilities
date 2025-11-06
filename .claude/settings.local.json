@@ -28,7 +28,9 @@
       "Bash(done)",
       "Bash(/opt/homebrew/bin/gh pr list --head feat/teleport-dialog-and-enhancements)",
       "Bash(/opt/homebrew/bin/gh pr checks 20 --repo jesshmusic/em-tile-utilities)",
-      "Bash(/opt/homebrew/bin/gh run view:*)"
+      "Bash(/opt/homebrew/bin/gh run view:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": [
