@@ -1181,8 +1181,7 @@ export async function createTeleportTile(
           deletesource: config.deleteSourceToken, // Use same delete token setting as main teleport
           preservesettings: false,
           avoidtokens: true,
-          colour: '#00e1ff',
-          confirm: config.requireConfirmation ? 'confirm' : null
+          colour: '#00e1ff'
         },
         id: foundry.utils.randomID()
       });
