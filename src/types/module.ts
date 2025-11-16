@@ -120,6 +120,7 @@ export interface TrapConfig {
   dmgTrapItemName?: string; // Name for display
   dmgTrapItemImg?: string; // Image for display
   customTags?: string;
+  pauseGameOnTrigger?: boolean; // Whether to pause the game when trap triggers
 }
 
 /**
@@ -165,7 +166,6 @@ export interface TeleportTileConfig {
   teleportX: number;
   teleportY: number;
   teleportSceneId: string;
-  requireConfirmation: boolean;
   deleteSourceToken: boolean;
   createReturnTeleport: boolean;
   hasSavingThrow: boolean;
@@ -174,6 +174,7 @@ export interface TeleportTileConfig {
   flavorText: string;
   customTags?: string;
   sound?: string;
+  pauseGameOnTrigger?: boolean; // Whether to pause the game when teleport triggers
 }
 
 export interface WallDoorState {

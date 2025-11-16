@@ -169,6 +169,20 @@ Hooks.once('init', async () => {
     default: false,
     requiresReload: true
   });
+
+  // Patreon support button
+  game.settings.registerMenu('em-tile-utilities', 'patreonSupport', {
+    name: 'Support on Patreon',
+    label: 'Visit Patreon',
+    hint: 'Support the development of this module on Patreon',
+    icon: 'fab fa-patreon',
+    type: class PatreonLink {
+      render() {
+        window.open('https://www.patreon.com/c/DormanLakely', '_blank');
+      }
+    },
+    restricted: false
+  });
 });
 
 // Check for dependencies
