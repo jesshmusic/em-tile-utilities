@@ -74,17 +74,24 @@ export function registerHandlebarsHelpers(): void {
  * Register Handlebars partials used in templates
  */
 export function registerHandlebarsPartials(): void {
-  try {
-    // Register saving-throw-section partial
-    const savingThrowPath = path.join(
-      __dirname,
-      '../..',
-      'templates/partials/saving-throw-section.hbs'
-    );
-    const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
-    Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
-  } catch (error) {
-    // Partial might not exist for some templates
+  const partialsToRegister = [
+    'saving-throw-section',
+    'visibility-section',
+    'custom-tags-section'
+  ];
+
+  for (const partialName of partialsToRegister) {
+    try {
+      const partialPath = path.join(
+        __dirname,
+        '../..',
+        `templates/partials/${partialName}.hbs`
+      );
+      const partialSource = fs.readFileSync(partialPath, 'utf8');
+      Handlebars.registerPartial(`partials/${partialName}`, partialSource);
+    } catch (error) {
+      // Partial might not exist for some templates - that's okay
+    }
   }
 }
 
@@ -129,14 +136,15 @@ export async function renderDialogTemplate(
  */
 export function htmlContainsSelector(html: string, selector: string): boolean {
   // Simple regex-based check for common selectors
+  // Support both single and double quotes
   if (selector.startsWith('select[name="')) {
     const name = selector.match(/name="([^"]+)"/)?.[1];
-    return new RegExp(`<select[^>]*name="${name}"`, 'i').test(html);
+    return new RegExp(`<select[^>]*name=['"]${name}['"]`, 'i').test(html);
   }
 
   if (selector.startsWith('input[name="')) {
     const name = selector.match(/name="([^"]+)"/)?.[1];
-    return new RegExp(`<input[^>]*name="${name}"`, 'i').test(html);
+    return new RegExp(`<input[^>]*name=['"]${name}['"]`, 'i').test(html);
   }
 
   if (selector.startsWith('button') && selector.includes('[data-')) {
@@ -151,7 +159,7 @@ export function htmlContainsSelector(html: string, selector: string): boolean {
 
   if (selector.startsWith('.')) {
     const className = selector.slice(1);
-    return new RegExp(`class="[^"]*${className}`, 'i').test(html);
+    return new RegExp(`class=['"][^'"]*${className}`, 'i').test(html);
   }
 
   return html.includes(selector);
@@ -161,8 +169,9 @@ export function htmlContainsSelector(html: string, selector: string): boolean {
  * Helper to get option values from a select in HTML
  */
 export function getSelectOptionValues(html: string, selectName: string): string[] {
+  // Support both single and double quotes
   const selectRegex = new RegExp(
-    `<select[^>]*name="${selectName}"[^>]*>([\\s\\S]*?)</select>`,
+    `<select[^>]*name=['"]${selectName}['"][^>]*>([\\s\\S]*?)</select>`,
     'i'
   );
   const selectMatch = html.match(selectRegex);
@@ -170,7 +179,8 @@ export function getSelectOptionValues(html: string, selectName: string): string[
   if (!selectMatch) return [];
 
   const selectContent = selectMatch[1];
-  const optionRegex = /<option[^>]*value="([^"]*)"[^>]*>/gi;
+  // Match both single and double quotes for values
+  const optionRegex = /<option[^>]*value=['"]([^'"]*)['"]/gi;
   const values: string[] = [];
   let match;
 

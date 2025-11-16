@@ -1,0 +1,87 @@
+{{! Visibility & Image Behavior Section }}
+<fieldset class='visibility-section'>
+  <legend>{{localize 'EMPUZZLES.VisibilityLegend'}}</legend>
+
+  {{! Image Behavior - Only for Image Traps }}
+  {{#if isImageTrap}}
+    <div class='form-group'>
+      <label for='imageBehavior'>{{localize 'EMPUZZLES.ImageBehavior'}}</label>
+      <select id='imageBehavior' name='imageBehavior'>
+        {{#each imageBehaviorOptions as |option|}}
+          <option
+            value='{{option.value}}'
+            {{#if (eq option.value ../imageBehavior)}}selected{{/if}}
+          >
+            {{localize option.label}}
+          </option>
+        {{/each}}
+      </select>
+      <p class='hint'>{{localize 'EMPUZZLES.ImageBehaviorHint'}}</p>
+    </div>
+  {{/if}}
+
+  {{! Starting Image }}
+  <div class='form-group'>
+    <label for='startingImage'>{{localize 'EMPUZZLES.TileImage'}}</label>
+    <div class='form-fields'>
+      <input
+        type='text'
+        id='startingImage'
+        name='startingImage'
+        value='{{startingImage}}'
+        placeholder='path/to/trap.png'
+        data-dtype='String'
+      />
+      <button
+        type='button'
+        class='file-picker'
+        data-type='imagevideo'
+        data-target='startingImage'
+        title='Browse Files'
+        tabindex='-1'
+      >
+        <i class='fas fa-file-import fa-fw'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
+  </div>
+
+  {{! Triggered Image - Only when Image Behavior is "Switch" }}
+  {{#if isImageTrap}}
+    {{#if (eq imageBehavior 'switch')}}
+      <div class='form-group'>
+        <label for='triggeredImage'>{{localize 'EMPUZZLES.TriggeredImage'}}</label>
+        <div class='form-fields'>
+          <input
+            type='text'
+            id='triggeredImage'
+            name='triggeredImage'
+            value='{{triggeredImage}}'
+            placeholder='path/to/triggered.png'
+            data-dtype='String'
+          />
+          <button
+            type='button'
+            class='file-picker'
+            data-type='imagevideo'
+            data-target='triggeredImage'
+            title='Browse Files'
+            tabindex='-1'
+          >
+            <i class='fas fa-file-import fa-fw'></i>
+          </button>
+        </div>
+        <p class='hint'>{{localize 'EMPUZZLES.TriggeredImageHint'}}</p>
+      </div>
+    {{/if}}
+  {{/if}}
+
+  {{! Hidden Trap Checkbox }}
+  <div class='form-group'>
+    <label>
+      <input type='checkbox' id='hiddenTrap' name='hiddenTrap' checked />
+      {{localize 'EMPUZZLES.HiddenTrap'}}
+    </label>
+    <p class='hint'>{{localize 'EMPUZZLES.HiddenTrapHint'}}</p>
+  </div>
+</fieldset>

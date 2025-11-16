@@ -1368,32 +1368,54 @@ export async function createTrapTile(
         });
       });
     }
-  } else if (config.hideTrapOnTrigger) {
-    // Disappearing trap: hide the trap tile
-    actions.push({
-      action: 'showhide',
-      data: {
-        entity: {
-          id: 'tile',
-          name: 'This Tile'
+  } else {
+    // Standard trap: handle visibility and image changes
+
+    // Action 1a: Show/hide trap based on configuration
+    if (config.hideTrapOnTrigger) {
+      // Disappearing trap: hide the trap tile when triggered
+      actions.push({
+        action: 'showhide',
+        data: {
+          entity: {
+            id: 'tile',
+            name: 'This Tile'
+          },
+          collection: 'tiles',
+          hidden: 'hide',
+          fade: 0
         },
-        collection: 'tokens',
-        hidden: 'hide',
-        fade: 0
-      },
-      id: foundry.utils.randomID()
-    });
-  } else if (config.triggeredImage) {
-    // Switching trap: change to triggered image
-    actions.push({
-      action: 'tileimage',
-      data: {
-        entity: { id: 'tile', name: 'This Tile' },
-        select: 'next',
-        transition: 'none'
-      },
-      id: foundry.utils.randomID()
-    });
+        id: foundry.utils.randomID()
+      });
+    } else if (config.hidden) {
+      // Hidden trap: reveal the trap tile when triggered
+      actions.push({
+        action: 'showhide',
+        data: {
+          entity: {
+            id: 'tile',
+            name: 'This Tile'
+          },
+          collection: 'tiles',
+          hidden: 'show',
+          fade: 0
+        },
+        id: foundry.utils.randomID()
+      });
+    }
+
+    // Action 1b: Switch to triggered image if provided
+    if (config.triggeredImage) {
+      actions.push({
+        action: 'tileimage',
+        data: {
+          entity: { id: 'tile', name: 'This Tile' },
+          select: 'next',
+          transition: 'none'
+        },
+        id: foundry.utils.randomID()
+      });
+    }
   }
 
   // Action 2: Play sound if provided

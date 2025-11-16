@@ -1857,6 +1857,16 @@ button .game-icon,
   color: #e30f0f;
 }
 
+/* ========================================
+   Visibility Section Fieldset
+   ======================================== */
+
+/* Visibility fieldset within trap dialogs */
+.em-puzzles fieldset.visibility-section {
+  margin: 5px 0;
+  flex: auto;
+}
+
 .em-puzzles fieldset.tagger .tag-container .tag:has(i:hover) {
   background-color: #ffb6b6;
 }

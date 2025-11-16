@@ -513,6 +513,21 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
+    // Disable "Hidden Trap" checkbox when "Hide Tile" is selected
+    // (These options are mutually exclusive - if trap hides when triggered, it shouldn't start hidden)
+    const hiddenTrapCheckbox = this.element.querySelector(
+      'input[name="hiddenTrap"]'
+    ) as HTMLInputElement;
+    if (hiddenTrapCheckbox && imageBehaviorSelect) {
+      const isHideBehavior = imageBehaviorSelect.value === ImageBehavior.HIDE;
+      if (isHideBehavior) {
+        hiddenTrapCheckbox.checked = false;
+        hiddenTrapCheckbox.disabled = true;
+      } else {
+        hiddenTrapCheckbox.disabled = false;
+      }
+    }
+
     // Set up result type selector change handler
     const resultTypeSelect = this.element.querySelector(
       'select[name="resultType"]'

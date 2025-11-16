@@ -28,6 +28,8 @@
     "CreateTeleport": "Create Teleport",
     "CreateTeleportDesc": "Teleport tile that moves tokens to another location or scene",
     "TileImage": "Tile Image",
+    "TileImageHint": "The image for this trap tile",
+    "VisibilityLegend": "Visibility & Image Behavior",
     "CustomTags": "Custom Tags",
     "TaggerLegend": "Tagger (press enter to complete)",
     "CustomTagsPlaceholder": "Type and press Enter",
