@@ -128,9 +128,7 @@ describe('Active Effect Trap Creation (Issue #22)', () => {
     const tileData = (scene.createEmbeddedDocuments as any).mock.calls[0][1][0];
     const actions = tileData.flags['monks-active-tiles'].actions;
 
-    const savingThrowAction = actions.find(
-      (a: any) => a.action === 'monks-tokenbar.requestroll'
-    );
+    const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
     const activeEffectAction = actions.find((a: any) => a.action === 'activeeffect');
 
     expect(savingThrowAction).toBeDefined();

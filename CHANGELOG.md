@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.2] - 2025-11-16
+
+### Fixed
+
+- correct pause game action structure and positioning
+- resolve hidden trap visibility bug and improve trap dialog UX (Issue #24)
+- active effect traps not applying effects (issue #22)
+
+### Other
+
+- enhancement: improve Tile Manager window positioning
+- docs: update README with current features and capabilities (#21)
+
 ## [1.15.1] - 2025-11-06
 
 ### Added

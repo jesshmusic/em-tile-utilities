@@ -38,11 +38,7 @@ describe('TrapDialog Template Rendering Integration', () => {
     ];
 
     for (const partialName of partialsToRegister) {
-      const partialPath = path.join(
-        __dirname,
-        '../..',
-        `templates/partials/${partialName}.hbs`
-      );
+      const partialPath = path.join(__dirname, '../..', `templates/partials/${partialName}.hbs`);
       const partialSource = fs.readFileSync(partialPath, 'utf8');
       Handlebars.registerPartial(`partials/${partialName}`, partialSource);
     }

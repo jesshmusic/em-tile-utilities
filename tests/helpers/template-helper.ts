@@ -74,19 +74,11 @@ export function registerHandlebarsHelpers(): void {
  * Register Handlebars partials used in templates
  */
 export function registerHandlebarsPartials(): void {
-  const partialsToRegister = [
-    'saving-throw-section',
-    'visibility-section',
-    'custom-tags-section'
-  ];
+  const partialsToRegister = ['saving-throw-section', 'visibility-section', 'custom-tags-section'];
 
   for (const partialName of partialsToRegister) {
     try {
-      const partialPath = path.join(
-        __dirname,
-        '../..',
-        `templates/partials/${partialName}.hbs`
-      );
+      const partialPath = path.join(__dirname, '../..', `templates/partials/${partialName}.hbs`);
       const partialSource = fs.readFileSync(partialPath, 'utf8');
       Handlebars.registerPartial(`partials/${partialName}`, partialSource);
     } catch (error) {
