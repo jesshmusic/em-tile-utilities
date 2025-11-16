@@ -55,13 +55,17 @@
 
   <div class="form-group">
     <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
-    <select id="resultType" name="resultType" data-result-type-select {{#if hasDmgTrap}}disabled{{/if}}>
+    <select id="resultType" {{#unless hasDmgTrap}}name="resultType"{{/unless}} data-result-type-select {{#if hasDmgTrap}}disabled{{/if}}>
       {{#each resultTypeOptions as |option|}}
         <option value="{{option.value}}" {{#if (eq option.value ../defaultResultType)}}selected{{/if}}>
           {{localize option.label}}
         </option>
       {{/each}}
     </select>
+    {{! Hidden input to preserve value when select is disabled }}
+    {{#if (and hasDmgTrap defaultResultType)}}
+      <input type="hidden" name="resultType" value="{{defaultResultType}}" />
+    {{/if}}
     <p class="hint">{{localize "EMPUZZLES.ResultTypeHint"}}</p>
   </div>
 

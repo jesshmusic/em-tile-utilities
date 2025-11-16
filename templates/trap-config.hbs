@@ -176,7 +176,11 @@
       <div class="form-group">
         <label for="damageOnFail">{{localize "EMPUZZLES.DamageOnFail"}}</label>
         {{#if defaultDamageOnFail}}
-          <input type="text" id="damageOnFail" name="damageOnFail" value="{{defaultDamageOnFail}}" placeholder="2d6" {{#if hasDmgTrap}}disabled{{/if}} />
+          <input type="text" id="damageOnFail" {{#unless hasDmgTrap}}name="damageOnFail"{{/unless}} value="{{defaultDamageOnFail}}" placeholder="2d6" {{#if hasDmgTrap}}disabled{{/if}} />
+          {{! Hidden input to preserve value when input is disabled }}
+          {{#if hasDmgTrap}}
+            <input type="hidden" name="damageOnFail" value="{{defaultDamageOnFail}}" />
+          {{/if}}
         {{else}}
           <input type="text" id="damageOnFail" name="damageOnFail" value="2d6" placeholder="2d6" {{#if hasDmgTrap}}disabled{{/if}} />
         {{/if}}

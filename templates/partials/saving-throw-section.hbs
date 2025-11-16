@@ -17,20 +17,24 @@
     <input
       type="checkbox"
       id="hasSavingThrow"
-      name="hasSavingThrow"
+      {{#unless (and canDisable hasDmgTrap)}}name="hasSavingThrow"{{/unless}}
       data-saving-throw-checkbox
       {{#if defaultHasSavingThrow}}checked{{/if}}
       {{#if (and canDisable hasDmgTrap)}}disabled{{/if}}
     />
     {{localize "EMPUZZLES.HasSavingThrow"}}
   </label>
+  {{! Hidden input to preserve value when checkbox is disabled }}
+  {{#if (and canDisable hasDmgTrap defaultHasSavingThrow)}}
+    <input type="hidden" name="hasSavingThrow" value="on" />
+  {{/if}}
   <p class="hint">{{localize "EMPUZZLES.HasSavingThrowHint"}}</p>
 </div>
 
 <div class="saving-throw-fields" style="display: none;">
   <div class="form-group">
     <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
-    <select id="savingThrow" name="savingThrow" {{#if (and canDisable hasDmgTrap)}}disabled{{/if}}>
+    <select id="savingThrow" {{#unless (and canDisable hasDmgTrap)}}name="savingThrow"{{/unless}} {{#if (and canDisable hasDmgTrap)}}disabled{{/if}}>
       {{#each savingThrowOptions as |option|}}
         {{#if (and ../hasDefaults ../defaultSavingThrow)}}
           <option value="{{option.value}}" {{#if (eq option.value ../defaultSavingThrow)}}selected{{/if}}>
@@ -43,13 +47,21 @@
         {{/if}}
       {{/each}}
     </select>
+    {{! Hidden input to preserve value when select is disabled }}
+    {{#if (and canDisable hasDmgTrap defaultSavingThrow)}}
+      <input type="hidden" name="savingThrow" value="{{defaultSavingThrow}}" />
+    {{/if}}
     <p class="hint">{{localize "EMPUZZLES.SavingThrowHint"}}</p>
   </div>
 
   <div class="form-group">
     <label for="dc">{{localize "EMPUZZLES.DC"}}</label>
     {{#if (and hasDefaults defaultDC)}}
-      <input type="number" id="dc" name="dc" value="{{defaultDC}}" min="1" max="30" data-dtype="Number" {{#if (and canDisable hasDmgTrap)}}disabled{{/if}} />
+      <input type="number" id="dc" {{#unless (and canDisable hasDmgTrap)}}name="dc"{{/unless}} value="{{defaultDC}}" min="1" max="30" data-dtype="Number" {{#if (and canDisable hasDmgTrap)}}disabled{{/if}} />
+      {{! Hidden input to preserve value when input is disabled }}
+      {{#if (and canDisable hasDmgTrap)}}
+        <input type="hidden" name="dc" value="{{defaultDC}}" />
+      {{/if}}
     {{else}}
       <input type="number" id="dc" name="dc" value="14" min="1" max="30" data-dtype="Number" {{#if (and canDisable hasDmgTrap)}}disabled{{/if}} />
     {{/if}}
@@ -59,9 +71,13 @@
   {{#if showHalfDamage}}
     <div class="form-group">
       <label>
-        <input type="checkbox" id="halfDamageOnSuccess" name="halfDamageOnSuccess" {{#if defaultHalfDamageOnSuccess}}checked{{/if}} {{#if (and canDisable hasDmgTrap)}}disabled{{/if}} />
+        <input type="checkbox" id="halfDamageOnSuccess" {{#unless (and canDisable hasDmgTrap)}}name="halfDamageOnSuccess"{{/unless}} {{#if defaultHalfDamageOnSuccess}}checked{{/if}} {{#if (and canDisable hasDmgTrap)}}disabled{{/if}} />
         {{localize "EMPUZZLES.HalfDamageOnSuccess"}}
       </label>
+      {{! Hidden input to preserve value when checkbox is disabled }}
+      {{#if (and canDisable hasDmgTrap defaultHalfDamageOnSuccess)}}
+        <input type="hidden" name="halfDamageOnSuccess" value="on" />
+      {{/if}}
       <p class="hint">{{localize "EMPUZZLES.HalfDamageOnSuccessHint"}}</p>
     </div>
   {{/if}}

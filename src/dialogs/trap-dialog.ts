@@ -1786,10 +1786,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         imageTrapConfig.teleportX = this.teleportX;
         imageTrapConfig.teleportY = this.teleportY;
       } else if (this.resultType === TrapResultType.ACTIVE_EFFECT) {
-        imageTrapConfig.effectId =
+        const effectId =
           (form.querySelector('select[name="effectId"]') as HTMLSelectElement)?.value || '';
-        imageTrapConfig.addEffect =
-          (form.querySelector('select[name="addEffect"]') as HTMLSelectElement)?.value === 'add';
+        const addEffect =
+          (form.querySelector('select[name="addEffect"]') as HTMLSelectElement)?.value || 'add';
+
+        imageTrapConfig.activeEffectConfig = {
+          effectid: effectId,
+          addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear'
+        };
       }
 
       trapConfig = imageTrapConfig;
