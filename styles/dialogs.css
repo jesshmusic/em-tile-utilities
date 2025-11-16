@@ -1857,6 +1857,16 @@ button .game-icon,
   color: #e30f0f;
 }
 
+/* ========================================
+   Visibility Section Fieldset
+   ======================================== */
+
+/* Visibility fieldset within trap dialogs */
+.em-puzzles fieldset.visibility-section {
+  margin: 5px 0;
+  flex: auto;
+}
+
 .em-puzzles fieldset.tagger .tag-container .tag:has(i:hover) {
   background-color: #ffb6b6;
 }
@@ -1881,4 +1891,79 @@ button .game-icon,
   font-size: 11px;
   color: #aaa;
   line-height: 1.3;
+}
+
+/* ====================================
+   Warning and Info Boxes
+   ==================================== */
+
+.warning-box {
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 4px solid #ffc107;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.warning-box p {
+  margin: 0;
+  color: #f57c00;
+}
+
+.warning-box p + p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9em;
+}
+
+.danger-box {
+  background: rgba(244, 67, 54, 0.1);
+  border-left: 4px solid #f44336;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.danger-box p {
+  margin: 0;
+  color: #d32f2f;
+}
+
+.danger-box p + p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9em;
+}
+
+/* ====================================
+   Patreon Support Link
+   ==================================== */
+
+.tile-manager-footer {
+  text-align: center;
+  padding: 12px;
+  margin-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.patreon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.patreon-link:hover {
+  background: linear-gradient(135deg, #2ecc71 0%, #52de97 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+  color: white;
+}
+
+.patreon-link i {
+  font-size: 16px;
 }

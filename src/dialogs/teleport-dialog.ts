@@ -88,7 +88,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Read current form values if the element exists (for re-renders)
     let hasSavingThrow = false;
-    let requireConfirmation = false;
+    let pauseGameOnTrigger = false;
     let deleteSourceToken = false;
     let createReturnTeleport = false;
     let customTags = '';
@@ -99,8 +99,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const hasSavingThrowCheckbox = this.element.querySelector(
         'input[name="hasSavingThrow"]'
       ) as HTMLInputElement;
-      const requireConfirmationCheckbox = this.element.querySelector(
-        'input[name="requireConfirmation"]'
+      const pauseGameOnTriggerCheckbox = this.element.querySelector(
+        'input[name="pauseGameOnTrigger"]'
       ) as HTMLInputElement;
       const deleteSourceTokenCheckbox = this.element.querySelector(
         'input[name="deleteSourceToken"]'
@@ -117,7 +117,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
 
       hasSavingThrow = hasSavingThrowCheckbox?.checked || false;
-      requireConfirmation = requireConfirmationCheckbox?.checked || false;
+      pauseGameOnTrigger = pauseGameOnTriggerCheckbox?.checked || false;
       deleteSourceToken = deleteSourceTokenCheckbox?.checked || false;
       createReturnTeleport = createReturnTeleportCheckbox?.checked || false;
       customTags = customTagsInput?.value || '';
@@ -151,7 +151,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportSceneName: teleportSceneName,
       isDifferentScene: isDifferentScene,
       hasSavingThrow: hasSavingThrow,
-      requireConfirmation: requireConfirmation,
+      pauseGameOnTrigger: pauseGameOnTrigger,
       deleteSourceToken: deleteSourceToken,
       createReturnTeleport: createReturnTeleport,
       customTags: customTags,
@@ -420,7 +420,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportX: this.teleportX,
       teleportY: this.teleportY,
       teleportSceneId: this.teleportSceneId,
-      requireConfirmation: data.requireConfirmation || false,
+      pauseGameOnTrigger: data.pauseGameOnTrigger || false,
       deleteSourceToken: data.deleteSourceToken || false,
       createReturnTeleport: data.createReturnTeleport || false,
       hasSavingThrow: data.hasSavingThrow || false,

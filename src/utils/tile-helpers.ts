@@ -995,6 +995,17 @@ export async function createTeleportTile(
     });
   }
 
+  // Pause game if requested (after audio feedback, before mechanics)
+  if (config.pauseGameOnTrigger) {
+    actions.push({
+      action: 'pause',
+      data: {
+        pause: 'pause'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
   // Add saving throw if enabled and Monk's Token Bar is available
   if (config.hasSavingThrow && hasMonksTokenBar()) {
     actions.push({
@@ -1038,9 +1049,7 @@ export async function createTeleportTile(
       deletesource: config.deleteSourceToken,
       preservesettings: false,
       avoidtokens: true,
-      colour: '#00e1ff',
-      // Player confirmation handled by Monk's Active Tiles
-      confirm: config.requireConfirmation ? 'confirm' : null
+      colour: '#00e1ff'
     },
     id: foundry.utils.randomID()
   });
@@ -1079,7 +1088,7 @@ export async function createTeleportTile(
         restriction: 'all',
         controlled: 'all',
         trigger: ['enter'],
-        allowpaused: false,
+        allowpaused: config.pauseGameOnTrigger || false,
         usealpha: false,
         pointer: true,
         vision: true,
@@ -1172,8 +1181,7 @@ export async function createTeleportTile(
           deletesource: config.deleteSourceToken, // Use same delete token setting as main teleport
           preservesettings: false,
           avoidtokens: true,
-          colour: '#00e1ff',
-          confirm: config.requireConfirmation ? 'confirm' : null
+          colour: '#00e1ff'
         },
         id: foundry.utils.randomID()
       });
@@ -1286,7 +1294,7 @@ export async function createTrapTile(
   // Build actions array
   const actions: any[] = [];
 
-  // Action 1: Handle trap visual response based on type
+  // Action 0: Handle trap visual response based on type
   if (config.tileActions && config.tileActions.length > 0) {
     // Activating trap: perform actions on other tiles
     config.tileActions.forEach(tileAction => {
@@ -1368,32 +1376,54 @@ export async function createTrapTile(
         });
       });
     }
-  } else if (config.hideTrapOnTrigger) {
-    // Disappearing trap: hide the trap tile
-    actions.push({
-      action: 'showhide',
-      data: {
-        entity: {
-          id: 'tile',
-          name: 'This Tile'
+  } else {
+    // Standard trap: handle visibility and image changes
+
+    // Action 1a: Show/hide trap based on configuration
+    if (config.hideTrapOnTrigger) {
+      // Disappearing trap: hide the trap tile when triggered
+      actions.push({
+        action: 'showhide',
+        data: {
+          entity: {
+            id: 'tile',
+            name: 'This Tile'
+          },
+          collection: 'tiles',
+          hidden: 'hide',
+          fade: 0
         },
-        collection: 'tokens',
-        hidden: 'hide',
-        fade: 0
-      },
-      id: foundry.utils.randomID()
-    });
-  } else if (config.triggeredImage) {
-    // Switching trap: change to triggered image
-    actions.push({
-      action: 'tileimage',
-      data: {
-        entity: { id: 'tile', name: 'This Tile' },
-        select: 'next',
-        transition: 'none'
-      },
-      id: foundry.utils.randomID()
-    });
+        id: foundry.utils.randomID()
+      });
+    } else if (config.hidden) {
+      // Hidden trap: reveal the trap tile when triggered
+      actions.push({
+        action: 'showhide',
+        data: {
+          entity: {
+            id: 'tile',
+            name: 'This Tile'
+          },
+          collection: 'tiles',
+          hidden: 'show',
+          fade: 0
+        },
+        id: foundry.utils.randomID()
+      });
+    }
+
+    // Action 1b: Switch to triggered image if provided
+    if (config.triggeredImage) {
+      actions.push({
+        action: 'tileimage',
+        data: {
+          entity: { id: 'tile', name: 'This Tile' },
+          select: 'next',
+          transition: 'none'
+        },
+        id: foundry.utils.randomID()
+      });
+    }
   }
 
   // Action 2: Play sound if provided
@@ -1415,7 +1445,18 @@ export async function createTrapTile(
     });
   }
 
-  // Action 3: Add result-based actions (only for non-activating traps)
+  // Action 3: Pause game if requested (after visual/audio feedback, before mechanics)
+  if (config.pauseGameOnTrigger) {
+    actions.push({
+      action: 'pause',
+      data: {
+        pause: 'pause'
+      },
+      id: foundry.utils.randomID()
+    });
+  }
+
+  // Action 4: Add result-based actions (only for non-activating traps)
   if (!config.tileActions || config.tileActions.length === 0) {
     const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
     const targetEntityName =
@@ -1740,7 +1781,7 @@ export async function createTrapTile(
         restriction: 'all',
         controlled: 'all',
         trigger: ['enter'],
-        allowpaused: false,
+        allowpaused: config.pauseGameOnTrigger || false,
         usealpha: false,
         pointer: false,
         vision: true,

@@ -1,6 +1,6 @@
 {
   "name": "em-tile-utilities",
-  "version": "1.15.1",
+  "version": "1.15.2",
   "description": "A FoundryVTT module that provides utility tile creation tools for Monk's Active Tiles.",
   "main": "dist/main.js",
   "scripts": {

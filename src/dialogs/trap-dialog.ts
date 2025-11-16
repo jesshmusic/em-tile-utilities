@@ -513,6 +513,21 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
+    // Disable "Hidden Trap" checkbox when "Hide Tile" is selected
+    // (These options are mutually exclusive - if trap hides when triggered, it shouldn't start hidden)
+    const hiddenTrapCheckbox = this.element.querySelector(
+      'input[name="hiddenTrap"]'
+    ) as HTMLInputElement;
+    if (hiddenTrapCheckbox && imageBehaviorSelect) {
+      const isHideBehavior = imageBehaviorSelect.value === ImageBehavior.HIDE;
+      if (isHideBehavior) {
+        hiddenTrapCheckbox.checked = false;
+        hiddenTrapCheckbox.disabled = true;
+      } else {
+        hiddenTrapCheckbox.disabled = false;
+      }
+    }
+
     // Set up result type selector change handler
     const resultTypeSelect = this.element.querySelector(
       'select[name="resultType"]'
@@ -1786,10 +1801,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         imageTrapConfig.teleportX = this.teleportX;
         imageTrapConfig.teleportY = this.teleportY;
       } else if (this.resultType === TrapResultType.ACTIVE_EFFECT) {
-        imageTrapConfig.effectId =
+        const effectId =
           (form.querySelector('select[name="effectId"]') as HTMLSelectElement)?.value || '';
-        imageTrapConfig.addEffect =
-          (form.querySelector('select[name="addEffect"]') as HTMLSelectElement)?.value === 'add';
+        const addEffect =
+          (form.querySelector('select[name="addEffect"]') as HTMLSelectElement)?.value || 'add';
+
+        // Note: altereffect is an optional field for PF2e effects with values (e.g., "+ 1")
+        // Not currently exposed in UI but could be added in future for PF2e support
+        imageTrapConfig.activeEffectConfig = {
+          effectid: effectId,
+          addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear'
+        };
       }
 
       trapConfig = imageTrapConfig;

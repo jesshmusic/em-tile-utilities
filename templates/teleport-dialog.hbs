@@ -49,6 +49,14 @@
 </div>
 
 <div class='form-group'>
+  <label>
+    <input type='checkbox' name='pauseGameOnTrigger' {{#if pauseGameOnTrigger}}checked{{/if}} />
+    {{localize 'EMPUZZLES.PauseGameOnTrigger'}}
+  </label>
+  <p class='hint'>{{localize 'EMPUZZLES.PauseGameOnTriggerHint'}}</p>
+</div>
+
+<div class='form-group'>
   <label for='targetScene'>{{localize 'EMPUZZLES.TargetScene'}}</label>
   <select name='targetScene'>
     {{#each scenes as |scene|}}
@@ -78,15 +86,17 @@
   {{/if}}
 </div>
 
-<div class='form-group'>
-  <label>
-    <input type='checkbox' name='requireConfirmation' {{#if requireConfirmation}}checked{{/if}} />
-    {{localize 'EMPUZZLES.RequireConfirmation'}}
-  </label>
-  <p class='hint'>{{localize 'EMPUZZLES.RequireConfirmationHint'}}</p>
-</div>
-
 {{#if isDifferentScene}}
+  <div class='form-group warning-box'>
+    <p>
+      <i class='fa-solid fa-triangle-exclamation'></i>
+      <strong>{{localize 'EMPUZZLES.CrossSceneTeleportWarning'}}</strong>
+    </p>
+    <p>
+      {{localize 'EMPUZZLES.CrossSceneTeleportWarningHint'}}
+    </p>
+  </div>
+
   <div class='form-group'>
     <label>
       <input type='checkbox' name='deleteSourceToken' {{#if deleteSourceToken}}checked{{/if}} />
@@ -94,6 +104,18 @@
     </label>
     <p class='hint'>{{localize 'EMPUZZLES.DeleteSourceTokenHint'}}</p>
   </div>
+
+  {{#if deleteSourceToken}}
+    <div class='form-group danger-box'>
+      <p>
+        <i class='fa-solid fa-circle-exclamation'></i>
+        <strong>{{localize 'EMPUZZLES.DeleteSourceCombatWarning'}}</strong>
+      </p>
+      <p>
+        {{localize 'EMPUZZLES.DeleteSourceCombatWarningHint'}}
+      </p>
+    </div>
+  {{/if}}
 {{/if}}
 
 <div class='form-group'>

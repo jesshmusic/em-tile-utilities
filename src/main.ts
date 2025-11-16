@@ -23,9 +23,15 @@ Hooks.once('init', async () => {
   // Pre-load templates
   const SAVING_THROW_SECTION_PARTIAL_PATH =
     'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
+  const VISIBILITY_SECTION_PARTIAL_PATH =
+    'modules/em-tile-utilities/templates/partials/visibility-section.hbs';
   const CUSTOM_TAGS_SECTION_PARTIAL_PATH =
     'modules/em-tile-utilities/templates/partials/custom-tags-section.hbs';
-  await loadTemplates([SAVING_THROW_SECTION_PARTIAL_PATH, CUSTOM_TAGS_SECTION_PARTIAL_PATH]);
+  await loadTemplates([
+    SAVING_THROW_SECTION_PARTIAL_PATH,
+    VISIBILITY_SECTION_PARTIAL_PATH,
+    CUSTOM_TAGS_SECTION_PARTIAL_PATH
+  ]);
 
   // Register Handlebars partials manually
   // IMPORTANT: loadTemplates() only preloads template files for caching.
@@ -44,6 +50,23 @@ Hooks.once('init', async () => {
   } catch (err) {
     console.error(
       `[em-tile-utilities] Error fetching partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}.`,
+      err
+    );
+  }
+
+  try {
+    const response = await fetch(VISIBILITY_SECTION_PARTIAL_PATH);
+    if (!response.ok) {
+      console.error(
+        `[em-tile-utilities] Failed to load partial template: ${VISIBILITY_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
+      );
+    } else {
+      const partialTemplate = await response.text();
+      (Handlebars as any).registerPartial('partials/visibility-section', partialTemplate);
+    }
+  } catch (err) {
+    console.error(
+      `[em-tile-utilities] Error fetching partial template: ${VISIBILITY_SECTION_PARTIAL_PATH}.`,
       err
     );
   }
@@ -145,6 +168,20 @@ Hooks.once('init', async () => {
     type: Boolean,
     default: false,
     requiresReload: true
+  });
+
+  // Patreon support button
+  game.settings.registerMenu('em-tile-utilities', 'patreonSupport', {
+    name: 'Support on Patreon',
+    label: 'Visit Patreon',
+    hint: 'Support the development of this module on Patreon',
+    icon: 'fab fa-patreon',
+    type: class PatreonLink {
+      render() {
+        window.open('https://www.patreon.com/c/DormanLakely', '_blank');
+      }
+    },
+    restricted: false
   });
 });
 

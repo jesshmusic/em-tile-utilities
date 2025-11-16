@@ -18,47 +18,14 @@
     <p class="hint">{{localize "EMPUZZLES.TrapNameHint"}}</p>
   </div>
 
-  {{! Image Trap Specific Fields }}
-  {{#if (eq trapType "image")}}
-    <div class="form-group">
-      <label for="imageBehavior">{{localize "EMPUZZLES.ImageBehavior"}}</label>
-      <select id="imageBehavior" name="imageBehavior">
-        {{#each imageBehaviorOptions as |option|}}
-          <option value="{{option.value}}" {{#if (eq option.value ../imageBehavior)}}selected{{/if}}>
-            {{localize option.label}}
-          </option>
-        {{/each}}
-      </select>
-      <p class="hint">{{localize "EMPUZZLES.ImageBehaviorHint"}}</p>
-    </div>
-  {{/if}}
-
-  <div class="form-group">
-    <label for="startingImage">{{localize "EMPUZZLES.StartingImage"}}</label>
-    <div class="form-fields">
-      <input type="text" id="startingImage" name="startingImage" value="{{defaultTrapImage}}" placeholder="path/to/floor.png" data-dtype="String" />
-      <button type="button" class="file-picker" data-type="imagevideo" data-target="startingImage" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
-      </button>
-    </div>
-    <p class="hint">{{localize "EMPUZZLES.StartingImageHint"}}</p>
-  </div>
-
-  {{! Triggered Image - Only for Switch Mode }}
-  {{#if (eq trapType "image")}}
-    {{#if (eq imageBehavior "switch")}}
-      <div class="form-group">
-        <label for="triggeredImage">{{localize "EMPUZZLES.TriggeredImage"}}</label>
-        <div class="form-fields">
-          <input type="text" id="triggeredImage" name="triggeredImage" value="{{defaultTrapTriggeredImage}}" placeholder="path/to/broken-floor.png" data-dtype="String" />
-          <button type="button" class="file-picker" data-type="imagevideo" data-target="triggeredImage" title="Browse Files" tabindex="-1">
-            <i class="fas fa-file-import fa-fw"></i>
-          </button>
-        </div>
-        <p class="hint">{{localize "EMPUZZLES.TriggeredImageHint"}}</p>
-      </div>
-    {{/if}}
-  {{/if}}
+  {{! Visibility & Image Behavior Section }}
+  {{> partials/visibility-section
+    isImageTrap=(eq trapType "image")
+    imageBehavior=imageBehavior
+    imageBehaviorOptions=imageBehaviorOptions
+    startingImage=defaultTrapImage
+    triggeredImage=defaultTrapTriggeredImage
+  }}
 
   <div class="form-group">
     <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
@@ -91,10 +58,10 @@
 
   <div class="form-group">
     <label>
-      <input type="checkbox" id="hiddenTrap" name="hiddenTrap" checked />
-      {{localize "EMPUZZLES.HiddenTrap"}}
+      <input type="checkbox" id="pauseGameOnTrigger" name="pauseGameOnTrigger" />
+      {{localize "EMPUZZLES.PauseGameOnTrigger"}}
     </label>
-    <p class="hint">{{localize "EMPUZZLES.HiddenTrapHint"}}</p>
+    <p class="hint">{{localize "EMPUZZLES.PauseGameOnTriggerHint"}}</p>
   </div>
 
   {{! Image Trap - Result Type and Result-Specific Fields }}
@@ -176,7 +143,11 @@
       <div class="form-group">
         <label for="damageOnFail">{{localize "EMPUZZLES.DamageOnFail"}}</label>
         {{#if defaultDamageOnFail}}
-          <input type="text" id="damageOnFail" name="damageOnFail" value="{{defaultDamageOnFail}}" placeholder="2d6" {{#if hasDmgTrap}}disabled{{/if}} />
+          <input type="text" id="damageOnFail" {{#unless hasDmgTrap}}name="damageOnFail"{{/unless}} value="{{defaultDamageOnFail}}" placeholder="2d6" {{#if hasDmgTrap}}disabled{{/if}} />
+          {{! Hidden input to preserve value when input is disabled }}
+          {{#if hasDmgTrap}}
+            <input type="hidden" name="damageOnFail" value="{{defaultDamageOnFail}}" />
+          {{/if}}
         {{else}}
           <input type="text" id="damageOnFail" name="damageOnFail" value="2d6" placeholder="2d6" {{#if hasDmgTrap}}disabled{{/if}} />
         {{/if}}

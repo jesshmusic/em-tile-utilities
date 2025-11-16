@@ -57,6 +57,7 @@ export function mockFoundry() {
     },
     settings: {
       register: jest.fn(),
+      registerMenu: jest.fn(),
       get: jest.fn((module: string, key: string) => {
         const defaults: Record<string, any> = {
           defaultOnImage: 'icons/svg/d20-highlight.svg',

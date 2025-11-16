@@ -31,21 +31,17 @@ import {
 describe('TrapDialog Template Rendering Integration', () => {
   // Register required partials before all tests
   beforeAll(() => {
-    const savingThrowPath = path.join(
-      __dirname,
-      '../..',
-      'templates/partials/saving-throw-section.hbs'
-    );
-    const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
-    Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
+    const partialsToRegister = [
+      'saving-throw-section',
+      'visibility-section',
+      'custom-tags-section'
+    ];
 
-    const customTagsPath = path.join(
-      __dirname,
-      '../..',
-      'templates/partials/custom-tags-section.hbs'
-    );
-    const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
-    Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
+    for (const partialName of partialsToRegister) {
+      const partialPath = path.join(__dirname, '../..', `templates/partials/${partialName}.hbs`);
+      const partialSource = fs.readFileSync(partialPath, 'utf8');
+      Handlebars.registerPartial(`partials/${partialName}`, partialSource);
+    }
   });
 
   describe('Template Compilation', () => {
@@ -203,9 +199,11 @@ describe('TrapDialog Template Rendering Integration', () => {
     it('should have file picker buttons with correct data attributes', async () => {
       const html = await renderDialogTemplate(TrapDialog);
 
-      expect(html.includes('class="file-picker"')).toBe(true);
-      expect(html.includes('data-target="startingImage"')).toBe(true);
-      expect(html.includes('data-type="imagevideo"')).toBe(true);
+      // File picker class exists
+      expect(/class=['"]file-picker['"]/.test(html)).toBe(true);
+      // Data attributes exist (support both single and double quotes)
+      expect(/data-target=['"]startingImage['"]/.test(html)).toBe(true);
+      expect(/data-type=['"]imagevideo['"]/.test(html)).toBe(true);
     });
   });
 

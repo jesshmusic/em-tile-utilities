@@ -30,7 +30,11 @@
       "Bash(/opt/homebrew/bin/gh pr checks 20 --repo jesshmusic/em-tile-utilities)",
       "Bash(/opt/homebrew/bin/gh run view:*)",
       "Bash(git pull:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": [

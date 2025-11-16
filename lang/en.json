@@ -28,6 +28,8 @@
     "CreateTeleport": "Create Teleport",
     "CreateTeleportDesc": "Teleport tile that moves tokens to another location or scene",
     "TileImage": "Tile Image",
+    "TileImageHint": "The image for this trap tile",
+    "VisibilityLegend": "Visibility & Image Behavior",
     "CustomTags": "Custom Tags",
     "TaggerLegend": "Tagger (press enter to complete)",
     "CustomTagsPlaceholder": "Type and press Enter",
@@ -38,10 +40,12 @@
     "TargetSceneHint": "The scene where the teleport destination is located",
     "Destination": "Destination",
     "SelectPositionHint": "Click the button and then click on the canvas to select a teleport destination",
-    "RequireConfirmation": "Require Player Confirmation",
-    "RequireConfirmationHint": "When checked, players will be prompted to confirm before teleporting",
+    "CrossSceneTeleportWarning": "Cross-Scene Teleport Requires GM",
+    "CrossSceneTeleportWarningHint": "A Gamemaster user must be logged in for cross-scene teleportation to work.",
     "DeleteSourceToken": "Delete Source Token",
-    "DeleteSourceTokenHint": "When teleporting to a different scene, delete the token at the source location (only available when teleporting to a different scene)",
+    "DeleteSourceTokenHint": "When teleporting to a different scene, delete the token at the source location.",
+    "DeleteSourceCombatWarning": "Combat Initiative Warning",
+    "DeleteSourceCombatWarningHint": "Using Delete Source Token during combat will corrupt the initiative tracker. The initiative is tied to the original token, which will be deleted. Avoid using this option during active combat encounters.",
     "CreateReturnTeleport": "Create Return Teleport",
     "CreateReturnTeleportHint": "Automatically create a 1x1 return teleport tile at the destination that brings tokens back to this location with the same settings",
     "EnableSavingThrow": "Enable Saving Throw",
@@ -130,6 +134,8 @@
     "TargetTypeHint": "Who is affected by the trap result",
     "TargetTriggering": "Triggering Token",
     "TargetWithinTile": "Tokens Within Tile",
+    "PauseGameOnTrigger": "Pause Game on Trigger",
+    "PauseGameOnTriggerHint": "When checked, the game will pause when this tile triggers. Useful for important narrative moments or giving the GM time to react.",
     "HiddenTrap": "Hidden Trap",
     "HiddenTrapHint": "When checked, the trap tile will be hidden from players until triggered",
     "AdditionalEffects": "Additional Effects (Optional)",
@@ -296,6 +302,7 @@
     "Nothing": "Nothing",
     "ActionTriggerTile": "Trigger Tile",
     "ActionDoorState": "Change Door State",
-    "SelectWall": "Select Wall/Door"
+    "SelectWall": "Select Wall/Door",
+    "SupportOnPatreon": "Support on Patreon"
   }
 }

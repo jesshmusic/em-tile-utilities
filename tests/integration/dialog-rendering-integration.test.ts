@@ -59,22 +59,18 @@ describe('Dialog Rendering Integration Tests', () => {
     it('should SUCCESS to render WITH partial registration', async () => {
       // This test simulates what main.ts should do at init
 
-      // Step 1: Load and register the partials (like main.ts does)
-      const savingThrowPath = path.join(
-        __dirname,
-        '../..',
-        'templates/partials/saving-throw-section.hbs'
-      );
-      const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
-      Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
+      // Step 1: Load and register ALL partials (like main.ts does)
+      const partialsToRegister = [
+        'saving-throw-section',
+        'visibility-section',
+        'custom-tags-section'
+      ];
 
-      const customTagsPath = path.join(
-        __dirname,
-        '../..',
-        'templates/partials/custom-tags-section.hbs'
-      );
-      const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
-      Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
+      for (const partialName of partialsToRegister) {
+        const partialPath = path.join(__dirname, '../..', `templates/partials/${partialName}.hbs`);
+        const partialSource = fs.readFileSync(partialPath, 'utf8');
+        Handlebars.registerPartial(`partials/${partialName}`, partialSource);
+      }
 
       // Step 2: Create dialog instance
       const dialog = new TrapDialog();
@@ -176,22 +172,18 @@ describe('Dialog Rendering Integration Tests', () => {
     it('should simulate the full ApplicationV2 render cycle', async () => {
       // This test simulates what happens when ApplicationV2 renders a dialog
 
-      // Step 1: Register partials (simulating init hook)
-      const savingThrowPath = path.join(
-        __dirname,
-        '../..',
-        'templates/partials/saving-throw-section.hbs'
-      );
-      const savingThrowSource = fs.readFileSync(savingThrowPath, 'utf8');
-      Handlebars.registerPartial('partials/saving-throw-section', savingThrowSource);
+      // Step 1: Register ALL partials (simulating init hook)
+      const partialsToRegister = [
+        'saving-throw-section',
+        'visibility-section',
+        'custom-tags-section'
+      ];
 
-      const customTagsPath = path.join(
-        __dirname,
-        '../..',
-        'templates/partials/custom-tags-section.hbs'
-      );
-      const customTagsSource = fs.readFileSync(customTagsPath, 'utf8');
-      Handlebars.registerPartial('partials/custom-tags-section', customTagsSource);
+      for (const partialName of partialsToRegister) {
+        const partialPath = path.join(__dirname, '../..', `templates/partials/${partialName}.hbs`);
+        const partialSource = fs.readFileSync(partialPath, 'utf8');
+        Handlebars.registerPartial(`partials/${partialName}`, partialSource);
+      }
 
       // Step 2: Create dialog (simulating user action)
       const dialog = new TrapDialog();
@@ -240,10 +232,10 @@ describe('Dialog Rendering Integration Tests', () => {
       const templateSource = fs.readFileSync(templatePath, 'utf8');
       const template = Handlebars.compile(templateSource);
 
-      // Should throw with clear message about missing partial
+      // Should throw with clear message about missing partial (could be any of the partials)
       expect(() => {
         template(context);
-      }).toThrow(/partial.*saving-throw-section.*could not be found/i);
+      }).toThrow(/partial.*could not be found/i);
     });
   });
 
