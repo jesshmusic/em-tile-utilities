@@ -1806,6 +1806,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const addEffect =
           (form.querySelector('select[name="addEffect"]') as HTMLSelectElement)?.value || 'add';
 
+        // Note: altereffect is an optional field for PF2e effects with values (e.g., "+ 1")
+        // Not currently exposed in UI but could be added in future for PF2e support
         imageTrapConfig.activeEffectConfig = {
           effectid: effectId,
           addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear'
