@@ -1,6 +1,10 @@
 {{! Visibility & Image Behavior Section }}
-<fieldset class='visibility-section'>
-  <legend>{{localize 'EMPUZZLES.VisibilityLegend'}}</legend>
+<fieldset class='visibility-section accordion-section' data-section='visibility'>
+  <legend class='accordion-header'>
+    <i class='fas fa-chevron-right accordion-icon'></i>
+    {{localize 'EMPUZZLES.VisibilityLegend'}}
+  </legend>
+  <div class='accordion-content' style='display: none;'>
 
   {{! Image Behavior - Only for Image Traps }}
   {{#if isImageTrap}}
@@ -83,5 +87,6 @@
       {{localize 'EMPUZZLES.HiddenTrap'}}
     </label>
     <p class='hint'>{{localize 'EMPUZZLES.HiddenTrapHint'}}</p>
+  </div>
   </div>
 </fieldset>

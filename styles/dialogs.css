@@ -1967,3 +1967,246 @@ button .game-icon,
 .patreon-link i {
   font-size: 16px;
 }
+
+/* Radio Group Styling for Trap Visibility */
+.visibility-section .form-group {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+}
+
+.visibility-section .form-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.visibility-section .form-group > label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-light-heading);
+  margin-bottom: 0.75rem;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--color-border-light-primary);
+}
+
+.radio-option input[type='radio'] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.radio-option input[type='radio']:disabled {
+  cursor: not-allowed;
+}
+
+.radio-option:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-option:has(input:disabled):hover {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--color-border-light-tertiary);
+}
+
+.radio-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.radio-label strong {
+  color: var(--color-text-light-heading);
+  font-size: 14px;
+}
+
+.radio-label .hint {
+  margin: 0;
+  color: var(--color-text-dark-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Triggered Image Field Styling */
+.visibility-section .triggered-image-group {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-light-tertiary);
+}
+
+.visibility-section .triggered-image-group > label {
+  font-weight: 600;
+  color: var(--color-text-light-heading);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Accordion Section Styling */
+.accordion-section {
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  font-weight: normal;
+  font-size: 13px;
+  color: inherit;
+}
+
+.accordion-header:hover {
+  color: var(--color-text-light-heading);
+}
+
+.accordion-icon {
+  transition: transform 0.2s ease;
+  font-size: 12px;
+  color: var(--color-text-light-primary);
+}
+
+/* Required field indicator */
+.accordion-header .required-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: #ff4444;
+  border-radius: 50%;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.accordion-content {
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* Basic Info Section - always open by default */
+.basic-info-section[open] .accordion-content {
+  display: block;
+}
+
+.basic-info-section[open] .accordion-icon {
+  transform: rotate(0deg);
+}
+
+/* Section-specific styling */
+.basic-info-section {
+  border-color: var(--color-border-light-primary);
+}
+
+.visibility-section {
+  /* Keeps existing border styling */
+}
+
+.result-config-section {
+  /* Can add specific styling if needed */
+}
+
+.tiles-doors-section {
+  /* Can add specific styling if needed */
+}
+
+.tagger {
+  /* Keeps existing styling */
+}
+
+/* Todo List Styling */
+.trap-todo-list {
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+}
+
+.trap-todo-list .todo-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-light-heading);
+  margin-bottom: 0.5rem;
+}
+
+.trap-todo-list .todo-header i {
+  color: #888;
+}
+
+.trap-todo-list .todo-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trap-todo-list .todo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 12px;
+  color: var(--color-text-light-primary);
+}
+
+.trap-todo-list .todo-item i {
+  font-size: 10px;
+  color: #ff8866;
+  flex-shrink: 0;
+}
+
+.trap-todo-list .todo-item.complete {
+  color: #4caf50;
+}
+
+.trap-todo-list .todo-item.complete i {
+  color: #4caf50;
+  font-size: 12px;
+}
+
+.trap-todo-list.all-complete {
+  background: rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.trap-todo-list.all-complete .todo-header {
+  color: #4caf50;
+}
+
+.trap-todo-list.all-complete .todo-header i {
+  color: #4caf50;
+}

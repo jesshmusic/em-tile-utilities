@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.0] - 2025-11-17
+
+### Added
+
+- fix: improve trap visibility UI with radio buttons and add bug report template (Issue #28)
+
+### Fixed
+
+- v1.15.3: Fix pause game checkbox not being read from trap dialog (#31)
+
+### Changed
+
+- replace image behavior dropdown with intuitive visibility radio buttons (Issue #28)
+
+### Other
+
+- style: improve visibility section layout and spacing
+
 ## [1.15.3] - 2025-11-17
 
 ### Fixed

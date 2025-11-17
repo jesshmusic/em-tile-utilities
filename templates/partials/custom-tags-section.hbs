@@ -1,13 +1,18 @@
-<fieldset class='tagger'>
-  <legend>{{localize 'EMPUZZLES.TaggerLegend'}}</legend>
-  <div class='form-group'>
-    <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
-    <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
-    <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
-    <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
-      <i class='fas fa-check'></i>
-    </button>
+<fieldset class='tagger accordion-section' data-section='tagger'>
+  <legend class='accordion-header'>
+    <i class='fas fa-chevron-right accordion-icon'></i>
+    {{localize 'EMPUZZLES.TaggerLegend'}}
+  </legend>
+  <div class='accordion-content' style='display: none;'>
+    <div class='form-group'>
+      <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
+      <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
+      <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
+      <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
+        <i class='fas fa-check'></i>
+      </button>
+    </div>
+    <div class='tag-container' data-tags-container></div>
+    <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
   </div>
-  <div class='tag-container' data-tags-container></div>
-  <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
 </fieldset>
