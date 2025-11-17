@@ -7,6 +7,7 @@
 .switch-config.window-app,
 .light-config.window-app,
 .reset-config.window-app,
+.teleport-config.window-app,
 .check-state-dialog.window-app {
   display: flex;
   flex-direction: column;
@@ -17,6 +18,7 @@
 .switch-config .window-content,
 .light-config .window-content,
 .reset-config .window-content,
+.teleport-config .window-content,
 .check-state-dialog .window-content {
   display: flex;
   flex-direction: column;
@@ -31,6 +33,7 @@
 .switch-config .form-footer,
 .light-config .form-footer,
 .reset-config .form-footer,
+.teleport-config .form-footer,
 .check-state-dialog .form-footer {
   flex-shrink: 0;
   background: #000;
