@@ -89,6 +89,7 @@ export interface TrapConfig {
   triggeredImage: string;
   hideTrapOnTrigger: boolean;
   hidden?: boolean; // Whether the trap tile is initially hidden from players
+  revealOnTrigger?: boolean; // Whether hidden traps should be revealed when triggered
   sound: string;
   resultType: TrapResultType; // Type of result (damage, teleport, activeeffect)
   targetType: TrapTargetType; // Who to target (triggering token or tokens within tile)

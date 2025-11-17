@@ -1395,8 +1395,8 @@ export async function createTrapTile(
         },
         id: foundry.utils.randomID()
       });
-    } else if (config.hidden) {
-      // Hidden trap: reveal the trap tile when triggered
+    } else if (config.hidden && config.revealOnTrigger) {
+      // Hidden trap with reveal option: reveal the trap tile when triggered
       actions.push({
         action: 'showhide',
         data: {

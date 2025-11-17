@@ -76,12 +76,34 @@
     {{/if}}
   {{/if}}
 
-  {{! Hidden Trap Checkbox }}
+  {{! Trap Visibility - Radio Buttons }}
   <div class='form-group'>
-    <label>
-      <input type='checkbox' id='hiddenTrap' name='hiddenTrap' checked />
-      {{localize 'EMPUZZLES.HiddenTrap'}}
-    </label>
-    <p class='hint'>{{localize 'EMPUZZLES.HiddenTrapHint'}}</p>
+    <label>{{localize 'EMPUZZLES.TrapVisibility'}}</label>
+
+    <div class='radio-group'>
+      <label class='radio-option'>
+        <input type='radio' name='trapVisibility' value='visible' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.VisibilityVisible'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.VisibilityVisibleHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option'>
+        <input type='radio' name='trapVisibility' value='hidden-reveal' checked />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.VisibilityHiddenReveal'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.VisibilityHiddenRevealHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option'>
+        <input type='radio' name='trapVisibility' value='hidden-stay' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.VisibilityHiddenStay'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.VisibilityHiddenStayHint'}}</p>
+        </span>
+      </label>
+    </div>
   </div>
 </fieldset>

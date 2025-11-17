@@ -513,19 +513,24 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
-    // Disable "Hidden Trap" checkbox when "Hide Tile" is selected
+    // Disable visibility radio buttons when "Hide Tile" is selected
     // (These options are mutually exclusive - if trap hides when triggered, it shouldn't start hidden)
-    const hiddenTrapCheckbox = this.element.querySelector(
-      'input[name="hiddenTrap"]'
-    ) as HTMLInputElement;
-    if (hiddenTrapCheckbox && imageBehaviorSelect) {
+    const visibilityRadios = this.element.querySelectorAll(
+      'input[name="trapVisibility"]'
+    ) as NodeListOf<HTMLInputElement>;
+    if (visibilityRadios.length > 0 && imageBehaviorSelect) {
       const isHideBehavior = imageBehaviorSelect.value === ImageBehavior.HIDE;
-      if (isHideBehavior) {
-        hiddenTrapCheckbox.checked = false;
-        hiddenTrapCheckbox.disabled = true;
-      } else {
-        hiddenTrapCheckbox.disabled = false;
-      }
+      visibilityRadios.forEach(radio => {
+        if (isHideBehavior) {
+          radio.disabled = true;
+          // Force "visible" option when using "Hide Tile" behavior
+          if (radio.value === 'visible') {
+            radio.checked = true;
+          }
+        } else {
+          radio.disabled = false;
+        }
+      });
     }
 
     // Set up result type selector change handler
@@ -1925,8 +1930,25 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const targetType =
       ((form.querySelector('select[name="targetType"]') as HTMLSelectElement)
         ?.value as TrapTargetType) || TrapTargetType.WITHIN_TILE;
-    const hidden =
-      (form.querySelector('input[name="hiddenTrap"]') as HTMLInputElement)?.checked || false;
+
+    // Extract visibility setting from radio buttons
+    const visibilityValue =
+      (form.querySelector('input[name="trapVisibility"]:checked') as HTMLInputElement)?.value ||
+      'hidden-reveal';
+
+    // Convert visibility radio value to hidden and revealOnTrigger booleans
+    let hidden = false;
+    let revealOnTrigger = false;
+    if (visibilityValue === 'visible') {
+      hidden = false;
+      revealOnTrigger = false; // Not used when visible
+    } else if (visibilityValue === 'hidden-reveal') {
+      hidden = true;
+      revealOnTrigger = true;
+    } else if (visibilityValue === 'hidden-stay') {
+      hidden = true;
+      revealOnTrigger = false;
+    }
     const hasSavingThrow =
       (form.querySelector('input[name="hasSavingThrow"]') as HTMLInputElement)?.checked || false;
     const pauseGameOnTrigger =
@@ -1955,6 +1977,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       minRequired: minRequired,
       targetType: targetType,
       hidden: hidden,
+      revealOnTrigger: revealOnTrigger,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
       hasSavingThrow: hasSavingThrow,
       pauseGameOnTrigger: pauseGameOnTrigger,

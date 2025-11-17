@@ -1967,3 +1967,66 @@ button .game-icon,
 .patreon-link i {
   font-size: 16px;
 }
+
+/* Radio Group Styling for Trap Visibility */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--color-border-light-primary);
+}
+
+.radio-option input[type='radio'] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.radio-option input[type='radio']:disabled {
+  cursor: not-allowed;
+}
+
+.radio-option:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-option:has(input:disabled):hover {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--color-border-light-tertiary);
+}
+
+.radio-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.radio-label strong {
+  color: var(--color-text-light-heading);
+  font-size: 14px;
+}
+
+.radio-label .hint {
+  margin: 0;
+  color: var(--color-text-dark-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - fix pause game checkbox not being read from trap dialog (Issue #27)
+
 ## [1.15.2] - 2025-11-16
 
 ### Fixed
