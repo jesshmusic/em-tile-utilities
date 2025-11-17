@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.2] - 2025-11-17
+
+### Added
+
+- style: add sticky footer positioning to all dialogs
+- Fix: Redesign trap visibility UI and add bug report template (Issue #28) (#32)
+
+### Fixed
+
+- make Tagger accordion only in trap dialog, always visible in others
+- enable scrolling for teleport dialog (Issue #34)
+- v1.15.3: Fix pause game checkbox not being read from trap dialog (#31)
+
+### Changed
+
+- bump version to 1.16.1
+
+### Other
+
+- docs: update CHANGELOG with Tagger fix
+- v1.16.0: Trap dialog accordion UI with setup tasks guide (#33)
+
+## [1.16.1] - 2025-11-17
+
+### Fixed
+
+- enable scrolling for teleport dialog to fix inaccessible Create button (Issue #34)
+- make Tagger section accordion only in trap dialog, always visible in other dialogs
+- move Tagger to last section in all dialogs for consistency
+
+### Changed
+
+- make Create/Cancel footer sticky and always visible at bottom of all dialogs
+
 ## [1.16.0] - 2025-11-17
 
 ### Added

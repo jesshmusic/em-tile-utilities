@@ -6,6 +6,7 @@ import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -30,12 +31,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       title: 'EMPUZZLES.TileManager',
       resizable: true
     },
-    position: {
-      width: 650,
-      height: 750,
-      left: 100,
-      top: 100
-    },
+    position: DialogPositions.TILE_MANAGER,
     actions: {
       createSwitch: TileManagerDialog.#onCreateSwitch,
       createLight: TileManagerDialog.#onCreateLight,

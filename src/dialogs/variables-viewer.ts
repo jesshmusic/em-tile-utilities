@@ -1,4 +1,5 @@
 import type { VariableData } from '../types/module';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -17,9 +18,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
       icon: 'gi-scroll-unfurled',
       title: 'EMPUZZLES.SceneVariables'
     },
-    position: {
-      width: 700
-    },
+    position: DialogPositions.VARIABLES_VIEWER,
     actions: {
       refresh: SceneVariablesViewer.#onRefresh,
       showHelp: SceneVariablesViewer.#onShowHelp

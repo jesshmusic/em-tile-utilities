@@ -465,9 +465,6 @@
   </fieldset>
 {{/if}}
 
-{{! Custom Tags Section - Appears for all trap types - wrapped in accordion in the partial itself }}
-{{> partials/custom-tags-section customTags=customTags}}
-
 {{! Todo List - Shows incomplete required tasks }}
 <div class="trap-todo-list" data-trap-todos>
   <div class="todo-header">
@@ -478,3 +475,6 @@
     {{! Dynamically populated by JavaScript }}
   </ul>
 </div>
+
+{{! Custom Tags Section - Last section, accordion in trap dialog only }}
+{{> partials/custom-tags-section customTags=customTags isAccordion=true}}

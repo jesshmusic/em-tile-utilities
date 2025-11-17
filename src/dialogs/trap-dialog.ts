@@ -8,6 +8,7 @@ import {
 } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -109,11 +110,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       title: 'EMPUZZLES.CreateTrap',
       resizable: true
     },
-    position: {
-      width: 700,
-      height: 'auto',
-      top: 100
-    },
+    position: DialogPositions.TRAP,
     form: {
       closeOnSubmit: false,
       handler: TrapDialog.prototype._onSubmit

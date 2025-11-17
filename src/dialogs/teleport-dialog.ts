@@ -2,6 +2,7 @@ import { createTeleportTile, getNextTileNumber, hasMonksTokenBar } from '../util
 import { getActiveTileManager } from './tile-manager-state';
 import type { TeleportTileConfig } from '../types/module';
 import { TagInputManager } from '../utils/tag-input-manager';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -37,11 +38,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       title: 'EMPUZZLES.CreateTeleport',
       resizable: true
     },
-    position: {
-      width: 576,
-      height: 'auto',
-      top: 100
-    },
+    position: DialogPositions.TELEPORT,
     form: {
       closeOnSubmit: false,
       handler: TeleportDialog.#onSubmit

@@ -2,6 +2,7 @@ import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module
 import { createResetTile } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -169,11 +170,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       title: 'EMPUZZLES.CreateResetTile',
       resizable: true
     },
-    position: {
-      width: 800,
-      height: 'auto',
-      top: 100
-    },
+    position: DialogPositions.RESET,
     form: {
       closeOnSubmit: false,
       handler: ResetTileConfigDialog.#onSubmit

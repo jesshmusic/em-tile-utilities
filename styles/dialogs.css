@@ -7,6 +7,7 @@
 .switch-config.window-app,
 .light-config.window-app,
 .reset-config.window-app,
+.teleport-config.window-app,
 .check-state-dialog.window-app {
   display: flex;
   flex-direction: column;
@@ -17,6 +18,7 @@
 .switch-config .window-content,
 .light-config .window-content,
 .reset-config .window-content,
+.teleport-config .window-content,
 .check-state-dialog .window-content {
   display: flex;
   flex-direction: column;
@@ -25,13 +27,17 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.5rem;
+  padding-bottom: 0; /* Remove bottom padding to eliminate space below footer */
 }
 
 .trap-config .form-footer,
 .switch-config .form-footer,
 .light-config .form-footer,
 .reset-config .form-footer,
+.teleport-config .form-footer,
 .check-state-dialog .form-footer {
+  position: sticky;
+  bottom: 0;
   flex-shrink: 0;
   background: #000;
   padding: 0.75rem;
@@ -1947,7 +1953,7 @@ button .game-icon,
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  background: #5b1d12;
   color: white;
   text-decoration: none;
   border-radius: 4px;
@@ -1958,7 +1964,7 @@ button .game-icon,
 }
 
 .patreon-link:hover {
-  background: linear-gradient(135deg, #2ecc71 0%, #52de97 100%);
+  background: #7a2518;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
   color: white;
