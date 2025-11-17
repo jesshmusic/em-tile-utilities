@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - enable scrolling for teleport dialog to fix inaccessible Create button (Issue #34)
+- make Tagger section accordion only in trap dialog, always visible in other dialogs
+- move Tagger to last section in all dialogs for consistency
 
 
 ## [1.16.0] - 2025-11-17
