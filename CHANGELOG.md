@@ -6,19 +6,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- fix: improve trap visibility UI with radio buttons and add bug report template (Issue #28)
-
-### Fixed
-
-- v1.15.3: Fix pause game checkbox not being read from trap dialog (#31)
+- accordion UI for trap dialog with organized collapsible sections
+- required field indicators with red dots on accordion headers
+- dynamic setup tasks guide that updates in real-time
+- comprehensive GitHub bug report issue template
 
 ### Changed
 
-- replace image behavior dropdown with intuitive visibility radio buttons (Issue #28)
+- trap dialog now uses accordion interface instead of single scrolling form
+- improved visibility section layout and spacing
+- one-section-at-a-time accordion behavior for cleaner, focused interface
 
-### Other
+### Fixed
 
-- style: improve visibility section layout and spacing
+- improved trap dialog usability and reduced cognitive load (addresses scrolling and form complexity issues)
 
 ## [1.15.3] - 2025-11-17
 
