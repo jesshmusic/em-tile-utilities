@@ -1929,6 +1929,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (form.querySelector('input[name="hiddenTrap"]') as HTMLInputElement)?.checked || false;
     const hasSavingThrow =
       (form.querySelector('input[name="hasSavingThrow"]') as HTMLInputElement)?.checked || false;
+    const pauseGameOnTrigger =
+      (form.querySelector('input[name="pauseGameOnTrigger"]') as HTMLInputElement)?.checked ||
+      false;
 
     // Extract additional effects from multiselect
     const additionalEffectsSelect = form.querySelector(
@@ -1954,6 +1957,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       hidden: hidden,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
       hasSavingThrow: hasSavingThrow,
+      pauseGameOnTrigger: pauseGameOnTrigger,
       customTags: customTags
     };
 
