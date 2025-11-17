@@ -14,18 +14,21 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - trap dialog now uses accordion interface instead of single scrolling form
+- replace image behavior dropdown with intuitive visibility radio buttons
 - improved visibility section layout and spacing
 - one-section-at-a-time accordion behavior for cleaner, focused interface
 
 ### Fixed
 
 - improved trap dialog usability and reduced cognitive load (addresses scrolling and form complexity issues)
+- redesign trap visibility UI and fix related visibility bug (Issue #28)
 
 ## [1.15.3] - 2025-11-17
 
 ### Fixed
 
 - fix pause game checkbox not being read from trap dialog (Issue #27)
+
 ## [1.15.2] - 2025-11-16
 
 ### Fixed

@@ -6,24 +6,6 @@
   </legend>
   <div class='accordion-content' style='display: none;'>
 
-  {{! Image Behavior - Only for Image Traps }}
-  {{#if isImageTrap}}
-    <div class='form-group'>
-      <label for='imageBehavior'>{{localize 'EMPUZZLES.ImageBehavior'}}</label>
-      <select id='imageBehavior' name='imageBehavior'>
-        {{#each imageBehaviorOptions as |option|}}
-          <option
-            value='{{option.value}}'
-            {{#if (eq option.value ../imageBehavior)}}selected{{/if}}
-          >
-            {{localize option.label}}
-          </option>
-        {{/each}}
-      </select>
-      <p class='hint'>{{localize 'EMPUZZLES.ImageBehaviorHint'}}</p>
-    </div>
-  {{/if}}
-
   {{! Starting Image }}
   <div class='form-group'>
     <label for='startingImage'>{{localize 'EMPUZZLES.TileImage'}}</label>
@@ -50,43 +32,110 @@
     <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
   </div>
 
-  {{! Triggered Image - Only when Image Behavior is "Switch" }}
-  {{#if isImageTrap}}
-    {{#if (eq imageBehavior 'switch')}}
-      <div class='form-group'>
-        <label for='triggeredImage'>{{localize 'EMPUZZLES.TriggeredImage'}}</label>
-        <div class='form-fields'>
-          <input
-            type='text'
-            id='triggeredImage'
-            name='triggeredImage'
-            value='{{triggeredImage}}'
-            placeholder='path/to/triggered.png'
-            data-dtype='String'
-          />
-          <button
-            type='button'
-            class='file-picker'
-            data-type='imagevideo'
-            data-target='triggeredImage'
-            title='Browse Files'
-            tabindex='-1'
-          >
-            <i class='fas fa-file-import fa-fw'></i>
-          </button>
-        </div>
-        <p class='hint'>{{localize 'EMPUZZLES.TriggeredImageHint'}}</p>
-      </div>
-    {{/if}}
-  {{/if}}
+  {{! Triggered Image - Shown when switching image behavior is selected }}
+  <div class='form-group triggered-image-group' style='display: none;'>
+    <label for='triggeredImage'>{{localize 'EMPUZZLES.TriggeredImage'}}</label>
+    <div class='form-fields'>
+      <input
+        type='text'
+        id='triggeredImage'
+        name='triggeredImage'
+        value='{{triggeredImage}}'
+        placeholder='path/to/triggered.png'
+        data-dtype='String'
+      />
+      <button
+        type='button'
+        class='file-picker'
+        data-type='imagevideo'
+        data-target='triggeredImage'
+        title='Browse Files'
+        tabindex='-1'
+      >
+        <i class='fas fa-file-import fa-fw'></i>
+      </button>
+    </div>
+    <p class='hint'>{{localize 'EMPUZZLES.TriggeredImageHint'}}</p>
+  </div>
 
-  {{! Hidden Trap Checkbox }}
+  {{! Initial Visibility }}
   <div class='form-group'>
-    <label>
-      <input type='checkbox' id='hiddenTrap' name='hiddenTrap' checked />
-      {{localize 'EMPUZZLES.HiddenTrap'}}
-    </label>
-    <p class='hint'>{{localize 'EMPUZZLES.HiddenTrapHint'}}</p>
+    <label>{{localize 'EMPUZZLES.InitialVisibility'}}</label>
+
+    <div class='radio-group'>
+      <label class='radio-option'>
+        <input type='radio' name='initialVisibility' value='visible' checked />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.VisibilityVisible'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.VisibilityVisibleHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option'>
+        <input type='radio' name='initialVisibility' value='hidden' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.VisibilityHidden'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.VisibilityHiddenHint'}}</p>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  {{! On Trigger Behavior }}
+  <div class='form-group'>
+    <label>{{localize 'EMPUZZLES.OnTriggerBehavior'}}</label>
+
+    <div class='radio-group'>
+      {{! Options shown when Initial Visibility = Visible }}
+      <label class='radio-option on-trigger-visible'>
+        <input type='radio' name='onTriggerBehavior' value='stays-same' checked />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.OnTriggerStaysSame'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.OnTriggerStaysSameHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option on-trigger-visible'>
+        <input type='radio' name='onTriggerBehavior' value='switches-image' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.OnTriggerSwitchesImage'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.OnTriggerSwitchesImageHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option on-trigger-visible'>
+        <input type='radio' name='onTriggerBehavior' value='hides' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.OnTriggerHides'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.OnTriggerHidesHint'}}</p>
+        </span>
+      </label>
+
+      {{! Options shown when Initial Visibility = Hidden }}
+      <label class='radio-option on-trigger-hidden' style='display: none;'>
+        <input type='radio' name='onTriggerBehavior' value='stays-hidden' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.OnTriggerStaysHidden'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.OnTriggerStaysHiddenHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option on-trigger-hidden' style='display: none;'>
+        <input type='radio' name='onTriggerBehavior' value='reveals-same' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.OnTriggerRevealsSame'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.OnTriggerRevealsSameHint'}}</p>
+        </span>
+      </label>
+
+      <label class='radio-option on-trigger-hidden' style='display: none;'>
+        <input type='radio' name='onTriggerBehavior' value='reveals-switched' />
+        <span class='radio-label'>
+          <strong>{{localize 'EMPUZZLES.OnTriggerRevealsSwitched'}}</strong>
+          <p class='hint'>{{localize 'EMPUZZLES.OnTriggerRevealsSwitchedHint'}}</p>
+        </span>
+      </label>
+    </div>
   </div>
   </div>
 </fieldset>

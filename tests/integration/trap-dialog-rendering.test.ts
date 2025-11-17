@@ -62,9 +62,14 @@ describe('TrapDialog Template Rendering Integration', () => {
       expect(htmlContainsSelector(html, 'select[name="trapType"]')).toBe(true);
     });
 
-    it('should render image behavior select element', async () => {
+    it('should render initial visibility radio buttons', async () => {
       const html = await renderDialogTemplate(TrapDialog);
-      expect(htmlContainsSelector(html, 'select[name="imageBehavior"]')).toBe(true);
+      expect(htmlContainsSelector(html, 'input[name="initialVisibility"]')).toBe(true);
+    });
+
+    it('should render on trigger behavior radio buttons', async () => {
+      const html = await renderDialogTemplate(TrapDialog);
+      expect(htmlContainsSelector(html, 'input[name="onTriggerBehavior"]')).toBe(true);
     });
 
     it('should render result type select element', async () => {
@@ -156,14 +161,25 @@ describe('TrapDialog Template Rendering Integration', () => {
     });
   });
 
-  describe('Image Behavior Options', () => {
-    it('should have HIDE, SWITCH, and NOTHING behaviors', async () => {
+  describe('Visibility Options', () => {
+    it('should have visible and hidden initial visibility options', async () => {
       const html = await renderDialogTemplate(TrapDialog);
-      const values = getSelectOptionValues(html, 'imageBehavior');
+      // Check for visible option
+      expect(html).toMatch(/value=['"]visible['"]/);
+      // Check for hidden option
+      expect(html).toMatch(/value=['"]hidden['"]/);
+    });
 
-      expect(values).toContain('hide');
-      expect(values).toContain('switch');
-      expect(values).toContain('nothing');
+    it('should have on-trigger behavior options', async () => {
+      const html = await renderDialogTemplate(TrapDialog);
+      // Check for visible on-trigger options
+      expect(html).toMatch(/value=['"]stays-same['"]/);
+      expect(html).toMatch(/value=['"]switches-image['"]/);
+      expect(html).toMatch(/value=['"]hides['"]/);
+      // Check for hidden on-trigger options
+      expect(html).toMatch(/value=['"]stays-hidden['"]/);
+      expect(html).toMatch(/value=['"]reveals-same['"]/);
+      expect(html).toMatch(/value=['"]reveals-switched['"]/);
     });
   });
 
