@@ -1,82 +1,95 @@
-{{! Trap Type Selector }}
-<div class="form-group">
-  <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
-  <select id="trapType" name="trapType">
-      {{#each trapTypeOptions as |option|}}
-        <option value="{{option.value}}" {{#if (eq option.value ../trapType)}}selected{{/if}}>
-          {{localize option.label}}
-        </option>
-      {{/each}}
-    </select>
-    <p class="hint">{{localize "EMPUZZLES.TrapTypeHint"}}</p>
-  </div>
-
-  {{! Common Fields }}
-  <div class="form-group">
-    <label for="trapName">{{localize "EMPUZZLES.TrapName"}}</label>
-    <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" />
-    <p class="hint">{{localize "EMPUZZLES.TrapNameHint"}}</p>
-  </div>
-
-  {{! Visibility & Image Behavior Section }}
-  {{> partials/visibility-section
-    isImageTrap=(eq trapType "image")
-    imageBehavior=imageBehavior
-    imageBehaviorOptions=imageBehaviorOptions
-    startingImage=defaultTrapImage
-    triggeredImage=defaultTrapTriggeredImage
-  }}
-
-  <div class="form-group">
-    <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
-    <div class="form-fields">
-      <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
-      <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
-      </button>
-    </div>
-    <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
-  </div>
-
-  <div class="form-group">
-    <label for="minRequired">{{localize "EMPUZZLES.MinRequired"}}</label>
-    <input type="number" id="minRequired" name="minRequired" value="" min="1" data-dtype="Number" />
-    <p class="hint">{{localize "EMPUZZLES.MinRequiredHint"}}</p>
-  </div>
-
-  <div class="form-group">
-    <label for="targetType">{{localize "EMPUZZLES.TargetType"}}</label>
-    <select id="targetType" name="targetType">
-      {{#each targetTypeOptions as |option|}}
-        <option value="{{option.value}}" {{#if (eq option.value ../defaultTargetType)}}selected{{/if}}>
-          {{localize option.label}}
-        </option>
-      {{/each}}
-    </select>
-    <p class="hint">{{localize "EMPUZZLES.TargetTypeHint"}}</p>
-  </div>
-
-  <div class="form-group">
-    <label>
-      <input type="checkbox" id="pauseGameOnTrigger" name="pauseGameOnTrigger" />
-      {{localize "EMPUZZLES.PauseGameOnTrigger"}}
-    </label>
-    <p class="hint">{{localize "EMPUZZLES.PauseGameOnTriggerHint"}}</p>
-  </div>
-
-  {{! Image Trap - Result Type and Result-Specific Fields }}
-  {{#if (eq trapType "image")}}
+{{! Basic Information Section }}
+<fieldset class="basic-info-section accordion-section" data-section="basic-info" open>
+  <legend class="accordion-header">
+    <i class="fas fa-chevron-down accordion-icon"></i>
+    {{localize "EMPUZZLES.BasicInfo"}}
+  </legend>
+  <div class="accordion-content">
     <div class="form-group">
-      <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
-      <select id="resultType" name="resultType">
-        {{#each resultTypeOptions as |option|}}
-          <option value="{{option.value}}" {{#if (eq option.value ../resultType)}}selected{{/if}}>
+      <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
+      <select id="trapType" name="trapType">
+        {{#each trapTypeOptions as |option|}}
+          <option value="{{option.value}}" {{#if (eq option.value ../trapType)}}selected{{/if}}>
             {{localize option.label}}
           </option>
         {{/each}}
       </select>
-      <p class="hint">{{localize "EMPUZZLES.ResultTypeHint"}}</p>
+      <p class="hint">{{localize "EMPUZZLES.TrapTypeHint"}}</p>
     </div>
+
+    <div class="form-group">
+      <label for="trapName">{{localize "EMPUZZLES.TrapName"}}</label>
+      <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" />
+      <p class="hint">{{localize "EMPUZZLES.TrapNameHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
+      <div class="form-fields">
+        <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
+        <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
+          <i class="fas fa-file-import fa-fw"></i>
+        </button>
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="minRequired">{{localize "EMPUZZLES.MinRequired"}}</label>
+      <input type="number" id="minRequired" name="minRequired" value="" min="1" data-dtype="Number" />
+      <p class="hint">{{localize "EMPUZZLES.MinRequiredHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="targetType">{{localize "EMPUZZLES.TargetType"}}</label>
+      <select id="targetType" name="targetType">
+        {{#each targetTypeOptions as |option|}}
+          <option value="{{option.value}}" {{#if (eq option.value ../defaultTargetType)}}selected{{/if}}>
+            {{localize option.label}}
+          </option>
+        {{/each}}
+      </select>
+      <p class="hint">{{localize "EMPUZZLES.TargetTypeHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="pauseGameOnTrigger" name="pauseGameOnTrigger" />
+        {{localize "EMPUZZLES.PauseGameOnTrigger"}}
+      </label>
+      <p class="hint">{{localize "EMPUZZLES.PauseGameOnTriggerHint"}}</p>
+    </div>
+  </div>
+</fieldset>
+
+{{! Visibility Section - wrapped in accordion in the partial itself }}
+{{> partials/visibility-section
+  isImageTrap=(eq trapType "image")
+  imageBehavior=imageBehavior
+  imageBehaviorOptions=imageBehaviorOptions
+  startingImage=defaultTrapImage
+  triggeredImage=defaultTrapTriggeredImage
+}}
+
+{{! Image Trap - Result Configuration Section }}
+{{#if (eq trapType "image")}}
+  <fieldset class="result-config-section accordion-section" data-section="result-config">
+    <legend class="accordion-header">
+      <i class="fas fa-chevron-right accordion-icon"></i>
+      {{localize "EMPUZZLES.ResultConfiguration"}}
+    </legend>
+    <div class="accordion-content" style="display: none;">
+      <div class="form-group">
+        <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
+        <select id="resultType" name="resultType">
+          {{#each resultTypeOptions as |option|}}
+            <option value="{{option.value}}" {{#if (eq option.value ../resultType)}}selected{{/if}}>
+              {{localize option.label}}
+            </option>
+          {{/each}}
+        </select>
+        <p class="hint">{{localize "EMPUZZLES.ResultTypeHint"}}</p>
+      </div>
 
     {{! Damage Result Type }}
     {{#if (eq resultType "damage")}}
@@ -314,14 +327,22 @@
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsCombatHint"}}</p>
       </div>
     {{/if}}
-  {{/if}}
+    </div>
+  </fieldset>
+{{/if}}
 
-  {{! Activating Trap Specific Fields }}
-  {{#if (eq trapType "activating")}}
-    <div class="form-group">
-      <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
-      <button type="button" class="add-tile-button" data-action="addTile">
-        <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
+{{! Activating Trap - Tiles & Doors Section }}
+{{#if (eq trapType "activating")}}
+  <fieldset class="tiles-doors-section accordion-section" data-section="tiles-doors">
+    <legend class="accordion-header">
+      <i class="fas fa-chevron-right accordion-icon"></i>
+      {{localize "EMPUZZLES.TilesAndDoors"}}
+    </legend>
+    <div class="accordion-content" style="display: none;">
+      <div class="form-group">
+        <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
+        <button type="button" class="add-tile-button" data-action="addTile">
+          <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
       </button>
       <p class="hint">{{localize "EMPUZZLES.ActivatingTrapTilesHint"}}</p>
     </div>
@@ -440,7 +461,20 @@
     {{else}}
       <p class="no-content">{{localize "EMPUZZLES.NoWallsSelected"}}</p>
     {{/if}}
-  {{/if}}
+    </div>
+  </fieldset>
+{{/if}}
 
-  {{! Custom Tags Section - Appears for all trap types }}
-  {{> partials/custom-tags-section customTags=customTags}}
+{{! Custom Tags Section - Appears for all trap types - wrapped in accordion in the partial itself }}
+{{> partials/custom-tags-section customTags=customTags}}
+
+{{! Todo List - Shows incomplete required tasks }}
+<div class="trap-todo-list" data-trap-todos>
+  <div class="todo-header">
+    <i class="fas fa-tasks"></i>
+    <span>{{localize "EMPUZZLES.SetupTasks"}}</span>
+  </div>
+  <ul class="todo-items" data-todo-items>
+    {{! Dynamically populated by JavaScript }}
+  </ul>
+</div>

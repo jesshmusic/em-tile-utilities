@@ -64,6 +64,18 @@ Design dangerous floors, tripwires, and hidden hazards that trigger when tokens 
 - **Trigger limits**: Set maximum number of times a trap can trigger (once, multiple times, or unlimited)
 - **Token configuration**: Combat traps can have visible or hidden tokens on the map
 
+**Organized interface with setup guidance:**
+
+The trap creation dialog features an intuitive accordion interface that organizes options into collapsible sections:
+
+- **Basic Information**: Trap type, name, trigger settings, and target type
+- **Result Configuration**: Damage, teleport, effects, or combat settings based on your trap type
+- **Visibility**: Starting image, triggered image, and visibility behavior
+- **Tiles & Doors**: Select tiles to activate and door states (for activating traps)
+- **Custom Tags**: Organize traps with tags for grouping and identification
+
+Each section shows a **red indicator** when required fields are missing, and a **Setup Tasks** list at the bottom guides you through completion. When all required fields are filled, you'll see a green "All required tasks complete!" message. Only one section can be open at a time to keep the interface clean and focused.
+
 ### Puzzle Reset Tiles
 
 Save hours of manual work resetting puzzle rooms between game sessions. Place a reset tile that restores everything to its starting state with one click.

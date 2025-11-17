@@ -2,19 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
-
-### Fixed
-
-- redesign trap visibility UI and fix related visibility bug (Issue #28)
+## [1.16.0] - 2025-11-17
 
 ### Added
 
-- add comprehensive GitHub bug report issue template
+- accordion UI for trap dialog with organized collapsible sections
+- required field indicators with red dots on accordion headers
+- dynamic setup tasks guide that updates in real-time
+- comprehensive GitHub bug report issue template
 
 ### Changed
 
+- trap dialog now uses accordion interface instead of single scrolling form
 - replace image behavior dropdown with intuitive visibility radio buttons
+- improved visibility section layout and spacing
+- one-section-at-a-time accordion behavior for cleaner, focused interface
+
+### Fixed
+
+- improved trap dialog usability and reduced cognitive load (addresses scrolling and form complexity issues)
+- redesign trap visibility UI and fix related visibility bug (Issue #28)
 
 ## [1.15.3] - 2025-11-17
 

@@ -1,6 +1,10 @@
 {{! Visibility & Image Behavior Section }}
-<fieldset class='visibility-section'>
-  <legend>{{localize 'EMPUZZLES.VisibilityLegend'}}</legend>
+<fieldset class='visibility-section accordion-section' data-section='visibility'>
+  <legend class='accordion-header'>
+    <i class='fas fa-chevron-right accordion-icon'></i>
+    {{localize 'EMPUZZLES.VisibilityLegend'}}
+  </legend>
+  <div class='accordion-content' style='display: none;'>
 
   {{! Starting Image }}
   <div class='form-group'>
@@ -132,5 +136,6 @@
         </span>
       </label>
     </div>
+  </div>
   </div>
 </fieldset>

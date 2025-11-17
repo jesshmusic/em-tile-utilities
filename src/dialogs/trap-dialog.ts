@@ -431,6 +431,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
 
+    // Set up accordion functionality
+    this._setupAccordion();
+
     // Set up file picker buttons
     const filePickerButtons = this.element.querySelectorAll('.file-picker');
     filePickerButtons.forEach((button: Element) => {
@@ -818,6 +821,229 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
    * Handle file picker button click
    */
+  /**
+   * Set up accordion functionality for collapsible sections
+   */
+  protected _setupAccordion(): void {
+    const sections = this.element.querySelectorAll('.accordion-section');
+
+    sections.forEach((section: Element) => {
+      const header = section.querySelector('.accordion-header') as HTMLElement;
+      const content = section.querySelector('.accordion-content') as HTMLElement;
+      const icon = section.querySelector('.accordion-icon') as HTMLElement;
+
+      if (!header || !content) return;
+
+      // Handle click on header to toggle section
+      header.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        const isOpen = content.style.display !== 'none';
+
+        // Only one section open at a time - close all others
+        sections.forEach((otherSection: Element) => {
+          if (otherSection !== section) {
+            const otherContent = otherSection.querySelector('.accordion-content') as HTMLElement;
+            const otherIcon = otherSection.querySelector('.accordion-icon') as HTMLElement;
+            if (otherContent) {
+              otherContent.style.display = 'none';
+            }
+            if (otherIcon) {
+              otherIcon.classList.remove('fa-chevron-down');
+              otherIcon.classList.add('fa-chevron-right');
+            }
+          }
+        });
+
+        // Toggle this section
+        if (isOpen) {
+          content.style.display = 'none';
+          icon?.classList.remove('fa-chevron-down');
+          icon?.classList.add('fa-chevron-right');
+        } else {
+          content.style.display = 'block';
+          icon?.classList.remove('fa-chevron-right');
+          icon?.classList.add('fa-chevron-down');
+        }
+      });
+    });
+
+    // Ensure Basic Information section starts open
+    const basicInfoSection = this.element.querySelector('.basic-info-section') as HTMLElement;
+    if (basicInfoSection) {
+      const basicContent = basicInfoSection.querySelector('.accordion-content') as HTMLElement;
+      const basicIcon = basicInfoSection.querySelector('.accordion-icon') as HTMLElement;
+      if (basicContent && basicIcon) {
+        basicContent.style.display = 'block';
+        basicIcon.classList.remove('fa-chevron-right');
+        basicIcon.classList.add('fa-chevron-down');
+      }
+    }
+
+    // Auto-expand result configuration when result type is selected
+    const resultTypeSelect = this.element.querySelector(
+      'select[name="resultType"]'
+    ) as HTMLSelectElement;
+    if (resultTypeSelect && this.resultType) {
+      const resultSection = this.element.querySelector('.result-config-section') as HTMLElement;
+      const resultContent = resultSection?.querySelector('.accordion-content') as HTMLElement;
+      const resultIcon = resultSection?.querySelector('.accordion-icon') as HTMLElement;
+      if (resultContent && resultIcon) {
+        // Close all other sections
+        sections.forEach((section: Element) => {
+          const content = section.querySelector('.accordion-content') as HTMLElement;
+          const icon = section.querySelector('.accordion-icon') as HTMLElement;
+          if (content) content.style.display = 'none';
+          if (icon) {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+          }
+        });
+        // Open result configuration
+        resultContent.style.display = 'block';
+        resultIcon.classList.remove('fa-chevron-right');
+        resultIcon.classList.add('fa-chevron-down');
+      }
+    }
+
+    // Set up required field validation indicators
+    this._updateRequiredIndicators();
+
+    // Update indicators when form fields change
+    const form = this.element.querySelector('form');
+    if (form) {
+      form.addEventListener('input', () => this._updateRequiredIndicators());
+      form.addEventListener('change', () => this._updateRequiredIndicators());
+    }
+  }
+
+  /**
+   * Update required field indicators on accordion headers and todo list
+   */
+  protected _updateRequiredIndicators(): void {
+    const sections = this.element.querySelectorAll('.accordion-section');
+    const todoItems: string[] = [];
+
+    sections.forEach((section: Element) => {
+      const header = section.querySelector('.accordion-header') as HTMLElement;
+      const content = section.querySelector('.accordion-content') as HTMLElement;
+
+      if (!header || !content) return;
+
+      // Check if this section has missing required fields
+      let hasMissingFields = false;
+
+      // Define required fields by section
+      if (section.classList.contains('basic-info-section')) {
+        // Check trap name
+        const trapName = content.querySelector('input[name="trapName"]') as HTMLInputElement;
+        if (!trapName || !trapName.value.trim()) {
+          hasMissingFields = true;
+          todoItems.push(game.i18n.localize('EMPUZZLES.TodoEnterTrapName'));
+        }
+      } else if (section.classList.contains('visibility-section')) {
+        // Check starting image for image traps
+        const trapType = this.element.querySelector('select[name="trapType"]') as HTMLSelectElement;
+        if (trapType && trapType.value === 'image') {
+          const startingImage = content.querySelector(
+            'input[name="startingImage"]'
+          ) as HTMLInputElement;
+          if (!startingImage || !startingImage.value.trim()) {
+            hasMissingFields = true;
+            todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectStartingImage'));
+          }
+        }
+      } else if (section.classList.contains('result-config-section')) {
+        // Check result type specific fields
+        const resultType = this.element.querySelector(
+          'select[name="resultType"]'
+        ) as HTMLSelectElement;
+        if (resultType) {
+          const resultValue = resultType.value;
+
+          // No result type selected
+          if (!resultValue) {
+            hasMissingFields = true;
+            todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectResultType'));
+          } else if (resultValue === 'damage') {
+            // Check if damage formula is provided (when no item dropped)
+            if (!this.dmgTrapItemId) {
+              const damageOnFail = content.querySelector(
+                'input[name="damageOnFail"]'
+              ) as HTMLInputElement;
+              if (!damageOnFail || !damageOnFail.value.trim()) {
+                hasMissingFields = true;
+                todoItems.push(game.i18n.localize('EMPUZZLES.TodoEnterDamageFormula'));
+              }
+            }
+          } else if (resultValue === 'teleport') {
+            // Check if teleport position is selected
+            if (this.teleportX === undefined || this.teleportY === undefined) {
+              hasMissingFields = true;
+              todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectTeleportPosition'));
+            }
+          } else if (resultValue === 'activeeffect') {
+            // Check if effect is selected
+            const effectId = content.querySelector('select[name="effectId"]') as HTMLSelectElement;
+            if (!effectId || !effectId.value) {
+              hasMissingFields = true;
+              todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectActiveEffect'));
+            }
+          } else if (resultValue === 'combat') {
+            // Check if attack item is dropped
+            if (!this.attackItemId) {
+              hasMissingFields = true;
+              todoItems.push(game.i18n.localize('EMPUZZLES.TodoDropAttackItem'));
+            }
+          }
+        }
+      } else if (section.classList.contains('tiles-doors-section')) {
+        // Check if tiles are selected for activating trap
+        if (this.selectedTiles.size === 0) {
+          hasMissingFields = true;
+          todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectTiles'));
+        }
+      }
+
+      // Add or remove indicator
+      const indicator = header.querySelector('.required-indicator') as HTMLElement;
+      if (hasMissingFields && !indicator) {
+        const newIndicator = document.createElement('span');
+        newIndicator.className = 'required-indicator';
+        newIndicator.title = 'This section has required fields that need to be filled';
+        header.appendChild(newIndicator);
+      } else if (!hasMissingFields && indicator) {
+        indicator.remove();
+      }
+    });
+
+    // Update todo list
+    const todoList = this.element.querySelector('[data-trap-todos]') as HTMLElement;
+    const todoItemsContainer = this.element.querySelector('[data-todo-items]') as HTMLElement;
+
+    if (todoList && todoItemsContainer) {
+      // Clear existing items
+      todoItemsContainer.innerHTML = '';
+
+      if (todoItems.length === 0) {
+        // All tasks complete
+        const completeLi = document.createElement('li');
+        completeLi.className = 'todo-item complete';
+        completeLi.innerHTML = `<i class="fas fa-check-circle"></i> ${game.i18n.localize('EMPUZZLES.TodoAllTasksComplete')}`;
+        todoItemsContainer.appendChild(completeLi);
+        todoList.classList.add('all-complete');
+      } else {
+        // Show incomplete tasks
+        todoList.classList.remove('all-complete');
+        todoItems.forEach(task => {
+          const li = document.createElement('li');
+          li.className = 'todo-item';
+          li.innerHTML = `<i class="far fa-circle"></i> ${task}`;
+          todoItemsContainer.appendChild(li);
+        });
+      }
+    }
+  }
+
   async _onFilePicker(event: Event): Promise<void> {
     event.preventDefault();
     const button = event.currentTarget as HTMLElement;
