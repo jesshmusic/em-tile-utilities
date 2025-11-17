@@ -2,6 +2,11 @@
 /* Using only Foundry VTT's built-in CSS classes */
 /* Custom styles only for complex tile list in reset dialog */
 
+/* Form Group Spacing - Namespaced to em-puzzles dialogs */
+.em-puzzles .form-group {
+  margin-bottom: 5px;
+}
+
 /* Dialog Scrolling - Applied to all tile creation dialogs */
 .trap-config.window-app,
 .switch-config.window-app,

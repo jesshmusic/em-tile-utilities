@@ -40,7 +40,8 @@ export enum TrapResultType {
  */
 export enum TrapTargetType {
   TRIGGERING = 'triggering',
-  WITHIN_TILE = 'within'
+  WITHIN_TILE = 'within',
+  PLAYER_TOKENS = 'player'
 }
 
 /**
@@ -90,6 +91,7 @@ export interface TrapConfig {
   hideTrapOnTrigger: boolean;
   hidden?: boolean; // Whether the trap tile is initially hidden from players
   revealOnTrigger?: boolean; // Whether hidden traps should be revealed when triggered
+  deactivateAfterTrigger?: boolean; // Whether to deactivate the trap after it triggers (one-time trap)
   sound: string;
   resultType: TrapResultType; // Type of result (damage, teleport, activeeffect)
   targetType: TrapTargetType; // Who to target (triggering token or tokens within tile)

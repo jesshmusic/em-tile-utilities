@@ -1458,9 +1458,25 @@ export async function createTrapTile(
 
   // Action 4: Add result-based actions (only for non-activating traps)
   if (!config.tileActions || config.tileActions.length === 0) {
-    const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
-    const targetEntityName =
-      config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+    // Determine target entity ID based on target type
+    let targetEntityId: string;
+    let targetEntityName: string;
+
+    switch (config.targetType) {
+      case TrapTargetType.PLAYER_TOKENS:
+        targetEntityId = 'players';
+        targetEntityName = 'Player Tokens';
+        break;
+      case TrapTargetType.WITHIN_TILE:
+        targetEntityId = 'within';
+        targetEntityName = 'Tokens within Tile';
+        break;
+      case TrapTargetType.TRIGGERING:
+      default:
+        targetEntityId = 'token';
+        targetEntityName = 'Triggering Token';
+        break;
+    }
 
     switch (config.resultType) {
       case TrapResultType.DAMAGE:
@@ -1747,6 +1763,22 @@ export async function createTrapTile(
   const files: any[] = [{ id: foundry.utils.randomID(), name: config.startingImage }];
   if (!config.hideTrapOnTrigger && config.triggeredImage) {
     files.push({ id: foundry.utils.randomID(), name: config.triggeredImage });
+  }
+
+  // Add deactivate action at the end if requested (one-time trap)
+  if (config.deactivateAfterTrigger) {
+    actions.push({
+      action: 'activate',
+      data: {
+        entity: {
+          id: 'tile',
+          name: 'This Tile'
+        },
+        activate: 'deactivate',
+        collection: 'tiles'
+      },
+      id: foundry.utils.randomID()
+    });
   }
 
   const tileData = {
