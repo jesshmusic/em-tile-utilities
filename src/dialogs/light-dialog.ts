@@ -1,6 +1,7 @@
 import { createLightTile } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -24,11 +25,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       title: 'EMPUZZLES.CreateLightTile',
       resizable: true
     },
-    position: {
-      width: 600,
-      height: 'auto',
-      top: 100
-    },
+    position: DialogPositions.LIGHT,
     form: {
       closeOnSubmit: false,
       handler: LightConfigDialog.#onSubmit

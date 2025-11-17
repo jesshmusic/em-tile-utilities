@@ -1,6 +1,7 @@
 import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -24,11 +25,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       title: 'EMPUZZLES.CreateSwitch',
       resizable: true
     },
-    position: {
-      width: 576,
-      height: 'auto',
-      top: 100
-    },
+    position: DialogPositions.SWITCH,
     form: {
       closeOnSubmit: false,
       handler: SwitchConfigDialog.prototype._onSubmit

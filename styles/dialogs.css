@@ -27,6 +27,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.5rem;
+  padding-bottom: 0; /* Remove bottom padding to eliminate space below footer */
 }
 
 .trap-config .form-footer,
@@ -1952,7 +1953,7 @@ button .game-icon,
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  background: #5b1d12;
   color: white;
   text-decoration: none;
   border-radius: 4px;
@@ -1963,7 +1964,7 @@ button .game-icon,
 }
 
 .patreon-link:hover {
-  background: linear-gradient(135deg, #2ecc71 0%, #52de97 100%);
+  background: #7a2518;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
   color: white;

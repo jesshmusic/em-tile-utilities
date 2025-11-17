@@ -1,6 +1,7 @@
 import type { Branch, ConditionOperator, LogicConnector } from '../types/module';
 import { BranchActionCategory } from '../types/module';
 import { getActiveTileManager } from './tile-manager-state';
+import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -29,11 +30,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       title: 'EMPUZZLES.CreateCheckStateTile',
       resizable: true
     },
-    position: {
-      width: 600,
-      height: 'auto',
-      top: 100
-    },
+    position: DialogPositions.CHECK_STATE,
     form: {
       closeOnSubmit: false,
       handler: CheckStateDialog.#onSubmit
