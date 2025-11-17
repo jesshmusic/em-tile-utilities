@@ -53,6 +53,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected currentTargetType?: string;
   protected currentHasSavingThrow?: boolean;
   protected customStartingImage?: string;
+  protected currentAdditionalEffects: string[] = [];
 
   /**
    * DMG trap item state (for damage result type)
@@ -338,6 +339,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
       effectOptions: effectOptions,
+      additionalEffects: this.currentAdditionalEffects,
       // Default values
       defaultTargetType: this.currentTargetType || TrapTargetType.TRIGGERING,
       defaultHasSavingThrow:
@@ -683,6 +685,23 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       });
     });
+
+    // Set up additional effects multi-select listener
+    const additionalEffectsSelect = this.element.querySelector(
+      'multi-select[name="additionalEffects"]'
+    ) as HTMLElement;
+    if (additionalEffectsSelect) {
+      additionalEffectsSelect.addEventListener('change', (event: Event) => {
+        const target = event.target as any;
+        if (target && target.value) {
+          this.currentAdditionalEffects = Array.isArray(target.value)
+            ? target.value
+            : [target.value];
+        } else {
+          this.currentAdditionalEffects = [];
+        }
+      });
+    }
   }
 
   /* -------------------------------------------- */
@@ -2109,14 +2128,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (form.querySelector('input[name="pauseGameOnTrigger"]') as HTMLInputElement)?.checked ||
       false;
 
-    // Extract additional effects from multiselect
+    // Extract additional effects from multi-select element
     const additionalEffectsSelect = form.querySelector(
-      'select[name="additionalEffects"]'
-    ) as HTMLSelectElement;
+      'multi-select[name="additionalEffects"]'
+    ) as any;
     const additionalEffects: string[] = [];
-    if (additionalEffectsSelect) {
-      for (const option of Array.from(additionalEffectsSelect.selectedOptions)) {
-        additionalEffects.push(option.value);
+    if (additionalEffectsSelect && additionalEffectsSelect.value) {
+      // Multi-select element returns array directly
+      if (Array.isArray(additionalEffectsSelect.value)) {
+        additionalEffects.push(...additionalEffectsSelect.value);
+      } else {
+        additionalEffects.push(additionalEffectsSelect.value);
       }
     }
 

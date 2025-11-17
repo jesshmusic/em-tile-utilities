@@ -183,11 +183,9 @@
 
       <div class="form-group">
         <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
-        <select id="additionalEffects" name="additionalEffects" multiple>
-          {{#each effectOptions as |option|}}
-            <option value="{{option.value}}">{{option.label}}</option>
-          {{/each}}
-        </select>
+        <multi-select name="additionalEffects">
+          {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
+        </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsDamageHint"}}</p>
       </div>
     {{/if}}
@@ -299,11 +297,9 @@
 
       <div class="form-group">
         <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
-        <select id="additionalEffects" name="additionalEffects" multiple>
-          {{#each effectOptions as |option|}}
-            <option value="{{option.value}}">{{option.label}}</option>
-          {{/each}}
-        </select>
+        <multi-select name="additionalEffects">
+          {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
+        </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsCombatHint"}}</p>
       </div>
 
