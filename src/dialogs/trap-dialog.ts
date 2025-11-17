@@ -1998,7 +1998,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       hidden = true;
       if (onTriggerBehavior === 'stays-hidden') {
         imageBehavior = ImageBehavior.NOTHING;
-        revealOnTrigger = false;
       } else if (onTriggerBehavior === 'reveals-same') {
         imageBehavior = ImageBehavior.NOTHING;
         revealOnTrigger = true;
