@@ -68,6 +68,33 @@ export function registerHandlebarsHelpers(): void {
       return !value;
     });
   }
+
+  // Register 'selectOptions' helper (Foundry VTT built-in for multi-select)
+  if (!Handlebars.helpers['selectOptions']) {
+    Handlebars.registerHelper('selectOptions', function (choices: any, options: any) {
+      if (!choices || !Array.isArray(choices)) return '';
+
+      const hash = options.hash || {};
+      const selected = hash.selected || [];
+      const nameAttr = hash.nameAttr || 'value';
+      const labelAttr = hash.labelAttr || 'label';
+
+      // Normalize selected to array for comparison
+      const selectedArray = Array.isArray(selected) ? selected : [selected];
+
+      // Generate option elements
+      return new Handlebars.SafeString(
+        choices
+          .map((choice: any) => {
+            const value = choice[nameAttr];
+            const label = choice[labelAttr];
+            const isSelected = selectedArray.includes(value) ? ' selected' : '';
+            return `<option value="${value}"${isSelected}>${label}</option>`;
+          })
+          .join('\n')
+      );
+    });
+  }
 }
 
 /**

@@ -53,6 +53,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected currentTargetType?: string;
   protected currentHasSavingThrow?: boolean;
   protected customStartingImage?: string;
+  protected currentAdditionalEffects: string[] = [];
 
   /**
    * DMG trap item state (for damage result type)
@@ -183,7 +184,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Prepare target type options
     const targetTypeOptions = [
       { value: TrapTargetType.TRIGGERING, label: 'EMPUZZLES.TargetTriggering' },
-      { value: TrapTargetType.WITHIN_TILE, label: 'EMPUZZLES.TargetWithinTile' }
+      { value: TrapTargetType.WITHIN_TILE, label: 'EMPUZZLES.TargetWithinTile' },
+      { value: TrapTargetType.PLAYER_TOKENS, label: 'EMPUZZLES.TargetPlayerTokens' }
     ];
 
     // Prepare saving throw options
@@ -337,6 +339,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
       effectOptions: effectOptions,
+      additionalEffects: this.currentAdditionalEffects,
       // Default values
       defaultTargetType: this.currentTargetType || TrapTargetType.TRIGGERING,
       defaultHasSavingThrow:
@@ -632,9 +635,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
-    // Set up pill-based multiselect for additional effects
-    this._setupEffectMultiselect();
-
     // Set up action type select listeners for activating trap tiles
     const actionSelects = this.element.querySelectorAll('[data-action-select]');
     actionSelects.forEach((select: Element) => {
@@ -685,129 +685,22 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       });
     });
-  }
 
-  /* -------------------------------------------- */
-  /* Effect Multiselect (Pill-based)             */
-  /* -------------------------------------------- */
-
-  /**
-   * Set up the pill-based multiselect for additional effects (Monk's Active Tiles style)
-   */
-  protected _setupEffectMultiselect(): void {
-    const container = this.element.querySelector('.multiple-dropdown-select');
-    if (!container) return;
-
-    const dropdown = container.querySelector('.multiple-dropdown') as HTMLElement;
-    const content = container.querySelector('.multiple-dropdown-content') as HTMLElement;
-    const dropdownList = container.querySelector('.dropdown-list') as HTMLElement;
-    const selectElement = container.querySelector('#additionalEffects') as HTMLSelectElement;
-
-    if (!dropdown || !content || !dropdownList || !selectElement) return;
-
-    // Toggle dropdown list when clicking the dropdown area
-    dropdown.addEventListener('click', (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropdownList.classList.toggle('open');
-    });
-
-    // Close dropdown when clicking outside
-    const closeDropdown = (e: Event) => {
-      if (!container.contains(e.target as Node)) {
-        dropdownList.classList.remove('open');
-      }
-    };
-    document.addEventListener('click', closeDropdown);
-
-    // Handle dropdown item clicks
-    const items = dropdownList.querySelectorAll('.multiple-dropdown-item');
-    items.forEach((item: Element) => {
-      item.addEventListener('click', (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const value = (item as HTMLElement).dataset.value;
-        const label = item.textContent?.trim();
-        if (!value || !label) return;
-
-        // Check if already selected
-        if (item.classList.contains('selected')) return;
-
-        // Add pill
-        this._addEffectPill(content, selectElement, value, label);
-
-        // Mark item as selected
-        item.classList.add('selected');
-
-        // Select in hidden select element
-        const option = Array.from(selectElement.options).find(opt => opt.value === value);
-        if (option) {
-          option.selected = true;
+    // Set up additional effects multi-select listener
+    const additionalEffectsSelect = this.element.querySelector(
+      'multi-select[name="additionalEffects"]'
+    ) as HTMLElement;
+    if (additionalEffectsSelect) {
+      additionalEffectsSelect.addEventListener('change', (event: Event) => {
+        const target = event.target as any;
+        if (target && target.value) {
+          this.currentAdditionalEffects = Array.isArray(target.value)
+            ? target.value
+            : [target.value];
+        } else {
+          this.currentAdditionalEffects = [];
         }
-
-        // Close dropdown
-        dropdownList.classList.remove('open');
       });
-    });
-  }
-
-  /**
-   * Add an effect pill to the container (Monk's Active Tiles style)
-   */
-  protected _addEffectPill(
-    container: HTMLElement,
-    selectElement: HTMLSelectElement,
-    value: string,
-    label: string
-  ): void {
-    const pill = document.createElement('div');
-    pill.className = 'multiple-dropdown-option flexrow';
-    pill.dataset.value = value;
-
-    const labelSpan = document.createElement('span');
-    labelSpan.textContent = label;
-    pill.appendChild(labelSpan);
-
-    const removeBtn = document.createElement('div');
-    removeBtn.className = 'remove-option';
-    removeBtn.innerHTML = '&times;';
-    removeBtn.addEventListener('click', (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this._removeEffectPill(pill, selectElement, value);
-    });
-    pill.appendChild(removeBtn);
-
-    container.appendChild(pill);
-  }
-
-  /**
-   * Remove an effect pill from the container (Monk's Active Tiles style)
-   */
-  protected _removeEffectPill(
-    pill: HTMLElement,
-    selectElement: HTMLSelectElement,
-    value: string
-  ): void {
-    // Remove pill from DOM
-    pill.remove();
-
-    // Deselect in hidden select element
-    const option = Array.from(selectElement.options).find(opt => opt.value === value);
-    if (option) {
-      option.selected = false;
-    }
-
-    // Remove selected class from dropdown item
-    const dropdownList = this.element.querySelector('.dropdown-list');
-    if (dropdownList) {
-      const item = dropdownList.querySelector(
-        `.multiple-dropdown-item[data-value="${value}"]`
-      ) as HTMLElement;
-      if (item) {
-        item.classList.remove('selected');
-      }
     }
   }
 
@@ -2235,14 +2128,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (form.querySelector('input[name="pauseGameOnTrigger"]') as HTMLInputElement)?.checked ||
       false;
 
-    // Extract additional effects from multiselect
+    // Extract additional effects from multi-select element
     const additionalEffectsSelect = form.querySelector(
-      'select[name="additionalEffects"]'
-    ) as HTMLSelectElement;
+      'multi-select[name="additionalEffects"]'
+    ) as any;
     const additionalEffects: string[] = [];
-    if (additionalEffectsSelect) {
-      for (const option of Array.from(additionalEffectsSelect.selectedOptions)) {
-        additionalEffects.push(option.value);
+    if (additionalEffectsSelect && additionalEffectsSelect.value) {
+      // Multi-select element returns array directly
+      if (Array.isArray(additionalEffectsSelect.value)) {
+        additionalEffects.push(...additionalEffectsSelect.value);
+      } else {
+        additionalEffects.push(additionalEffectsSelect.value);
       }
     }
 

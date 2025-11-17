@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.17.0] - 2025-11-17
+
+### Added
+
+- Fix: Redesign trap visibility UI and add bug report template (Issue #28) (#32)
+
+### Fixed
+
+- v1.16.2: Fix teleport dialog scrolling, improve dialog UX, and centralize positions (#35)
+- v1.15.3: Fix pause game checkbox not being read from trap dialog (#31)
+
+### Other
+
+- v1.16.0: Trap dialog accordion UI with setup tasks guide (#33)
+
 ## [1.16.2] - 2025-11-17
 
 ### Added
