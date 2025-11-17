@@ -42,11 +42,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected trapType: TrapType = TrapType.IMAGE;
 
   /**
-   * Current image behavior (for image traps)
-   */
-  protected imageBehavior: ImageBehavior = ImageBehavior.NOTHING;
-
-  /**
    * Current result type (for image traps)
    */
   protected resultType?: TrapResultType;
@@ -177,13 +172,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const trapTypeOptions = [
       { value: TrapType.IMAGE, label: 'EMPUZZLES.ImageTrap' },
       { value: TrapType.ACTIVATING, label: 'EMPUZZLES.ActivatingTrap' }
-    ];
-
-    // Prepare image behavior options
-    const imageBehaviorOptions = [
-      { value: ImageBehavior.HIDE, label: 'EMPUZZLES.HideTile' },
-      { value: ImageBehavior.SWITCH, label: 'EMPUZZLES.SwitchTile' },
-      { value: ImageBehavior.NOTHING, label: 'EMPUZZLES.DoNothing' }
     ];
 
     // Prepare result type options
@@ -345,11 +333,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       defaultTrapTriggeredImage: defaultTrapTriggeredImage,
       // Current selections
       trapType: this.trapType,
-      imageBehavior: this.imageBehavior,
       resultType: this.resultType,
       // Dropdown options
       trapTypeOptions: trapTypeOptions,
-      imageBehaviorOptions: imageBehaviorOptions,
       resultTypeOptions: resultTypeOptions,
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
@@ -502,36 +488,85 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
-    // Set up image behavior selector change handler
-    const imageBehaviorSelect = this.element.querySelector(
-      'select[name="imageBehavior"]'
-    ) as HTMLSelectElement;
-    if (imageBehaviorSelect) {
-      imageBehaviorSelect.addEventListener('change', (event: Event) => {
-        this.imageBehavior = (event.target as HTMLSelectElement).value as ImageBehavior;
-        this.render();
-      });
-    }
-
-    // Disable visibility radio buttons when "Hide Tile" is selected
-    // (These options are mutually exclusive - if trap hides when triggered, it shouldn't start hidden)
-    const visibilityRadios = this.element.querySelectorAll(
-      'input[name="trapVisibility"]'
+    // Handle Initial Visibility and On Trigger Behavior radio button interactions
+    const initialVisibilityRadios = this.element.querySelectorAll(
+      'input[name="initialVisibility"]'
     ) as NodeListOf<HTMLInputElement>;
-    if (visibilityRadios.length > 0 && imageBehaviorSelect) {
-      const isHideBehavior = imageBehaviorSelect.value === ImageBehavior.HIDE;
-      visibilityRadios.forEach(radio => {
-        if (isHideBehavior) {
-          radio.disabled = true;
-          // Force "visible" option when using "Hide Tile" behavior
-          if (radio.value === 'visible') {
-            radio.checked = true;
-          }
-        } else {
-          radio.disabled = false;
-        }
-      });
-    }
+    const onTriggerVisibleOptions = this.element.querySelectorAll(
+      '.on-trigger-visible'
+    ) as NodeListOf<HTMLElement>;
+    const onTriggerHiddenOptions = this.element.querySelectorAll(
+      '.on-trigger-hidden'
+    ) as NodeListOf<HTMLElement>;
+
+    const updateOnTriggerOptions = () => {
+      const isVisible =
+        (this.element.querySelector('input[name="initialVisibility"]:checked') as HTMLInputElement)
+          ?.value === 'visible';
+
+      if (isVisible) {
+        // Show visible options, hide hidden options
+        onTriggerVisibleOptions.forEach(option => {
+          option.style.display = 'flex';
+        });
+        onTriggerHiddenOptions.forEach(option => {
+          option.style.display = 'none';
+        });
+        // Check default "stays-same" option
+        const staysSameRadio = this.element.querySelector(
+          'input[name="onTriggerBehavior"][value="stays-same"]'
+        ) as HTMLInputElement;
+        if (staysSameRadio) staysSameRadio.checked = true;
+      } else {
+        // Show hidden options, hide visible options
+        onTriggerVisibleOptions.forEach(option => {
+          option.style.display = 'none';
+        });
+        onTriggerHiddenOptions.forEach(option => {
+          option.style.display = 'flex';
+        });
+        // Check default "reveals-same" option
+        const revealsSameRadio = this.element.querySelector(
+          'input[name="onTriggerBehavior"][value="reveals-same"]'
+        ) as HTMLInputElement;
+        if (revealsSameRadio) revealsSameRadio.checked = true;
+      }
+    };
+
+    // Set initial state
+    updateOnTriggerOptions();
+
+    // Update when initial visibility changes
+    initialVisibilityRadios.forEach(radio => {
+      radio.addEventListener('change', updateOnTriggerOptions);
+    });
+
+    // Show/hide triggered image field based on onTriggerBehavior selection
+    const triggeredImageGroup = this.element.querySelector('.triggered-image-group') as HTMLElement;
+    const onTriggerBehaviorRadios = this.element.querySelectorAll(
+      'input[name="onTriggerBehavior"]'
+    ) as NodeListOf<HTMLInputElement>;
+
+    const updateTriggeredImageVisibility = () => {
+      const selectedBehavior = (
+        this.element.querySelector('input[name="onTriggerBehavior"]:checked') as HTMLInputElement
+      )?.value;
+
+      // Show triggered image field when switching image behaviors are selected
+      if (selectedBehavior === 'switches-image' || selectedBehavior === 'reveals-switched') {
+        if (triggeredImageGroup) triggeredImageGroup.style.display = 'block';
+      } else {
+        if (triggeredImageGroup) triggeredImageGroup.style.display = 'none';
+      }
+    };
+
+    // Set initial state
+    updateTriggeredImageVisibility();
+
+    // Update when on trigger behavior changes
+    onTriggerBehaviorRadios.forEach(radio => {
+      radio.addEventListener('change', updateTriggeredImageVisibility);
+    });
 
     // Set up result type selector change handler
     const resultTypeSelect = this.element.querySelector(
@@ -1449,13 +1484,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         return { valid: false, message: 'Please select a result type!' };
       }
 
-      // Check triggered image for switch mode
-      if (this.imageBehavior === ImageBehavior.SWITCH) {
+      // Check triggered image when switching behavior is selected
+      const onTriggerBehavior = (
+        form.querySelector('input[name="onTriggerBehavior"]:checked') as HTMLInputElement
+      )?.value;
+      if (onTriggerBehavior === 'switches-image' || onTriggerBehavior === 'reveals-switched') {
         const triggeredImage = (
           form.querySelector('input[name="triggeredImage"]') as HTMLInputElement
         )?.value;
         if (!triggeredImage) {
-          return { valid: false, message: 'Triggered image is required for switching traps!' };
+          return { valid: false, message: 'Triggered image is required when switching images!' };
         }
       }
 
@@ -1640,12 +1678,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Extract common config
     const config = this._extractCommonConfig(form);
 
-    // Extract image behavior
-    const hideTrapOnTrigger = this.imageBehavior === ImageBehavior.HIDE;
-    const triggeredImage =
-      this.imageBehavior === ImageBehavior.SWITCH
-        ? (form.querySelector('input[name="triggeredImage"]') as HTMLInputElement)?.value || ''
-        : '';
+    // Extract image behavior from visibility radio buttons
+    const onTriggerBehavior =
+      (form.querySelector('input[name="onTriggerBehavior"]:checked') as HTMLInputElement)?.value ||
+      'stays-same';
+    const needsTriggeredImage =
+      onTriggerBehavior === 'switches-image' || onTriggerBehavior === 'reveals-switched';
+    const triggeredImage = needsTriggeredImage
+      ? (form.querySelector('input[name="triggeredImage"]') as HTMLInputElement)?.value || ''
+      : '';
 
     // Extract result-specific config
     let trapConfig: TrapConfig | CombatTrapConfig;
@@ -1764,7 +1805,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Standard image trap config
       const imageTrapConfig: TrapConfig = {
         ...config,
-        hideTrapOnTrigger: hideTrapOnTrigger,
         triggeredImage: triggeredImage,
         resultType: this.resultType as TrapResultType
       };
@@ -1931,23 +1971,41 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       ((form.querySelector('select[name="targetType"]') as HTMLSelectElement)
         ?.value as TrapTargetType) || TrapTargetType.WITHIN_TILE;
 
-    // Extract visibility setting from radio buttons
-    const visibilityValue =
-      (form.querySelector('input[name="trapVisibility"]:checked') as HTMLInputElement)?.value ||
-      'hidden-reveal';
+    // Extract visibility settings from two radio groups
+    const initialVisibility =
+      (form.querySelector('input[name="initialVisibility"]:checked') as HTMLInputElement)?.value ||
+      'visible';
+    const onTriggerBehavior =
+      (form.querySelector('input[name="onTriggerBehavior"]:checked') as HTMLInputElement)?.value ||
+      'stays-same';
 
-    // Convert visibility radio value to hidden and revealOnTrigger booleans
+    // Map radio values to internal configuration
     let hidden = false;
     let revealOnTrigger = false;
-    if (visibilityValue === 'visible') {
+    let imageBehavior: ImageBehavior = ImageBehavior.NOTHING;
+
+    if (initialVisibility === 'visible') {
       hidden = false;
-      revealOnTrigger = false; // Not used when visible
-    } else if (visibilityValue === 'hidden-reveal') {
+      if (onTriggerBehavior === 'stays-same') {
+        imageBehavior = ImageBehavior.NOTHING;
+      } else if (onTriggerBehavior === 'switches-image') {
+        imageBehavior = ImageBehavior.SWITCH;
+      } else if (onTriggerBehavior === 'hides') {
+        imageBehavior = ImageBehavior.HIDE;
+      }
+    } else {
+      // initialVisibility === 'hidden'
       hidden = true;
-      revealOnTrigger = true;
-    } else if (visibilityValue === 'hidden-stay') {
-      hidden = true;
-      revealOnTrigger = false;
+      if (onTriggerBehavior === 'stays-hidden') {
+        imageBehavior = ImageBehavior.NOTHING;
+        revealOnTrigger = false;
+      } else if (onTriggerBehavior === 'reveals-same') {
+        imageBehavior = ImageBehavior.NOTHING;
+        revealOnTrigger = true;
+      } else if (onTriggerBehavior === 'reveals-switched') {
+        imageBehavior = ImageBehavior.SWITCH;
+        revealOnTrigger = true;
+      }
     }
     const hasSavingThrow =
       (form.querySelector('input[name="hasSavingThrow"]') as HTMLInputElement)?.checked || false;
@@ -1978,6 +2036,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetType: targetType,
       hidden: hidden,
       revealOnTrigger: revealOnTrigger,
+      hideTrapOnTrigger: imageBehavior === ImageBehavior.HIDE,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
       hasSavingThrow: hasSavingThrow,
       pauseGameOnTrigger: pauseGameOnTrigger,

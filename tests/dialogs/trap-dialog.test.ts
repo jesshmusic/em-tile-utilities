@@ -40,10 +40,6 @@ describe('TrapDialog', () => {
       expect((dialog as any).trapType).toBe('image');
     });
 
-    it('should initialize with NOTHING image behavior by default', () => {
-      expect((dialog as any).imageBehavior).toBe('nothing');
-    });
-
     it('should initialize with NO default result type', () => {
       expect((dialog as any).resultType).toBeUndefined();
     });
@@ -65,16 +61,6 @@ describe('TrapDialog', () => {
       expect(context.trapTypeOptions.length).toBeGreaterThan(0);
       expect(context.trapTypeOptions.some((opt: any) => opt.value === 'image')).toBe(true);
       expect(context.trapTypeOptions.some((opt: any) => opt.value === 'activating')).toBe(true);
-    });
-
-    it('should include imageBehavior options', async () => {
-      const context = await dialog._prepareContext({});
-
-      expect(context.imageBehaviorOptions).toBeDefined();
-      expect(context.imageBehaviorOptions.length).toBeGreaterThan(0);
-      expect(context.imageBehaviorOptions.some((opt: any) => opt.value === 'hide')).toBe(true);
-      expect(context.imageBehaviorOptions.some((opt: any) => opt.value === 'switch')).toBe(true);
-      expect(context.imageBehaviorOptions.some((opt: any) => opt.value === 'nothing')).toBe(true);
     });
 
     it('should include resultType options', async () => {
@@ -120,7 +106,6 @@ describe('TrapDialog', () => {
       const context = await dialog._prepareContext({});
 
       expect(context.trapType).toBe('image');
-      expect(context.imageBehavior).toBe('nothing');
       expect(context.resultType).toBeUndefined();
     });
   });
@@ -133,22 +118,6 @@ describe('TrapDialog', () => {
     it('should support ACTIVATING trap type', () => {
       (dialog as any).trapType = 'activating';
       expect((dialog as any).trapType).toBe('activating');
-    });
-  });
-
-  describe('image behavior selection', () => {
-    it('should default to NOTHING', () => {
-      expect((dialog as any).imageBehavior).toBe('nothing');
-    });
-
-    it('should support HIDE behavior', () => {
-      (dialog as any).imageBehavior = 'hide';
-      expect((dialog as any).imageBehavior).toBe('hide');
-    });
-
-    it('should support SWITCH behavior', () => {
-      (dialog as any).imageBehavior = 'switch';
-      expect((dialog as any).imageBehavior).toBe('switch');
     });
   });
 
