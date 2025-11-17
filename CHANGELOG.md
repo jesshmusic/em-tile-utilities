@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.3] - 2025-11-17
+
+
 ## [1.15.2] - 2025-11-16
 
 ### Fixed
