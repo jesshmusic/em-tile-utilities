@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 - make Tagger section accordion only in trap dialog, always visible in other dialogs
 - move Tagger to last section in all dialogs for consistency
 
+### Changed
+
+- make Create/Cancel footer sticky and always visible at bottom of all dialogs
+
 
 ## [1.16.0] - 2025-11-17
 
