@@ -91,5 +91,14 @@ export const DialogPositions: Record<string, DialogPosition> = {
     ...DEFAULT_DIALOG_POSITION,
     left: 100,
     top: 100
+  },
+
+  /**
+   * Variables Viewer
+   */
+  VARIABLES_VIEWER: {
+    ...DEFAULT_DIALOG_POSITION,
+    left: 240,
+    top: 240
   }
 };

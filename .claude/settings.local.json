@@ -37,7 +37,9 @@
       "Bash(gh api:*)",
       "Bash(gh pr close:*)",
       "Bash(git cherry-pick:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": [

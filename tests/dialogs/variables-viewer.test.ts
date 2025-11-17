@@ -27,7 +27,7 @@ describe('SceneVariablesViewer', () => {
       expect(options.id).toBe('em-puzzles-variables-viewer');
       expect(options.window.icon).toBe('gi-scroll-unfurled');
       expect(options.window.title).toBe('EMPUZZLES.SceneVariables');
-      expect(options.position.width).toBe(700);
+      expect(options.position.width).toBe(650);
     });
 
     it('should have correct parts configuration', () => {

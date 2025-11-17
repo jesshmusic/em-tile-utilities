@@ -28,7 +28,7 @@ describe('LightConfigDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-candle-flame');
       expect(options.window.title).toBe('EMPUZZLES.CreateLightTile');
-      expect(options.position.width).toBe(600);
+      expect(options.position.width).toBe(650);
     });
 
     it('should have correct parts configuration', () => {

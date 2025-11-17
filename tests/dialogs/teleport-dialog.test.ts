@@ -28,7 +28,7 @@ describe('TeleportDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('fa-solid fa-right-left');
       expect(options.window.title).toBe('EMPUZZLES.CreateTeleport');
-      expect(options.position.width).toBe(576);
+      expect(options.position.width).toBe(650);
     });
 
     it('should have correct parts configuration', () => {

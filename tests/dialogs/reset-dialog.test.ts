@@ -28,8 +28,8 @@ describe('ResetTileConfigDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-clockwise-rotation');
       expect(options.window.title).toBe('EMPUZZLES.CreateResetTile');
-      expect(options.position.width).toBe(800);
-      expect(options.position.height).toBe('auto');
+      expect(options.position.width).toBe(650);
+      expect(options.position.height).toBe(525);
     });
 
     it('should have correct parts configuration', () => {
