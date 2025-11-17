@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.3] - 2025-11-17
+
+### Added
+
+- fix: remove requireConfirmation references and add registerMenu to types
+
+### Fixed
+
+- extract pauseGameOnTrigger from trap dialog form (#27)
+- correct pause game action structure and positioning
+- resolve hidden trap visibility bug and improve trap dialog UX (Issue #24)
+- active effect traps not applying effects (issue #22)
+
+### Changed
+
+- address Copilot PR review feedback
+- bump version to 1.15.2
+
+### Other
+
+- enhancement: improve Tile Manager window positioning
+- docs: update README with current features and capabilities (#21)
+
 ## [1.15.2] - 2025-11-16
 
 ### Fixed
