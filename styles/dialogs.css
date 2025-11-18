@@ -1842,12 +1842,10 @@ button .game-icon,
   border-top: 1px solid var(--color-border-light-tertiary);
 }
 
-/* Setup tasks fixed at bottom (not in scroll) */
+/* Setup tasks sticky at bottom (always visible above footer) */
 .trap-config .trap-todo-list {
-  position: fixed;
-  bottom: 52px; /* Above footer */
-  left: 0;
-  right: 0;
+  position: sticky;
+  bottom: 52px; /* Above footer (footer is at 0) */
   background: #000;
   z-index: 9;
   margin: 0;
