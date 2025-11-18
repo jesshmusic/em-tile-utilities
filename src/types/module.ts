@@ -97,6 +97,7 @@ export interface TrapConfig {
   resultType: TrapResultType; // Type of result (damage, teleport, activeeffect)
   targetType: TrapTargetType; // Who to target (triggering token or tokens within tile)
   additionalEffects?: string[]; // Optional additional effects to apply
+  additionalEffectsAction?: 'add' | 'remove'; // Whether to add or remove additional effects
   // Optional saving throw (applies to all result types)
   hasSavingThrow: boolean;
   minRequired: number | null;

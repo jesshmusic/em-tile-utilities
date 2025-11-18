@@ -1755,13 +1755,14 @@ export async function createTrapTile(
     }
   }
 
-  // Action 4: Add additional effects if specified
+  // Action 4: Add/Remove additional effects if specified
   if (config.additionalEffects && config.additionalEffects.length > 0) {
     const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
     const targetEntityName =
       config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+    const effectAction = config.additionalEffectsAction || 'add'; // Default to 'add' if not specified
 
-    // Add each additional effect
+    // Add/Remove each additional effect
     config.additionalEffects.forEach(effectId => {
       actions.push({
         action: 'activeeffect',
@@ -1771,7 +1772,7 @@ export async function createTrapTile(
             name: targetEntityName
           },
           effectid: effectId,
-          addeffect: 'add',
+          addeffect: effectAction, // Use the configured action (add or remove)
           altereffect: ''
         },
         id: foundry.utils.randomID()

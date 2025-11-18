@@ -185,6 +185,18 @@
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsDamageHint"}}</p>
+
+        {{! Add/Remove toggle for additional effects }}
+        <div class="radio-group additional-effects-action" {{#unless additionalEffects.length}}style="opacity: 0.5; pointer-events: none;"{{/unless}}>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="add" {{#if (eq additionalEffectsAction "add")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.AddEffects"}}</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="remove" {{#if (eq additionalEffectsAction "remove")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.RemoveEffects"}}</span>
+          </label>
+        </div>
       </div>
     {{/if}}
 
@@ -208,6 +220,18 @@
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsHealHint"}}</p>
+
+        {{! Add/Remove toggle for additional effects }}
+        <div class="radio-group additional-effects-action" {{#unless additionalEffects.length}}style="opacity: 0.5; pointer-events: none;"{{/unless}}>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="add" {{#if (eq additionalEffectsAction "add")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.AddEffects"}}</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="remove" {{#if (eq additionalEffectsAction "remove")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.RemoveEffects"}}</span>
+          </label>
+        </div>
       </div>
     {{/if}}
 
@@ -322,6 +346,18 @@
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsCombatHint"}}</p>
+
+        {{! Add/Remove toggle for additional effects }}
+        <div class="radio-group additional-effects-action" {{#unless additionalEffects.length}}style="opacity: 0.5; pointer-events: none;"{{/unless}}>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="add" {{#if (eq additionalEffectsAction "add")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.AddEffects"}}</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="remove" {{#if (eq additionalEffectsAction "remove")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.RemoveEffects"}}</span>
+          </label>
+        </div>
       </div>
 
       <div class="form-group">

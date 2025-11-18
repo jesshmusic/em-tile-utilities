@@ -81,6 +81,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   // Additional Effects (shared across damage, heal, active effect)
   protected additionalEffects: string[] = [];
+  protected additionalEffectsAction: 'add' | 'remove' = 'add';
 
   // Custom Tags
   protected customTags: string = '';
@@ -414,6 +415,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
       // Additional Effects - use class property
       additionalEffects: this.additionalEffects,
+      additionalEffectsAction: this.additionalEffectsAction,
 
       // Custom Tags - use class property
       customTags: this.customTags,
@@ -577,6 +579,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       this.additionalEffects = Array.isArray(additionalEffectsSelect.value)
         ? additionalEffectsSelect.value
         : [additionalEffectsSelect.value];
+    }
+
+    // Additional Effects Action (add vs remove)
+    const additionalEffectsActionRadio = this.element.querySelector(
+      '[name="additionalEffectsAction"]:checked'
+    ) as HTMLInputElement;
+    if (additionalEffectsActionRadio) {
+      this.additionalEffectsAction = additionalEffectsActionRadio.value as 'add' | 'remove';
     }
 
     // Combat Trap
@@ -910,12 +920,32 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (additionalEffectsSelect) {
       additionalEffectsSelect.addEventListener('change', (event: Event) => {
         const target = event.target as any;
-        if (target && target.value) {
+        const hasEffects = target && target.value && target.value.length > 0;
+
+        if (hasEffects) {
           this.currentAdditionalEffects = Array.isArray(target.value)
             ? target.value
             : [target.value];
         } else {
           this.currentAdditionalEffects = [];
+        }
+
+        // Enable/disable the add/remove radio buttons based on selection
+        const actionGroup = this.element.querySelector('.additional-effects-action') as HTMLElement;
+        const actionRadios = this.element.querySelectorAll(
+          '[name="additionalEffectsAction"]'
+        ) as NodeListOf<HTMLInputElement>;
+
+        if (actionGroup && actionRadios) {
+          if (hasEffects) {
+            actionGroup.style.opacity = '1';
+            actionGroup.style.pointerEvents = 'auto';
+            actionRadios.forEach(radio => (radio.disabled = false));
+          } else {
+            actionGroup.style.opacity = '0.5';
+            actionGroup.style.pointerEvents = 'none';
+            actionRadios.forEach(radio => (radio.disabled = true));
+          }
         }
       });
     }
@@ -2080,6 +2110,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       revealOnTrigger: revealOnTrigger,
       hideTrapOnTrigger: imageBehavior === ImageBehavior.HIDE,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
+      additionalEffectsAction:
+        (
+          form.querySelector('[name="additionalEffectsAction"]:checked') as HTMLInputElement
+        )?.value as 'add' | 'remove' | undefined,
       hasSavingThrow: hasSavingThrow,
       pauseGameOnTrigger: pauseGameOnTrigger,
       customTags: customTags
