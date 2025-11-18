@@ -9,38 +9,11 @@ body:
         Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
 
   - type: input
-    id: module-version
-    attributes:
-      label: Module Version
-      description: What version of Dorman Lakely's Tile Utilities are you using?
-      placeholder: "e.g., 1.15.3"
-    validations:
-      required: true
-
-  - type: input
     id: foundry-version
     attributes:
       label: Foundry VTT Version
       description: What version of Foundry VTT are you running?
       placeholder: "e.g., 13.330"
-    validations:
-      required: true
-
-  - type: input
-    id: monks-version
-    attributes:
-      label: Monk's Active Tiles Version
-      description: What version of Monk's Active Tiles are you using?
-      placeholder: "e.g., 11.0.0"
-    validations:
-      required: true
-
-  - type: input
-    id: game-system
-    attributes:
-      label: Game System
-      description: What game system are you using?
-      placeholder: "e.g., DnD5e 3.3.1, PF2e 6.4.1, etc."
     validations:
       required: true
 

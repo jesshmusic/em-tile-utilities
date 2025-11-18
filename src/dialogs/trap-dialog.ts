@@ -8,7 +8,6 @@ import {
 } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
-import { FormStateManager } from '../utils/form-state-manager';
 import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
@@ -129,11 +128,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Tag input manager for custom tags
    */
   private tagInputManager?: TagInputManager;
-
-  /**
-   * Form state manager for preserving form values across re-renders
-   */
-  private formStateManager: FormStateManager = new FormStateManager();
 
   /* -------------------------------------------- */
 
@@ -1406,32 +1400,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   /**
-   * Capture current form values before re-rendering
-   */
-  /**
-   * Capture all form values using FormStateManager
-   */
-  captureFormValues(): any {
-    if (!this.element) return null;
-    return this.formStateManager.capture(this.element);
-  }
-
-  /**
-   * Restore form values after re-rendering using FormStateManager
-   */
-  restoreFormValues(values: any): void {
-    if (!this.element || !values) return;
-    this.formStateManager.restore(this.element, values);
-  }
-
-  /**
    * Handle adding a tile to the activation list
    */
   async _onAddTile(_event: Event, _target: HTMLElement): Promise<void> {
     ui.notifications.info('Click on a tile to add it to the activation list...');
 
-    // Capture form values before re-rendering
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties before re-rendering
+    this._syncFormToState();
 
     const handler = (_clickEvent: any) => {
       // Get the object under the cursor
@@ -1474,10 +1449,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Remove click handler
       (canvas as any).stage.off('click', handler);
 
-      // Re-render to show updated list, then restore form values
-      this.render(true).then(() => {
-        this.restoreFormValues(formValues);
-      });
+      // Re-render to show updated list (form state in class properties)
+      this.render(true);
     };
 
     (canvas as any).stage.on('click', handler);
@@ -1496,16 +1469,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const tileId = button.dataset.tileId;
     if (!tileId) return;
 
-    // Capture form values
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties
+    this._syncFormToState();
 
     // Remove tile from selection
     this.selectedTiles.delete(tileId);
 
-    // Re-render to show updated list, then restore form values
-    this.render(true).then(() => {
-      this.restoreFormValues(formValues);
-    });
+    // Re-render to show updated list (form state in class properties)
+    this.render(true);
   }
 
   /**
@@ -1519,8 +1490,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     ui.notifications.info('Click on the canvas to select move position...');
 
-    // Capture form values before re-rendering
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties before re-rendering
+    this._syncFormToState();
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
@@ -1537,10 +1508,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Remove click handler
       (canvas as any).stage.off('click', handler);
 
-      // Re-render to show updated position, then restore form values
-      this.render(true).then(() => {
-        this.restoreFormValues(formValues);
-      });
+      // Re-render to show updated position (form state in class properties)
+      this.render(true);
     };
 
     (canvas as any).stage.on('click', handler);
@@ -1550,8 +1519,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle adding a wall/door to the action list
    */
   async _onAddWall(_event: Event, _target: HTMLElement): Promise<void> {
-    // Capture form values before minimizing
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties before minimizing
+    this._syncFormToState();
 
     // Minimize this dialog
     await this.minimize();
@@ -1565,7 +1534,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Store that we're waiting for wall selection
     (this as any)._waitingForWall = true;
-    (this as any)._wallFormValues = formValues;
 
     // Set up a one-time hook to capture wall selection
     Hooks.once('controlWall', (wall: any, controlled: boolean) => {
@@ -1592,13 +1560,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         (canvas as any).tiles.activate();
       }
 
-      // Restore and re-render
+      // Re-render to show updated list (form state in class properties)
       this.maximize().then(() => {
-        this.render(true).then(() => {
-          const savedFormValues = (this as any)._wallFormValues;
-          delete (this as any)._wallFormValues;
-          this.restoreFormValues(savedFormValues);
-        });
+        this.render(true);
       });
     });
   }
@@ -1613,16 +1577,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const index = parseInt(target.dataset.wallIndex || '');
     if (isNaN(index)) return;
 
-    // Capture form values
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties
+    this._syncFormToState();
 
     // Remove wall from selection
     this.selectedWalls.splice(index, 1);
 
-    // Re-render to show updated list, then restore form values
-    this.render(true).then(() => {
-      this.restoreFormValues(formValues);
-    });
+    // Re-render to show updated list (form state in class properties)
+    this.render(true);
   }
 
   /* -------------------------------------------- */
