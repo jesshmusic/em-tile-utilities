@@ -1831,6 +1831,18 @@ button .game-icon,
   flex: auto;
 }
 
+/* Make tagger sticky in trap dialog */
+.trap-config fieldset.tagger {
+  position: sticky;
+  bottom: 52px; /* Height of footer (padding + border + button height) */
+  background: #000;
+  z-index: 9; /* Below footer (z-index: 10) */
+  margin: 0;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border-light-tertiary);
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+}
+
 .em-puzzles fieldset.tagger .tag-container {
   display: flex;
   flex-wrap: wrap;
