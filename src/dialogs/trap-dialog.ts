@@ -87,6 +87,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected customTags: string = '';
 
   /**
+   * Custom starting image tracking (for DMG trap auto-fill)
+   */
+  protected customStartingImage?: string;
+
+  /**
    * DMG trap item state (for damage result type)
    */
   protected dmgTrapItemId?: string;
@@ -928,11 +933,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const hasEffects = target && target.value && target.value.length > 0;
 
         if (hasEffects) {
-          this.currentAdditionalEffects = Array.isArray(target.value)
+          this.additionalEffects = Array.isArray(target.value)
             ? target.value
             : [target.value];
         } else {
-          this.currentAdditionalEffects = [];
+          this.additionalEffects = [];
         }
 
         // Enable/disable the add/remove radio buttons based on selection

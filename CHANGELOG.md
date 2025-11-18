@@ -35,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - test: improve light-dialog.ts coverage from 85.45% to 97.57%
 - test: improve dialog and utility test coverage to 75%+
 
-
 ## [1.17.0] - 2025-11-17
 
 ### Added
