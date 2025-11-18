@@ -1,0 +1,31 @@
+<footer class="form-footer trap-footer">
+  {{! Row 1: Setup Tasks }}
+  <div class="trap-todo-list" data-trap-todos>
+    <div class="todo-header">
+      <i class="fas fa-tasks"></i>
+      <span>{{localize "EMPUZZLES.SetupTasks"}}</span>
+    </div>
+    <ul class="todo-items" data-todo-items>
+      {{! Dynamically populated by JavaScript }}
+    </ul>
+  </div>
+
+  {{! Row 2: Action Buttons }}
+  <div class="footer-buttons">
+    {{! Debug button (left side) }}
+    <button type="button" data-action="openDebug" class="debug-btn" title="Open State Debug Window">
+      <i class="fa-solid fa-bug"></i>
+      Debug
+    </button>
+
+    {{! Main action buttons (right side) }}
+    <div class="main-buttons">
+      {{#each buttons as |button|}}
+      <button type="{{button.type}}" {{#if button.action}}data-action="{{button.action}}"{{/if}} {{#if button.disabled}}disabled{{/if}}>
+        {{#if button.icon}}<i class="{{button.icon}}"></i>{{/if}}
+        {{localize button.label}}
+      </button>
+      {{/each}}
+    </div>
+  </div>
+</footer>

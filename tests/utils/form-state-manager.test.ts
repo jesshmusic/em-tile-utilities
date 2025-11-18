@@ -70,7 +70,9 @@ describe('FormStateManager', () => {
       const state = manager.capture(container);
       expect(state.values.get('textareaField')).toBe('Some long text');
 
-      const textarea = container.querySelector('textarea[name="textareaField"]') as HTMLTextAreaElement;
+      const textarea = container.querySelector(
+        'textarea[name="textareaField"]'
+      ) as HTMLTextAreaElement;
       textarea.value = 'Changed text';
 
       manager.restore(container, state);
@@ -319,19 +321,31 @@ describe('FormStateManager', () => {
       (container.querySelector('input[name="name"]') as HTMLInputElement).value = 'Jane Doe';
       (container.querySelector('input[name="age"]') as HTMLInputElement).value = '25';
       (container.querySelector('input[name="subscribe"]') as HTMLInputElement).checked = false;
-      (container.querySelector('input[name="gender"][value="female"]') as HTMLInputElement).checked = true;
+      (
+        container.querySelector('input[name="gender"][value="female"]') as HTMLInputElement
+      ).checked = true;
       (container.querySelector('select[name="country"]') as HTMLSelectElement).value = 'uk';
       (container.querySelector('textarea[name="bio"]') as HTMLTextAreaElement).value = 'Changed';
 
       // Restore
       manager.restore(container, state);
 
-      expect((container.querySelector('input[name="name"]') as HTMLInputElement).value).toBe('John Doe');
+      expect((container.querySelector('input[name="name"]') as HTMLInputElement).value).toBe(
+        'John Doe'
+      );
       expect((container.querySelector('input[name="age"]') as HTMLInputElement).value).toBe('30');
-      expect((container.querySelector('input[name="subscribe"]') as HTMLInputElement).checked).toBe(true);
-      expect((container.querySelector('input[name="gender"][value="male"]') as HTMLInputElement).checked).toBe(true);
-      expect((container.querySelector('select[name="country"]') as HTMLSelectElement).value).toBe('us');
-      expect((container.querySelector('textarea[name="bio"]') as HTMLTextAreaElement).value).toBe('Some bio text');
+      expect((container.querySelector('input[name="subscribe"]') as HTMLInputElement).checked).toBe(
+        true
+      );
+      expect(
+        (container.querySelector('input[name="gender"][value="male"]') as HTMLInputElement).checked
+      ).toBe(true);
+      expect((container.querySelector('select[name="country"]') as HTMLSelectElement).value).toBe(
+        'us'
+      );
+      expect((container.querySelector('textarea[name="bio"]') as HTMLTextAreaElement).value).toBe(
+        'Some bio text'
+      );
     });
   });
 
@@ -407,8 +421,12 @@ describe('FormStateManager', () => {
       const state = manager.capture(container);
 
       // Change states
-      const section1Content = container.querySelector('[data-section="section1"] .accordion-content') as HTMLElement;
-      const section1Icon = container.querySelector('[data-section="section1"] .accordion-icon') as HTMLElement;
+      const section1Content = container.querySelector(
+        '[data-section="section1"] .accordion-content'
+      ) as HTMLElement;
+      const section1Icon = container.querySelector(
+        '[data-section="section1"] .accordion-icon'
+      ) as HTMLElement;
       section1Content.style.display = 'block';
       section1Icon.classList.remove('fa-chevron-right');
       section1Icon.classList.add('fa-chevron-down');

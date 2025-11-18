@@ -46,7 +46,9 @@ export class FormStateManager {
     }
 
     // Capture text inputs, textareas, number inputs, hidden inputs
-    const textInputs = container.querySelectorAll('input[type="text"], input[type="number"], input[type="hidden"], textarea');
+    const textInputs = container.querySelectorAll(
+      'input[type="text"], input[type="number"], input[type="hidden"], textarea'
+    );
     textInputs.forEach((input: Element) => {
       const el = input as HTMLInputElement | HTMLTextAreaElement;
       if (el.name) {
@@ -126,7 +128,9 @@ export class FormStateManager {
 
     // Restore text inputs, textareas, number inputs, hidden inputs
     state.values.forEach((value, name) => {
-      const input = container.querySelector(`[name="${name}"]`) as HTMLInputElement | HTMLTextAreaElement;
+      const input = container.querySelector(`[name="${name}"]`) as
+        | HTMLInputElement
+        | HTMLTextAreaElement;
       if (input) {
         input.value = value;
       }
@@ -134,7 +138,9 @@ export class FormStateManager {
 
     // Restore checkboxes
     state.checkboxes.forEach((checked, name) => {
-      const checkbox = container.querySelector(`input[type="checkbox"][name="${name}"]`) as HTMLInputElement;
+      const checkbox = container.querySelector(
+        `input[type="checkbox"][name="${name}"]`
+      ) as HTMLInputElement;
       if (checkbox) {
         checkbox.checked = checked;
       }
