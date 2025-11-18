@@ -949,6 +949,45 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       });
     }
+
+    // Update Setup Tasks list
+    this._updateSetupTasks();
+  }
+
+  /**
+   * Update the Setup Tasks list based on missing required fields
+   */
+  protected _updateSetupTasks(): void {
+    const todoContainer = this.element.querySelector('[data-todo-items]');
+    if (!todoContainer) return;
+
+    const tasks: string[] = [];
+
+    // Check for required fields based on trap type
+    if (this.trapType === TrapType.IMAGE) {
+      if (!this.resultType) {
+        tasks.push('Select a result type');
+      }
+
+      if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
+        tasks.push('Add a DMG trap item for combat');
+      }
+
+      if (this.resultType === TrapResultType.TELEPORT && (!this.teleportX || !this.teleportY)) {
+        tasks.push('Select teleport destination');
+      }
+    }
+
+    if (this.trapType === TrapType.ACTIVATING && this.selectedTiles.size === 0) {
+      tasks.push('Add at least one tile to activate');
+    }
+
+    // Update the DOM
+    if (tasks.length === 0) {
+      todoContainer.innerHTML = '<li class="todo-item complete">All required fields completed!</li>';
+    } else {
+      todoContainer.innerHTML = tasks.map(task => `<li class="todo-item incomplete">${task}</li>`).join('');
+    }
   }
 
   /* -------------------------------------------- */

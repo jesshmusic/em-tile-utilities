@@ -1831,12 +1831,8 @@ button .game-icon,
   flex: auto;
 }
 
-/* Make tagger sticky in trap dialog */
+/* Tagger section in trap dialog */
 .trap-config fieldset.tagger {
-  position: sticky;
-  bottom: 0; /* Sticks to bottom when scrolling */
-  background: #000;
-  z-index: 8;
   margin: 0;
   padding: 0.75rem;
   border-top: 1px solid var(--color-border-light-tertiary);

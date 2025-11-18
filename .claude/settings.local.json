@@ -39,11 +39,11 @@
       "Bash(git cherry-pick:*)",
       "Bash(git branch:*)",
       "Bash(gh pr checks:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": [
-      "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git rebase:*)",
