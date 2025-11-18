@@ -23,6 +23,7 @@ export interface FormState {
   radios: Map<string, string>;
   selects: Map<string, string | string[]>;
   multiSelects: Map<string, string[]>;
+  accordions: Map<string, boolean>; // section data-section attribute → isOpen
 }
 
 export class FormStateManager {
@@ -35,7 +36,8 @@ export class FormStateManager {
       checkboxes: new Map(),
       radios: new Map(),
       selects: new Map(),
-      multiSelects: new Map()
+      multiSelects: new Map(),
+      accordions: new Map()
     };
 
     if (!container) {
@@ -99,6 +101,17 @@ export class FormStateManager {
       }
     });
 
+    // Capture accordion state (which sections are open/closed)
+    const accordionSections = container.querySelectorAll('.accordion-section');
+    accordionSections.forEach((section: Element) => {
+      const sectionName = section.getAttribute('data-section');
+      const content = section.querySelector('.accordion-content') as HTMLElement;
+      if (sectionName && content) {
+        const isOpen = content.style.display !== 'none';
+        state.accordions.set(sectionName, isOpen);
+      }
+    });
+
     return state;
   }
 
@@ -132,8 +145,18 @@ export class FormStateManager {
       const radio = container.querySelector(
         `input[type="radio"][name="${name}"][value="${value}"]`
       ) as HTMLInputElement;
-      if (radio) {
+
+      // Check if the radio button exists and is visible (not in a hidden parent)
+      const isVisible = radio && this._isElementVisible(radio);
+
+      if (isVisible) {
         radio.checked = true;
+      } else if (!isVisible && radio) {
+        // Radio exists but is hidden - find first visible radio in this group and check it
+        const visibleRadio = this._findFirstVisibleRadio(container, name);
+        if (visibleRadio) {
+          visibleRadio.checked = true;
+        }
       }
     });
 
@@ -160,6 +183,28 @@ export class FormStateManager {
         multiSelect.value = values;
       }
     });
+
+    // Restore accordion state
+    state.accordions.forEach((isOpen, sectionName) => {
+      const section = container.querySelector(
+        `.accordion-section[data-section="${sectionName}"]`
+      ) as HTMLElement;
+      if (section) {
+        const content = section.querySelector('.accordion-content') as HTMLElement;
+        const icon = section.querySelector('.accordion-icon') as HTMLElement;
+        if (content && icon) {
+          if (isOpen) {
+            content.style.display = 'block';
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-down');
+          } else {
+            content.style.display = 'none';
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+          }
+        }
+      }
+    });
   }
 
   /**
@@ -183,6 +228,37 @@ export class FormStateManager {
   }
 
   /**
+   * Check if an element is visible (not hidden by CSS)
+   * @private
+   */
+  private _isElementVisible(element: HTMLElement): boolean {
+    // Check if element or any parent has display:none or visibility:hidden
+    let current: HTMLElement | null = element;
+    while (current) {
+      const style = window.getComputedStyle(current);
+      if (style.display === 'none' || style.visibility === 'hidden') {
+        return false;
+      }
+      current = current.parentElement;
+    }
+    return true;
+  }
+
+  /**
+   * Find the first visible radio button in a radio group
+   * @private
+   */
+  private _findFirstVisibleRadio(container: HTMLElement, name: string): HTMLInputElement | null {
+    const radios = container.querySelectorAll(`input[type="radio"][name="${name}"]`);
+    for (const radio of Array.from(radios)) {
+      if (this._isElementVisible(radio as HTMLElement)) {
+        return radio as HTMLInputElement;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Debug helper: log current form state to console
    */
   public debugState(container: HTMLElement): void {
@@ -193,6 +269,7 @@ export class FormStateManager {
     console.log('Radios:', Object.fromEntries(state.radios));
     console.log('Selects:', Object.fromEntries(state.selects));
     console.log('Multi-Selects:', Object.fromEntries(state.multiSelects));
+    console.log('Accordions:', Object.fromEntries(state.accordions));
     console.groupEnd();
   }
 }

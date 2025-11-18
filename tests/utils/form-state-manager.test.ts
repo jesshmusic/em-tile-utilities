@@ -170,6 +170,47 @@ describe('FormStateManager', () => {
       expect(state.radios.get('group1')).toBe('a');
       expect(state.radios.get('group2')).toBe('y');
     });
+
+    it('should check first visible radio when saved radio is hidden', () => {
+      container.innerHTML = `
+        <input type="radio" name="visibility" value="hidden-option" checked style="display: none;" />
+        <input type="radio" name="visibility" value="visible-option" />
+      `;
+
+      const state = manager.capture(container);
+      expect(state.radios.get('visibility')).toBe('hidden-option');
+
+      // Change selection
+      const visibleRadio = container.querySelector(
+        'input[name="visibility"][value="visible-option"]'
+      ) as HTMLInputElement;
+      visibleRadio.checked = true;
+
+      // Restore - should check the visible option since saved option is hidden
+      manager.restore(container, state);
+      expect(visibleRadio.checked).toBe(true);
+    });
+
+    it('should handle radio buttons in hidden parent elements', () => {
+      container.innerHTML = `
+        <div style="display: none;">
+          <input type="radio" name="conditional" value="option1" checked />
+        </div>
+        <div>
+          <input type="radio" name="conditional" value="option2" />
+        </div>
+      `;
+
+      const state = manager.capture(container);
+      expect(state.radios.get('conditional')).toBe('option1');
+
+      // Restore - should check visible option since saved is in hidden parent
+      manager.restore(container, state);
+      const option2 = container.querySelector(
+        'input[name="conditional"][value="option2"]'
+      ) as HTMLInputElement;
+      expect(option2.checked).toBe(true);
+    });
   });
 
   describe('capture and restore select elements', () => {
@@ -304,7 +345,7 @@ describe('FormStateManager', () => {
     });
 
     it('should handle null container gracefully', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       const state = manager.capture(null as any);
       expect(state.values.size).toBe(0);
       expect(consoleSpy).toHaveBeenCalled();
@@ -323,13 +364,72 @@ describe('FormStateManager', () => {
     it('should handle restore with null state gracefully', () => {
       container.innerHTML = `<input type="text" name="test" value="initial" />`;
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       manager.restore(container, null as any);
 
       const input = container.querySelector('input[name="test"]') as HTMLInputElement;
       expect(input.value).toBe('initial'); // Unchanged
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('capture and restore accordion state', () => {
+    it('should capture accordion open state', () => {
+      container.innerHTML = `
+        <fieldset class="accordion-section" data-section="section1">
+          <div class="accordion-content" style="display: block;"></div>
+          <i class="accordion-icon fa-chevron-down"></i>
+        </fieldset>
+        <fieldset class="accordion-section" data-section="section2">
+          <div class="accordion-content" style="display: none;"></div>
+          <i class="accordion-icon fa-chevron-right"></i>
+        </fieldset>
+      `;
+
+      const state = manager.capture(container);
+      expect(state.accordions.get('section1')).toBe(true);
+      expect(state.accordions.get('section2')).toBe(false);
+    });
+
+    it('should restore accordion open state', () => {
+      container.innerHTML = `
+        <fieldset class="accordion-section" data-section="section1">
+          <div class="accordion-content" style="display: none;"></div>
+          <i class="accordion-icon fa-chevron-right"></i>
+        </fieldset>
+        <fieldset class="accordion-section" data-section="section2">
+          <div class="accordion-content" style="display: block;"></div>
+          <i class="accordion-icon fa-chevron-down"></i>
+        </fieldset>
+      `;
+
+      const state = manager.capture(container);
+
+      // Change states
+      const section1Content = container.querySelector('[data-section="section1"] .accordion-content') as HTMLElement;
+      const section1Icon = container.querySelector('[data-section="section1"] .accordion-icon') as HTMLElement;
+      section1Content.style.display = 'block';
+      section1Icon.classList.remove('fa-chevron-right');
+      section1Icon.classList.add('fa-chevron-down');
+
+      // Restore original state
+      manager.restore(container, state);
+
+      expect(section1Content.style.display).toBe('none');
+      expect(section1Icon.classList.contains('fa-chevron-right')).toBe(true);
+      expect(section1Icon.classList.contains('fa-chevron-down')).toBe(false);
+    });
+
+    it('should handle accordion without data-section attribute', () => {
+      container.innerHTML = `
+        <fieldset class="accordion-section">
+          <div class="accordion-content" style="display: block;"></div>
+        </fieldset>
+      `;
+
+      const state = manager.capture(container);
+      expect(state.accordions.size).toBe(0);
     });
   });
 
@@ -340,9 +440,9 @@ describe('FormStateManager', () => {
         <input type="checkbox" name="check" checked />
       `;
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      const consoleGroupSpy = jest.spyOn(console, 'group').mockImplementation();
-      const consoleGroupEndSpy = jest.spyOn(console, 'groupEnd').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleGroupSpy = jest.spyOn(console, 'group').mockImplementation(() => {});
+      const consoleGroupEndSpy = jest.spyOn(console, 'groupEnd').mockImplementation(() => {});
 
       manager.debugState(container);
 
