@@ -1,11 +1,7 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
 import { TrapTargetType, TrapResultType } from '../types/module';
-import {
-  createTrapTile,
-  createCombatTrapTile,
-  getNextTileNumber,
-  hasMonksTokenBar
-} from '../utils/tile-helpers';
+import { createTrapTile, createCombatTrapTile } from '../utils/creators';
+import { getNextTileNumber, hasMonksTokenBar } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';

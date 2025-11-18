@@ -1,4 +1,5 @@
-import { createTeleportTile, getNextTileNumber, hasMonksTokenBar } from '../utils/tile-helpers';
+import { createTeleportTile } from '../utils/creators';
+import { getNextTileNumber, hasMonksTokenBar } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import type { TeleportTileConfig } from '../types/module';
 import { TagInputManager } from '../utils/tag-input-manager';

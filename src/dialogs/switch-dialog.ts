@@ -1,4 +1,5 @@
-import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
+import { createSwitchTile } from '../utils/creators';
+import { getNextTileNumber } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
