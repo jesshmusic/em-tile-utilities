@@ -39,22 +39,52 @@ enum ImageBehavior {
  */
 export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
-   * Current trap type selection
+   * ========================================
+   * FORM STATE - All form fields stored as class properties
+   * ========================================
    */
-  protected trapType: TrapType = TrapType.IMAGE;
 
-  /**
-   * Current result type (for image traps)
-   */
+  // Basic Information
+  protected trapType: TrapType = TrapType.IMAGE;
+  protected trapName: string = '';
+  protected sound: string = '';
+  protected minRequired: number = 1;
+  protected targetType: TrapTargetType = TrapTargetType.TRIGGERING;
+  protected pauseGameOnTrigger: boolean = false;
+  protected deactivateAfterTrigger: boolean = false;
+
+  // Visibility & Image Behavior
+  protected startingImage: string = '';
+  protected triggeredImage: string = '';
+  protected initialVisibility: 'visible' | 'hidden' = 'visible';
+  protected onTriggerBehavior: string = 'stays-same';
+
+  // Result Configuration
   protected resultType?: TrapResultType;
 
-  /**
-   * Form state storage (to preserve state on re-render)
-   */
-  protected currentTargetType?: string;
-  protected currentHasSavingThrow?: boolean;
-  protected customStartingImage?: string;
-  protected currentAdditionalEffects: string[] = [];
+  // Saving Throw (shared across result types)
+  protected hasSavingThrow: boolean = false;
+  protected savingThrow: string = 'ability:dex';
+  protected dc: number = 14;
+
+  // Damage Result Type
+  protected damageOnFail: string = '';
+  protected halfDamageOnSuccess: boolean = false;
+  protected flavorText: string = '';
+
+  // Heal Result Type
+  protected healingAmount: string = '2d4+2';
+  protected healFlavorText: string = '';
+
+  // Active Effect Result Type
+  protected effectId: string = '';
+  protected addEffect: 'add' | 'remove' | 'toggle' | 'clear' = 'add';
+
+  // Additional Effects (shared across damage, heal, active effect)
+  protected additionalEffects: string[] = [];
+
+  // Custom Tags
+  protected customTags: string = '';
 
   /**
    * DMG trap item state (for damage result type)
@@ -81,15 +111,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected attackItemData?: any;
 
   /**
-   * Token configuration (for combat result type)
+   * Combat trap configuration
    */
   protected tokenVisible: boolean = false;
   protected tokenImage?: string;
   protected tokenX?: number;
   protected tokenY?: number;
+  protected maxTriggers: number = 0;
 
   /**
-   * Teleport position (for teleport result type)
+   * Teleport configuration
    */
   protected teleportX?: number;
   protected teleportY?: number;
@@ -321,64 +352,113 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       };
     }
 
-    // Preserve custom tags value across re-renders
-    let customTags = '';
-    if (this.element) {
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      customTags = customTagsInput?.value || '';
+    // Initialize trapName if empty (first render)
+    if (!this.trapName) {
+      this.trapName = `${trapBaseName} ${nextNumber}`;
     }
+
+    // Initialize defaults from settings if not set
+    if (!this.sound && defaultSound) {
+      this.sound = defaultSound;
+    }
+    if (!this.startingImage && defaultTrapImage) {
+      this.startingImage = defaultTrapImage;
+    }
+    if (!this.triggeredImage && defaultTrapTriggeredImage) {
+      this.triggeredImage = defaultTrapTriggeredImage;
+    }
+
+    // Use DMG trap data if available, otherwise use class properties
+    const useDamageOnFail = activityData?.damageFormula || this.damageOnFail;
+    const useHasSavingThrow = activityData?.dc !== undefined || this.hasSavingThrow;
+    const useSavingThrow = activityData?.ability
+      ? `ability:${activityData.ability}`
+      : this.savingThrow;
+    const useDC = activityData?.dc !== undefined ? activityData.dc : this.dc;
+    const useHalfDamageOnSuccess = activityData?.halfDamageOnSuccess !== undefined
+      ? activityData.halfDamageOnSuccess
+      : this.halfDamageOnSuccess;
 
     return {
       ...context,
-      // Basic info
-      trapName: `${trapBaseName} ${nextNumber}`,
-      defaultSound: defaultSound,
-      defaultTrapImage: this.customStartingImage || defaultTrapImage,
-      defaultTrapTriggeredImage: defaultTrapTriggeredImage,
-      // Current selections
+      // Basic Information - use class properties
+      trapName: this.trapName,
+      defaultSound: this.sound,
+      defaultTrapImage: this.startingImage,
+      defaultTrapTriggeredImage: this.triggeredImage,
       trapType: this.trapType,
+      minRequired: this.minRequired,
+      defaultTargetType: this.targetType,
+      pauseGameOnTrigger: this.pauseGameOnTrigger,
+      deactivateAfterTrigger: this.deactivateAfterTrigger,
+
+      // Visibility & Image Behavior - use class properties
+      initialVisibility: this.initialVisibility,
+      onTriggerBehavior: this.onTriggerBehavior,
+
+      // Result Configuration - use class properties
       resultType: this.resultType,
+
+      // Saving Throw - use class properties (or DMG trap data if available)
+      defaultHasSavingThrow: useHasSavingThrow,
+      defaultSavingThrow: useSavingThrow,
+      defaultDC: useDC,
+
+      // Damage Result Type - use class properties
+      defaultDamageOnFail: useDamageOnFail,
+      defaultHalfDamageOnSuccess: useHalfDamageOnSuccess,
+      flavorText: this.flavorText,
+
+      // Heal Result Type - use class properties
+      healingAmount: this.healingAmount,
+      healFlavorText: this.healFlavorText,
+
+      // Active Effect Result Type - use class properties
+      effectId: this.effectId,
+      addEffect: this.addEffect,
+
+      // Additional Effects - use class property
+      additionalEffects: this.additionalEffects,
+
+      // Custom Tags - use class property
+      customTags: this.customTags,
+
       // Dropdown options
       trapTypeOptions: trapTypeOptions,
       resultTypeOptions: resultTypeOptions,
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
       effectOptions: effectOptions,
-      additionalEffects: this.currentAdditionalEffects,
-      // Default values
-      defaultTargetType: this.currentTargetType || TrapTargetType.TRIGGERING,
-      defaultHasSavingThrow:
-        this.currentHasSavingThrow !== undefined ? this.currentHasSavingThrow : true,
-      defaultSavingThrow: activityData?.ability ? `ability:${activityData.ability}` : undefined,
-      defaultDC: activityData?.dc,
-      defaultDamageOnFail: activityData?.damageFormula,
-      defaultHalfDamageOnSuccess: activityData?.halfDamageOnSuccess || false,
+
       // DMG trap state
       hasDmgTrap: !!this.dmgTrapItemId,
       dmgTrap: dmgTrapData,
+
       // Activating trap state
       hasTiles: tiles.length > 0,
       tiles: tiles,
       hasWalls: this.selectedWalls.length > 0,
       walls: this.selectedWalls,
-      // Combat trap state
+
+      // Combat trap state - use class properties
       hasAttackItem: !!this.attackItemId,
       attackItem: attackItemData,
       tokenVisible: this.tokenVisible,
       tokenImage: this.tokenImage || '',
       tokenX: this.tokenX,
       tokenY: this.tokenY,
-      // Teleport state
+      maxTriggers: this.maxTriggers,
+
+      // Teleport state - use class properties
       teleportX: this.teleportX,
       teleportY: this.teleportY,
-      // Custom tags (preserved across re-renders)
-      customTags: customTags,
+
       // Validation state
       canSubmit: this._canSubmit(),
+
       // Feature availability
       hasMonksTokenBar: hasMonksTokenBar(),
+
       // Footer buttons
       buttons: [
         {
@@ -395,6 +475,102 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       ]
     };
+  }
+
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Basic Information
+    const trapNameInput = this.element.querySelector('[name="trapName"]') as HTMLInputElement;
+    if (trapNameInput) this.trapName = trapNameInput.value;
+
+    const soundInput = this.element.querySelector('[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const minRequiredInput = this.element.querySelector('[name="minRequired"]') as HTMLInputElement;
+    if (minRequiredInput) this.minRequired = parseInt(minRequiredInput.value) || 1;
+
+    const targetTypeSelect = this.element.querySelector('[name="targetType"]') as HTMLSelectElement;
+    if (targetTypeSelect) this.targetType = targetTypeSelect.value as TrapTargetType;
+
+    const pauseGameCheckbox = this.element.querySelector('[name="pauseGameOnTrigger"]') as HTMLInputElement;
+    if (pauseGameCheckbox) this.pauseGameOnTrigger = pauseGameCheckbox.checked;
+
+    const deactivateCheckbox = this.element.querySelector('[name="deactivateAfterTrigger"]') as HTMLInputElement;
+    if (deactivateCheckbox) this.deactivateAfterTrigger = deactivateCheckbox.checked;
+
+    // Visibility & Image Behavior
+    const startingImageInput = this.element.querySelector('[name="startingImage"]') as HTMLInputElement;
+    if (startingImageInput) this.startingImage = startingImageInput.value;
+
+    const triggeredImageInput = this.element.querySelector('[name="triggeredImage"]') as HTMLInputElement;
+    if (triggeredImageInput) this.triggeredImage = triggeredImageInput.value;
+
+    const initialVisibilityRadio = this.element.querySelector('[name="initialVisibility"]:checked') as HTMLInputElement;
+    if (initialVisibilityRadio) this.initialVisibility = initialVisibilityRadio.value as 'visible' | 'hidden';
+
+    const onTriggerBehaviorRadio = this.element.querySelector('[name="onTriggerBehavior"]:checked') as HTMLInputElement;
+    if (onTriggerBehaviorRadio) this.onTriggerBehavior = onTriggerBehaviorRadio.value;
+
+    // Saving Throw
+    const hasSavingThrowCheckbox = this.element.querySelector('[name="hasSavingThrow"]') as HTMLInputElement;
+    if (hasSavingThrowCheckbox) this.hasSavingThrow = hasSavingThrowCheckbox.checked;
+
+    const savingThrowSelect = this.element.querySelector('[name="savingThrow"]') as HTMLSelectElement;
+    if (savingThrowSelect) this.savingThrow = savingThrowSelect.value;
+
+    const dcInput = this.element.querySelector('[name="dc"]') as HTMLInputElement;
+    if (dcInput) this.dc = parseInt(dcInput.value) || 14;
+
+    // Damage Result Type
+    const damageOnFailInput = this.element.querySelector('[name="damageOnFail"]') as HTMLInputElement;
+    if (damageOnFailInput) this.damageOnFail = damageOnFailInput.value;
+
+    const halfDamageCheckbox = this.element.querySelector('[name="halfDamageOnSuccess"]') as HTMLInputElement;
+    if (halfDamageCheckbox) this.halfDamageOnSuccess = halfDamageCheckbox.checked;
+
+    const flavorTextArea = this.element.querySelector('[name="flavorText"]') as HTMLTextAreaElement;
+    if (flavorTextArea) this.flavorText = flavorTextArea.value;
+
+    // Heal Result Type
+    const healingAmountInput = this.element.querySelector('[name="healingAmount"]') as HTMLInputElement;
+    if (healingAmountInput) this.healingAmount = healingAmountInput.value;
+
+    const healFlavorTextArea = this.element.querySelector('[name="healFlavorText"]') as HTMLTextAreaElement;
+    if (healFlavorTextArea) this.healFlavorText = healFlavorTextArea.value;
+
+    // Active Effect Result Type
+    const effectIdSelect = this.element.querySelector('[name="effectId"]') as HTMLSelectElement;
+    if (effectIdSelect) this.effectId = effectIdSelect.value;
+
+    const addEffectSelect = this.element.querySelector('[name="addEffect"]') as HTMLSelectElement;
+    if (addEffectSelect) this.addEffect = addEffectSelect.value as 'add' | 'remove' | 'toggle' | 'clear';
+
+    // Additional Effects
+    const additionalEffectsSelect = this.element.querySelector('[name="additionalEffects"]') as any;
+    if (additionalEffectsSelect && additionalEffectsSelect.value) {
+      this.additionalEffects = Array.isArray(additionalEffectsSelect.value)
+        ? additionalEffectsSelect.value
+        : [additionalEffectsSelect.value];
+    }
+
+    // Combat Trap
+    const maxTriggersInput = this.element.querySelector('[name="maxTriggers"]') as HTMLInputElement;
+    if (maxTriggersInput) this.maxTriggers = parseInt(maxTriggersInput.value) || 0;
+
+    const tokenVisibleCheckbox = this.element.querySelector('[name="tokenVisible"]') as HTMLInputElement;
+    if (tokenVisibleCheckbox) this.tokenVisible = tokenVisibleCheckbox.checked;
+
+    const tokenImageInput = this.element.querySelector('[name="tokenImage"]') as HTMLInputElement;
+    if (tokenImageInput) this.tokenImage = tokenImageInput.value;
+
+    // Custom Tags
+    const customTagsInput = this.element.querySelector('[name="customTags"]') as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
   }
 
   /**
@@ -493,11 +669,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (trapTypeSelect) {
       trapTypeSelect.addEventListener('change', (event: Event) => {
-        const formState = this.captureFormValues();
+        this._syncFormToState(); // Sync all form values to class properties
         this.trapType = (event.target as HTMLSelectElement).value as TrapType;
-        this.render().then(() => {
-          if (formState) this.restoreFormValues(formState);
-        });
+        this.render(); // Re-render using class properties
       });
     }
 
@@ -599,7 +773,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (resultTypeSelect) {
       resultTypeSelect.addEventListener('change', (event: Event) => {
-        const formState = this.captureFormValues();
+        this._syncFormToState(); // Sync all form values to class properties
         const value = (event.target as HTMLSelectElement).value;
 
         // Validate that value is a valid TrapResultType before assignment
@@ -609,9 +783,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           this.resultType = undefined;
         }
 
-        this.render().then(() => {
-          if (formState) this.restoreFormValues(formState);
-        });
+        this.render(); // Re-render using class properties
       });
     }
 
