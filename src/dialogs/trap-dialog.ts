@@ -8,6 +8,7 @@ import {
 } from '../utils/tile-helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
+import { FormStateManager } from '../utils/form-state-manager';
 import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
@@ -97,6 +98,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Tag input manager for custom tags
    */
   private tagInputManager?: TagInputManager;
+
+  /**
+   * Form state manager for preserving form values across re-renders
+   */
+  private formStateManager: FormStateManager = new FormStateManager();
 
   /* -------------------------------------------- */
 
@@ -486,8 +492,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (trapTypeSelect) {
       trapTypeSelect.addEventListener('change', (event: Event) => {
+        const formState = this.captureFormValues();
         this.trapType = (event.target as HTMLSelectElement).value as TrapType;
-        this.render();
+        this.render().then(() => {
+          if (formState) this.restoreFormValues(formState);
+        });
       });
     }
 
@@ -577,6 +586,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (resultTypeSelect) {
       resultTypeSelect.addEventListener('change', (event: Event) => {
+        const formState = this.captureFormValues();
         const value = (event.target as HTMLSelectElement).value;
 
         // Validate that value is a valid TrapResultType before assignment
@@ -586,7 +596,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           this.resultType = undefined;
         }
 
-        this.render();
+        this.render().then(() => {
+          if (formState) this.restoreFormValues(formState);
+        });
       });
     }
 
@@ -1050,7 +1062,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Re-render to show the item and activity selector
-    this.render();
+    const formState = this.captureFormValues();
+    this.render().then(() => {
+      if (formState) this.restoreFormValues(formState);
+    });
   }
 
   /**
@@ -1066,7 +1081,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dmgTrapActivities = undefined;
 
     // Re-render to show empty drop zone and unlock fields
-    this.render();
+    const formState = this.captureFormValues();
+    this.render().then(() => {
+      if (formState) this.restoreFormValues(formState);
+    });
   }
 
   /**
@@ -1077,7 +1095,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dmgTrapActivityId = select.value;
 
     // Re-render to update fields with new activity data
-    this.render();
+    const formState = this.captureFormValues();
+    this.render().then(() => {
+      if (formState) this.restoreFormValues(formState);
+    });
   }
 
   /**
@@ -1208,67 +1229,20 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
    * Capture current form values before re-rendering
    */
+  /**
+   * Capture all form values using FormStateManager
+   */
   captureFormValues(): any {
-    if (!this.element) return {};
-
-    const form = this.element.querySelector('form');
-    if (!form) return {};
-
-    const values: any = {
-      trapName: (form.querySelector('input[name="trapName"]') as HTMLInputElement)?.value || '',
-      startingImage:
-        (form.querySelector('input[name="startingImage"]') as HTMLInputElement)?.value || '',
-      sound: (form.querySelector('input[name="sound"]') as HTMLInputElement)?.value || '',
-      minRequired:
-        (form.querySelector('input[name="minRequired"]') as HTMLInputElement)?.value || ''
-    };
-
-    // Capture tile action configurations
-    this.selectedTiles.forEach((_tileData, tileId) => {
-      const actionSelect = form.querySelector(
-        `select[name="action-${tileId}"]`
-      ) as HTMLSelectElement;
-      const activateModeSelect = form.querySelector(
-        `select[name="activateMode-${tileId}"]`
-      ) as HTMLSelectElement;
-      const showHideModeSelect = form.querySelector(
-        `select[name="showHideMode-${tileId}"]`
-      ) as HTMLSelectElement;
-
-      if (actionSelect) values[`action-${tileId}`] = actionSelect.value;
-      if (activateModeSelect) values[`activateMode-${tileId}`] = activateModeSelect.value;
-      if (showHideModeSelect) values[`showHideMode-${tileId}`] = showHideModeSelect.value;
-    });
-
-    // Capture wall/door state selections
-    this.selectedWalls.forEach((_wall, index) => {
-      const stateSelect = form.querySelector(
-        `select[name="wall-state-${index}"]`
-      ) as HTMLSelectElement;
-      if (stateSelect) values[`wall-state-${index}`] = stateSelect.value;
-    });
-
-    return values;
+    if (!this.element) return null;
+    return this.formStateManager.capture(this.element);
   }
 
   /**
-   * Restore form values after re-rendering
+   * Restore form values after re-rendering using FormStateManager
    */
   restoreFormValues(values: any): void {
     if (!this.element || !values) return;
-
-    const form = this.element.querySelector('form');
-    if (!form) return;
-
-    Object.entries(values).forEach(([name, value]) => {
-      const input = form.querySelector(`[name="${name}"]`) as
-        | HTMLInputElement
-        | HTMLSelectElement
-        | HTMLTextAreaElement;
-      if (input && value) {
-        input.value = value as string;
-      }
-    });
+    this.formStateManager.restore(this.element, values);
   }
 
   /**
