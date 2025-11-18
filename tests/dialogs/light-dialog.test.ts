@@ -716,4 +716,157 @@ describe('LightConfigDialog', () => {
       expect(context.onImage).toBe('synced-on.png');
     });
   });
+
+  describe('_onRender DOM event handlers', () => {
+    it('should toggle darkness settings visibility when darkness checkbox changes', () => {
+      const darknessToggle = { checked: false, addEventListener: jest.fn() };
+      const darknessSettings = { style: { display: '' } };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return darknessToggle;
+          if (selector === '.darkness-settings') return darknessSettings;
+          if (selector === 'input[name="useOverlay"]') return null;
+          if (selector === '.overlay-settings') return null;
+          return null;
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).useDarkness = false;
+
+      dialog._onRender({}, {});
+
+      // Get the event listener that was registered
+      expect(darknessToggle.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      const changeHandler = (darknessToggle.addEventListener as any).mock.calls[0][1];
+
+      // Simulate checking the box
+      darknessToggle.checked = true;
+      (changeHandler as any)();
+      expect(darknessSettings.style.display).toBe('block');
+
+      // Simulate unchecking the box
+      darknessToggle.checked = false;
+      (changeHandler as any)();
+      expect(darknessSettings.style.display).toBe('none');
+    });
+
+    it('should toggle overlay settings visibility when overlay checkbox changes', () => {
+      const overlayToggle = { checked: false, addEventListener: jest.fn() };
+      const overlaySettings = { style: { display: '' } };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return null;
+          if (selector === '.darkness-settings') return null;
+          if (selector === 'input[name="useOverlay"]') return overlayToggle;
+          if (selector === '.overlay-settings') return overlaySettings;
+          return null;
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).useOverlay = false;
+
+      dialog._onRender({}, {});
+
+      // Get the event listener
+      expect(overlayToggle.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      const changeHandler = (overlayToggle.addEventListener as any).mock.calls[0][1];
+
+      // Simulate checking the box
+      overlayToggle.checked = true;
+      (changeHandler as any)();
+      expect(overlaySettings.style.display).toBe('block');
+      expect((dialog as any).useOverlay).toBe(true);
+
+      // Simulate unchecking
+      overlayToggle.checked = false;
+      (changeHandler as any)();
+      expect(overlaySettings.style.display).toBe('none');
+      expect((dialog as any).useOverlay).toBe(false);
+    });
+
+    it('should update range slider display when slider value changes', () => {
+      const rangeInput = {
+        dataset: { updateDisplay: 'dimLight-display' },
+        value: '50',
+        addEventListener: jest.fn()
+      };
+      const displayElement = { textContent: '40' };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return null;
+          if (selector === 'input[name="useOverlay"]') return null;
+          if (selector === '#dimLight-display') return displayElement;
+          return null;
+        }),
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === 'input[type="range"][data-update-display]') {
+            return [rangeInput];
+          }
+          return [];
+        })
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      // Get the input event listener
+      expect(rangeInput.addEventListener).toHaveBeenCalledWith('input', expect.any(Function));
+      const inputHandler = (rangeInput.addEventListener as any).mock.calls[0][1];
+
+      // Simulate slider change
+      rangeInput.value = '75';
+      (inputHandler as any)();
+      expect(displayElement.textContent).toBe('75');
+    });
+
+    it('should sync color picker with text input bidirectionally', () => {
+      const colorTextInput = {
+        value: '#ffffff',
+        addEventListener: jest.fn(),
+        dispatchEvent: jest.fn()
+      };
+      const colorPicker = {
+        value: '#ffffff',
+        addEventListener: jest.fn()
+      };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return null;
+          if (selector === 'input[name="useOverlay"]') return null;
+          if (selector === 'input[name="lightColor"]') return colorTextInput;
+          if (selector === 'input[type="color"][data-edit="lightColor"]') return colorPicker;
+          return null;
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      // Check both event listeners were registered
+      expect(colorTextInput.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(colorPicker.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+      // Test text input → color picker
+      const textChangeHandler = (colorTextInput.addEventListener as any).mock.calls[0][1];
+      colorTextInput.value = '#ff0000';
+      (textChangeHandler as any)();
+      expect(colorPicker.value).toBe('#ff0000');
+
+      // Test color picker → text input
+      const pickerChangeHandler = (colorPicker.addEventListener as any).mock.calls[0][1];
+      colorPicker.value = '#00ff00';
+      (pickerChangeHandler as any)();
+      expect(colorTextInput.value).toBe('#00ff00');
+      expect(colorTextInput.dispatchEvent).toHaveBeenCalled();
+    });
+  });
 });
