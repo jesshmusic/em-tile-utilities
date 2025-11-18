@@ -42,7 +42,9 @@
       "Bash(gh run view:*)",
       "Bash(git add:*)",
       "Bash(for dialog in \"combat-trap-dialog\" \"disappearing-trap-dialog\" \"switching-trap-dialog\" \"state-debug-dialog\")",
-      "Bash(do echo \"=== $dialog ===\" grep -r \"$dialog\" \"/Users/jesshendricks/Library/Application Support/FoundryVTT/Data/modules/em-tile-utilities/src\" --include=\"*.ts\")"
+      "Bash(do echo \"=== $dialog ===\" grep -r \"$dialog\" \"/Users/jesshendricks/Library/Application Support/FoundryVTT/Data/modules/em-tile-utilities/src\" --include=\"*.ts\")",
+      "Bash(npm run test:coverage:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [
