@@ -13,15 +13,31 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  * @abstract
  */
 export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+  // Form state properties - Common trap fields
+  protected trapName: string = '';
+  protected startingImage: string = '';
+  protected sound: string = '';
+  protected resultType: string = TrapResultType.DAMAGE;
+  protected targetType: string = TrapTargetType.TRIGGERING;
+  protected hasSavingThrow: boolean = false;
+  protected minRequired: string = '';
+  protected savingThrow: string = 'ability:dex';
+  protected dc: string = '10';
+  protected damageOnFail: string = '1d6';
+  protected halfDamageOnSuccess: boolean = false;
+  protected flavorText: string = 'You triggered a trap!';
+  protected customTags: string = '';
+
+  // Active Effect fields (conditional)
+  protected effectId: string = '';
+  protected addEffect: string = 'add';
+
   // Teleport position storage
   protected teleportX?: number;
   protected teleportY?: number;
 
-  // Form state storage (to preserve state on re-render)
-  protected currentResultType?: string;
-  protected currentTargetType?: string;
-  protected currentHasSavingThrow?: boolean;
-  protected customStartingImage?: string; // Track if user has set a custom starting image
+  // Track if user has set a custom starting image (for DMG trap logic)
+  protected customStartingImage?: string;
 
   // DMG trap item state
   protected dmgTrapItemId?: string;
@@ -115,17 +131,110 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
   /* -------------------------------------------- */
 
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Text inputs
+    const trapNameInput = this.element.querySelector('input[name="trapName"]') as HTMLInputElement;
+    if (trapNameInput) this.trapName = trapNameInput.value;
+
+    const startingImageInput = this.element.querySelector(
+      'input[name="startingImage"]'
+    ) as HTMLInputElement;
+    if (startingImageInput) this.startingImage = startingImageInput.value;
+
+    const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const minRequiredInput = this.element.querySelector(
+      'input[name="minRequired"]'
+    ) as HTMLInputElement;
+    if (minRequiredInput) this.minRequired = minRequiredInput.value;
+
+    const dcInput = this.element.querySelector('input[name="dc"]') as HTMLInputElement;
+    if (dcInput) this.dc = dcInput.value;
+
+    const damageOnFailInput = this.element.querySelector(
+      'input[name="damageOnFail"]'
+    ) as HTMLInputElement;
+    if (damageOnFailInput) this.damageOnFail = damageOnFailInput.value;
+
+    const flavorTextInput = this.element.querySelector(
+      'textarea[name="flavorText"]'
+    ) as HTMLTextAreaElement;
+    if (flavorTextInput) this.flavorText = flavorTextInput.value;
+
+    const customTagsInput = this.element.querySelector(
+      'input[name="customTags"]'
+    ) as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
+
+    // Selects
+    const resultTypeSelect = this.element.querySelector(
+      'select[name="resultType"]'
+    ) as HTMLSelectElement;
+    if (resultTypeSelect) this.resultType = resultTypeSelect.value;
+
+    const targetTypeSelect = this.element.querySelector(
+      'select[name="targetType"]'
+    ) as HTMLSelectElement;
+    if (targetTypeSelect) this.targetType = targetTypeSelect.value;
+
+    const savingThrowSelect = this.element.querySelector(
+      'select[name="savingThrow"]'
+    ) as HTMLSelectElement;
+    if (savingThrowSelect) this.savingThrow = savingThrowSelect.value;
+
+    const effectIdSelect = this.element.querySelector(
+      'select[name="effectId"]'
+    ) as HTMLSelectElement;
+    if (effectIdSelect) this.effectId = effectIdSelect.value;
+
+    const addEffectSelect = this.element.querySelector(
+      'select[name="addEffect"]'
+    ) as HTMLSelectElement;
+    if (addEffectSelect) this.addEffect = addEffectSelect.value;
+
+    // Checkboxes
+    const hasSavingThrowCheckbox = this.element.querySelector(
+      'input[name="hasSavingThrow"]'
+    ) as HTMLInputElement;
+    if (hasSavingThrowCheckbox) this.hasSavingThrow = hasSavingThrowCheckbox.checked;
+
+    const halfDamageCheckbox = this.element.querySelector(
+      'input[name="halfDamageOnSuccess"]'
+    ) as HTMLInputElement;
+    if (halfDamageCheckbox) this.halfDamageOnSuccess = halfDamageCheckbox.checked;
+  }
+
+  /* -------------------------------------------- */
+
   /** @inheritDoc */
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
-    // Get default values from settings
-    const defaultSound = (game.settings.get('em-tile-utilities', 'defaultSound') as string) || '';
-    const defaultTrapImage =
-      (game.settings.get('em-tile-utilities', 'defaultTrapImage') as string) || '';
+    // Initialize defaults on first render, sync state on re-renders
+    if (!this.element) {
+      // First render: Get default values from settings
+      const defaultSound = (game.settings.get('em-tile-utilities', 'defaultSound') as string) || '';
+      const defaultTrapImage =
+        (game.settings.get('em-tile-utilities', 'defaultTrapImage') as string) || '';
 
-    // Generate trap name based on existing traps in scene
-    const nextNumber = getNextTileNumber('Trap');
+      // Generate trap name based on existing traps in scene
+      const nextNumber = getNextTileNumber('Trap');
+
+      this.trapName = `Trap ${nextNumber}`;
+      this.startingImage = this.customStartingImage || defaultTrapImage;
+      this.sound = defaultSound;
+      this.flavorText = 'You triggered a trap!';
+    } else {
+      // Re-render: Sync form state before re-render
+      this._syncFormToState();
+    }
 
     // Get available effects from CONFIG.statusEffects
     const effectOptions: any[] = [];
@@ -189,21 +298,12 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       }
     }
 
-    // Read current form values if the element exists (for re-renders)
-    let customTags = '';
-    if (this.element) {
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      customTags = customTagsInput?.value || '';
-    }
-
     const baseContext = {
       ...context,
-      trapName: `Trap ${nextNumber}`,
-      defaultSound: defaultSound,
-      defaultTrapImage: this.customStartingImage || defaultTrapImage,
-      customTags: customTags,
+      trapName: this.trapName,
+      defaultSound: this.sound,
+      defaultTrapImage: this.startingImage,
+      customTags: this.customTags,
       resultTypeOptions: [
         { value: TrapResultType.DAMAGE, label: 'EMPUZZLES.ResultDamage' },
         { value: TrapResultType.TELEPORT, label: 'EMPUZZLES.ResultTeleport' },
@@ -214,11 +314,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
         { value: TrapTargetType.WITHIN_TILE, label: 'EMPUZZLES.TargetWithinTile' }
       ],
       effectOptions: effectOptions,
-      defaultResultType: dmgTrapData
-        ? TrapResultType.DAMAGE
-        : (this.currentResultType ?? TrapResultType.DAMAGE),
-      defaultTargetType: this.currentTargetType ?? TrapTargetType.TRIGGERING,
-      defaultHasSavingThrow: dmgTrapData ? true : (this.currentHasSavingThrow ?? false),
+      defaultResultType: dmgTrapData ? TrapResultType.DAMAGE : this.resultType,
+      defaultTargetType: this.targetType,
+      defaultHasSavingThrow: dmgTrapData ? true : this.hasSavingThrow,
       teleportX: this.teleportX,
       teleportY: this.teleportY,
       savingThrowOptions: [
@@ -276,6 +374,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       startingImageInput.addEventListener('change', () => {
         // User manually changed the starting image
         if (startingImageInput.value) {
+          this.startingImage = startingImageInput.value;
           this.customStartingImage = startingImageInput.value;
         }
       });
@@ -397,21 +496,6 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
    * Handle teleport position selection
    */
   protected async _onSelectTeleportPosition(): Promise<void> {
-    // Capture current form state before re-rendering
-    const resultTypeSelect = this.element.querySelector(
-      'select[name="resultType"]'
-    ) as HTMLSelectElement;
-    const targetTypeSelect = this.element.querySelector(
-      'select[name="targetType"]'
-    ) as HTMLSelectElement;
-    const hasSavingThrowCheckbox = this.element.querySelector(
-      'input[name="hasSavingThrow"]'
-    ) as HTMLInputElement;
-
-    if (resultTypeSelect) this.currentResultType = resultTypeSelect.value;
-    if (targetTypeSelect) this.currentTargetType = targetTypeSelect.value;
-    if (hasSavingThrowCheckbox) this.currentHasSavingThrow = hasSavingThrowCheckbox.checked;
-
     ui.notifications.info('Click on the canvas to select the teleport destination...');
 
     const handler = (clickEvent: any) => {
@@ -613,6 +697,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
         !startingImageInput.value ||
         startingImageInput.value === defaultTrapImage
       ) {
+        this.startingImage = item.img;
         this.customStartingImage = item.img;
       }
     }

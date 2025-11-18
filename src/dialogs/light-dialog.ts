@@ -14,6 +14,23 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
 export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   private tagInputManager?: TagInputManager;
 
+  // Form state properties
+  protected lightName: string = 'Light';
+  protected offImage: string = '';
+  protected onImage: string = '';
+  protected useDarkness: boolean = false;
+  protected darknessMin: number = 0.5;
+  protected dimLight: number = 40;
+  protected brightLight: number = 20;
+  protected lightColor: string = '#ffa726';
+  protected colorIntensity: number = 0.5;
+  protected useOverlay: boolean = false;
+  protected overlayImage: string = '';
+  protected sound: string = '';
+  protected soundRadius: number = 40;
+  protected soundVolume: number = 0.5;
+  protected customTags: string = '';
+
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     id: 'em-puzzles-light-config',
@@ -54,37 +71,37 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
-    // Get default images and sound from settings
-    const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultLightOffImage');
-    const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultLightOnImage');
-    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
+    // Initialize default values from settings on first render
+    if (!this.element) {
+      const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultLightOffImage');
+      const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultLightOnImage');
+      const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
 
-    // Read current form values if the element exists (for re-renders)
-    let customTags = '';
-    if (this.element) {
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      customTags = customTagsInput?.value || '';
+      this.offImage = defaultOffImage as string;
+      this.onImage = defaultOnImage as string;
+      this.sound = defaultSound;
+    } else {
+      // Sync form state before re-render to preserve user input
+      this._syncFormToState();
     }
 
     return {
       ...context,
-      lightName: 'Light',
-      offImage: defaultOffImage,
-      onImage: defaultOnImage,
-      useDarkness: false,
-      darknessMin: 0.5,
-      dimLight: 40,
-      brightLight: 20,
-      lightColor: '#ffa726',
-      colorIntensity: 0.5,
-      useOverlay: false,
-      overlayImage: '',
-      sound: defaultSound,
-      soundRadius: 40,
-      soundVolume: 0.5,
-      customTags: customTags,
+      lightName: this.lightName,
+      offImage: this.offImage,
+      onImage: this.onImage,
+      useDarkness: this.useDarkness,
+      darknessMin: this.darknessMin,
+      dimLight: this.dimLight,
+      brightLight: this.brightLight,
+      lightColor: this.lightColor,
+      colorIntensity: this.colorIntensity,
+      useOverlay: this.useOverlay,
+      overlayImage: this.overlayImage,
+      sound: this.sound,
+      soundRadius: this.soundRadius,
+      soundVolume: this.soundVolume,
+      customTags: this.customTags,
       buttons: [
         {
           type: 'submit',
@@ -99,6 +116,84 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
         }
       ]
     };
+  }
+
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Text inputs
+    const lightNameInput = this.element.querySelector(
+      'input[name="lightName"]'
+    ) as HTMLInputElement;
+    if (lightNameInput) this.lightName = lightNameInput.value;
+
+    const offImageInput = this.element.querySelector('input[name="offImage"]') as HTMLInputElement;
+    if (offImageInput) this.offImage = offImageInput.value;
+
+    const onImageInput = this.element.querySelector('input[name="onImage"]') as HTMLInputElement;
+    if (onImageInput) this.onImage = onImageInput.value;
+
+    const overlayImageInput = this.element.querySelector(
+      'input[name="overlayImage"]'
+    ) as HTMLInputElement;
+    if (overlayImageInput) this.overlayImage = overlayImageInput.value;
+
+    const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const lightColorInput = this.element.querySelector(
+      'input[name="lightColor"]'
+    ) as HTMLInputElement;
+    if (lightColorInput) this.lightColor = lightColorInput.value;
+
+    const customTagsInput = this.element.querySelector(
+      'input[name="customTags"]'
+    ) as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
+
+    // Checkboxes
+    const useDarknessInput = this.element.querySelector(
+      'input[name="useDarkness"]'
+    ) as HTMLInputElement;
+    if (useDarknessInput) this.useDarkness = useDarknessInput.checked;
+
+    const useOverlayInput = this.element.querySelector(
+      'input[name="useOverlay"]'
+    ) as HTMLInputElement;
+    if (useOverlayInput) this.useOverlay = useOverlayInput.checked;
+
+    // Number inputs and range sliders
+    const darknessMinInput = this.element.querySelector(
+      'input[name="darknessMin"]'
+    ) as HTMLInputElement;
+    if (darknessMinInput) this.darknessMin = parseFloat(darknessMinInput.value);
+
+    const dimLightInput = this.element.querySelector('input[name="dimLight"]') as HTMLInputElement;
+    if (dimLightInput) this.dimLight = parseInt(dimLightInput.value);
+
+    const brightLightInput = this.element.querySelector(
+      'input[name="brightLight"]'
+    ) as HTMLInputElement;
+    if (brightLightInput) this.brightLight = parseInt(brightLightInput.value);
+
+    const colorIntensityInput = this.element.querySelector(
+      'input[name="colorIntensity"]'
+    ) as HTMLInputElement;
+    if (colorIntensityInput) this.colorIntensity = parseFloat(colorIntensityInput.value);
+
+    const soundRadiusInput = this.element.querySelector(
+      'input[name="soundRadius"]'
+    ) as HTMLInputElement;
+    if (soundRadiusInput) this.soundRadius = parseInt(soundRadiusInput.value);
+
+    const soundVolumeInput = this.element.querySelector(
+      'input[name="soundVolume"]'
+    ) as HTMLInputElement;
+    if (soundVolumeInput) this.soundVolume = parseFloat(soundVolumeInput.value);
   }
 
   /* -------------------------------------------- */
@@ -137,6 +232,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     if (darknessToggle && darknessSettings) {
       const toggleDarknessSettings = () => {
+        // Update state
+        this.useDarkness = darknessToggle.checked;
+        // Update UI
         if (darknessToggle.checked) {
           darknessSettings.style.display = 'block';
         } else {
@@ -144,7 +242,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
         }
       };
 
-      toggleDarknessSettings();
+      // Initial state from property
+      darknessSettings.style.display = this.useDarkness ? 'block' : 'none';
       darknessToggle.addEventListener('change', toggleDarknessSettings);
     }
 
@@ -156,6 +255,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     if (overlayToggle && overlaySettings) {
       const toggleOverlaySettings = () => {
+        // Update state
+        this.useOverlay = overlayToggle.checked;
+        // Update UI
         if (overlayToggle.checked) {
           overlaySettings.style.display = 'block';
         } else {
@@ -163,7 +265,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
         }
       };
 
-      toggleOverlaySettings();
+      // Initial state from property
+      overlaySettings.style.display = this.useOverlay ? 'block' : 'none';
       overlayToggle.addEventListener('change', toggleOverlaySettings);
     }
 

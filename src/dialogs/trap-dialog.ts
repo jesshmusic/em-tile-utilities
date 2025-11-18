@@ -610,6 +610,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Check if the form can be submitted
    */
   protected _canSubmit(): boolean {
+    // Check required fields first
+    if (!this.trapName || this.trapName.trim() === '') {
+      return false;
+    }
+
     // Activating trap: must have tiles selected
     if (this.trapType === TrapType.ACTIVATING) {
       return this.selectedTiles.size > 0;
@@ -952,6 +957,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Update Setup Tasks list
     this._updateSetupTasks();
+
+    // Set up form validation listener to update submit button state
+    this._setupFormValidation();
   }
 
   /**
@@ -962,6 +970,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!todoContainer) return;
 
     const tasks: string[] = [];
+
+    // Check for trap name (always required)
+    if (!this.trapName || this.trapName.trim() === '') {
+      tasks.push('Enter a trap name');
+    }
 
     // Check for required fields based on trap type
     if (this.trapType === TrapType.IMAGE) {
@@ -984,10 +997,47 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Update the DOM
     if (tasks.length === 0) {
-      todoContainer.innerHTML = '<li class="todo-item complete">All required fields completed!</li>';
+      todoContainer.innerHTML =
+        '<li class="todo-item complete">All required fields completed!</li>';
     } else {
-      todoContainer.innerHTML = tasks.map(task => `<li class="todo-item incomplete">${task}</li>`).join('');
+      todoContainer.innerHTML = tasks
+        .map(task => `<li class="todo-item incomplete">${task}</li>`)
+        .join('');
     }
+  }
+
+  /**
+   * Set up form validation listener to update submit button state
+   */
+  protected _setupFormValidation(): void {
+    const form = this.element.querySelector('form');
+    if (!form) return;
+
+    // Find the submit button
+    const submitButton = this.element.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (!submitButton) return;
+
+    // Update button state based on form validity
+    const updateSubmitButton = () => {
+      // Sync form state first to get current values
+      this._syncFormToState();
+
+      // Check if form can be submitted
+      const canSubmit = this._canSubmit();
+
+      // Update button disabled state
+      submitButton.disabled = !canSubmit;
+
+      // Also update Setup Tasks
+      this._updateSetupTasks();
+    };
+
+    // Listen to input and change events on the form
+    form.addEventListener('input', updateSubmitButton);
+    form.addEventListener('change', updateSubmitButton);
+
+    // Initial validation check
+    updateSubmitButton();
   }
 
   /* -------------------------------------------- */
@@ -2149,10 +2199,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       revealOnTrigger: revealOnTrigger,
       hideTrapOnTrigger: imageBehavior === ImageBehavior.HIDE,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
-      additionalEffectsAction:
-        (
-          form.querySelector('[name="additionalEffectsAction"]:checked') as HTMLInputElement
-        )?.value as 'add' | 'remove' | undefined,
+      additionalEffectsAction: (
+        form.querySelector('[name="additionalEffectsAction"]:checked') as HTMLInputElement
+      )?.value as 'add' | 'remove' | undefined,
       hasSavingThrow: hasSavingThrow,
       pauseGameOnTrigger: pauseGameOnTrigger,
       customTags: customTags

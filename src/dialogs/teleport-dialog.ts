@@ -13,6 +13,21 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  * @mixes HandlebarsApplication
  */
 export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+  // Form state properties
+  protected tileName: string = '';
+  protected tileImage: string = 'icons/magic/movement/portal-vortex-orange.webp';
+  protected hidden: boolean = false;
+  protected sound: string = '';
+  protected selectedSceneId: string = '';
+  protected hasSavingThrow: boolean = false;
+  protected savingThrow: string = 'dex';
+  protected dc: number = 15;
+  protected flavorText: string = '';
+  protected pauseGameOnTrigger: boolean = false;
+  protected deleteSourceToken: boolean = false;
+  protected createReturnTeleport: boolean = false;
+  protected customTags: string = '';
+
   /** Teleport destination coordinates */
   protected teleportX?: number;
   protected teleportY?: number;
@@ -68,62 +83,27 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
-    // Generate teleport name
-    const nextNumber = getNextTileNumber('Teleport');
-
-    // Get default sound from settings
-    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
-
     // Get all scenes for selection dropdown
     const scenes = Array.from((game as any).scenes).map((scene: any) => ({
       id: scene.id,
       name: scene.name
     }));
 
-    // Get current scene as default
+    // Get current scene
     const currentScene = canvas.scene;
 
-    // Read current form values if the element exists (for re-renders)
-    let hasSavingThrow = false;
-    let pauseGameOnTrigger = false;
-    let deleteSourceToken = false;
-    let createReturnTeleport = false;
-    let customTags = '';
-    let sound = defaultSound;
-    let selectedSceneId = currentScene?.id || (scenes.length > 0 ? scenes[0].id : null);
+    // Initialize defaults on first render
+    if (!this.element) {
+      const nextNumber = getNextTileNumber('Teleport');
+      this.tileName = `Teleport ${nextNumber}`;
 
-    if (this.element) {
-      const hasSavingThrowCheckbox = this.element.querySelector(
-        'input[name="hasSavingThrow"]'
-      ) as HTMLInputElement;
-      const pauseGameOnTriggerCheckbox = this.element.querySelector(
-        'input[name="pauseGameOnTrigger"]'
-      ) as HTMLInputElement;
-      const deleteSourceTokenCheckbox = this.element.querySelector(
-        'input[name="deleteSourceToken"]'
-      ) as HTMLInputElement;
-      const createReturnTeleportCheckbox = this.element.querySelector(
-        'input[name="createReturnTeleport"]'
-      ) as HTMLInputElement;
-      const targetSceneSelect = this.element.querySelector(
-        'select[name="targetScene"]'
-      ) as HTMLSelectElement;
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
+      const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
+      this.sound = defaultSound;
 
-      hasSavingThrow = hasSavingThrowCheckbox?.checked || false;
-      pauseGameOnTrigger = pauseGameOnTriggerCheckbox?.checked || false;
-      deleteSourceToken = deleteSourceTokenCheckbox?.checked || false;
-      createReturnTeleport = createReturnTeleportCheckbox?.checked || false;
-      customTags = customTagsInput?.value || '';
-      sound = soundInput?.value || defaultSound;
-
-      // Read the selected scene from the dropdown (for re-renders)
-      if (targetSceneSelect?.value) {
-        selectedSceneId = targetSceneSelect.value;
-      }
+      this.selectedSceneId = currentScene?.id || (scenes.length > 0 ? scenes[0].id : '');
+    } else {
+      // Sync form state before re-render to preserve user input
+      this._syncFormToState();
     }
 
     // Get the selected teleport scene name
@@ -132,26 +112,30 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       : null;
 
     // Determine if teleporting to a different scene (based on dropdown selection)
-    const isDifferentScene = selectedSceneId !== currentScene?.id;
+    const isDifferentScene = this.selectedSceneId !== currentScene?.id;
 
     return {
       ...context,
-      tileName: `Teleport ${nextNumber}`,
-      tileImage: 'icons/magic/movement/portal-vortex-orange.webp',
-      sound: sound,
+      tileName: this.tileName,
+      tileImage: this.tileImage,
+      hidden: this.hidden,
+      sound: this.sound,
       scenes: scenes,
-      selectedSceneId: selectedSceneId,
+      selectedSceneId: this.selectedSceneId,
       currentSceneId: currentScene?.id,
       teleportX: this.teleportX,
       teleportY: this.teleportY,
       teleportSceneId: this.teleportSceneId,
       teleportSceneName: teleportSceneName,
       isDifferentScene: isDifferentScene,
-      hasSavingThrow: hasSavingThrow,
-      pauseGameOnTrigger: pauseGameOnTrigger,
-      deleteSourceToken: deleteSourceToken,
-      createReturnTeleport: createReturnTeleport,
-      customTags: customTags,
+      hasSavingThrow: this.hasSavingThrow,
+      savingThrow: this.savingThrow,
+      dc: this.dc,
+      flavorText: this.flavorText,
+      pauseGameOnTrigger: this.pauseGameOnTrigger,
+      deleteSourceToken: this.deleteSourceToken,
+      createReturnTeleport: this.createReturnTeleport,
+      customTags: this.customTags,
       hasMonksTokenBar: hasMonksTokenBar(),
       buttons: [
         {
@@ -167,6 +151,75 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       ]
     };
+  }
+
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Text inputs
+    const tileNameInput = this.element.querySelector('input[name="tileName"]') as HTMLInputElement;
+    if (tileNameInput) this.tileName = tileNameInput.value;
+
+    const tileImageInput = this.element.querySelector(
+      'input[name="tileImage"]'
+    ) as HTMLInputElement;
+    if (tileImageInput) this.tileImage = tileImageInput.value;
+
+    const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const savingThrowInput = this.element.querySelector(
+      'select[name="savingThrow"]'
+    ) as HTMLSelectElement;
+    if (savingThrowInput) this.savingThrow = savingThrowInput.value;
+
+    const dcInput = this.element.querySelector('input[name="dc"]') as HTMLInputElement;
+    if (dcInput) this.dc = parseInt(dcInput.value);
+
+    const flavorTextInput = this.element.querySelector(
+      'textarea[name="flavorText"]'
+    ) as HTMLTextAreaElement;
+    if (flavorTextInput) this.flavorText = flavorTextInput.value;
+
+    const customTagsInput = this.element.querySelector(
+      'input[name="customTags"]'
+    ) as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
+
+    // Checkboxes
+    const hiddenCheckbox = this.element.querySelector('input[name="hidden"]') as HTMLInputElement;
+    if (hiddenCheckbox) this.hidden = hiddenCheckbox.checked;
+
+    const hasSavingThrowCheckbox = this.element.querySelector(
+      'input[name="hasSavingThrow"]'
+    ) as HTMLInputElement;
+    if (hasSavingThrowCheckbox) this.hasSavingThrow = hasSavingThrowCheckbox.checked;
+
+    const pauseGameOnTriggerCheckbox = this.element.querySelector(
+      'input[name="pauseGameOnTrigger"]'
+    ) as HTMLInputElement;
+    if (pauseGameOnTriggerCheckbox) this.pauseGameOnTrigger = pauseGameOnTriggerCheckbox.checked;
+
+    const deleteSourceTokenCheckbox = this.element.querySelector(
+      'input[name="deleteSourceToken"]'
+    ) as HTMLInputElement;
+    if (deleteSourceTokenCheckbox) this.deleteSourceToken = deleteSourceTokenCheckbox.checked;
+
+    const createReturnTeleportCheckbox = this.element.querySelector(
+      'input[name="createReturnTeleport"]'
+    ) as HTMLInputElement;
+    if (createReturnTeleportCheckbox)
+      this.createReturnTeleport = createReturnTeleportCheckbox.checked;
+
+    // Dropdown
+    const targetSceneSelect = this.element.querySelector(
+      'select[name="targetScene"]'
+    ) as HTMLSelectElement;
+    if (targetSceneSelect) this.selectedSceneId = targetSceneSelect.value;
   }
 
   /* -------------------------------------------- */

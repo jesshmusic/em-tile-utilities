@@ -1838,6 +1838,26 @@ button .game-icon,
   border-top: 1px solid var(--color-border-light-tertiary);
 }
 
+/* Required field indicator */
+.required {
+  color: #ff4444;
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
+/* Form validation styles */
+input:invalid,
+select:invalid,
+textarea:invalid {
+  border-color: rgba(255, 68, 68, 0.5);
+}
+
+input:valid,
+select:valid,
+textarea:valid {
+  border-color: var(--color-border-light-primary);
+}
+
 /* Trap footer - two row layout */
 .trap-footer {
   display: flex;

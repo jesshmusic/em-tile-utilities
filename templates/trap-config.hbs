@@ -17,8 +17,8 @@
     </div>
 
     <div class="form-group">
-      <label for="trapName">{{localize "EMPUZZLES.TrapName"}}</label>
-      <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" />
+      <label for="trapName">{{localize "EMPUZZLES.TrapName"}} <span class="required">*</span></label>
+      <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" required />
       <p class="hint">{{localize "EMPUZZLES.TrapNameHint"}}</p>
     </div>
 
@@ -86,8 +86,8 @@
     </legend>
     <div>
       <div class="form-group">
-        <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
-        <select id="resultType" name="resultType">
+        <label for="resultType">{{localize "EMPUZZLES.ResultType"}} <span class="required">*</span></label>
+        <select id="resultType" name="resultType" required>
           {{#each resultTypeOptions as |option|}}
             <option value="{{option.value}}" {{#if (eq option.value ../resultType)}}selected{{/if}}>
               {{localize option.label}}

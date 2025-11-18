@@ -1,0 +1,58 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We appreciate your ideas to make this module better.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: |
+        Describe the feature you'd like to see added or the enhancement you're proposing.
+
+        - What problem does it solve?
+        - How would it work?
+        - Why would it be useful?
+      placeholder: |
+        I would like to be able to...
+
+        This would help with...
+
+        It could work by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case / Example Scenario
+      description: Provide a specific example of when and how you would use this feature
+      placeholder: |
+        For example, I'm creating a dungeon with multiple puzzle rooms...
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you tried any workarounds or alternative approaches?
+      placeholder: "Currently I'm using X, but it doesn't work well because..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would improve my workflow significantly
+        - Critical for my use case
+    validations:
+      required: false

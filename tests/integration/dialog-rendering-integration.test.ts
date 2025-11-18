@@ -94,12 +94,13 @@ describe('Dialog Rendering Integration Tests', () => {
       }).not.toThrow();
 
       // Verify the rendered HTML is valid
-      expect(html!).toBeTruthy();
-      expect(html!.length).toBeGreaterThan(100);
+      expect(html).toBeTruthy();
+      expect(html).toBeDefined();
+      expect(html.length).toBeGreaterThan(100);
 
       // Verify the partial content is included (tests use localization keys)
-      expect(html!).toContain('EMPUZZLES.SavingThrow');
-      expect(html!).toContain('hasSavingThrow'); // From partial
+      expect(html).toContain('EMPUZZLES.SavingThrow');
+      expect(html).toContain('hasSavingThrow'); // From partial
     });
 
     it('should verify partial is actually used in template', () => {
@@ -215,9 +216,10 @@ describe('Dialog Rendering Integration Tests', () => {
       }).not.toThrow();
 
       // Step 8: Verify rendered output
-      expect(html!).toBeTruthy();
-      expect(html!).toContain('trapType'); // Should have form fields
-      expect(html!).toContain('EMPUZZLES.SavingThrow'); // Should have partial content (localization key in tests)
+      expect(html).toBeTruthy();
+      expect(html).toBeDefined();
+      expect(html).toContain('trapType'); // Should have form fields
+      expect(html).toContain('EMPUZZLES.SavingThrow'); // Should have partial content (localization key in tests)
     });
 
     it('should fail gracefully with clear error message if partial missing', async () => {

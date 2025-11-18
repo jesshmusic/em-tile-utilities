@@ -54,6 +54,7 @@
     "TrapType": "Trap Type",
     "TrapTypeHint": "Choose between an image-based trap or a trap that activates other tiles",
     "BasicInfo": "Basic Information",
+    "TeleportSetup": "Teleport Setup",
     "ResultConfiguration": "Result Configuration",
     "TilesAndDoors": "Tiles & Doors",
     "SetupTasks": "Setup Tasks",
