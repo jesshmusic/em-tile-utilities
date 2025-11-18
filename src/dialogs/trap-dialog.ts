@@ -525,11 +525,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         onTriggerHiddenOptions.forEach(option => {
           option.style.display = 'none';
         });
-        // Check default "stays-same" option
-        const staysSameRadio = this.element.querySelector(
-          'input[name="onTriggerBehavior"][value="stays-same"]'
-        ) as HTMLInputElement;
-        if (staysSameRadio) staysSameRadio.checked = true;
+        // Only check default if no visible radio is checked
+        const anyVisibleChecked = Array.from(onTriggerVisibleOptions).some(option => {
+          const radio = option.querySelector('input[type="radio"]') as HTMLInputElement;
+          return radio && radio.checked;
+        });
+        if (!anyVisibleChecked) {
+          const staysSameRadio = this.element.querySelector(
+            'input[name="onTriggerBehavior"][value="stays-same"]'
+          ) as HTMLInputElement;
+          if (staysSameRadio) staysSameRadio.checked = true;
+        }
       } else {
         // Show hidden options, hide visible options
         onTriggerVisibleOptions.forEach(option => {
@@ -538,11 +544,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         onTriggerHiddenOptions.forEach(option => {
           option.style.display = 'flex';
         });
-        // Check default "reveals-same" option
-        const revealsSameRadio = this.element.querySelector(
-          'input[name="onTriggerBehavior"][value="reveals-same"]'
-        ) as HTMLInputElement;
-        if (revealsSameRadio) revealsSameRadio.checked = true;
+        // Only check default if no hidden radio is checked
+        const anyHiddenChecked = Array.from(onTriggerHiddenOptions).some(option => {
+          const radio = option.querySelector('input[type="radio"]') as HTMLInputElement;
+          return radio && radio.checked;
+        });
+        if (!anyHiddenChecked) {
+          const revealsSameRadio = this.element.querySelector(
+            'input[name="onTriggerBehavior"][value="reveals-same"]'
+          ) as HTMLInputElement;
+          if (revealsSameRadio) revealsSameRadio.checked = true;
+        }
       }
     };
 
