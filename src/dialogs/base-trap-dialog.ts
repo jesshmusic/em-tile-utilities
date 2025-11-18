@@ -1,6 +1,7 @@
 import type { TrapConfig } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
-import { createTrapTile, getNextTileNumber } from '../utils/tile-helpers';
+import { createTrapTile } from '../utils/creators';
+import { getNextTileNumber } from '../utils/helpers';
 import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API

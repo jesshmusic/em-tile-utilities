@@ -1,5 +1,5 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
-import { createResetTile } from '../utils/tile-helpers';
+import { createResetTile } from '../utils/creators';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';

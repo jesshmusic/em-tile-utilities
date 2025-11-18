@@ -1,4 +1,4 @@
-import { createLightTile } from '../utils/tile-helpers';
+import { createLightTile } from '../utils/creators';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
