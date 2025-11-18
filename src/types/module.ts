@@ -30,6 +30,7 @@ export interface LightConfig {
  */
 export enum TrapResultType {
   DAMAGE = 'damage',
+  HEAL = 'heal',
   TELEPORT = 'teleport',
   ACTIVE_EFFECT = 'activeeffect',
   COMBAT = 'combat'
@@ -105,6 +106,9 @@ export interface TrapConfig {
   damageOnFail: string;
   halfDamageOnSuccess?: boolean; // Whether successful saves take half damage
   flavorText: string;
+  // For heal result type
+  healingAmount?: string; // Healing formula (e.g., "2d4+2")
+  healFlavorText?: string; // Flavor text for healing
   // For teleport result type
   teleportX?: number; // Teleport destination X
   teleportY?: number; // Teleport destination Y

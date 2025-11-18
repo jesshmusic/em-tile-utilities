@@ -190,6 +190,29 @@
       </div>
     {{/if}}
 
+    {{! Heal Result Type }}
+    {{#if (eq resultType "heal")}}
+      <div class="form-group">
+        <label for="healingAmount">{{localize "EMPUZZLES.HealingAmount"}}</label>
+        <input type="text" id="healingAmount" name="healingAmount" value="2d4+2" placeholder="2d4+2" />
+        <p class="hint">{{localize "EMPUZZLES.HealingAmountHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="healFlavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
+        <textarea id="healFlavorText" name="healFlavorText" rows="3" placeholder="{{localize 'EMPUZZLES.HealFlavorTextPlaceholder'}}"></textarea>
+        <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
+        <multi-select name="additionalEffects">
+          {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
+        </multi-select>
+        <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsHealHint"}}</p>
+      </div>
+    {{/if}}
+
     {{! Teleport Result Type }}
     {{#if (eq resultType "teleport")}}
       <div class="form-group">

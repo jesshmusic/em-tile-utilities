@@ -1692,6 +1692,26 @@ export async function createTrapTile(
         }
         break;
 
+      case TrapResultType.HEAL:
+        // Heal action (applies healing to targets)
+        if (config.healingAmount) {
+          actions.push({
+            action: 'hurtheal',
+            data: {
+              entity: {
+                id: targetEntityId,
+                name: targetEntityName
+              },
+              value: `[[${config.healingAmount}]]`, // Positive value for healing
+              chatMessage: true,
+              rollmode: 'roll',
+              showdice: true
+            },
+            id: foundry.utils.randomID()
+          });
+        }
+        break;
+
       case TrapResultType.ACTIVE_EFFECT:
         // Add saving throw if enabled and Monk's Token Bar is available
         if (config.hasSavingThrow && hasMonksTokenBar()) {

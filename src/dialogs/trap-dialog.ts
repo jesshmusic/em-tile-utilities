@@ -182,6 +182,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const resultTypeOptions = [
       { value: '', label: 'EMPUZZLES.ResultSelectPrompt' },
       { value: TrapResultType.DAMAGE, label: 'EMPUZZLES.ResultDamage' },
+      { value: TrapResultType.HEAL, label: 'EMPUZZLES.ResultHeal' },
       { value: TrapResultType.TELEPORT, label: 'EMPUZZLES.ResultTeleport' },
       { value: TrapResultType.ACTIVE_EFFECT, label: 'EMPUZZLES.ResultActiveEffect' },
       { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' }
@@ -1947,6 +1948,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           effectid: effectId,
           addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear'
         };
+      } else if (this.resultType === TrapResultType.HEAL) {
+        imageTrapConfig.healingAmount =
+          (form.querySelector('input[name="healingAmount"]') as HTMLInputElement)?.value ||
+          '2d4+2';
+        imageTrapConfig.healFlavorText =
+          (form.querySelector('textarea[name="healFlavorText"]') as HTMLTextAreaElement)?.value ||
+          '';
       }
 
       trapConfig = imageTrapConfig;
