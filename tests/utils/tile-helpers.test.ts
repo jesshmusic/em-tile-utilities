@@ -430,6 +430,81 @@ describe('tile-helpers', () => {
       expect(doorAction).toBeDefined();
       expect(doorAction.data.state).toBe('locked');
     });
+
+    it('should create showhide action when tile has showHideAction', async () => {
+      resetConfig.tilesToReset[0].hasShowHideAction = true;
+      resetConfig.tilesToReset[0].hidden = true;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const showHideAction = actions.find(
+        (a: any) => a.action === 'showhide' && a.data.entity.id.includes('tile-1')
+      );
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('hide');
+    });
+
+    it('should create showhide action when tile has no other actions', async () => {
+      resetConfig.tilesToReset[0].hasActivateAction = false;
+      resetConfig.tilesToReset[0].hasMovementAction = false;
+      resetConfig.tilesToReset[0].hasTileImageAction = false;
+      resetConfig.tilesToReset[0].hasShowHideAction = false;
+      resetConfig.tilesToReset[0].hidden = false;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const showHideAction = actions.find(
+        (a: any) => a.action === 'showhide' && a.data.entity.id.includes('tile-1')
+      );
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('show');
+    });
+
+    it('should create movement action when tile has movementAction', async () => {
+      resetConfig.tilesToReset[0].hasMovementAction = true;
+      resetConfig.tilesToReset[0].x = 500;
+      resetConfig.tilesToReset[0].y = 600;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const moveAction = actions.find(
+        (a: any) => a.action === 'movetoken' && a.data.entity.id.includes('tile-1')
+      );
+      expect(moveAction).toBeDefined();
+      expect(moveAction.data.x).toBe('500');
+      expect(moveAction.data.y).toBe('600');
+    });
+
+    it('should create rotation action when tile has movement with rotation', async () => {
+      resetConfig.tilesToReset[0].hasMovementAction = true;
+      resetConfig.tilesToReset[0].x = 500;
+      resetConfig.tilesToReset[0].y = 600;
+      resetConfig.tilesToReset[0].rotation = 90;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const rotationAction = actions.find(
+        (a: any) => a.action === 'rotation' && a.data.entity.id.includes('tile-1')
+      );
+      expect(rotationAction).toBeDefined();
+      expect(rotationAction.data.rotation).toBe('90');
+    });
   });
 
   describe('createTrapTile', () => {
@@ -1045,6 +1120,40 @@ describe('tile-helpers', () => {
       };
     });
 
+    it('should tag lights in scene along with tiles', async () => {
+      // Create mock light with tags
+      const mockLight = {
+        id: 'light-1',
+        _tags: ['EMTorch']
+      };
+      mockScene.lights.set('light-1', mockLight);
+
+      // Mock getTags to return tags for light
+      mockTagger.getTags = jest.fn((doc: any) => {
+        if (doc.id === 'light-1') {
+          return ['EMTorch'];
+        }
+        return doc._tags || [];
+      });
+
+      const config = {
+        name: 'Torch',
+        variableName: 'torch_1',
+        onImage: 'on.png',
+        offImage: 'off.png',
+        sound: ''
+      };
+
+      await createSwitchTile(mockScene, config, 200, 200);
+
+      // Should detect existing EMTorch tag and create EMTorch2
+      expect(mockTagger.setTags).toHaveBeenCalled();
+      const tagArgs = mockTagger.setTags.mock.calls[0];
+      const tags = tagArgs[1];
+      // Should have numbered tag to avoid collision
+      expect(tags[0]).toMatch(/EMTorch\d+/);
+    });
+
     it('should tag switch tiles with EM prefix', async () => {
       const config = {
         name: 'Test Switch',
@@ -1382,6 +1491,77 @@ describe('tile-helpers', () => {
       const lightData = lightCall[1][0];
       expect(lightData.config.darkness.min).toBe(0);
       expect(lightData.config.darkness.max).toBe(1);
+    });
+
+    it('should create ambient sound when sound is provided', async () => {
+      const config: LightConfig = {
+        name: 'Torch with Sound',
+        onImage: 'torch-on.png',
+        offImage: 'torch-off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: '#ff9900',
+        colorIntensity: 0.8,
+        useOverlay: false,
+        sound: 'sounds/torch-crackle.ogg',
+        soundRadius: 30,
+        soundVolume: 0.6
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      // Should create AmbientLight and AmbientSound
+      const soundCall = mockScene.createEmbeddedDocuments.mock.calls.find(
+        (call: any) => call[0] === 'AmbientSound'
+      );
+      expect(soundCall).toBeDefined();
+
+      const soundData = soundCall[1][0];
+      expect(soundData.path).toBe('sounds/torch-crackle.ogg');
+      expect(soundData.radius).toBe(30);
+      expect(soundData.volume).toBe(0.6);
+      expect(soundData.repeat).toBe(true);
+      expect(soundData.walls).toBe(true);
+      expect(soundData.hidden).toBe(true); // Hidden initially for manual toggle
+    });
+
+    it('should create overlay tile when useOverlay is true', async () => {
+      // Reset mock before this test to ensure clean state
+      mockScene.createEmbeddedDocuments.mockClear();
+
+      const config: LightConfig = {
+        name: 'Light with Overlay',
+        onImage: 'light-on.png',
+        offImage: 'light-off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: null,
+        colorIntensity: 0.5,
+        useOverlay: true,
+        overlayImage: 'light-glow.webm'
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      // Find ALL tile calls and search for the overlay
+      const tileCalls = mockScene.createEmbeddedDocuments.mock.calls.filter(
+        (call: any) => call[0] === 'Tile'
+      );
+      expect(tileCalls.length).toBeGreaterThanOrEqual(2); // At least main + overlay
+
+      // Find the tile with overlay image
+      const overlayTile = tileCalls
+        .map((call: any) => call[1][0])
+        .find((tile: any) => tile.texture.src === 'light-glow.webm');
+
+      expect(overlayTile).toBeDefined();
+      expect(overlayTile.elevation).toBe(1); // Above main tile
+      expect(overlayTile.hidden).toBe(true); // Start hidden
+      expect(overlayTile.flags['monks-active-tiles'].name).toContain('(Overlay)');
     });
   });
 

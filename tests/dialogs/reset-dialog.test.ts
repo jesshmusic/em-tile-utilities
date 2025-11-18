@@ -79,6 +79,30 @@ describe('ResetTileConfigDialog', () => {
       expect(context.hasTiles).toBe(false);
     });
 
+    it('should call _syncFormToState when element exists', async () => {
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="resetName"]') {
+            return { value: 'Synced Name' };
+          }
+          if (selector === 'input[name="resetTileImage"]') {
+            return { value: 'synced.png' };
+          }
+          if (selector === 'input[name="customTags"]') {
+            return { value: 'synced,tags' };
+          }
+          return null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      const context = await dialog._prepareContext({});
+
+      // Verify that form state was synced
+      expect(context.resetName).toBe('Synced Name');
+      expect(context.resetTileImage).toBe('synced.png');
+    });
+
     it('should include resetName in context', async () => {
       const context = await dialog._prepareContext({});
 
@@ -422,6 +446,118 @@ describe('ResetTileConfigDialog', () => {
       expect(dialog.resetName).toBe('Reset Tile');
     });
   });
+
+  describe('_syncFormToState', () => {
+    it('should sync resetName from form to state', () => {
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="resetName"]') {
+            return { value: 'Updated Reset Name' };
+          }
+          if (selector === 'input[name="resetTileImage"]') {
+            return { value: 'icons/test.png' };
+          }
+          if (selector === 'input[name="customTags"]') {
+            return { value: '' };
+          }
+          return null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any)._syncFormToState();
+
+      expect(dialog.resetName).toBe('Updated Reset Name');
+    });
+
+    it('should sync resetTileImage from form to state', () => {
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="resetName"]') {
+            return { value: 'Reset Tile' };
+          }
+          if (selector === 'input[name="resetTileImage"]') {
+            return { value: 'icons/custom-reset.png' };
+          }
+          if (selector === 'input[name="customTags"]') {
+            return { value: '' };
+          }
+          return null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any)._syncFormToState();
+
+      expect(dialog.resetTileImage).toBe('icons/custom-reset.png');
+    });
+
+    it('should sync customTags from form to state', () => {
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="resetName"]') {
+            return { value: 'Reset Tile' };
+          }
+          if (selector === 'input[name="resetTileImage"]') {
+            return { value: 'icons/test.png' };
+          }
+          if (selector === 'input[name="customTags"]') {
+            return { value: 'tag1,tag2,tag3' };
+          }
+          return null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any)._syncFormToState();
+
+      expect((dialog as any).customTags).toBe('tag1,tag2,tag3');
+    });
+
+    it('should not throw if element is null', () => {
+      dialog.element = null as any;
+      expect(() => (dialog as any)._syncFormToState()).not.toThrow();
+    });
+
+    it('should handle missing form inputs gracefully', () => {
+      const mockElement = {
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      expect(() => (dialog as any)._syncFormToState()).not.toThrow();
+    });
+  });
+
+  describe('_onClose', () => {
+    it('should close the dialog', () => {
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+      expect(dialog.close).toHaveBeenCalled();
+    });
+
+    it('should maximize tile manager if it exists', () => {
+      const mockTileManager = { maximize: jest.fn() };
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(mockTileManager);
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      expect(mockTileManager.maximize).toHaveBeenCalled();
+    });
+
+    it('should not throw if tile manager does not exist', () => {
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(null);
+
+      dialog.close = jest.fn();
+
+      expect(() => (dialog as any)._onClose()).not.toThrow();
+    });
+  });
 });
 
 // Import utility functions for testing
@@ -495,6 +631,30 @@ describe('ResetTileConfigDialog Extended Tests', () => {
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockBrowse).toHaveBeenCalled();
+    });
+
+    it('should update input value when file is selected', async () => {
+      const mockInput = { name: 'resetTileImage', value: 'old.png', dispatchEvent: jest.fn() };
+      dialog.element = { querySelector: jest.fn().mockReturnValue(mockInput) } as any;
+
+      const mockEvent = {
+        preventDefault: jest.fn(),
+        currentTarget: { dataset: { target: 'resetTileImage', type: 'imagevideo' } }
+      } as any;
+
+      let capturedCallback: any;
+      (global as any).FilePicker = jest.fn().mockImplementation((options: any) => {
+        capturedCallback = options.callback;
+        return { browse: jest.fn() };
+      });
+
+      await dialog._onFilePicker(mockEvent);
+
+      // Simulate file selection
+      capturedCallback('new/image.png');
+
+      expect(mockInput.value).toBe('new/image.png');
+      expect(mockInput.dispatchEvent).toHaveBeenCalled();
     });
 
     it('should return early if no target', async () => {
@@ -1076,6 +1236,315 @@ describe('ResetTileConfigDialog Extended Tests', () => {
 
       expect(dialog.selectedTiles.has('tile-1')).toBe(true); // Still there
       expect(dialog.captureFormValues).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('#onAddTag action handler', () => {
+    it('should call tagInputManager addTagsFromInput method', () => {
+      const mockTagManager = { addTagsFromInput: jest.fn(), showConfirmation: jest.fn() };
+      (dialog as any).tagInputManager = mockTagManager;
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.actions.addTag;
+      handler.call(dialog);
+
+      expect(mockTagManager.addTagsFromInput).toHaveBeenCalled();
+    });
+
+    it('should not throw if tagInputManager is undefined', () => {
+      (dialog as any).tagInputManager = undefined;
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.actions.addTag;
+
+      expect(() => handler.call(dialog)).not.toThrow();
+    });
+  });
+
+  describe('#onConfirmTags action handler', () => {
+    it('should call tagInputManager addTagsFromInput and showConfirmation', () => {
+      const mockTagManager = { addTagsFromInput: jest.fn(), showConfirmation: jest.fn() };
+      (dialog as any).tagInputManager = mockTagManager;
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.actions.confirmTags;
+      handler.call(dialog);
+
+      expect(mockTagManager.addTagsFromInput).toHaveBeenCalled();
+      expect(mockTagManager.showConfirmation).toHaveBeenCalled();
+    });
+
+    it('should not throw if tagInputManager is undefined', () => {
+      (dialog as any).tagInputManager = undefined;
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.actions.confirmTags;
+
+      expect(() => handler.call(dialog)).not.toThrow();
+    });
+  });
+
+  describe('canvas click placement', () => {
+    beforeEach(() => {
+      dialog.minimize = jest.fn();
+      dialog.close = jest.fn();
+    });
+
+    it('should create reset tile on canvas click', async () => {
+      (global as any).canvas.scene = mockScene;
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [],
+        variables: { var1: true },
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: false,
+        hasShowHideAction: false,
+        hasAnyActions: false,
+        resetTriggerHistory: false
+      });
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, {
+        object: {
+          resetTileImage: 'reset.png',
+          resetName: 'Test Reset',
+          'var_tile-1_var1': 'true',
+          'visibility_tile-1': 'show',
+          'fileindex_tile-1': '0',
+          'active_tile-1': 'true',
+          'rotation_tile-1': '0',
+          'x_tile-1': '100',
+          'y_tile-1': '200',
+          'resetTriggerHistory_tile-1': 'false'
+        }
+      });
+
+      // Get the click handler
+      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+
+      // Simulate canvas click
+      const mockClickEvent = {
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 300, y: 400 })
+        }
+      };
+
+      await clickHandler(mockClickEvent);
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
+    });
+
+    it('should minimize dialog before canvas click', async () => {
+      (global as any).canvas.scene = mockScene;
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [],
+        variables: {},
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: false,
+        hasShowHideAction: false,
+        hasAnyActions: false,
+        resetTriggerHistory: false
+      });
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, {
+        object: {
+          resetTileImage: 'reset.png',
+          resetName: 'Reset',
+          'visibility_tile-1': 'show',
+          'fileindex_tile-1': '0',
+          'active_tile-1': 'true',
+          'rotation_tile-1': '0',
+          'x_tile-1': '100',
+          'y_tile-1': '200'
+        }
+      });
+
+      expect(dialog.minimize).toHaveBeenCalled();
+    });
+
+    it('should close dialog and restore tile manager after placement', async () => {
+      (global as any).canvas.scene = mockScene;
+      const mockTileManager = { maximize: jest.fn() };
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(mockTileManager);
+
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [],
+        variables: {},
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: false,
+        hasShowHideAction: false,
+        hasAnyActions: false,
+        resetTriggerHistory: false
+      });
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, {
+        object: {
+          resetTileImage: 'reset.png',
+          resetName: 'Reset',
+          'visibility_tile-1': 'show',
+          'fileindex_tile-1': '0',
+          'active_tile-1': 'true',
+          'rotation_tile-1': '0',
+          'x_tile-1': '100',
+          'y_tile-1': '200'
+        }
+      });
+
+      // Get the click handler
+      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+
+      // Simulate canvas click
+      await clickHandler({
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 300, y: 400 })
+        }
+      });
+
+      expect(dialog.close).toHaveBeenCalled();
+      expect(mockTileManager.maximize).toHaveBeenCalled();
+    });
+
+    it('should remove click handler after placement', async () => {
+      (global as any).canvas.scene = mockScene;
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [],
+        variables: {},
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: false,
+        hasShowHideAction: false,
+        hasAnyActions: false,
+        resetTriggerHistory: false
+      });
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, {
+        object: {
+          resetTileImage: 'reset.png',
+          resetName: 'Reset',
+          'visibility_tile-1': 'show',
+          'fileindex_tile-1': '0',
+          'active_tile-1': 'true',
+          'rotation_tile-1': '0',
+          'x_tile-1': '100',
+          'y_tile-1': '200'
+        }
+      });
+
+      // Get the click handler
+      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+
+      // Simulate canvas click
+      await clickHandler({
+        data: {
+          getLocalPosition: jest.fn().mockReturnValue({ x: 300, y: 400 })
+        }
+      });
+
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', clickHandler);
+    });
+
+    it('should handle wall door states in submission', async () => {
+      (global as any).canvas.scene = mockScene;
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [],
+        variables: {},
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [
+          { entityId: 'wall-1', entityName: 'Door 1', state: 'CLOSED' },
+          { entityId: 'wall-2', entityName: 'Door 2', state: 'LOCKED' }
+        ],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: false,
+        hasShowHideAction: false,
+        hasAnyActions: false,
+        resetTriggerHistory: false
+      });
+
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, {
+        object: {
+          resetTileImage: 'reset.png',
+          resetName: 'Reset',
+          'visibility_tile-1': 'show',
+          'fileindex_tile-1': '0',
+          'active_tile-1': 'true',
+          'rotation_tile-1': '0',
+          'x_tile-1': '100',
+          'y_tile-1': '200',
+          walldoor__0: 'OPEN',
+          walldoor__1: 'CLOSED'
+        }
+      });
+
+      // Should not throw and should process wall door states
+      expect(dialog.minimize).toHaveBeenCalled();
     });
   });
 });
