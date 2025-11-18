@@ -1247,10 +1247,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Re-render to show the item and activity selector
-    const formState = this.captureFormValues();
-    this.render().then(() => {
-      if (formState) this.restoreFormValues(formState);
-    });
+    this._syncFormToState();
+    this.render();
   }
 
   /**
@@ -1266,10 +1264,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dmgTrapActivities = undefined;
 
     // Re-render to show empty drop zone and unlock fields
-    const formState = this.captureFormValues();
-    this.render().then(() => {
-      if (formState) this.restoreFormValues(formState);
-    });
+    this._syncFormToState();
+    this.render();
   }
 
   /**
@@ -1280,10 +1276,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dmgTrapActivityId = select.value;
 
     // Re-render to update fields with new activity data
-    const formState = this.captureFormValues();
-    this.render().then(() => {
-      if (formState) this.restoreFormValues(formState);
-    });
+    this._syncFormToState();
+    this.render();
   }
 
   /**
