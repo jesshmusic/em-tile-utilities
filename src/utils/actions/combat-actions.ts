@@ -117,7 +117,7 @@ export function createTeleportAction(
 }
 
 /**
- * Create an active effect action
+ * Create an active effect action (creates new custom effects)
  * @param effectData - Active effect configuration
  * @returns Monk's Active Tiles action object
  */
@@ -135,6 +135,34 @@ export function createActiveEffectAction(effectData: {
       icon: effectData.icon || 'icons/svg/aura.svg',
       duration: effectData.duration || 0,
       changes: effectData.changes || []
+    },
+    id: foundry.utils.randomID()
+  };
+}
+
+/**
+ * Apply or remove an existing active effect by ID
+ * @param entityId - Entity ID to apply effect to
+ * @param entityName - Entity name for display
+ * @param effectId - Effect ID to apply/remove
+ * @param addEffect - Action to perform ('add', 'remove', 'toggle')
+ * @param alterEffect - Additional effect alteration
+ * @returns Monk's Active Tiles action object
+ */
+export function createApplyEffectAction(
+  entityId: string,
+  entityName: string,
+  effectId: string,
+  addEffect: string,
+  alterEffect?: string
+): any {
+  return {
+    action: 'activeeffect',
+    data: {
+      entity: { id: entityId, name: entityName },
+      effectid: effectId,
+      addeffect: addEffect,
+      altereffect: alterEffect || ''
     },
     id: foundry.utils.randomID()
   };
