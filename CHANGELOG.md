@@ -14,6 +14,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fix switch tile image toggle not working (missing entity field, wrong comparison type, invalid Handlebars helper)
+- Fix invalid Patreon menu registration causing console error on module load
+- Fix setvariable actions missing entity field for proper variable scoping
+- Fix checkvariable using wrong comparison type ('eq' instead of 'all')
+- Fix missing Handlebars 'default' helper by using standard {{#if}} syntax
 - Restore Setup Tasks list and remove Tagger sticky positioning
 - Remove accordion from Tagger section in trap dialog
 - Sync radio button UI with state + remove accordion + full-width footer
@@ -27,6 +32,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Condense CLAUDE.md documentation from 1,825 to 865 lines (53% reduction)
+- Add comprehensive tile-helpers refactoring documentation to CLAUDE.md
 - claude settings
 - replace FormStateManager with React-style state pattern (Issue #38)
 - Complete React-style state refactoring - remove FormStateManager
@@ -35,6 +42,7 @@ All notable changes to this project will be documented in this file.
 
 ### Other
 
+- test: add regression tests for switch setvariable entity field and checkvariable type
 - test: improve teleport-dialog coverage from 33.47% to 65.25%
 - test: improve light-dialog.ts coverage from 85.45% to 97.57%
 - test: improve dialog and utility test coverage to 75%+
