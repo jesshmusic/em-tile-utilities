@@ -15,16 +15,24 @@ export function createRequestRollAction(
   options?: {
     flavor?: string;
     rollmode?: string;
+    silent?: boolean;
+    fastforward?: boolean;
+    usetokens?: string;
+    continue?: string;
   }
 ): any {
   return {
     action: 'monks-tokenbar.requestroll',
     data: {
-      entity: { id: '' },
+      entity: { id: 'token', name: 'Triggering Token' },
       request: rollType,
       dc: dc.toString(),
       flavor: options?.flavor || '',
-      rollmode: options?.rollmode || 'roll'
+      rollmode: options?.rollmode || 'roll',
+      silent: options?.silent ?? false,
+      fastforward: options?.fastforward ?? false,
+      usetokens: options?.usetokens ?? 'fail',
+      continue: options?.continue ?? 'failed'
     },
     id: foundry.utils.randomID()
   };

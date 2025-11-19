@@ -31,13 +31,13 @@ export function createTileImageAction(
 /**
  * Create a show/hide entity action
  * @param entityId - Full entity ID (e.g., "Scene.{sceneId}.Tile.{tileId}")
- * @param hidden - Whether to hide ("hide") or show ("show")
+ * @param hidden - Whether to hide ("hide"), show ("show"), or toggle
  * @param options - Optional configuration
  * @returns Monk's Active Tiles action object
  */
 export function createShowHideAction(
   entityId: string,
-  hidden: 'hide' | 'show',
+  hidden: 'hide' | 'show' | 'toggle',
   options?: {
     collection?: string;
     fade?: number;

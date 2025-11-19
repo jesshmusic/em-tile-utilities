@@ -63,6 +63,8 @@ export function createTeleportAction(
   y: number,
   sceneId?: string,
   options?: {
+    entityId?: string;
+    entityName?: string;
     snap?: boolean;
     deletesource?: boolean;
     remotesnap?: boolean;
@@ -74,6 +76,10 @@ export function createTeleportAction(
   return {
     action: 'teleport',
     data: {
+      entity: {
+        id: options?.entityId ?? 'token',
+        name: options?.entityName ?? 'Triggering Token'
+      },
       location: {
         x,
         y,
