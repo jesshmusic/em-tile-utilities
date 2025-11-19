@@ -1,660 +1,42 @@
 # CLAUDE.md - Technical Reference for AI Assistants
 
-This document contains technical notes, patterns, and conventions for working on the Dorman Lakely's Tile Utilities project.
+This document contains technical notes, patterns, and conventions for working on Dorman Lakely's Tile Utilities.
 
-> **Note**: This is the **developer documentation**. The README.md is written for end users and contains no implementation details. Keep them separate:
+> **Note**: This is **developer documentation**. README.md is for end users.
 >
 > - **README.md**: User-focused, benefits-oriented, no technical jargon
 > - **CLAUDE.md**: Developer-focused, implementation details, code patterns
 
 ## Project Overview
 
-**Dorman Lakely's Tile Utilities** is a FoundryVTT v13 module that provides UI tools for creating interactive tiles using Monk's Active Tiles. Built with TypeScript, uses Foundry's ApplicationV2 API.
+**Dorman Lakely's Tile Utilities** is a FoundryVTT v13 module providing UI tools for creating interactive tiles using Monk's Active Tiles. Built with TypeScript using Foundry's ApplicationV2 API.
 
 **Key Dependencies:**
 
-- FoundryVTT v13+ (uses ApplicationV2 API)
-- Monk's Active Tiles v11.0+ (required module)
+- FoundryVTT v13+ (ApplicationV2 API)
+- Monk's Active Tiles v11.0+ (required)
 
-## Experimental Features Policy
+## Quick Start for AI Assistants
 
-**IMPORTANT**: All new features MUST start under the experimental features flag.
-
-### Why Use Experimental Features?
-
-- Allows testing new features without affecting stable users
-- Provides a safe way to iterate on incomplete implementations
-- Users can opt-in to try new features while understanding they may change
-- Easier to deprecate or remove features that don't work out
-
-### Implementation Steps
-
-When creating a new feature (dialog, tile type, tool, etc.):
-
-1. **Check the Setting** - The experimental features flag is already registered in `src/main.ts`:
-
-   ```typescript
-   game.settings.register('em-tile-utilities', 'experimentalFeatures', {
-     name: 'Experimental Features',
-     hint: 'Enable experimental features...',
-     scope: 'world',
-     config: true,
-     type: Boolean,
-     default: false, // OFF by default
-     requiresReload: true // Prompts user to reload when toggled
-   });
-   ```
-
-2. **Hide UI Elements** - In `tile-manager.ts`, pass the setting to the template:
-
-   ```typescript
-   async _prepareContext(_options: any): Promise<any> {
-     const experimentalFeatures = game.settings.get(
-       'em-tile-utilities',
-       'experimentalFeatures'
-     ) as boolean;
-
-     return {
-       ...context,
-       experimentalFeatures: experimentalFeatures
-     };
-   }
-   ```
-
-3. **Conditionally Render** - In `tile-manager.hbs`, wrap the feature button:
-
-   ```handlebars
-   {{#if experimentalFeatures}}
-     <button type='button' class='create-tile-card' data-action='createNewFeature'>
-       <div class='card-icon'>
-         <i class='fa-solid fa-icon'></i>
-       </div>
-       <div class='card-content'>
-         <h3 class='card-title'>{{localize 'EMPUZZLES.CreateNewFeature'}}</h3>
-         <p class='card-description'>{{localize 'EMPUZZLES.CreateNewFeatureDesc'}}</p>
-       </div>
-     </button>
-   {{/if}}
-   ```
-
-4. **Add Localization** - In `lang/en.json`:
-
-   ```json
-   {
-     "EMPUZZLES": {
-       "CreateNewFeature": "New Feature Name",
-       "CreateNewFeatureDesc": "Description of what the feature does"
-     }
-   }
-   ```
-
-5. **Document as Experimental** - In code comments and commit messages, clearly mark the feature as experimental.
-
-### When to Remove Experimental Flag
-
-Remove the experimental flag when:
-
-- Feature is fully implemented and tested
-- Feature has been used by beta testers without major issues
-- Feature is stable enough for general use
-- Documentation is complete
-
-To remove the flag:
-
-1. Remove the `{{#if experimentalFeatures}}` wrapper from templates
-2. Remove the experimental note from documentation
-3. Update CHANGELOG to indicate the feature is now stable
-4. Increment minor version (e.g., 1.6.0 → 1.7.0)
-
-### Current Experimental Features
-
-- **Check State Tile** - Complex conditional tile that monitors variables and executes different actions based on conditions
-
-## Feature Development Workflow
-
-**IMPORTANT**: All new features must be developed in a feature branch and start behind the experimental features flag.
-
-### Starting a New Feature
-
-1. **Create a Feature Branch from Main**
-
-   Always branch from `main` to ensure you have the latest stable code:
-
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b feat/feature-name
-   ```
-
-2. **Branch Naming Conventions**
-
-   Use prefixes to categorize your work:
-   - `feat/` - New features (e.g., `feat/teleport-tile`, `feat/multi-state-switch`)
-   - `enhancement/` - Improvements to existing features (e.g., `enhancement/switch-animations`)
-   - `fix/` - Bug fixes (e.g., `fix/light-toggle-bug`)
-   - `refactor/` - Code refactoring without behavior changes (e.g., `refactor/tile-helpers`)
-   - `docs/` - Documentation updates (e.g., `docs/api-reference`)
-   - `test/` - Adding or updating tests (e.g., `test/switch-dialog`)
-
-   Use descriptive kebab-case names that clearly indicate what the branch contains.
-
-3. **Put Feature Behind Experimental Flag**
-
-   See the [Experimental Features Policy](#experimental-features-policy) section above for detailed implementation steps. Every new feature MUST:
-   - Be hidden behind the `experimentalFeatures` setting
-   - Be conditionally rendered in templates using `{{#if experimentalFeatures}}`
-   - Be documented as experimental in code comments and commit messages
-
-4. **Development Best Practices**
-   - **Make Small, Focused Commits** - Each commit should represent a single logical change
-   - **Write Descriptive Commit Messages** - Follow the existing style (see `git log` for examples):
-     - Format: `type: description` (e.g., `feat: adds teleport tile`, `fix: resolves switch toggle bug`)
-     - Use present tense ("add" not "added")
-     - Keep first line under 72 characters
-     - Add bullet points for details if needed
-   - **Run Tests Frequently** - Use `npm run watch` and test in Foundry as you develop
-   - **Lint and Format** - Run `npm run lint` and `npm run format` before committing
-   - **Keep CLAUDE.md Updated** - Document new patterns, gotchas, or architectural decisions
-
-5. **Testing Your Feature**
-
-   Before creating a pull request:
-
-   ```bash
-   # Run linting and formatting
-   npm run lint
-   npm run format
-
-   # Build the project
-   npm run build
-
-   # Test in Foundry
-   # 1. Enable experimental features in module settings
-   # 2. Test the new feature thoroughly
-   # 3. Test with experimental features disabled to ensure nothing breaks
-   # 4. Test existing features to ensure no regressions
-   ```
-
-6. **Bump Version Before Creating PR**
-
-   **IMPORTANT**: Version must be bumped as part of your PR, not by the workflow.
-
-   ```bash
-   # Determine the version bump type:
-   # - patch: Bug fixes, documentation (1.6.1 → 1.6.2)
-   # - minor: New features, enhancements (1.6.1 → 1.7.0)
-   # - major: Breaking changes (1.6.1 → 2.0.0)
-
-   # Run the release script
-   npm run release:patch   # or release:minor or release:major
-
-   # This will:
-   # - Update package.json and module.json versions
-   # - Generate CHANGELOG.md entry from commit messages
-   # - Update build-info.json
-
-   # Commit the version bump
-   git add package.json module.json CHANGELOG.md build-info.json
-   git commit -m "chore: bump version to X.X.X"
-
-   # Make sure all changes are committed
-   git status
-   ```
-
-7. **Creating a Pull Request**
-
-   ```bash
-   # Push your branch to GitHub
-   git push -u origin feat/feature-name
-   ```
-
-   Then on GitHub:
-   - Create a pull request from your feature branch to `main`
-   - Write a clear PR description explaining:
-     - What the feature does
-     - Why it's needed
-     - How to test it
-     - Any breaking changes or dependencies
-   - Add screenshots or GIFs if the feature has UI changes
-   - Mark as "experimental" in the PR title if applicable
-   - **Optional**: Add a version label for documentation:
-     - `patch` - Bug fixes, documentation
-     - `minor` - New features, enhancements
-     - `major` - Breaking changes
-
-8. **Pull Request Best Practices**
-   - **Keep PRs Focused** - One feature per PR makes review easier
-   - **Respond to Feedback** - Address review comments promptly
-   - **Update Documentation** - Ensure README.md, CLAUDE.md, and code comments are current
-   - **Squash If Needed** - Consider squashing commits if the history is messy
-
-9. **After Merging**
-
-   Once the PR is merged:
-
-   ```bash
-   # Switch back to main and pull the latest changes
-   git checkout main
-   git pull origin main
-
-   # Delete the local feature branch (optional)
-   git branch -d feat/feature-name
-
-   # Delete the remote feature branch (optional)
-   git push origin --delete feat/feature-name
-   ```
-
-### Feature Branch Examples
-
-**Good branch names:**
-
-- `feat/teleport-tile` - Adding a new teleport tile type
-- `enhancement/switch-sound-effects` - Improving switch audio options
-- `fix/light-color-picker` - Fixing color picker bug in light dialog
-- `refactor/tile-creation-logic` - Refactoring tile helper functions
-- `docs/handlebars-patterns` - Adding Handlebars documentation
-
-**Bad branch names:**
-
-- `new-stuff` - Too vague
-- `john-working` - Not descriptive
-- `fix` - What are you fixing?
-- `tile` - Which tile? What about it?
-
-### When Features Become Stable
-
-When a feature has been tested and is ready to be promoted from experimental to stable:
-
-1. Remove the `{{#if experimentalFeatures}}` wrapper from templates
-2. Update CLAUDE.md to remove it from "Current Experimental Features"
-3. Update CHANGELOG to note the feature is now stable
-4. Create a PR with these changes
-5. After merge, a minor version release will be created automatically (e.g., 1.6.0 → 1.7.0)
-
-## Automated Releases
-
-**IMPORTANT**: Releases are automated via GitHub Actions when PRs are merged to `main`. Version bumps must be done BEFORE creating the PR.
-
-### How It Works
-
-When a pull request is merged into `main`:
-
-1. The `auto-release.yml` workflow automatically triggers
-2. It reads the version from `package.json` (which you already bumped)
-3. It verifies the version is newer than the last tag
-4. The workflow automatically:
-   - Builds the project (`npm run build`)
-   - Creates a `module.zip` archive
-   - Creates a git tag (e.g., `v1.7.0`)
-   - Pushes the tag to GitHub
-   - Creates a GitHub Release with changelog from CHANGELOG.md
-   - Notifies FoundryVTT Package API
-
-**Note**: No commits are pushed to `main` - the version bump is already part of your PR.
-
-### Optional: Repository Labels for Documentation
-
-Labels are **optional** but helpful for documenting what type of change a PR contains:
-
-1. Go to `https://github.com/YOUR-USERNAME/em-tile-utilities/labels`
-2. Create these labels if they don't exist:
-   - **patch** - Color: `#d4c5f9` (purple) - "Bug fixes and minor improvements"
-   - **minor** - Color: `#0e8a16` (green) - "New features and enhancements"
-   - **major** - Color: `#d93f0b` (red) - "Breaking changes"
-
-Alternatively, create them via CLI:
+**Essential Commands:**
 
 ```bash
-gh label create "patch" --description "Bug fixes and minor improvements" --color "d4c5f9"
-gh label create "minor" --description "New features and enhancements" --color "0e8a16"
-gh label create "major" --description "Breaking changes" --color "d93f0b"
+npm run build          # Build TypeScript → dist/main.js
+npm run watch          # Auto-rebuild on changes
+npm run lint           # Check code style
+npm run lint -- --fix  # Auto-fix issues
+npm test               # Run 544 Jest unit tests
+npm run test:watch     # Watch mode
+npm run test:coverage  # Generate coverage report
 ```
 
-### Adding Labels to PRs (Optional)
-
-Labels don't control the version bump (you do that with `npm run release:X`), but they're useful for documentation:
-
-**On GitHub.com:**
-
-1. Open your pull request
-2. On the right sidebar, click "Labels"
-3. Select the label that matches your version bump:
-   - `patch` if you ran `npm run release:patch`
-   - `minor` if you ran `npm run release:minor`
-   - `major` if you ran `npm run release:major`
-
-### Version Bump Guidelines
-
-**Use `patch` (1.6.1 → 1.6.2) for:**
-
-- Bug fixes
-- Performance improvements
-- Documentation updates
-- Code cleanup/refactoring
-- Minor UI tweaks
-
-**Use `minor` (1.6.1 → 1.7.0) for:**
-
-- New tile types
-- New features
-- New dialogs or tools
-- Promoting experimental features to stable
-- Adding new configuration options
-
-**Use `major` (1.6.1 → 2.0.0) for:**
-
-- Breaking API changes
-- Removing features
-- Foundry version requirement changes
-- Major architectural changes
-- Changes that require user migration
-
-### Manual Releases
-
-If you need to trigger a release manually (e.g., after merging without auto-release):
-
-1. Ensure the version has been bumped and merged to `main`
-2. Go to GitHub Actions in your repository
-3. Select "Manual Release" workflow
-4. Click "Run workflow" on the `main` branch
-5. The workflow will create a release from the current version in `package.json`
-
-**Note**: This only works if the version in `package.json` hasn't been released yet. If the tag already exists, the workflow will fail.
-
-### Changelog Generation
-
-The `scripts/release.js` script automatically generates changelog entries from git commit messages:
-
-- **feat:** commits → "Added" section
-- **fix:** commits → "Fixed" section
-- **chore:**, **refactor:**, **update:** commits → "Changed" section
-- Other commits → "Other" section
-
-This is why descriptive commit messages following the conventional format are important!
-
-### Example Workflow
-
-```bash
-# 1. Create feature branch
-git checkout main
-git pull origin main
-git checkout -b feat/teleport-tile
-
-# 2. Develop feature
-# ... make changes ...
-git add .
-git commit -m "feat: adds teleport tile with sound effects"
-
-# 3. Bump version before creating PR
-npm run release:minor
-
-# This generates CHANGELOG from commits and updates versions
-git add package.json module.json CHANGELOG.md build-info.json
-git commit -m "chore: bump version to 1.7.0"
-
-# 4. Push to GitHub
-git push -u origin feat/teleport-tile
-
-# 5. Create PR on GitHub (optionally add 'minor' label for documentation)
-
-# 6. After review, merge PR → Auto-release triggers!
-
-# 7. GitHub Actions automatically:
-#    - Reads version 1.7.0 from package.json
-#    - Builds the project
-#    - Creates git tag v1.7.0
-#    - Creates GitHub Release with your CHANGELOG
-#    - Publishes to Foundry Package API
-```
-
-## GitHub Workflows
-
-The project uses GitHub Actions for automated testing, building, and releases. All workflows are in `.github/workflows/`.
-
-### Workflow Overview
-
-```
-.github/workflows/
-├── test.yml          # Runs tests on PR and push
-├── auto-release.yml  # Creates releases on PR merge
-└── release.yml       # Manual release trigger
-```
-
-### test.yml - Automated Testing
-
-**Triggers:**
-
-- Pull requests to `main` or `develop`
-- Pushes to `main` or `develop`
-
-**Jobs:**
-
-1. **Run Tests** (Matrix: Node 18.x, 20.x)
-   - Checkout code
-   - Setup Node.js with cache
-   - Install dependencies (`npm ci`)
-   - Run tests (`npm run test:ci`)
-   - Upload coverage to Codecov (Node 20.x only)
-
-2. **Lint & Type Check**
-   - Checkout code
-   - Setup Node.js 20.x with cache
-   - Install dependencies (`npm ci`)
-   - Run build (`npm run build`)
-
-**Configuration:**
-
-```yaml
-name: Tests
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run test:ci
-```
-
-**What it validates:**
-
-- All tests pass on multiple Node versions
-- Code builds without errors
-- Test coverage is tracked
-
-### auto-release.yml - Automated Releases
-
-**Triggers:**
-
-- Pull request merged to `main`
-
-**Workflow Steps:**
-
-1. **Checkout code** with full git history
-2. **Get version** from `package.json`
-3. **Verify version bump** - Fails if version wasn't incremented
-4. **Install dependencies** with `npm ci`
-5. **Build project** with `npm run build`
-6. **Create module.zip** with necessary files
-7. **Create git tag** (e.g., `v1.13.0`)
-8. **Push tag** to GitHub
-9. **Extract changelog** for this version
-10. **Create GitHub Release** with changelog and artifacts
-11. **Notify FoundryVTT API** about new version
-
-**Key Features:**
-
-- Only runs if PR was actually merged (not just closed)
-- Verifies version was bumped before proceeding
-- Automatically extracts relevant changelog section
-- Notifies Foundry Package API for automatic updates
-
-**Permissions Required:**
-
-- `contents: write` - To create tags and releases
-- `FOUNDRY_PACKAGE_TOKEN` secret - For Foundry API notification
-
-**What it does NOT do:**
-
-- Does not modify any code files
-- Does not commit anything to `main`
-- Only creates tags and releases from existing code
-
-### release.yml - Manual Releases
-
-**Triggers:**
-
-- Manual workflow dispatch from GitHub Actions UI
-
-**Use Cases:**
-
-- Testing release process
-- Recovering from failed auto-release
-- Creating releases for older versions
-
-**Workflow:**
-Same as auto-release.yml, but:
-
-- Triggered manually instead of on PR merge
-- Includes check to prevent duplicate tags
-- Useful for troubleshooting release issues
-
-**How to Use:**
-
-1. Go to Actions tab in GitHub
-2. Select "Manual Release" workflow
-3. Click "Run workflow"
-4. Select `main` branch
-5. Click green "Run workflow" button
-
-### GitHub Copilot PR Reviews
-
-The project uses GitHub Copilot for automated PR code review.
-
-**What Copilot Reviews:**
-
-- Code quality and best practices
-- Potential bugs and type safety issues
-- Performance concerns
-- Unused variables and dead code
-- File formatting and readability
-
-**Handling Copilot Suggestions:**
-
-When Copilot comments on your PR:
-
-1. **Read all suggestions carefully** - Even "nitpick" comments can be valuable
-2. **Evaluate each suggestion:**
-   - Does it improve code quality?
-   - Does it fix a real bug?
-   - Is it worth the change?
-
-3. **Implement accepted suggestions:**
-
-   ```bash
-   # Make fixes
-   git add .
-   git commit -m "fix: implement Copilot PR review suggestions"
-   git push
-   ```
-
-4. **Resolve Copilot comments:**
-
-   Use the GitHub CLI or GraphQL API to mark threads as resolved:
-
-   ```bash
-   # Get review thread IDs
-   gh api graphql -f query='
-   query {
-     repository(owner: "USER", name: "REPO") {
-       pullRequest(number: PR_NUMBER) {
-         reviewThreads(first: 10) {
-           nodes {
-             id
-             isResolved
-             comments(first: 1) {
-               nodes { path body }
-             }
-           }
-         }
-       }
-     }
-   }'
-
-   # Resolve threads
-   gh api graphql -f query='
-   mutation {
-     resolveReviewThread(input: {threadId: "THREAD_ID"}) {
-       thread { id isResolved }
-     }
-   }'
-   ```
-
-**Common Copilot Suggestions:**
-
-1. **Version mismatches** - package.json vs package-lock.json
-2. **Type safety issues** - Unsafe type assertions
-3. **Validation gaps** - Missing form validation
-4. **Code formatting** - Long lines, complex conditionals
-5. **Dead code** - Unused variables or imports
-
-**Best Practice:**
-
-- Address all Copilot suggestions before merging
-- Mark threads as resolved after implementing fixes
-- Document why you're NOT implementing a suggestion if you disagree
-
-### Workflow Permissions
-
-The `.claude/settings.local.json` file controls which bash commands can run without asking:
-
-**Auto-allowed (Read-only operations):**
-
-- `npm run build`, `lint`, `format`, `test`
-- `git status`, `git diff`, `git log`, `git fetch`
-- `gh pr view`, `gh pr checks`, `gh pr diff`
-- Web searches and fetches
-
-**Requires Approval (Destructive operations):**
-
-- `git add`, `git commit`, `git push`
-- `git rebase`, `git stash`, `git merge`
-- `npm install` (modifies package files)
-- `npm run release:*` (version bumps)
-- `gh pr create` (creates PRs)
-- `brew install` (system changes)
-
-**Why This Matters:**
-
-- Prevents accidental commits or pushes
-- Ensures you review changes before they're permanent
-- Gives you control over git history
-
-**Updating Permissions:**
-
-If you need to add a new command pattern:
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash(my-safe-command:*)"],
-    "ask": ["Bash(my-destructive-command:*)"]
-  }
-}
-```
+**Key Patterns:**
+
+- Dialogs extend `HandlebarsApplicationMixin(ApplicationV2)`
+- Tile creation uses modular creators (switch, light, trap, etc.)
+- Action builders create type-safe Monk's Active Tiles actions
+- All files in `src/` directory (TypeScript)
+- Tests in `tests/` directory (Jest + ts-jest)
 
 ## Architecture
 
@@ -662,61 +44,339 @@ If you need to add a new command pattern:
 
 ```
 src/
-├── main.ts                    # Module entry point, hooks, toolbar registration
+├── main.ts                    # Module entry, hooks, toolbar
 ├── dialogs/                   # ApplicationV2 dialog implementations
-│   ├── switch-dialog.ts       # Switch tile creator
-│   ├── light-dialog.ts        # Light tile creator
-│   ├── reset-dialog.ts        # Reset tile creator
-│   ├── variables-viewer.ts    # Scene variables viewer
-│   └── tile-manager.ts        # Tile management UI
+│   ├── switch-dialog.ts
+│   ├── light-dialog.ts
+│   ├── trap-dialog.ts
+│   ├── teleport-dialog.ts
+│   ├── reset-dialog.ts
+│   ├── combat-trap-dialog.ts
+│   ├── check-state-dialog.ts
+│   ├── tile-manager.ts
+│   └── variables-viewer.ts
 ├── utils/
-│   └── tile-helpers.ts        # Core tile creation functions
+│   ├── helpers/              # Utility functions
+│   │   ├── naming-helpers.ts
+│   │   ├── tag-helpers.ts
+│   │   ├── grid-helpers.ts
+│   │   ├── folder-helpers.ts
+│   │   └── module-checks.ts
+│   ├── actions/              # Action builders (21+)
+│   │   ├── tile-actions.ts
+│   │   ├── combat-actions.ts
+│   │   ├── variable-actions.ts
+│   │   ├── flow-control-actions.ts
+│   │   ├── common-actions.ts
+│   │   ├── door-actions.ts
+│   │   └── monks-tokenbar-actions.ts
+│   ├── builders/             # Data structure builders
+│   │   ├── base-tile-builder.ts
+│   │   ├── monks-config-builder.ts
+│   │   └── entity-builders.ts
+│   └── creators/             # Tile creation (7 creators)
+│       ├── switch-creator.ts
+│       ├── light-creator.ts
+│       ├── trap-creator.ts
+│       ├── teleport-creator.ts
+│       ├── reset-creator.ts
+│       ├── combat-trap-creator.ts
+│       ├── check-state-creator.ts
+│       └── index.ts
 └── types/
-    ├── foundry.d.ts           # Foundry API type definitions
-    └── module.ts              # Module-specific types
+    ├── foundry.d.ts          # Foundry API types
+    └── module.ts             # Module types
 
-templates/                     # Handlebars templates (one per dialog)
-styles/dialogs.css            # All dialog styles
-lang/en.json                  # Localization strings
-dist/main.js                  # Build output (IIFE bundle)
+templates/                    # Handlebars templates
+styles/dialogs.css           # All dialog styles
+lang/en.json                 # Localization
+dist/main.js                 # Build output (IIFE)
 ```
 
 ### Build System
 
 - **Vite** bundles TypeScript → single IIFE at `dist/main.js`
-- Configuration in `vite.config.ts` with library mode (IIFE format for FoundryVTT)
-- Custom plugin in Vite config increments build number on each build
+- Configuration in `vite.config.ts` (library mode, IIFE format)
+- Custom plugin increments build number on each build
 - `build-info.json` tracks build number (auto-generated)
-- Source maps enabled with inline sources for debugging
-- Scripts: `npm run build`, `npm run watch`, `npm run clean`
-- Release scripts: `npm run release:patch|minor|major`
+- Source maps enabled with inline sources
+- Scripts: `build`, `watch`, `clean`, `release:patch|minor|major`
 
-**Key Vite Configuration:**
+## Tile-Helpers Refactoring - Modular Architecture
 
-- Library mode with `formats: ['iife']` for FoundryVTT compatibility
-- Global name: `EMPuzzlesAndTrapTiles`
-- Watch mode: `vite build --watch` for development
-- TypeScript support built-in (no plugin needed)
-- JSON imports natively supported
+### Before & After
+
+**Before (v1.15.x):**
+
+- Single `tile-helpers.ts` file: 2,502 lines
+- All tile creation in one monolithic file
+- Significant code duplication
+- Hard to maintain and extend
+
+**After (v1.16.0+):**
+
+- Modular 4-layer architecture: helpers → actions → builders → creators
+- 7 creator modules (1,523 lines total)
+- 21+ reusable action builders
+- Net deletion: 1,026 lines of code
+- Zero code duplication
+
+### Module Organization
+
+**Layer 1: Helpers** (5 modules)
+
+- `naming-helpers.ts` - Tile numbering, name generation
+- `tag-helpers.ts` - Tagger integration, unique tag generation
+- `grid-helpers.ts` - Grid sizing, position calculations
+- `folder-helpers.ts` - Folder creation, organization
+- `module-checks.ts` - Check for Monk's Token Bar, Tagger, etc.
+
+**Layer 2: Action Builders** (21+ builders in 7 modules)
+
+- Type-safe functions that return Monk's Active Tiles action objects
+- Examples: `createPlaySoundAction`, `createHurtHealAction`, `createTeleportAction`
+- Enforce correct data structure and provide defaults
+- Import from `utils/actions`
+
+**Layer 3: Builders** (3 modules)
+
+- `base-tile-builder.ts` - Base tile data structure
+- `monks-config-builder.ts` - Monk's Active Tiles flags
+- `entity-builders.ts` - Ambient lights, sounds, tokens, actors
+
+**Layer 4: Creators** (7 creators)
+
+- High-level tile creation functions
+- Combine helpers, builders, and actions
+- Handle complete tile creation flow
+- Examples: `createSwitchTile`, `createTrapTile`, `createCombatTrapTile`
+
+### Common Action Builder Patterns
+
+```typescript
+// Simple action - use builder
+import { createPlaySoundAction } from '../actions';
+actions.push(createPlaySoundAction('sound.ogg'));
+
+// Action with options - use builder with config
+import { createHurtHealAction } from '../actions';
+actions.push(
+  createHurtHealAction('-[[2d6]]', {
+    entity: { id: 'token', name: 'Triggering Token' },
+    chatmessage: true
+  })
+);
+
+// Complex action with unsupported fields - use raw object
+actions.push({
+  action: 'teleport',
+  data: {
+    entity: { id: 'token', name: 'Triggering Token' },
+    location: { x, y, sceneId: scene.id },
+    position: 'random', // Not supported by builder
+    avoidtokens: true // Not supported by builder
+  },
+  id: foundry.utils.randomID()
+});
+```
+
+### Key Action Builders Reference
+
+**Tile Actions:**
+
+- `createActivateAction(entityId, mode, options)` - Activate/deactivate/toggle
+- `createShowHideAction(entityId, hidden, options)` - Show/hide/toggle
+- `createTileImageAction(entityId, select)` - Change tile image ('next', 'previous', index)
+- `createMoveTokenAction(entityId, x, y, options)` - Move tile/token
+
+**Combat Actions:**
+
+- `createHurtHealAction(amount, options)` - Damage/heal (negative = damage)
+- `createTeleportAction(x, y, sceneId, options)` - Teleport to position
+- `createAttackAction(target, targetName, actor, actorName, itemId, name)` - Run attack
+- `createApplyEffectAction(entityId, name, effectId, action, alter)` - Apply/remove effect
+
+**Variable Actions:**
+
+- `createSetVariableAction(name, value, scope)` - Set variable (supports Handlebars)
+- `createCheckVariableAction(name, value, failAnchor, comparison)` - Conditional check
+
+**Flow Control:**
+
+- `createAnchorAction(tag, stop)` - Jump target
+- `createStopAction()` - Stop execution
+- `createPauseAction(pause)` - Pause game
+- `createTriggerAction(entityId, options)` - Trigger another tile
+
+**Common Actions:**
+
+- `createChatMessageAction(text, options)` - Send chat message
+- `createPlaySoundAction(path, options)` - Play sound
+- `createChangeDoorAction(wallId, state)` - Open/close/lock door
+
+**Monk's Token Bar Actions:**
+
+- `createRequestRollAction(type, dc, options)` - Saving throw/ability check
+- `createFilterRequestAction(options)` - Split tokens by pass/fail
+
+### Refactoring Gotchas
+
+1. **Action Builder Signatures Must Match Exactly**
+   - `createTriggerAction` takes `(entityId, options)` not `(entityId, name, id)`
+   - `createActivateAction` collection goes in options: `{collection: 'tiles'}`
+   - `createFilterRequestAction` takes object with `{passed, failed, resume}` anchors
+
+2. **Property Names Are Lowercase in Monk's Config**
+   - Use `minrequired` not `minRequired`
+   - Use `allowpaused` not `allowPaused`
+   - Builders handle this automatically
+
+3. **Some Actions Need Raw Objects**
+   - Complex teleport with `position: 'random'` not supported by builder
+   - Move token with `position` field not in builder options
+   - Use raw action object with `foundry.utils.randomID()`
+
+4. **Test Imports Must Update**
+   - Change `from '../../src/utils/tile-helpers'` to `from '../../src/utils/creators'`
+   - Helper functions like `getNextTileNumber` moved to `utils/helpers/naming-helpers`
+   - Mock `ModuleChecks` not `TileHelpers` for `hasMonksTokenBar`
+
+5. **Dynamic Imports in Tests**
+   ```typescript
+   // Update all dynamic imports
+   const { createTrapTile } = await import('../../src/utils/creators');
+   const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
+   ```
+
+### Adding New Tile Types
+
+When adding a new tile creator:
+
+1. **Create action sequence** using action builders
+2. **Build tile data** using `createBaseTileData`
+3. **Build Monk's config** using `createMonksConfig`
+4. **Create entities** if needed (lights, sounds) using entity builders
+5. **Add Tagger integration** using tag helpers
+6. **Export from `creators/index.ts`**
+7. **Update imports** in dialogs to use new creator
+8. **Add tests** following existing patterns
+
+## Experimental Features Policy
+
+**IMPORTANT**: All new features MUST start behind the experimental features flag.
+
+### Why Experimental Features
+
+- Allows testing without affecting stable users
+- Safe iteration on incomplete implementations
+- Users opt-in knowingly
+- Easier to deprecate features that don't work
+
+### Implementation
+
+```typescript
+// 1. Setting already registered in main.ts
+game.settings.get('em-tile-utilities', 'experimentalFeatures') as boolean
+
+// 2. Pass to template
+async _prepareContext(_options: any): Promise<any> {
+  const experimentalFeatures = game.settings.get('em-tile-utilities', 'experimentalFeatures');
+  return { ...context, experimentalFeatures };
+}
+
+// 3. Conditionally render in template
+{{#if experimentalFeatures}}
+  <button data-action="newFeature">New Feature</button>
+{{/if}}
+
+// 4. Add localization in lang/en.json
+```
+
+### When to Remove Flag
+
+Remove experimental flag when:
+
+- Feature fully implemented and tested
+- Beta tested without major issues
+- Stable enough for general use
+- Documentation complete
+
+Then: Remove `{{#if}}` wrapper, update CHANGELOG, increment minor version.
+
+**Current Experimental Features:**
+
+- Check State Tile (complex conditional branching)
+
+## Development Workflow
+
+### Branch Naming
+
+Use prefixes:
+
+- `feat/` - New features
+- `enhancement/` - Improvements
+- `fix/` - Bug fixes
+- `refactor/` - Code refactoring
+- `docs/` - Documentation
+- `test/` - Tests
+
+Always branch from `main`, use descriptive kebab-case names.
+
+### Version Bumps
+
+**IMPORTANT**: Version must be bumped BEFORE creating PR using release scripts.
+
+```bash
+npm run release:patch  # Bug fixes (1.16.1 → 1.16.2)
+npm run release:minor  # New features (1.16.1 → 1.17.0)
+npm run release:major  # Breaking changes (1.16.1 → 2.0.0)
+```
+
+This updates `package.json`, `module.json`, generates CHANGELOG from commits.
+
+### Commit Messages
+
+Follow conventional format:
+
+- `feat: description` - New features
+- `fix: description` - Bug fixes
+- `refactor: description` - Code refactoring
+- `test: description` - Testing
+- `docs: description` - Documentation
+- `chore: description` - Build, dependencies
+
+Use present tense, keep first line under 72 characters.
+
+### Automated Releases
+
+When PR merges to `main`:
+
+1. GitHub Actions reads version from `package.json`
+2. Verifies version was bumped
+3. Builds project (`npm run build`)
+4. Creates `module.zip`
+5. Creates git tag (e.g., `v1.17.0`)
+6. Creates GitHub Release with changelog
+7. Notifies FoundryVTT Package API
+
+**No commits pushed to main** - version bump is part of your PR.
+
+Manual release: Go to Actions → Manual Release → Run workflow on `main`.
 
 ## Foundry VTT v13 Patterns
 
 ### ApplicationV2 Best Practices
 
-**Key Principles:**
+1. **Use private static methods for handlers** (`#methodName`)
+2. **Minimize dialog during canvas placement** so user can see
+3. **Clean up event handlers** after use (canvas clicks)
+4. **Restore parent dialog** if opened from Tile Manager
+5. **Use form-footer.hbs** for consistent buttons
 
-1. **Use Private Static Methods for Handlers** - Form submission and action handlers should be private static methods using `#` syntax
-2. **Minimize on Placement** - When waiting for canvas click, minimize the dialog so user can see
-3. **Clean Up Event Handlers** - Always remove canvas event listeners after use
-4. **Restore Parent Dialog** - If dialog was opened from Tile Manager, restore it after creation
-5. **Consistent Button Structure** - Use form-footer.hbs with button array for consistency
-
-### ApplicationV2 Dialogs
-
-All dialogs extend `HandlebarsApplicationMixin(ApplicationV2)`:
+### ApplicationV2 Dialog Pattern
 
 ```typescript
-const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
@@ -725,15 +385,15 @@ export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     window: {
       contentClasses: ['standard-form'],
       icon: 'fa-solid fa-icon',
-      title: 'EMPUZZLES.LocalizationKey'
+      title: 'EMPUZZLES.Title'
     },
     position: { width: 480 },
     form: {
       closeOnSubmit: true,
-      handler: MyDialog.#onSubmit // Private static method
+      handler: MyDialog.#onSubmit  // Private static method
     },
     actions: {
-      actionName: MyDialog.#onActionName // For data-action buttons
+      myAction: MyDialog.#onMyAction
     }
   };
 
@@ -749,7 +409,7 @@ export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
-    return { ...context, myData: 'value' };
+    return { ...context, myData: 'value', buttons: [...] };
   }
 
   _onRender(context: any, options: any): void {
@@ -766,57 +426,17 @@ export class MyDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
 **Key Points:**
 
-- Use private static methods (`#methodName`) for form handlers and actions
-- Always call `super._prepareContext()` and spread the result
-- `_onRender` is where you set up DOM event listeners
-- `formData.object` contains form field values as an object
-
-**Form Footer Pattern:**
-
-Use a reusable footer template for consistent buttons:
-
-```typescript
-// In _prepareContext:
-return {
-  ...context,
-  buttons: [
-    {
-      type: 'submit',
-      icon: 'fa-solid fa-check',
-      label: 'EMPUZZLES.Create'
-    },
-    {
-      type: 'button',
-      action: 'cancel',
-      icon: 'fa-solid fa-times',
-      label: 'EMPUZZLES.Cancel'
-    }
-  ]
-};
-```
-
-```handlebars
-{{!-- templates/form-footer.hbs --}}
-<footer class="form-footer">
-  {{#each buttons as |button|}}
-  <button type="{{button.type}}" {{#if button.action}}data-action="{{button.action}}"{{/if}}>
-    {{#if button.icon}}<i class="{{button.icon}}"></i>{{/if}}
-    {{localize button.label}}
-  </button>
-  {{/each}}
-</footer>
-```
+- Private static methods (`#methodName`)
+- Always call `super._prepareContext()` and spread
+- `_onRender` for DOM event listeners
+- `formData.object` contains form values
 
 ### File Pickers
-
-Standard pattern for file picker buttons:
 
 ```typescript
 _onRender(context: any, options: any): void {
   super._onRender(context, options);
-
-  const filePickerButtons = this.element.querySelectorAll('.file-picker');
-  filePickerButtons.forEach((button: Element) => {
+  this.element.querySelectorAll('.file-picker').forEach((button: Element) => {
     (button as HTMLElement).onclick = this._onFilePicker.bind(this);
   });
 }
@@ -824,12 +444,12 @@ _onRender(context: any, options: any): void {
 async _onFilePicker(event: Event): Promise<void> {
   event.preventDefault();
   const button = event.currentTarget as HTMLElement;
-  const target = button.dataset.target;  // Input name to update
+  const target = button.dataset.target;  // Input name
   const type = button.dataset.type;      // 'imagevideo' or 'audio'
 
   const input = this.element.querySelector(`input[name="${target}"]`) as HTMLInputElement;
   const fp = new (FilePicker as any)({
-    type: type,
+    type,
     current: input.value,
     callback: (path: string) => {
       input.value = path;
@@ -840,29 +460,15 @@ async _onFilePicker(event: Event): Promise<void> {
 }
 ```
 
-### Canvas Click Placement Pattern
-
-For placing tiles on canvas after dialog submission:
+### Canvas Click Placement
 
 ```typescript
-static async #onSubmit(
-  this: SwitchConfigDialog, // Type the 'this' context
-  _event: SubmitEvent,
-  _form: HTMLFormElement,
-  formData: any
-): Promise<void> {
+static async #onSubmit(this: MyDialog, _event: SubmitEvent, _form: HTMLFormElement, formData: any): Promise<void> {
   const scene = canvas.scene;
-  if (!scene) {
-    ui.notifications.error('No active scene!');
-    return;
-  }
-
   const data = formData.object;
 
-  // IMPORTANT: Minimize dialog so user can see canvas
-  this.minimize();
-
-  ui.notifications.info('Click on the canvas to place the tile...');
+  this.minimize();  // IMPORTANT: Let user see canvas
+  ui.notifications.info('Click on canvas to place tile...');
 
   const handler = async (clickEvent: any) => {
     const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
@@ -870,437 +476,201 @@ static async #onSubmit(
 
     await createTile(scene, data, snapped.x, snapped.y);
 
-    ui.notifications.info('Tile created!');
-
-    // Clean up: Remove event listener
+    // Clean up
     (canvas as any).stage.off('click', handler);
-
-    // Close this dialog
     this.close();
 
-    // Restore parent dialog if it exists
+    // Restore parent if exists
     const tileManager = getActiveTileManager();
-    if (tileManager) {
-      tileManager.maximize();
-    }
+    if (tileManager) tileManager.maximize();
   };
 
   (canvas as any).stage.on('click', handler);
 }
 ```
 
-**Key Points:**
-
-- Type `this` in the handler signature for proper context
-- Always minimize dialog before canvas placement
-- Use `getSnappedPoint` with `{ mode: 2 }` for center snapping
-- Clean up event listeners with `.off()` after placement
-- Close dialog and restore parent (Tile Manager) after creation
-
 ## Monk's Active Tiles Integration
 
 ### Tile Data Structure
-
-All created tiles include `flags['monks-active-tiles']` with this structure:
 
 ```typescript
 flags: {
   "monks-active-tiles": {
     name: "Tile Name",
-    active: true,                    // Whether tile is active
+    active: true,
     record: false,
-    restriction: "all",              // Who can trigger: "all", "gm", "player"
+    restriction: "all",        // "all", "gm", "player"
     controlled: "all",
-    trigger: ["dblclick"],           // Trigger types: "dblclick", "click", "darkness"
+    trigger: ["dblclick"],     // "dblclick", "click", "enter", "darkness"
     allowpaused: false,
-    usealpha: false,
-    pointer: true,                   // Show pointer cursor on hover
+    pointer: true,             // Show cursor on hover
     vision: true,
-    pertoken: false,
-    minrequired: null,
+    minrequired: null,         // Minimum tokens to trigger
     cooldown: null,
     chance: 100,
-    fileindex: 0,                    // Current file index for tile image
-    actions: [],                     // Array of action objects
-    files: [],                       // Array of images for tile states
-    variables: {}                    // Scene variables used by this tile
+    fileindex: 0,              // Current image index
+    actions: [],               // Array of action objects
+    files: [],                 // Array of images
+    variables: {}              // Scene variables
   }
 }
 ```
 
-### Common Actions
+### Common Actions (Use Builders)
 
 **Play Sound:**
 
 ```typescript
-{
-  action: "playsound",
-  data: {
-    audiofile: "path/to/sound.ogg",
-    audiofor: "everyone",
-    volume: 1,
-    loop: false,
-    fade: 0.25
-  },
-  id: foundry.utils.randomID()
-}
+createPlaySoundAction('path.ogg', {
+  volume: 1,
+  loop: false,
+  fade: 0.25
+});
 ```
 
 **Set Variable:**
 
 ```typescript
-{
-  action: "setvariable",
-  data: {
-    name: "variableName",
-    value: "{{not variable.variableName}}",  // Handlebars expression
-    scope: "scene"
-  },
-  id: foundry.utils.randomID()
-}
+createSetVariableAction('myVar', '{{not variable.myVar}}', 'scene');
 ```
 
-**Check Value (Conditional):**
+**Check Variable:**
 
 ```typescript
-{
-  action: "checkvalue",
-  data: {
-    name: "variable.variableName",
-    value: "true",
-    fail: "anchorTag"  // Jump to anchor if false
-  },
-  id: foundry.utils.randomID()
-}
+createCheckVariableAction('variable.myVar', 'true', 'failAnchor', 'eq');
 ```
 
-**Anchor (Jump Target):**
+**Anchor:**
 
 ```typescript
-{
-  action: "anchor",
-  data: {
-    tag: "anchorTag",
-    stop: false
-  },
-  id: foundry.utils.randomID()
-}
+createAnchorAction('anchorTag', false); // false = don't stop
 ```
 
 **Change Tile Image:**
 
 ```typescript
-{
-  action: "tileimage",
-  data: {
-    entity: { id: "tile", name: "This Tile" },  // "tile" = current tile
-    select: "next",  // "next", "previous", or numeric fileindex
-    transition: "none"
-  },
-  id: foundry.utils.randomID()
-}
-```
-
-**Toggle Entity Active State:**
-
-```typescript
-{
-  action: "activate",
-  data: {
-    entity: {
-      id: "Scene.{sceneId}.AmbientLight.{lightId}",
-      name: "Light Name"
-    },
-    activate: "toggle",  // "activate", "deactivate", "toggle"
-    collection: "lights"
-  },
-  id: foundry.utils.randomID()
-}
-```
-
-**Move Token/Tile:**
-
-```typescript
-{
-  action: "movetoken",
-  data: {
-    entity: { id: "Scene.{sceneId}.Tile.{tileId}" },
-    duration: 0,
-    x: "100",
-    y: "200",
-    location: { id: "", x: 100, y: 200, name: "[x:100 y:200]" },
-    snap: true,
-    speed: 6,
-    trigger: false
-  },
-  id: foundry.utils.randomID()
-}
-```
-
-**Show/Hide Entity:**
-
-```typescript
-{
-  action: "showhide",
-  data: {
-    entity: { id: "Scene.{sceneId}.Tile.{tileId}" },
-    collection: "tiles",
-    hidden: "hide",  // "hide" or "show"
-    fade: 0
-  },
-  id: foundry.utils.randomID()
-}
-```
-
-**Change Door State:**
-
-```typescript
-{
-  action: "changedoor",
-  data: {
-    entity: { id: "Scene.{sceneId}.Wall.{wallId}" },
-    type: "nothing",
-    state: "open",  // "open", "closed", "locked"
-    movement: "nothing",
-    light: "nothing",
-    sight: "nothing",
-    sound: "nothing"
-  },
-  id: foundry.utils.randomID()
-}
-```
-
-**Chat Message:**
-
-```typescript
-{
-  action: "chatmessage",
-  data: {
-    text: "Message text with {{variable.name}}",
-    flavor: "",
-    whisper: "gm",  // "gm", "token", or ""
-    language: ""
-  },
-  id: foundry.utils.randomID()
-}
+createTileImageAction('tile', 'next'); // 'next', 'previous', or index
 ```
 
 ### Entity ID Format
 
-When referencing entities in actions:
-
 - Current tile: `{ id: "tile", name: "This Tile" }`
-- Other tile: `{ id: "Scene.{sceneId}.Tile.{tileId}", name: "Tile: {tileId}" }`
+- Other tile: `{ id: "Scene.{sceneId}.Tile.{tileId}" }`
 - Light: `{ id: "Scene.{sceneId}.AmbientLight.{lightId}" }`
 - Wall: `{ id: "Scene.{sceneId}.Wall.{wallId}" }`
+- Token: `{ id: "Scene.{sceneId}.Token.{tokenId}" }`
 
 ## Tile Creation Patterns
 
-### Standard Tile Data Template
+### Standard Tile Data
+
+Use `createBaseTileData` builder:
 
 ```typescript
-const tileData = {
-  texture: {
-    src: imagePath,
-    anchorX: 0.5,
-    anchorY: 0.5,
-    fit: 'fill',
-    scaleX: 1,
-    scaleY: 1,
-    rotation: 0,
-    tint: '#ffffff',
-    alphaThreshold: 0.75
-  },
+const baseTile = createBaseTileData({
+  textureSrc: imagePath,
   width: gridSize,
   height: gridSize,
   x: tileX,
   y: tileY,
-  elevation: 0,
-  sort: 0, // Z-order for rendering
-  occlusion: { mode: 0, alpha: 0 },
-  rotation: 0,
-  alpha: 1,
-  hidden: false,
-  locked: false,
-  restrictions: { light: false, weather: false },
-  video: { loop: true, autoplay: true, volume: 0 },
-  flags: {
-    'monks-active-tiles': {
-      /* ... */
-    }
-  },
-  visible: true,
-  img: imagePath
-};
-
-await scene.createEmbeddedDocuments('Tile', [tileData]);
+  hidden: false
+});
 ```
 
 ### Grid Sizing
 
 ```typescript
-const gridSize = (canvas as any).grid.size; // 1 grid square
+import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
+
+const gridSize = getGridSize(); // 1 grid square
 const largeSize = gridSize * 2; // 2x2 grid squares
+const position = getDefaultPosition(x, y); // Scene center if undefined
 ```
 
 ### Creating Lights
 
+Use `createAmbientLightData` builder:
+
 ```typescript
-const lightData = {
-  x: centerX,
-  y: centerY,
-  rotation: 0,
-  elevation: 0,
-  walls: true,
-  vision: false,
-  config: {
-    angle: 360,
-    color: '#ffffff', // null for no color
-    dim: 40, // Dim light radius
-    bright: 20, // Bright light radius
-    alpha: 0.5, // Color intensity
-    negative: false,
-    priority: 0,
-    coloration: 1,
-    attenuation: 0.5,
-    luminosity: 0.5,
-    saturation: 0,
-    contrast: 0,
-    shadows: 0,
-    animation: { type: null, speed: 5, intensity: 5, reverse: false },
-    darkness: { min: 0, max: 1 } // Darkness range for activation
-  },
+const lightData = createAmbientLightData(centerX, centerY, {
+  color: '#ffffff',
+  dimLight: 40,
+  brightLight: 20,
+  colorIntensity: 0.5,
+  useDarkness: false,
+  darknessMin: 0,
   hidden: false
-};
+});
 
 const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
-const lightId = (light as any).id;
 ```
 
-## Handlebars Template Patterns
+## Testing & Development
 
-### Standard Form Structure
+### Test Organization
 
-```handlebars
-<div class='form-group'>
-  <label for='fieldName'>{{localize 'EMPUZZLES.Label'}}</label>
-  <input type='text' name='fieldName' value='{{defaultValue}}' />
-  <p class='hint'>{{localize 'EMPUZZLES.Hint'}}</p>
-</div>
+```
+tests/
+├── dialogs/          # Unit tests for ApplicationV2 dialogs (9 files)
+├── utils/            # Unit tests for tile helpers (2 files)
+├── integration/      # Template rendering integration tests (3 files)
+├── helpers/          # Test utilities (template-helper.ts)
+├── mocks/            # Foundry VTT mocks (foundry.ts)
+├── setup.ts          # Jest setup
+└── README.md         # Test documentation
 ```
 
-### File Picker Button
+**Test Infrastructure:**
 
-```handlebars
-<div class='form-group'>
-  <label for='imagePath'>{{localize 'EMPUZZLES.Image'}}</label>
-  <div class='file-picker-group'>
-    <input type='text' name='imagePath' value='{{imagePath}}' />
-    <button type='button' class='file-picker' data-target='imagePath' data-type='imagevideo'>
-      <i class='fas fa-file-image'></i>
-    </button>
-  </div>
-</div>
-```
+- Jest 30.2.0 with ts-jest
+- Node environment (not jsdom)
+- 544 tests total
+- Coverage: 34% overall, 83% on core utilities
 
-### Conditional Content
-
-```handlebars
-{{#if hasTiles}}
-  <div class='tile-list'>
-    {{#each tiles as |tile|}}
-      <div class='tile-entry' data-tile-id='{{tile.id}}'>
-        {{#if tile.image}}
-          <img src='{{tile.image}}' class='tile-thumbnail' alt='' />
-        {{else}}
-          <img
-            src='icons/svg/hazard.svg'
-            class='tile-thumbnail tile-thumbnail-placeholder'
-            alt=''
-          />
-        {{/if}}
-        <span>{{tile.name}}</span>
-      </div>
-    {{/each}}
-  </div>
-{{else}}
-  <p class='no-content'>{{localize 'EMPUZZLES.NoTiles'}}</p>
-{{/if}}
-```
-
-### Action Buttons (ApplicationV2)
-
-```handlebars
-<button type='button' data-action='actionName' data-tile-id='{{tile.id}}'>
-  <i class='fas fa-icon'></i>
-  {{localize 'EMPUZZLES.ButtonLabel'}}
-</button>
-```
-
-## Localization
-
-All user-facing strings must be in `lang/en.json` under the `EMPUZZLES` key:
-
-```json
-{
-  "EMPUZZLES": {
-    "KeyName": "Display Text",
-    "KeyNameHint": "Help text for the field"
-  }
-}
-```
-
-Access in templates: `{{localize "EMPUZZLES.KeyName"}}`
-Access in code: `game.i18n.localize('EMPUZZLES.KeyName')`
-
-## Settings Management
-
-### Registering Settings
-
-In `main.ts` during `init` hook:
+### Unit Testing Pattern
 
 ```typescript
-game.settings.register('em-tile-utilities', 'settingName', {
-  name: 'Display Name',
-  hint: 'Help text',
-  scope: 'world', // 'world' or 'client'
-  config: true, // Show in module settings UI
-  type: String, // String, Number, Boolean
-  default: 'default value',
-  filePicker: 'imagevideo', // Optional: adds file picker button
-  requiresReload: true // Optional: prompts user to reload when changed
+import { mockFoundry, createMockScene } from '../mocks/foundry';
+mockFoundry();  // Set up before imports
+
+import { createSwitchTile } from '../../src/utils/creators';
+
+describe('Switch Tile', () => {
+  let scene: any;
+
+  beforeEach(() => {
+    scene = createMockScene();
+  });
+
+  it('should create tile with correct structure', () => {
+    const config = { name: 'Test', variableName: 'test_var', ... };
+    const tile = createSwitchTile(scene, config, 0, 0);
+
+    expect(tile.flags['monks-active-tiles'].name).toBe('Test');
+  });
 });
 ```
 
-**Important Options:**
-
-- `requiresReload: true` - When set, Foundry will automatically show a dialog asking the user to reload when the setting is changed. Use this for settings that affect UI rendering, feature visibility, or other aspects that require a fresh initialization.
-
-### Accessing Settings
+### Integration Testing (Template Rendering)
 
 ```typescript
-const value = game.settings.get('em-tile-utilities', 'settingName') as string;
-await game.settings.set('em-tile-utilities', 'settingName', newValue);
+import { renderDialogTemplate, htmlContainsSelector } from '../helpers/template-helper';
+import { TrapDialog } from '../../src/dialogs/trap-dialog';
+
+it('should compile template', async () => {
+  const html = await renderDialogTemplate(TrapDialog);
+  expect(html).toBeTruthy();
+  expect(htmlContainsSelector(html, 'input[name="trapName"]')).toBe(true);
+});
 ```
 
-## Toolbar Integration
+### Running Tests
 
-Buttons are added via `getSceneControlButtons` hook in `main.ts`:
-
-```typescript
-Hooks.on('getSceneControlButtons', (controls: any) => {
-  const tilesControl = controls.tiles;
-  if (!tilesControl) return;
-
-  tilesControl.tools['tool-id'] = {
-    name: 'tool-id',
-    title: 'EMPUZZLES.ToolTitle',
-    icon: 'fas fa-icon',
-    button: true,
-    onClick: () => showDialog(),
-    order: 1000 // Higher = appears later in toolbar
-  };
-});
+```bash
+npm test                 # Run all tests once
+npm run test:watch       # Watch mode
+npm run test:coverage    # Generate coverage
+npm run test:ci          # CI mode (GitHub Actions)
 ```
 
 ## Common Patterns
@@ -1308,11 +678,8 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
 ### Auto-Incrementing IDs
 
 ```typescript
-// In _prepareContext:
 const counter = game.settings.get('em-tile-utilities', 'switchCounter') as number;
 const nextId = `switch_${counter}`;
-
-// After creation:
 await game.settings.set('em-tile-utilities', 'switchCounter', counter + 1);
 ```
 
@@ -1321,7 +688,6 @@ await game.settings.set('em-tile-utilities', 'switchCounter', counter + 1);
 ```typescript
 _onRender(context: any, options: any): void {
   super._onRender(context, options);
-
   if (!(this as any)._hooksRegistered) {
     (this as any)._updateHook = (doc: any) => this._onUpdate(doc);
     Hooks.on('updateTile', (this as any)._updateHook);
@@ -1331,7 +697,6 @@ _onRender(context: any, options: any): void {
 
 _onClose(options: any): void {
   super._onClose(options);
-
   if ((this as any)._hooksRegistered) {
     Hooks.off('updateTile', (this as any)._updateHook);
     (this as any)._hooksRegistered = false;
@@ -1349,296 +714,92 @@ if (!scene) {
 }
 ```
 
-### Tile Property Access
+## Handlebars Template Patterns
+
+### Standard Form Structure
+
+```handlebars
+<div class='form-group'>
+  <label for='fieldName'>{{localize 'EMPUZZLES.Label'}}</label>
+  <input type='text' name='fieldName' value='{{defaultValue}}' />
+  <p class='hint'>{{localize 'EMPUZZLES.Hint'}}</p>
+</div>
+```
+
+### File Picker Button
+
+```handlebars
+<div class='file-picker-group'>
+  <input type='text' name='imagePath' value='{{imagePath}}' />
+  <button type='button' class='file-picker' data-target='imagePath' data-type='imagevideo'>
+    <i class='fas fa-file-image'></i>
+  </button>
+</div>
+```
+
+### Action Buttons
+
+```handlebars
+<button type='button' data-action='actionName' data-tile-id='{{tile.id}}'>
+  <i class='fas fa-icon'></i>
+  {{localize 'EMPUZZLES.ButtonLabel'}}
+</button>
+```
+
+## Settings Management
+
+### Registering Settings
 
 ```typescript
-// Get all tiles
-const tiles = Array.from((scene.tiles as any).values());
-
-// Tile properties
-tile.id;
-tile.name;
-tile.texture.src;
-(tile.x, tile.y);
-(tile.width, tile.height);
-tile.elevation;
-tile.sort;
-tile.hidden;
-tile.locked;
-tile.flags['monks-active-tiles'];
-
-// Monks data
-const monksData = tile.flags['monks-active-tiles'];
-monksData.active;
-monksData.actions;
-monksData.variables;
-monksData.files;
-```
-
-## Testing & Development
-
-### Watch Mode
-
-```bash
-npm run watch  # Auto-rebuild on file changes
-```
-
-### Manual Testing Workflow
-
-1. Run `npm run watch`
-2. Make changes in `src/`
-3. Refresh FoundryVTT (F5)
-4. Test in Tiles layer with Monk's Active Tiles enabled
-
-### Console Debugging
-
-```typescript
-console.log('%c🧩 Debug:', 'color: #ff6b35;', data);
-```
-
-### Automated Testing
-
-The project uses Jest with ts-jest for comprehensive testing coverage.
-
-**Test Suite Overview:**
-
-- **463 total tests** (444 unit + 19 integration)
-- **14 test suites**
-- Test files: `tests/**/*.test.ts`
-
-**Running Tests:**
-
-```bash
-npm test                 # Run all tests once
-npm run test:watch       # Watch mode for development
-npm run test:coverage    # Generate coverage report
-npm run test:ci          # CI mode (for GitHub Actions)
-```
-
-**Test Organization:**
-
-```
-tests/
-├── dialogs/                     # Unit tests for dialog classes
-│   ├── switch-dialog.test.ts
-│   ├── light-dialog.test.ts
-│   ├── trap-dialog.test.ts
-│   └── ...
-├── utils/                       # Unit tests for utilities
-│   └── tile-helpers.test.ts
-├── integration/                 # Integration tests
-│   └── trap-dialog-rendering.test.ts
-├── helpers/                     # Test utilities
-│   └── template-helper.ts       # Handlebars rendering helpers
-└── mocks/                       # Mock system
-    └── foundry.ts               # Foundry VTT mocks
-```
-
-### Unit Testing
-
-**Purpose:** Test individual functions and classes in isolation
-
-**Example:**
-
-```typescript
-import { createSwitchTile } from '../src/utils/tile-helpers';
-
-describe('createSwitchTile', () => {
-  it('should create tile with correct structure', () => {
-    const config = {
-      name: 'Test Switch',
-      variableName: 'test_var',
-      onImage: 'on.png',
-      offImage: 'off.png',
-      sound: 'click.ogg'
-    };
-
-    const tile = createSwitchTile(mockScene, config, 0, 0);
-
-    expect(tile.flags['monks-active-tiles'].name).toBe('Test Switch');
-    expect(tile.flags['monks-active-tiles'].variables).toHaveProperty('test_var');
-  });
+game.settings.register('em-tile-utilities', 'settingName', {
+  name: 'Display Name',
+  hint: 'Help text',
+  scope: 'world', // 'world' or 'client'
+  config: true, // Show in module settings UI
+  type: String, // String, Number, Boolean
+  default: 'value',
+  requiresReload: true // Prompt user to reload when changed
 });
 ```
 
-**Best Practices:**
-
-- Test public APIs, not implementation details
-- Use descriptive test names (what it should do, not what it tests)
-- Follow AAA pattern: Arrange, Act, Assert
-- Mock external dependencies (Foundry globals, canvas, etc.)
-
-### Integration Testing
-
-**Purpose:** Test how components work together, especially template rendering
-
-**Why Integration Tests Matter:**
-
-Integration tests catch bugs that unit tests miss by actually compiling and rendering templates with real context data. These tests would have caught the production bug where `'combat'` string literal was used instead of `TrapResultType.COMBAT` enum constant.
-
-**Example of Bug Prevention:**
+### Accessing Settings
 
 ```typescript
-// This bug passed unit tests but failed in production
-const resultTypeOptions = [
-  { value: 'combat', label: 'EMPUZZLES.ResultCombat' } // ❌ String literal
-];
-
-// Integration test catches this by validating rendered HTML
-it('should have correct enum values in dropdown', async () => {
-  const html = await renderDialogTemplate(TrapDialog);
-  const values = getSelectOptionValues(html, 'resultType');
-
-  // This test FAILS with string literal, PASSES with enum
-  expect(values).toContain(TrapResultType.COMBAT);
-});
+const value = game.settings.get('em-tile-utilities', 'settingName') as string;
+await game.settings.set('em-tile-utilities', 'settingName', newValue);
 ```
 
-**Integration Test Structure:**
+## Localization
+
+All user-facing strings in `lang/en.json` under `EMPUZZLES` key:
+
+```json
+{
+  "EMPUZZLES": {
+    "KeyName": "Display Text",
+    "KeyNameHint": "Help text"
+  }
+}
+```
+
+In templates: `{{localize "EMPUZZLES.KeyName"}}`
+In code: `game.i18n.localize('EMPUZZLES.KeyName')`
+
+## Toolbar Integration
 
 ```typescript
-import { renderDialogTemplate, getSelectOptionValues } from '../helpers/template-helper';
-import { TrapDialog } from '../../src/dialogs/trap-dialog';
+Hooks.on('getSceneControlButtons', (controls: any) => {
+  const tilesControl = controls.tiles;
+  if (!tilesControl) return;
 
-describe('TrapDialog Template Rendering', () => {
-  it('should compile template without errors', async () => {
-    const html = await renderDialogTemplate(TrapDialog);
-    expect(html).toBeTruthy();
-  });
-
-  it('should have correct enum values', async () => {
-    const html = await renderDialogTemplate(TrapDialog);
-    const values = getSelectOptionValues(html, 'resultType');
-
-    expect(values).toContain(TrapResultType.DAMAGE);
-    expect(values).toContain(TrapResultType.COMBAT);
-  });
-});
-```
-
-**Template Test Helpers:**
-
-Located in `tests/helpers/template-helper.ts`:
-
-```typescript
-// Load and compile Handlebars templates
-export function loadTemplate(templatePath: string): string;
-export function compileTemplate(templateSource: string): HandlebarsTemplateDelegate;
-export function registerHandlebarsHelpers(): void;
-export function registerHandlebarsPartials(): void;
-
-// Render templates with context
-export function renderTemplate(templatePath: string, context: any): string;
-export async function renderDialogTemplate(dialogClass: any): Promise<string>;
-
-// HTML validation utilities
-export function htmlContainsSelector(html: string, selector: string): boolean;
-export function getSelectOptionValues(html: string, selectName: string): string[];
-export function getSelectOptionLabels(html: string, selectName: string): string[];
-```
-
-### Mock System
-
-**Foundry VTT Mocks:**
-
-Located in `tests/mocks/foundry.ts`, provides complete Foundry global mocks:
-
-```typescript
-import { mockFoundry, createMockScene, createMockTile } from '../mocks/foundry';
-
-beforeEach(() => {
-  mockFoundry(); // Sets up game, canvas, ui, etc.
-});
-
-const scene = createMockScene();
-const tile = createMockTile({ x: 100, y: 200 });
-```
-
-**Available Mock Factories:**
-
-- `mockFoundry()` - Sets up all Foundry globals
-- `createMockScene()` - Creates test scenes with tiles
-- `createMockTile()` - Creates mock tile documents
-- `createMockLight()` - Creates mock light documents
-
-### Test Coverage
-
-**Current Coverage:**
-
-- Overall: 34% statements, 26.61% branches, 33.64% functions
-- Core utilities (tile-helpers.ts): 83% statements, 100% functions
-- Variables viewer: 97% statements, 94% branches
-
-**Viewing Coverage:**
-
-```bash
-npm run test:coverage  # Generates coverage/lcov-report/index.html
-open coverage/lcov-report/index.html  # View in browser
-```
-
-**Coverage Goals:**
-
-- Critical paths (tile creation): >80%
-- Dialog classes: >60%
-- Utilities: >80%
-
-### CI/CD Testing
-
-Tests run automatically via GitHub Actions on:
-
-- Every pull request to `main` or `develop`
-- Every push to `main` or `develop`
-
-See `.github/workflows/test.yml` for configuration.
-
-**Test Matrix:**
-
-- Node.js 18.x
-- Node.js 20.x
-
-**Workflow:**
-
-1. Checkout code
-2. Setup Node.js
-3. Install dependencies (`npm ci`)
-4. Run tests (`npm run test:ci`)
-5. Upload coverage to Codecov (Node 20.x only)
-
-### Adding New Tests
-
-**For Unit Tests:**
-
-1. Create test file: `tests/path/to/my-feature.test.ts`
-2. Import dependencies and mocks
-3. Write describe blocks for feature areas
-4. Write it blocks for specific behaviors
-5. Run `npm test` to verify
-
-**For Integration Tests:**
-
-1. Create test file: `tests/integration/my-dialog-rendering.test.ts`
-2. Import template helpers
-3. Test template compilation
-4. Test critical form elements
-5. Test conditional rendering
-6. Test localization keys
-
-**Example Integration Test:**
-
-```typescript
-import { renderDialogTemplate, htmlContainsSelector } from '../helpers/template-helper';
-import { MyDialog } from '../../src/dialogs/my-dialog';
-
-describe('MyDialog Template Rendering', () => {
-  it('should compile template', async () => {
-    const html = await renderDialogTemplate(MyDialog);
-    expect(html).toBeTruthy();
-  });
-
-  it('should render required fields', async () => {
-    const html = await renderDialogTemplate(MyDialog);
-    expect(htmlContainsSelector(html, 'input[name="myField"]')).toBe(true);
-  });
+  tilesControl.tools['tool-id'] = {
+    name: 'tool-id',
+    title: 'EMPUZZLES.ToolTitle',
+    icon: 'fas fa-icon',
+    button: true,
+    onClick: () => showDialog(),
+    order: 1000
+  };
 });
 ```
 
@@ -1646,18 +807,18 @@ describe('MyDialog Template Rendering', () => {
 
 1. **Always use `(foundry as any)` and `(canvas as any)`** - Foundry types aren't fully typed
 2. **Action IDs must be unique** - Always use `foundry.utils.randomID()`
-3. **Tile placement needs canvas click handler** - Set up in form submit handler
-4. **ApplicationV2 form handlers are private static** - Use `#methodName` syntax
-5. **Handlebars expressions in action values** - Use `{{variable.name}}` syntax
+3. **Tile placement needs canvas click handler** - Set up in form submit
+4. **ApplicationV2 form handlers are private static** - Use `#methodName`
+5. **Handlebars expressions in action values** - Use `{{variable.name}}`
 6. **File index is 0-based** - First file in `files` array is fileindex 0
-7. **Grid coordinates vs pixel coordinates** - Always snap to grid for placement
-8. **Scene variables scope** - Always use `scope: "scene"` for tile variables
-9. **Entity references need full path** - Format: `Scene.{id}.Type.{id}`
-10. **Light position centering** - Add `gridSize / 2` to tile x/y for center placement
+7. **Grid coordinates vs pixel coordinates** - Always snap to grid
+8. **Scene variables scope** - Always use `scope: "scene"`
+9. **Entity references need full path** - `Scene.{id}.Type.{id}`
+10. **Light position centering** - Add `gridSize / 2` to tile x/y
 
 ## Type Definitions
 
-Basic types are in `src/types/module.ts`:
+Basic types in `src/types/module.ts`:
 
 ```typescript
 export interface SwitchConfig {
@@ -1668,153 +829,55 @@ export interface SwitchConfig {
   sound: string;
 }
 
-export interface LightConfig {
+export interface TrapConfig {
   name: string;
-  onImage: string;
-  offImage: string;
-  useDarkness: boolean;
-  darknessMin: number;
-  dimLight: number;
-  brightLight: number;
-  lightColor: string | null;
-  colorIntensity: number;
+  resultType: TrapResultType;
+  targetType: TrapTargetType;
+  startingImage: string;
+  triggeredImage?: string;
+  hidden?: boolean;
+  pauseGameOnTrigger?: boolean;
+  // ... many more fields
 }
 ```
 
-## Style and Best Practices
+## Style Guide
 
-- When you make changes to the module, please run `npm run lint` and `npm run format` to check for style and best practices. Change any issues that are reported.
-- When you create a new file, add it to the VSC.
-- Add JSDoc comments to all public methods and properties.
-
-### Linting Best Practices
-
-**Always run linting before committing:**
+### Linting Commands
 
 ```bash
-npm run lint        # Check for issues
-npm run lint -- --fix  # Auto-fix issues
-npm run format      # Format code with Prettier
+npm run lint              # Check for issues
+npm run lint -- --fix     # Auto-fix issues
+npm run format            # Format with Prettier
 ```
 
-**Common Linting Issues and Fixes:**
+### Key Linting Issues
 
-1. **Import Formatting** - Keep imports on one line when possible:
+- Import formatting (keep imports on one line when possible)
+- Return type formatting (multi-line for object returns)
+- Unused parameters (prefix with underscore: `_event`)
+- Long lines (break onto multiple lines)
+- Template HTML (include `alt` attributes for images)
 
-   ```typescript
-   // Good
-   import type { SwitchConfig, LightConfig, TrapConfig } from '../types/module';
+### Before Committing
 
-   // Bad (triggers prettier/prettier warning)
-   import type { SwitchConfig, LightConfig, TrapConfig } from '../types/module';
-   ```
-
-2. **Return Type Formatting** - Multi-line object return types:
-
-   ```typescript
-   // Good
-   protected _validateFields(form: HTMLFormElement): {
-     valid: boolean;
-     message?: string;
-   } {
-     // ...
-   }
-
-   // Bad (triggers prettier/prettier warning)
-   protected _validateFields(form: HTMLFormElement): { valid: boolean; message?: string } {
-     // ...
-   }
-   ```
-
-3. **Long String Selectors** - Break onto multiple lines:
-
-   ```typescript
-   // Good
-   const element = this.element.querySelector(
-     '[data-action="selectPosition"]'
-   ) as HTMLButtonElement;
-
-   // Bad (triggers prettier/prettier warning)
-   const element = this.element.querySelector(
-     '[data-action="selectPosition"]'
-   ) as HTMLButtonElement;
-   ```
-
-4. **Function Parameters** - Keep short, break if long:
-
-   ```typescript
-   // Good (short)
-   async _onSubmit(_event: SubmitEvent, form: HTMLFormElement, _formData: any): Promise<void> {
-
-   // Good (long - use multi-line)
-   async _onSubmit(
-     _event: SubmitEvent,
-     form: HTMLFormElement,
-     _formData: any
-   ): Promise<void> {
-   ```
-
-5. **Unused Parameters** - Prefix with underscore:
-
-   ```typescript
-   // Good
-   const handler = (_clickEvent: any) => {
-     // Not using clickEvent
-   };
-
-   // Bad (triggers @typescript-eslint/no-unused-vars)
-   const handler = (clickEvent: any) => {
-     // Not using clickEvent
-   };
-   ```
-
-6. **Union Types** - Multi-line for readability:
-
-   ```typescript
-   // Good
-   target:
-     | Element
-     | HTMLInputElement
-     | HTMLSelectElement;
-
-   // Bad (triggers prettier/prettier warning)
-   target: Element | HTMLInputElement | HTMLSelectElement;
-   ```
-
-7. **Grid Position Calculations** - Break long method calls:
-
-   ```typescript
-   // Good
-   const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
-
-   // Bad (triggers prettier/prettier warning)
-   const snapped = (canvas as any).grid.getSnappedPosition(position.x, position.y);
-   ```
-
-**Template HTML Validation:**
-
-- The Handlebars linter may warn about `<div>` elements in certain contexts - these are usually safe to ignore if the template renders correctly
-- Always include `alt` attributes for `<img>` tags (use `alt=""` for decorative images)
-- For placeholder images like `icons/svg/hazard.svg`, these come from Foundry core and don't need path validation
-
-**Auto-Fix Workflow:**
+Always run:
 
 ```bash
-# Make changes
-npm run lint -- --fix  # Auto-fix most issues
-npm run build          # Verify build succeeds
-# Manually fix remaining warnings
+npm run lint -- --fix
+npm run build
+npm test
 ```
 
 ## Version Management
 
-The module uses a custom build increment system:
+Custom build increment system:
 
 - `build-info.json` contains `buildNumber`
-- `rollup-plugin-increment-build.mjs` increments on each build
-- Version displayed in console banner on init
+- Auto-increments on each `npm run build`
+- Version displayed in console on init
 
-Release process:
+Release commands:
 
 ```bash
 npm run release:patch  # 1.1.2 → 1.1.3
@@ -1822,4 +885,12 @@ npm run release:minor  # 1.1.2 → 1.2.0
 npm run release:major  # 1.1.2 → 2.0.0
 ```
 
-This updates `module.json`, `package.json`, and creates git tag.
+Updates `module.json`, `package.json`, generates CHANGELOG from commit messages.
+
+## Code References
+
+When referencing code, use pattern `file_path:line_number` for navigation:
+
+```
+Clients fail in connectToServer function in src/services/process.ts:712
+```

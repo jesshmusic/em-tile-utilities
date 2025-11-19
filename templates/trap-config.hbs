@@ -1,10 +1,9 @@
 {{! Basic Information Section }}
-<fieldset class="basic-info-section accordion-section" data-section="basic-info" open>
-  <legend class="accordion-header">
-    <i class="fas fa-chevron-down accordion-icon"></i>
+<fieldset class="basic-info-section">
+  <legend>
     {{localize "EMPUZZLES.BasicInfo"}}
   </legend>
-  <div class="accordion-content">
+  <div>
     <div class="form-group">
       <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
       <select id="trapType" name="trapType">
@@ -18,8 +17,8 @@
     </div>
 
     <div class="form-group">
-      <label for="trapName">{{localize "EMPUZZLES.TrapName"}}</label>
-      <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" />
+      <label for="trapName">{{localize "EMPUZZLES.TrapName"}} <span class="required">*</span></label>
+      <input type="text" id="trapName" name="trapName" value="{{trapName}}" placeholder="{{localize 'EMPUZZLES.TrapNamePlaceholder'}}" required />
       <p class="hint">{{localize "EMPUZZLES.TrapNameHint"}}</p>
     </div>
 
@@ -81,15 +80,14 @@
 
 {{! Image Trap - Result Configuration Section }}
 {{#if (eq trapType "image")}}
-  <fieldset class="result-config-section accordion-section" data-section="result-config">
-    <legend class="accordion-header">
-      <i class="fas fa-chevron-right accordion-icon"></i>
+  <fieldset class="result-config-section">
+    <legend>
       {{localize "EMPUZZLES.ResultConfiguration"}}
     </legend>
-    <div class="accordion-content" style="display: none;">
+    <div>
       <div class="form-group">
-        <label for="resultType">{{localize "EMPUZZLES.ResultType"}}</label>
-        <select id="resultType" name="resultType">
+        <label for="resultType">{{localize "EMPUZZLES.ResultType"}} <span class="required">*</span></label>
+        <select id="resultType" name="resultType" required>
           {{#each resultTypeOptions as |option|}}
             <option value="{{option.value}}" {{#if (eq option.value ../resultType)}}selected{{/if}}>
               {{localize option.label}}
@@ -187,6 +185,53 @@
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsDamageHint"}}</p>
+
+        {{! Add/Remove toggle for additional effects }}
+        <div class="radio-group additional-effects-action" {{#unless additionalEffects.length}}style="opacity: 0.5; pointer-events: none;"{{/unless}}>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="add" {{#if (eq additionalEffectsAction "add")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.AddEffects"}}</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="remove" {{#if (eq additionalEffectsAction "remove")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.RemoveEffects"}}</span>
+          </label>
+        </div>
+      </div>
+    {{/if}}
+
+    {{! Heal Result Type }}
+    {{#if (eq resultType "heal")}}
+      <div class="form-group">
+        <label for="healingAmount">{{localize "EMPUZZLES.HealingAmount"}}</label>
+        <input type="text" id="healingAmount" name="healingAmount" value="2d4+2" placeholder="2d4+2" />
+        <p class="hint">{{localize "EMPUZZLES.HealingAmountHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="healFlavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
+        <textarea id="healFlavorText" name="healFlavorText" rows="3" placeholder="{{localize 'EMPUZZLES.HealFlavorTextPlaceholder'}}"></textarea>
+        <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
+        <multi-select name="additionalEffects">
+          {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
+        </multi-select>
+        <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsHealHint"}}</p>
+
+        {{! Add/Remove toggle for additional effects }}
+        <div class="radio-group additional-effects-action" {{#unless additionalEffects.length}}style="opacity: 0.5; pointer-events: none;"{{/unless}}>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="add" {{#if (eq additionalEffectsAction "add")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.AddEffects"}}</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="remove" {{#if (eq additionalEffectsAction "remove")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.RemoveEffects"}}</span>
+          </label>
+        </div>
       </div>
     {{/if}}
 
@@ -301,6 +346,18 @@
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsCombatHint"}}</p>
+
+        {{! Add/Remove toggle for additional effects }}
+        <div class="radio-group additional-effects-action" {{#unless additionalEffects.length}}style="opacity: 0.5; pointer-events: none;"{{/unless}}>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="add" {{#if (eq additionalEffectsAction "add")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.AddEffects"}}</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="additionalEffectsAction" value="remove" {{#if (eq additionalEffectsAction "remove")}}checked{{/if}} {{#unless additionalEffects.length}}disabled{{/unless}} />
+            <span>{{localize "EMPUZZLES.RemoveEffects"}}</span>
+          </label>
+        </div>
       </div>
 
       <div class="form-group">
@@ -315,12 +372,11 @@
 
 {{! Activating Trap - Tiles & Doors Section }}
 {{#if (eq trapType "activating")}}
-  <fieldset class="tiles-doors-section accordion-section" data-section="tiles-doors">
-    <legend class="accordion-header">
-      <i class="fas fa-chevron-right accordion-icon"></i>
+  <fieldset class="tiles-doors-section">
+    <legend>
       {{localize "EMPUZZLES.TilesAndDoors"}}
     </legend>
-    <div class="accordion-content" style="display: none;">
+    <div>
       <div class="form-group">
         <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
         <button type="button" class="add-tile-button" data-action="addTile">
@@ -447,16 +503,5 @@
   </fieldset>
 {{/if}}
 
-{{! Todo List - Shows incomplete required tasks }}
-<div class="trap-todo-list" data-trap-todos>
-  <div class="todo-header">
-    <i class="fas fa-tasks"></i>
-    <span>{{localize "EMPUZZLES.SetupTasks"}}</span>
-  </div>
-  <ul class="todo-items" data-todo-items>
-    {{! Dynamically populated by JavaScript }}
-  </ul>
-</div>
-
-{{! Custom Tags Section - Last section, accordion in trap dialog only }}
-{{> partials/custom-tags-section customTags=customTags isAccordion=true}}
+{{! Custom Tags Section - Last section }}
+{{> partials/custom-tags-section customTags=customTags}}

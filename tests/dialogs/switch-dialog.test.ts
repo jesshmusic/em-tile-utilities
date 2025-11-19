@@ -456,4 +456,34 @@ describe('SwitchConfigDialog', () => {
       expect(tileData.flags['monks-active-tiles'].name).toBe('Switch');
     });
   });
+
+  describe('_onClose', () => {
+    it('should close the dialog', () => {
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+      expect(dialog.close).toHaveBeenCalled();
+    });
+
+    it('should maximize tile manager if it exists', () => {
+      const mockTileManager = { maximize: jest.fn() };
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(mockTileManager);
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      expect(mockTileManager.maximize).toHaveBeenCalled();
+    });
+
+    it('should not throw if tile manager does not exist', () => {
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(null);
+
+      dialog.close = jest.fn();
+
+      expect(() => (dialog as any)._onClose()).not.toThrow();
+    });
+  });
 });

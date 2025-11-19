@@ -66,6 +66,12 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
   /** @inheritDoc */
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
+
+    // Sync form state before re-render to preserve user input
+    if (this.element) {
+      this._syncFormToState();
+    }
+
     const scene = canvas.scene;
 
     if (!scene) {
@@ -166,6 +172,28 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     if (tileManager) {
       tileManager.maximize();
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Sync tile name and image (basic form fields)
+    const tileNameInput = this.element.querySelector('input[name="tileName"]') as HTMLInputElement;
+    if (tileNameInput) this.tileName = tileNameInput.value;
+
+    const tileImageInput = this.element.querySelector(
+      'input[name="tileImage"]'
+    ) as HTMLInputElement;
+    if (tileImageInput) this.tileImage = tileImageInput.value;
+
+    // Note: selectedTiles and branches are already managed via event listeners
+    // and stored directly in instance properties, so no DOM sync needed
   }
 
   /* -------------------------------------------- */
@@ -490,8 +518,8 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     }
 
     try {
-      // Import the helper function dynamically
-      const { createCheckStateTile } = await import('../utils/tile-helpers');
+      // Import the creator function dynamically
+      const { createCheckStateTile } = await import('../utils/creators');
 
       // Prepare config
       const config = {

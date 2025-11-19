@@ -1,11 +1,7 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
 import { TrapTargetType, TrapResultType } from '../types/module';
-import {
-  createTrapTile,
-  createCombatTrapTile,
-  getNextTileNumber,
-  hasMonksTokenBar
-} from '../utils/tile-helpers';
+import { createTrapTile, createCombatTrapTile } from '../utils/creators';
+import { getNextTileNumber, hasMonksTokenBar } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -38,22 +34,58 @@ enum ImageBehavior {
  */
 export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
-   * Current trap type selection
+   * ========================================
+   * FORM STATE - All form fields stored as class properties
+   * ========================================
    */
-  protected trapType: TrapType = TrapType.IMAGE;
 
-  /**
-   * Current result type (for image traps)
-   */
+  // Basic Information
+  protected trapType: TrapType = TrapType.IMAGE;
+  protected trapName: string = '';
+  protected sound: string = '';
+  protected minRequired: number = 1;
+  protected targetType: TrapTargetType = TrapTargetType.TRIGGERING;
+  protected pauseGameOnTrigger: boolean = false;
+  protected deactivateAfterTrigger: boolean = false;
+
+  // Visibility & Image Behavior
+  protected startingImage: string = '';
+  protected triggeredImage: string = '';
+  protected initialVisibility: 'visible' | 'hidden' = 'visible';
+  protected onTriggerBehavior: string = 'stays-same';
+
+  // Result Configuration
   protected resultType?: TrapResultType;
 
+  // Saving Throw (shared across result types)
+  protected hasSavingThrow: boolean = false;
+  protected savingThrow: string = 'ability:dex';
+  protected dc: number = 14;
+
+  // Damage Result Type
+  protected damageOnFail: string = '';
+  protected halfDamageOnSuccess: boolean = false;
+  protected flavorText: string = '';
+
+  // Heal Result Type
+  protected healingAmount: string = '2d4+2';
+  protected healFlavorText: string = '';
+
+  // Active Effect Result Type
+  protected effectId: string = '';
+  protected addEffect: 'add' | 'remove' | 'toggle' | 'clear' = 'add';
+
+  // Additional Effects (shared across damage, heal, active effect)
+  protected additionalEffects: string[] = [];
+  protected additionalEffectsAction: 'add' | 'remove' = 'add';
+
+  // Custom Tags
+  protected customTags: string = '';
+
   /**
-   * Form state storage (to preserve state on re-render)
+   * Custom starting image tracking (for DMG trap auto-fill)
    */
-  protected currentTargetType?: string;
-  protected currentHasSavingThrow?: boolean;
   protected customStartingImage?: string;
-  protected currentAdditionalEffects: string[] = [];
 
   /**
    * DMG trap item state (for damage result type)
@@ -80,15 +112,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected attackItemData?: any;
 
   /**
-   * Token configuration (for combat result type)
+   * Combat trap configuration
    */
   protected tokenVisible: boolean = false;
   protected tokenImage?: string;
   protected tokenX?: number;
   protected tokenY?: number;
+  protected maxTriggers: number = 0;
 
   /**
-   * Teleport position (for teleport result type)
+   * Teleport configuration
    */
   protected teleportX?: number;
   protected teleportY?: number;
@@ -176,6 +209,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const resultTypeOptions = [
       { value: '', label: 'EMPUZZLES.ResultSelectPrompt' },
       { value: TrapResultType.DAMAGE, label: 'EMPUZZLES.ResultDamage' },
+      { value: TrapResultType.HEAL, label: 'EMPUZZLES.ResultHeal' },
       { value: TrapResultType.TELEPORT, label: 'EMPUZZLES.ResultTeleport' },
       { value: TrapResultType.ACTIVE_EFFECT, label: 'EMPUZZLES.ResultActiveEffect' },
       { value: TrapResultType.COMBAT, label: 'EMPUZZLES.ResultCombat' }
@@ -314,64 +348,115 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       };
     }
 
-    // Preserve custom tags value across re-renders
-    let customTags = '';
-    if (this.element) {
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      customTags = customTagsInput?.value || '';
+    // Initialize trapName if empty (first render)
+    if (!this.trapName) {
+      this.trapName = `${trapBaseName} ${nextNumber}`;
     }
+
+    // Initialize defaults from settings if not set
+    if (!this.sound && defaultSound) {
+      this.sound = defaultSound;
+    }
+    if (!this.startingImage && defaultTrapImage) {
+      this.startingImage = defaultTrapImage;
+    }
+    if (!this.triggeredImage && defaultTrapTriggeredImage) {
+      this.triggeredImage = defaultTrapTriggeredImage;
+    }
+
+    // Use DMG trap data if available, otherwise use class properties
+    const useDamageOnFail = activityData?.damageFormula || this.damageOnFail;
+    const useHasSavingThrow = activityData?.dc !== undefined || this.hasSavingThrow;
+    const useSavingThrow = activityData?.ability
+      ? `ability:${activityData.ability}`
+      : this.savingThrow;
+    const useDC = activityData?.dc !== undefined ? activityData.dc : this.dc;
+    const useHalfDamageOnSuccess =
+      activityData?.halfDamageOnSuccess !== undefined
+        ? activityData.halfDamageOnSuccess
+        : this.halfDamageOnSuccess;
 
     return {
       ...context,
-      // Basic info
-      trapName: `${trapBaseName} ${nextNumber}`,
-      defaultSound: defaultSound,
-      defaultTrapImage: this.customStartingImage || defaultTrapImage,
-      defaultTrapTriggeredImage: defaultTrapTriggeredImage,
-      // Current selections
+      // Basic Information - use class properties
+      trapName: this.trapName,
+      defaultSound: this.sound,
+      defaultTrapImage: this.startingImage,
+      defaultTrapTriggeredImage: this.triggeredImage,
       trapType: this.trapType,
+      minRequired: this.minRequired,
+      defaultTargetType: this.targetType,
+      pauseGameOnTrigger: this.pauseGameOnTrigger,
+      deactivateAfterTrigger: this.deactivateAfterTrigger,
+
+      // Visibility & Image Behavior - use class properties
+      initialVisibility: this.initialVisibility,
+      onTriggerBehavior: this.onTriggerBehavior,
+
+      // Result Configuration - use class properties
       resultType: this.resultType,
+
+      // Saving Throw - use class properties (or DMG trap data if available)
+      defaultHasSavingThrow: useHasSavingThrow,
+      defaultSavingThrow: useSavingThrow,
+      defaultDC: useDC,
+
+      // Damage Result Type - use class properties
+      defaultDamageOnFail: useDamageOnFail,
+      defaultHalfDamageOnSuccess: useHalfDamageOnSuccess,
+      flavorText: this.flavorText,
+
+      // Heal Result Type - use class properties
+      healingAmount: this.healingAmount,
+      healFlavorText: this.healFlavorText,
+
+      // Active Effect Result Type - use class properties
+      effectId: this.effectId,
+      addEffect: this.addEffect,
+
+      // Additional Effects - use class property
+      additionalEffects: this.additionalEffects,
+      additionalEffectsAction: this.additionalEffectsAction,
+
+      // Custom Tags - use class property
+      customTags: this.customTags,
+
       // Dropdown options
       trapTypeOptions: trapTypeOptions,
       resultTypeOptions: resultTypeOptions,
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
       effectOptions: effectOptions,
-      additionalEffects: this.currentAdditionalEffects,
-      // Default values
-      defaultTargetType: this.currentTargetType || TrapTargetType.TRIGGERING,
-      defaultHasSavingThrow:
-        this.currentHasSavingThrow !== undefined ? this.currentHasSavingThrow : true,
-      defaultSavingThrow: activityData?.ability ? `ability:${activityData.ability}` : undefined,
-      defaultDC: activityData?.dc,
-      defaultDamageOnFail: activityData?.damageFormula,
-      defaultHalfDamageOnSuccess: activityData?.halfDamageOnSuccess || false,
+
       // DMG trap state
       hasDmgTrap: !!this.dmgTrapItemId,
       dmgTrap: dmgTrapData,
+
       // Activating trap state
       hasTiles: tiles.length > 0,
       tiles: tiles,
       hasWalls: this.selectedWalls.length > 0,
       walls: this.selectedWalls,
-      // Combat trap state
+
+      // Combat trap state - use class properties
       hasAttackItem: !!this.attackItemId,
       attackItem: attackItemData,
       tokenVisible: this.tokenVisible,
       tokenImage: this.tokenImage || '',
       tokenX: this.tokenX,
       tokenY: this.tokenY,
-      // Teleport state
+      maxTriggers: this.maxTriggers,
+
+      // Teleport state - use class properties
       teleportX: this.teleportX,
       teleportY: this.teleportY,
-      // Custom tags (preserved across re-renders)
-      customTags: customTags,
+
       // Validation state
       canSubmit: this._canSubmit(),
+
       // Feature availability
       hasMonksTokenBar: hasMonksTokenBar(),
+
       // Footer buttons
       buttons: [
         {
@@ -391,9 +476,146 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Basic Information
+    const trapNameInput = this.element.querySelector('[name="trapName"]') as HTMLInputElement;
+    if (trapNameInput) this.trapName = trapNameInput.value;
+
+    const soundInput = this.element.querySelector('[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const minRequiredInput = this.element.querySelector('[name="minRequired"]') as HTMLInputElement;
+    if (minRequiredInput) this.minRequired = parseInt(minRequiredInput.value) || 1;
+
+    const targetTypeSelect = this.element.querySelector('[name="targetType"]') as HTMLSelectElement;
+    if (targetTypeSelect) this.targetType = targetTypeSelect.value as TrapTargetType;
+
+    const pauseGameCheckbox = this.element.querySelector(
+      '[name="pauseGameOnTrigger"]'
+    ) as HTMLInputElement;
+    if (pauseGameCheckbox) this.pauseGameOnTrigger = pauseGameCheckbox.checked;
+
+    const deactivateCheckbox = this.element.querySelector(
+      '[name="deactivateAfterTrigger"]'
+    ) as HTMLInputElement;
+    if (deactivateCheckbox) this.deactivateAfterTrigger = deactivateCheckbox.checked;
+
+    // Visibility & Image Behavior
+    const startingImageInput = this.element.querySelector(
+      '[name="startingImage"]'
+    ) as HTMLInputElement;
+    if (startingImageInput) this.startingImage = startingImageInput.value;
+
+    const triggeredImageInput = this.element.querySelector(
+      '[name="triggeredImage"]'
+    ) as HTMLInputElement;
+    if (triggeredImageInput) this.triggeredImage = triggeredImageInput.value;
+
+    const initialVisibilityRadio = this.element.querySelector(
+      '[name="initialVisibility"]:checked'
+    ) as HTMLInputElement;
+    if (initialVisibilityRadio)
+      this.initialVisibility = initialVisibilityRadio.value as 'visible' | 'hidden';
+
+    const onTriggerBehaviorRadio = this.element.querySelector(
+      '[name="onTriggerBehavior"]:checked'
+    ) as HTMLInputElement;
+    if (onTriggerBehaviorRadio) this.onTriggerBehavior = onTriggerBehaviorRadio.value;
+
+    // Saving Throw
+    const hasSavingThrowCheckbox = this.element.querySelector(
+      '[name="hasSavingThrow"]'
+    ) as HTMLInputElement;
+    if (hasSavingThrowCheckbox) this.hasSavingThrow = hasSavingThrowCheckbox.checked;
+
+    const savingThrowSelect = this.element.querySelector(
+      '[name="savingThrow"]'
+    ) as HTMLSelectElement;
+    if (savingThrowSelect) this.savingThrow = savingThrowSelect.value;
+
+    const dcInput = this.element.querySelector('[name="dc"]') as HTMLInputElement;
+    if (dcInput) this.dc = parseInt(dcInput.value) || 14;
+
+    // Damage Result Type
+    const damageOnFailInput = this.element.querySelector(
+      '[name="damageOnFail"]'
+    ) as HTMLInputElement;
+    if (damageOnFailInput) this.damageOnFail = damageOnFailInput.value;
+
+    const halfDamageCheckbox = this.element.querySelector(
+      '[name="halfDamageOnSuccess"]'
+    ) as HTMLInputElement;
+    if (halfDamageCheckbox) this.halfDamageOnSuccess = halfDamageCheckbox.checked;
+
+    const flavorTextArea = this.element.querySelector('[name="flavorText"]') as HTMLTextAreaElement;
+    if (flavorTextArea) this.flavorText = flavorTextArea.value;
+
+    // Heal Result Type
+    const healingAmountInput = this.element.querySelector(
+      '[name="healingAmount"]'
+    ) as HTMLInputElement;
+    if (healingAmountInput) this.healingAmount = healingAmountInput.value;
+
+    const healFlavorTextArea = this.element.querySelector(
+      '[name="healFlavorText"]'
+    ) as HTMLTextAreaElement;
+    if (healFlavorTextArea) this.healFlavorText = healFlavorTextArea.value;
+
+    // Active Effect Result Type
+    const effectIdSelect = this.element.querySelector('[name="effectId"]') as HTMLSelectElement;
+    if (effectIdSelect) this.effectId = effectIdSelect.value;
+
+    const addEffectSelect = this.element.querySelector('[name="addEffect"]') as HTMLSelectElement;
+    if (addEffectSelect)
+      this.addEffect = addEffectSelect.value as 'add' | 'remove' | 'toggle' | 'clear';
+
+    // Additional Effects
+    const additionalEffectsSelect = this.element.querySelector('[name="additionalEffects"]') as any;
+    if (additionalEffectsSelect && additionalEffectsSelect.value) {
+      this.additionalEffects = Array.isArray(additionalEffectsSelect.value)
+        ? additionalEffectsSelect.value
+        : [additionalEffectsSelect.value];
+    }
+
+    // Additional Effects Action (add vs remove)
+    const additionalEffectsActionRadio = this.element.querySelector(
+      '[name="additionalEffectsAction"]:checked'
+    ) as HTMLInputElement;
+    if (additionalEffectsActionRadio) {
+      this.additionalEffectsAction = additionalEffectsActionRadio.value as 'add' | 'remove';
+    }
+
+    // Combat Trap
+    const maxTriggersInput = this.element.querySelector('[name="maxTriggers"]') as HTMLInputElement;
+    if (maxTriggersInput) this.maxTriggers = parseInt(maxTriggersInput.value) || 0;
+
+    const tokenVisibleCheckbox = this.element.querySelector(
+      '[name="tokenVisible"]'
+    ) as HTMLInputElement;
+    if (tokenVisibleCheckbox) this.tokenVisible = tokenVisibleCheckbox.checked;
+
+    const tokenImageInput = this.element.querySelector('[name="tokenImage"]') as HTMLInputElement;
+    if (tokenImageInput) this.tokenImage = tokenImageInput.value;
+
+    // Custom Tags
+    const customTagsInput = this.element.querySelector('[name="customTags"]') as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
+  }
+
+  /**
    * Check if the form can be submitted
    */
   protected _canSubmit(): boolean {
+    // Check required fields first
+    if (!this.trapName || this.trapName.trim() === '') {
+      return false;
+    }
+
     // Activating trap: must have tiles selected
     if (this.trapType === TrapType.ACTIVATING) {
       return this.selectedTiles.size > 0;
@@ -430,9 +652,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @inheritDoc */
   _onRender(context: any, options: any): void {
     super._onRender(context, options);
-
-    // Set up accordion functionality
-    this._setupAccordion();
 
     // Set up file picker buttons
     const filePickerButtons = this.element.querySelectorAll('.file-picker');
@@ -486,8 +705,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (trapTypeSelect) {
       trapTypeSelect.addEventListener('change', (event: Event) => {
+        this._syncFormToState(); // Sync all form values to class properties
         this.trapType = (event.target as HTMLSelectElement).value as TrapType;
-        this.render();
+        this.render(); // Re-render using class properties
       });
     }
 
@@ -515,11 +735,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         onTriggerHiddenOptions.forEach(option => {
           option.style.display = 'none';
         });
-        // Check default "stays-same" option
-        const staysSameRadio = this.element.querySelector(
-          'input[name="onTriggerBehavior"][value="stays-same"]'
-        ) as HTMLInputElement;
-        if (staysSameRadio) staysSameRadio.checked = true;
+        // Only check default if no visible radio is checked
+        const anyVisibleChecked = Array.from(onTriggerVisibleOptions).some(option => {
+          const radio = option.querySelector('input[type="radio"]') as HTMLInputElement;
+          return radio && radio.checked;
+        });
+        if (!anyVisibleChecked) {
+          const staysSameRadio = this.element.querySelector(
+            'input[name="onTriggerBehavior"][value="stays-same"]'
+          ) as HTMLInputElement;
+          if (staysSameRadio) staysSameRadio.checked = true;
+        }
       } else {
         // Show hidden options, hide visible options
         onTriggerVisibleOptions.forEach(option => {
@@ -528,11 +754,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         onTriggerHiddenOptions.forEach(option => {
           option.style.display = 'flex';
         });
-        // Check default "reveals-same" option
-        const revealsSameRadio = this.element.querySelector(
-          'input[name="onTriggerBehavior"][value="reveals-same"]'
-        ) as HTMLInputElement;
-        if (revealsSameRadio) revealsSameRadio.checked = true;
+        // Only check default if no hidden radio is checked
+        const anyHiddenChecked = Array.from(onTriggerHiddenOptions).some(option => {
+          const radio = option.querySelector('input[type="radio"]') as HTMLInputElement;
+          return radio && radio.checked;
+        });
+        if (!anyHiddenChecked) {
+          const revealsSameRadio = this.element.querySelector(
+            'input[name="onTriggerBehavior"][value="reveals-same"]'
+          ) as HTMLInputElement;
+          if (revealsSameRadio) revealsSameRadio.checked = true;
+        }
       }
     };
 
@@ -577,6 +809,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (resultTypeSelect) {
       resultTypeSelect.addEventListener('change', (event: Event) => {
+        this._syncFormToState(); // Sync all form values to class properties
         const value = (event.target as HTMLSelectElement).value;
 
         // Validate that value is a valid TrapResultType before assignment
@@ -586,7 +819,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           this.resultType = undefined;
         }
 
-        this.render();
+        this.render(); // Re-render using class properties
       });
     }
 
@@ -693,15 +926,117 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (additionalEffectsSelect) {
       additionalEffectsSelect.addEventListener('change', (event: Event) => {
         const target = event.target as any;
-        if (target && target.value) {
-          this.currentAdditionalEffects = Array.isArray(target.value)
-            ? target.value
-            : [target.value];
+        const hasEffects = target && target.value && target.value.length > 0;
+
+        if (hasEffects) {
+          this.additionalEffects = Array.isArray(target.value) ? target.value : [target.value];
         } else {
-          this.currentAdditionalEffects = [];
+          this.additionalEffects = [];
+        }
+
+        // Enable/disable the add/remove radio buttons based on selection
+        const actionGroup = this.element.querySelector('.additional-effects-action') as HTMLElement;
+        const actionRadios = this.element.querySelectorAll(
+          '[name="additionalEffectsAction"]'
+        ) as NodeListOf<HTMLInputElement>;
+
+        if (actionGroup && actionRadios) {
+          if (hasEffects) {
+            actionGroup.style.opacity = '1';
+            actionGroup.style.pointerEvents = 'auto';
+            actionRadios.forEach(radio => (radio.disabled = false));
+          } else {
+            actionGroup.style.opacity = '0.5';
+            actionGroup.style.pointerEvents = 'none';
+            actionRadios.forEach(radio => (radio.disabled = true));
+          }
         }
       });
     }
+
+    // Update Setup Tasks list
+    this._updateSetupTasks();
+
+    // Set up form validation listener to update submit button state
+    this._setupFormValidation();
+  }
+
+  /**
+   * Update the Setup Tasks list based on missing required fields
+   */
+  protected _updateSetupTasks(): void {
+    const todoContainer = this.element.querySelector('[data-todo-items]');
+    if (!todoContainer) return;
+
+    const tasks: string[] = [];
+
+    // Check for trap name (always required)
+    if (!this.trapName || this.trapName.trim() === '') {
+      tasks.push('Enter a trap name');
+    }
+
+    // Check for required fields based on trap type
+    if (this.trapType === TrapType.IMAGE) {
+      if (!this.resultType) {
+        tasks.push('Select a result type');
+      }
+
+      if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
+        tasks.push('Add a DMG trap item for combat');
+      }
+
+      if (this.resultType === TrapResultType.TELEPORT && (!this.teleportX || !this.teleportY)) {
+        tasks.push('Select teleport destination');
+      }
+    }
+
+    if (this.trapType === TrapType.ACTIVATING && this.selectedTiles.size === 0) {
+      tasks.push('Add at least one tile to activate');
+    }
+
+    // Update the DOM
+    if (tasks.length === 0) {
+      todoContainer.innerHTML =
+        '<li class="todo-item complete">All required fields completed!</li>';
+    } else {
+      todoContainer.innerHTML = tasks
+        .map(task => `<li class="todo-item incomplete">${task}</li>`)
+        .join('');
+    }
+  }
+
+  /**
+   * Set up form validation listener to update submit button state
+   */
+  protected _setupFormValidation(): void {
+    const form = this.element.querySelector('form');
+    if (!form) return;
+
+    // Find the submit button
+    const submitButton = this.element.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (!submitButton) return;
+
+    // Update button state based on form validity
+    const updateSubmitButton = () => {
+      // Sync form state first to get current values
+      this._syncFormToState();
+
+      // Check if form can be submitted
+      const canSubmit = this._canSubmit();
+
+      // Update button disabled state
+      submitButton.disabled = !canSubmit;
+
+      // Also update Setup Tasks
+      this._updateSetupTasks();
+    };
+
+    // Listen to input and change events on the form
+    form.addEventListener('input', updateSubmitButton);
+    form.addEventListener('change', updateSubmitButton);
+
+    // Initial validation check
+    updateSubmitButton();
   }
 
   /* -------------------------------------------- */
@@ -711,229 +1046,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /**
    * Handle file picker button click
    */
-  /**
-   * Set up accordion functionality for collapsible sections
-   */
-  protected _setupAccordion(): void {
-    const sections = this.element.querySelectorAll('.accordion-section');
-
-    sections.forEach((section: Element) => {
-      const header = section.querySelector('.accordion-header') as HTMLElement;
-      const content = section.querySelector('.accordion-content') as HTMLElement;
-      const icon = section.querySelector('.accordion-icon') as HTMLElement;
-
-      if (!header || !content) return;
-
-      // Handle click on header to toggle section
-      header.addEventListener('click', (e: Event) => {
-        e.preventDefault();
-        const isOpen = content.style.display !== 'none';
-
-        // Only one section open at a time - close all others
-        sections.forEach((otherSection: Element) => {
-          if (otherSection !== section) {
-            const otherContent = otherSection.querySelector('.accordion-content') as HTMLElement;
-            const otherIcon = otherSection.querySelector('.accordion-icon') as HTMLElement;
-            if (otherContent) {
-              otherContent.style.display = 'none';
-            }
-            if (otherIcon) {
-              otherIcon.classList.remove('fa-chevron-down');
-              otherIcon.classList.add('fa-chevron-right');
-            }
-          }
-        });
-
-        // Toggle this section
-        if (isOpen) {
-          content.style.display = 'none';
-          icon?.classList.remove('fa-chevron-down');
-          icon?.classList.add('fa-chevron-right');
-        } else {
-          content.style.display = 'block';
-          icon?.classList.remove('fa-chevron-right');
-          icon?.classList.add('fa-chevron-down');
-        }
-      });
-    });
-
-    // Ensure Basic Information section starts open
-    const basicInfoSection = this.element.querySelector('.basic-info-section') as HTMLElement;
-    if (basicInfoSection) {
-      const basicContent = basicInfoSection.querySelector('.accordion-content') as HTMLElement;
-      const basicIcon = basicInfoSection.querySelector('.accordion-icon') as HTMLElement;
-      if (basicContent && basicIcon) {
-        basicContent.style.display = 'block';
-        basicIcon.classList.remove('fa-chevron-right');
-        basicIcon.classList.add('fa-chevron-down');
-      }
-    }
-
-    // Auto-expand result configuration when result type is selected
-    const resultTypeSelect = this.element.querySelector(
-      'select[name="resultType"]'
-    ) as HTMLSelectElement;
-    if (resultTypeSelect && this.resultType) {
-      const resultSection = this.element.querySelector('.result-config-section') as HTMLElement;
-      const resultContent = resultSection?.querySelector('.accordion-content') as HTMLElement;
-      const resultIcon = resultSection?.querySelector('.accordion-icon') as HTMLElement;
-      if (resultContent && resultIcon) {
-        // Close all other sections
-        sections.forEach((section: Element) => {
-          const content = section.querySelector('.accordion-content') as HTMLElement;
-          const icon = section.querySelector('.accordion-icon') as HTMLElement;
-          if (content) content.style.display = 'none';
-          if (icon) {
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-right');
-          }
-        });
-        // Open result configuration
-        resultContent.style.display = 'block';
-        resultIcon.classList.remove('fa-chevron-right');
-        resultIcon.classList.add('fa-chevron-down');
-      }
-    }
-
-    // Set up required field validation indicators
-    this._updateRequiredIndicators();
-
-    // Update indicators when form fields change
-    const form = this.element.querySelector('form');
-    if (form) {
-      form.addEventListener('input', () => this._updateRequiredIndicators());
-      form.addEventListener('change', () => this._updateRequiredIndicators());
-    }
-  }
-
-  /**
-   * Update required field indicators on accordion headers and todo list
-   */
-  protected _updateRequiredIndicators(): void {
-    const sections = this.element.querySelectorAll('.accordion-section');
-    const todoItems: string[] = [];
-
-    sections.forEach((section: Element) => {
-      const header = section.querySelector('.accordion-header') as HTMLElement;
-      const content = section.querySelector('.accordion-content') as HTMLElement;
-
-      if (!header || !content) return;
-
-      // Check if this section has missing required fields
-      let hasMissingFields = false;
-
-      // Define required fields by section
-      if (section.classList.contains('basic-info-section')) {
-        // Check trap name
-        const trapName = content.querySelector('input[name="trapName"]') as HTMLInputElement;
-        if (!trapName || !trapName.value.trim()) {
-          hasMissingFields = true;
-          todoItems.push(game.i18n.localize('EMPUZZLES.TodoEnterTrapName'));
-        }
-      } else if (section.classList.contains('visibility-section')) {
-        // Check starting image for image traps
-        const trapType = this.element.querySelector('select[name="trapType"]') as HTMLSelectElement;
-        if (trapType && trapType.value === 'image') {
-          const startingImage = content.querySelector(
-            'input[name="startingImage"]'
-          ) as HTMLInputElement;
-          if (!startingImage || !startingImage.value.trim()) {
-            hasMissingFields = true;
-            todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectStartingImage'));
-          }
-        }
-      } else if (section.classList.contains('result-config-section')) {
-        // Check result type specific fields
-        const resultType = this.element.querySelector(
-          'select[name="resultType"]'
-        ) as HTMLSelectElement;
-        if (resultType) {
-          const resultValue = resultType.value;
-
-          // No result type selected
-          if (!resultValue) {
-            hasMissingFields = true;
-            todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectResultType'));
-          } else if (resultValue === 'damage') {
-            // Check if damage formula is provided (when no item dropped)
-            if (!this.dmgTrapItemId) {
-              const damageOnFail = content.querySelector(
-                'input[name="damageOnFail"]'
-              ) as HTMLInputElement;
-              if (!damageOnFail || !damageOnFail.value.trim()) {
-                hasMissingFields = true;
-                todoItems.push(game.i18n.localize('EMPUZZLES.TodoEnterDamageFormula'));
-              }
-            }
-          } else if (resultValue === 'teleport') {
-            // Check if teleport position is selected
-            if (this.teleportX === undefined || this.teleportY === undefined) {
-              hasMissingFields = true;
-              todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectTeleportPosition'));
-            }
-          } else if (resultValue === 'activeeffect') {
-            // Check if effect is selected
-            const effectId = content.querySelector('select[name="effectId"]') as HTMLSelectElement;
-            if (!effectId || !effectId.value) {
-              hasMissingFields = true;
-              todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectActiveEffect'));
-            }
-          } else if (resultValue === 'combat') {
-            // Check if attack item is dropped
-            if (!this.attackItemId) {
-              hasMissingFields = true;
-              todoItems.push(game.i18n.localize('EMPUZZLES.TodoDropAttackItem'));
-            }
-          }
-        }
-      } else if (section.classList.contains('tiles-doors-section')) {
-        // Check if tiles are selected for activating trap
-        if (this.selectedTiles.size === 0) {
-          hasMissingFields = true;
-          todoItems.push(game.i18n.localize('EMPUZZLES.TodoSelectTiles'));
-        }
-      }
-
-      // Add or remove indicator
-      const indicator = header.querySelector('.required-indicator') as HTMLElement;
-      if (hasMissingFields && !indicator) {
-        const newIndicator = document.createElement('span');
-        newIndicator.className = 'required-indicator';
-        newIndicator.title = 'This section has required fields that need to be filled';
-        header.appendChild(newIndicator);
-      } else if (!hasMissingFields && indicator) {
-        indicator.remove();
-      }
-    });
-
-    // Update todo list
-    const todoList = this.element.querySelector('[data-trap-todos]') as HTMLElement;
-    const todoItemsContainer = this.element.querySelector('[data-todo-items]') as HTMLElement;
-
-    if (todoList && todoItemsContainer) {
-      // Clear existing items
-      todoItemsContainer.innerHTML = '';
-
-      if (todoItems.length === 0) {
-        // All tasks complete
-        const completeLi = document.createElement('li');
-        completeLi.className = 'todo-item complete';
-        completeLi.innerHTML = `<i class="fas fa-check-circle"></i> ${game.i18n.localize('EMPUZZLES.TodoAllTasksComplete')}`;
-        todoItemsContainer.appendChild(completeLi);
-        todoList.classList.add('all-complete');
-      } else {
-        // Show incomplete tasks
-        todoList.classList.remove('all-complete');
-        todoItems.forEach(task => {
-          const li = document.createElement('li');
-          li.className = 'todo-item';
-          li.innerHTML = `<i class="far fa-circle"></i> ${task}`;
-          todoItemsContainer.appendChild(li);
-        });
-      }
-    }
-  }
-
   async _onFilePicker(event: Event): Promise<void> {
     event.preventDefault();
     const button = event.currentTarget as HTMLElement;
@@ -1050,6 +1162,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Re-render to show the item and activity selector
+    this._syncFormToState();
     this.render();
   }
 
@@ -1066,6 +1179,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dmgTrapActivities = undefined;
 
     // Re-render to show empty drop zone and unlock fields
+    this._syncFormToState();
     this.render();
   }
 
@@ -1077,6 +1191,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.dmgTrapActivityId = select.value;
 
     // Re-render to update fields with new activity data
+    this._syncFormToState();
     this.render();
   }
 
@@ -1206,79 +1321,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   /**
-   * Capture current form values before re-rendering
-   */
-  captureFormValues(): any {
-    if (!this.element) return {};
-
-    const form = this.element.querySelector('form');
-    if (!form) return {};
-
-    const values: any = {
-      trapName: (form.querySelector('input[name="trapName"]') as HTMLInputElement)?.value || '',
-      startingImage:
-        (form.querySelector('input[name="startingImage"]') as HTMLInputElement)?.value || '',
-      sound: (form.querySelector('input[name="sound"]') as HTMLInputElement)?.value || '',
-      minRequired:
-        (form.querySelector('input[name="minRequired"]') as HTMLInputElement)?.value || ''
-    };
-
-    // Capture tile action configurations
-    this.selectedTiles.forEach((_tileData, tileId) => {
-      const actionSelect = form.querySelector(
-        `select[name="action-${tileId}"]`
-      ) as HTMLSelectElement;
-      const activateModeSelect = form.querySelector(
-        `select[name="activateMode-${tileId}"]`
-      ) as HTMLSelectElement;
-      const showHideModeSelect = form.querySelector(
-        `select[name="showHideMode-${tileId}"]`
-      ) as HTMLSelectElement;
-
-      if (actionSelect) values[`action-${tileId}`] = actionSelect.value;
-      if (activateModeSelect) values[`activateMode-${tileId}`] = activateModeSelect.value;
-      if (showHideModeSelect) values[`showHideMode-${tileId}`] = showHideModeSelect.value;
-    });
-
-    // Capture wall/door state selections
-    this.selectedWalls.forEach((_wall, index) => {
-      const stateSelect = form.querySelector(
-        `select[name="wall-state-${index}"]`
-      ) as HTMLSelectElement;
-      if (stateSelect) values[`wall-state-${index}`] = stateSelect.value;
-    });
-
-    return values;
-  }
-
-  /**
-   * Restore form values after re-rendering
-   */
-  restoreFormValues(values: any): void {
-    if (!this.element || !values) return;
-
-    const form = this.element.querySelector('form');
-    if (!form) return;
-
-    Object.entries(values).forEach(([name, value]) => {
-      const input = form.querySelector(`[name="${name}"]`) as
-        | HTMLInputElement
-        | HTMLSelectElement
-        | HTMLTextAreaElement;
-      if (input && value) {
-        input.value = value as string;
-      }
-    });
-  }
-
-  /**
    * Handle adding a tile to the activation list
    */
   async _onAddTile(_event: Event, _target: HTMLElement): Promise<void> {
     ui.notifications.info('Click on a tile to add it to the activation list...');
 
-    // Capture form values before re-rendering
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties before re-rendering
+    this._syncFormToState();
 
     const handler = (_clickEvent: any) => {
       // Get the object under the cursor
@@ -1321,10 +1370,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Remove click handler
       (canvas as any).stage.off('click', handler);
 
-      // Re-render to show updated list, then restore form values
-      this.render(true).then(() => {
-        this.restoreFormValues(formValues);
-      });
+      // Re-render to show updated list (form state in class properties)
+      this.render(true);
     };
 
     (canvas as any).stage.on('click', handler);
@@ -1343,16 +1390,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const tileId = button.dataset.tileId;
     if (!tileId) return;
 
-    // Capture form values
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties
+    this._syncFormToState();
 
     // Remove tile from selection
     this.selectedTiles.delete(tileId);
 
-    // Re-render to show updated list, then restore form values
-    this.render(true).then(() => {
-      this.restoreFormValues(formValues);
-    });
+    // Re-render to show updated list (form state in class properties)
+    this.render(true);
   }
 
   /**
@@ -1366,8 +1411,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     ui.notifications.info('Click on the canvas to select move position...');
 
-    // Capture form values before re-rendering
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties before re-rendering
+    this._syncFormToState();
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
@@ -1384,10 +1429,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Remove click handler
       (canvas as any).stage.off('click', handler);
 
-      // Re-render to show updated position, then restore form values
-      this.render(true).then(() => {
-        this.restoreFormValues(formValues);
-      });
+      // Re-render to show updated position (form state in class properties)
+      this.render(true);
     };
 
     (canvas as any).stage.on('click', handler);
@@ -1397,8 +1440,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle adding a wall/door to the action list
    */
   async _onAddWall(_event: Event, _target: HTMLElement): Promise<void> {
-    // Capture form values before minimizing
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties before minimizing
+    this._syncFormToState();
 
     // Minimize this dialog
     await this.minimize();
@@ -1412,7 +1455,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Store that we're waiting for wall selection
     (this as any)._waitingForWall = true;
-    (this as any)._wallFormValues = formValues;
 
     // Set up a one-time hook to capture wall selection
     Hooks.once('controlWall', (wall: any, controlled: boolean) => {
@@ -1439,13 +1481,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         (canvas as any).tiles.activate();
       }
 
-      // Restore and re-render
+      // Re-render to show updated list (form state in class properties)
       this.maximize().then(() => {
-        this.render(true).then(() => {
-          const savedFormValues = (this as any)._wallFormValues;
-          delete (this as any)._wallFormValues;
-          this.restoreFormValues(savedFormValues);
-        });
+        this.render(true);
       });
     });
   }
@@ -1460,16 +1498,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const index = parseInt(target.dataset.wallIndex || '');
     if (isNaN(index)) return;
 
-    // Capture form values
-    const formValues = this.captureFormValues();
+    // Sync form state to class properties
+    this._syncFormToState();
 
     // Remove wall from selection
     this.selectedWalls.splice(index, 1);
 
-    // Re-render to show updated list, then restore form values
-    this.render(true).then(() => {
-      this.restoreFormValues(formValues);
-    });
+    // Re-render to show updated list (form state in class properties)
+    this.render(true);
   }
 
   /* -------------------------------------------- */
@@ -1973,6 +2009,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           effectid: effectId,
           addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear'
         };
+      } else if (this.resultType === TrapResultType.HEAL) {
+        imageTrapConfig.healingAmount =
+          (form.querySelector('input[name="healingAmount"]') as HTMLInputElement)?.value || '2d4+2';
+        imageTrapConfig.healFlavorText =
+          (form.querySelector('textarea[name="healFlavorText"]') as HTMLTextAreaElement)?.value ||
+          '';
       }
 
       trapConfig = imageTrapConfig;
@@ -2156,6 +2198,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       revealOnTrigger: revealOnTrigger,
       hideTrapOnTrigger: imageBehavior === ImageBehavior.HIDE,
       additionalEffects: additionalEffects.length > 0 ? additionalEffects : undefined,
+      additionalEffectsAction: (
+        form.querySelector('[name="additionalEffectsAction"]:checked') as HTMLInputElement
+      )?.value as 'add' | 'remove' | undefined,
       hasSavingThrow: hasSavingThrow,
       pauseGameOnTrigger: pauseGameOnTrigger,
       customTags: customTags

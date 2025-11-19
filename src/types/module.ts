@@ -30,6 +30,7 @@ export interface LightConfig {
  */
 export enum TrapResultType {
   DAMAGE = 'damage',
+  HEAL = 'heal',
   TELEPORT = 'teleport',
   ACTIVE_EFFECT = 'activeeffect',
   COMBAT = 'combat'
@@ -96,6 +97,7 @@ export interface TrapConfig {
   resultType: TrapResultType; // Type of result (damage, teleport, activeeffect)
   targetType: TrapTargetType; // Who to target (triggering token or tokens within tile)
   additionalEffects?: string[]; // Optional additional effects to apply
+  additionalEffectsAction?: 'add' | 'remove'; // Whether to add or remove additional effects
   // Optional saving throw (applies to all result types)
   hasSavingThrow: boolean;
   minRequired: number | null;
@@ -105,6 +107,9 @@ export interface TrapConfig {
   damageOnFail: string;
   halfDamageOnSuccess?: boolean; // Whether successful saves take half damage
   flavorText: string;
+  // For heal result type
+  healingAmount?: string; // Healing formula (e.g., "2d4+2")
+  healFlavorText?: string; // Flavor text for healing
   // For teleport result type
   teleportX?: number; // Teleport destination X
   teleportY?: number; // Teleport destination Y

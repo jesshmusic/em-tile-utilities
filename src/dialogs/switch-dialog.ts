@@ -1,4 +1,5 @@
-import { createSwitchTile, getNextTileNumber } from '../utils/tile-helpers';
+import { createSwitchTile } from '../utils/creators';
+import { getNextTileNumber } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -13,6 +14,14 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  */
 export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   private tagInputManager?: TagInputManager;
+
+  // Form state properties
+  protected switchName: string = '';
+  protected variableName: string = '';
+  protected onImage: string = '';
+  protected offImage: string = '';
+  protected sound: string = '';
+  protected customTags: string = '';
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -54,32 +63,35 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
-    // Get default values from settings
-    const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultOnImage') as string;
-    const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultOffImage') as string;
-    const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
+    // Initialize defaults on first render
+    if (!this.element) {
+      // Get default values from settings
+      const defaultOnImage = game.settings.get('em-tile-utilities', 'defaultOnImage') as string;
+      const defaultOffImage = game.settings.get('em-tile-utilities', 'defaultOffImage') as string;
+      const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
 
-    // Generate switch name based on existing switches in scene
-    const nextNumber = getNextTileNumber('Switch');
-    const nextSwitchId = `switch_${nextNumber}`;
+      // Generate switch name based on existing switches in scene
+      const nextNumber = getNextTileNumber('Switch');
+      const nextSwitchId = `switch_${nextNumber}`;
 
-    // Read current form values if the element exists (for re-renders)
-    let customTags = '';
-    if (this.element) {
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      customTags = customTagsInput?.value || '';
+      this.switchName = `Switch ${nextNumber}`;
+      this.variableName = nextSwitchId;
+      this.onImage = defaultOnImage;
+      this.offImage = defaultOffImage;
+      this.sound = defaultSound;
+    } else {
+      // Sync form state before re-render to preserve user input
+      this._syncFormToState();
     }
 
     return {
       ...context,
-      switchName: `Switch ${nextNumber}`,
-      variableName: nextSwitchId,
-      onImage: defaultOnImage,
-      offImage: defaultOffImage,
-      sound: defaultSound,
-      customTags: customTags,
+      switchName: this.switchName,
+      variableName: this.variableName,
+      onImage: this.onImage,
+      offImage: this.offImage,
+      sound: this.sound,
+      customTags: this.customTags,
       buttons: [
         {
           type: 'submit',
@@ -94,6 +106,39 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
         }
       ]
     };
+  }
+
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Text inputs
+    const switchNameInput = this.element.querySelector(
+      'input[name="switchName"]'
+    ) as HTMLInputElement;
+    if (switchNameInput) this.switchName = switchNameInput.value;
+
+    const variableNameInput = this.element.querySelector(
+      'input[name="variableName"]'
+    ) as HTMLInputElement;
+    if (variableNameInput) this.variableName = variableNameInput.value;
+
+    const onImageInput = this.element.querySelector('input[name="onImage"]') as HTMLInputElement;
+    if (onImageInput) this.onImage = onImageInput.value;
+
+    const offImageInput = this.element.querySelector('input[name="offImage"]') as HTMLInputElement;
+    if (offImageInput) this.offImage = offImageInput.value;
+
+    const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const customTagsInput = this.element.querySelector(
+      'input[name="customTags"]'
+    ) as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
   }
 
   /* -------------------------------------------- */

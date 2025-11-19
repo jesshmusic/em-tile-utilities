@@ -8,14 +8,7 @@ body:
       value: |
         Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
 
-  - type: input
-    id: module-version
-    attributes:
-      label: Module Version
-      description: What version of Dorman Lakely's Tile Utilities are you using?
-      placeholder: "e.g., 1.15.3"
-    validations:
-      required: true
+        **Note:** If you see any console errors (Press F12 in Foundry → Console tab), including them in your description is appreciated but not required.
 
   - type: input
     id: foundry-version
@@ -27,29 +20,27 @@ body:
       required: true
 
   - type: input
-    id: monks-version
+    id: dnd5e-version
     attributes:
-      label: Monk's Active Tiles Version
-      description: What version of Monk's Active Tiles are you using?
-      placeholder: "e.g., 11.0.0"
+      label: D&D 5e System Version
+      description: What version of the D&D 5e system are you using?
+      placeholder: "e.g., 4.0.0"
     validations:
-      required: true
-
-  - type: input
-    id: game-system
-    attributes:
-      label: Game System
-      description: What game system are you using?
-      placeholder: "e.g., DnD5e 3.3.1, PF2e 6.4.1, etc."
-    validations:
-      required: true
+      required: false
 
   - type: textarea
     id: description
     attributes:
       label: Bug Description
-      description: A clear and concise description of what the bug is.
-      placeholder: "When I create a trap with..."
+      description: |
+        A clear description of the bug, including:
+        - What you expected to happen
+        - What actually happened
+        - Any console errors (if applicable)
+      placeholder: |
+        When I create a trap with X option, I expected Y to happen, but instead Z occurred.
+
+        Console showed: [error message if applicable]
     validations:
       required: true
 
@@ -67,24 +58,6 @@ body:
       required: true
 
   - type: textarea
-    id: expected
-    attributes:
-      label: Expected Behavior
-      description: What did you expect to happen?
-      placeholder: "The trap should..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual Behavior
-      description: What actually happened?
-      placeholder: "Instead, the trap..."
-    validations:
-      required: true
-
-  - type: textarea
     id: tile-actions
     attributes:
       label: Tile Actions (Screenshot or JSON)
@@ -96,34 +69,3 @@ body:
         Drag and drop the exported JSON file here, or paste screenshot
     validations:
       required: false
-
-  - type: textarea
-    id: console-errors
-    attributes:
-      label: Browser Console Errors
-      description: Press F12 in Foundry, check the Console tab for any errors (screenshot or copy/paste)
-      placeholder: "Paste any red errors from the browser console here"
-    validations:
-      required: false
-
-  - type: textarea
-    id: additional
-    attributes:
-      label: Additional Context
-      description: Any other information that might help us solve this issue
-      placeholder: "This only happens when..., I also have module X installed..."
-    validations:
-      required: false
-
-  - type: checkboxes
-    id: checklist
-    attributes:
-      label: Checklist
-      description: Please confirm the following
-      options:
-        - label: I have tested with only Monk's Active Tiles and this module enabled (no other modules)
-          required: false
-        - label: I have checked existing issues to make sure this isn't a duplicate
-          required: true
-        - label: I have included the module version in this report
-          required: true

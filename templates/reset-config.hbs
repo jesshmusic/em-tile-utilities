@@ -18,10 +18,7 @@
       <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
     </button>
   </div>
-
-  <div class="tile-list-container">
     {{#if hasTiles}}
-      <div class="tile-list-scroll">
         {{#each tiles as |tile|}}
           <div class="tile-entry" data-tile-id="{{tile.tileId}}">
             <div class="tile-header">
@@ -144,10 +141,8 @@
             </div>
           </div>
         {{/each}}
-      </div>
     {{else}}
       <p><em>{{localize "EMPUZZLES.NoTilesSelected"}}</em></p>
-    {{/if}}
-  </div>
+{{/if}}
 
   {{> partials/custom-tags-section customTags=customTags}}

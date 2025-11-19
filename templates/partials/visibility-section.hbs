@@ -1,10 +1,9 @@
 {{! Visibility & Image Behavior Section }}
-<fieldset class='visibility-section accordion-section' data-section='visibility'>
-  <legend class='accordion-header'>
-    <i class='fas fa-chevron-right accordion-icon'></i>
+<fieldset class='visibility-section'>
+  <legend>
     {{localize 'EMPUZZLES.VisibilityLegend'}}
   </legend>
-  <div class='accordion-content' style='display: none;'>
+  <div>
 
   {{! Starting Image }}
   <div class='form-group'>
@@ -64,7 +63,7 @@
 
     <div class='radio-group'>
       <label class='radio-option'>
-        <input type='radio' name='initialVisibility' value='visible' checked />
+        <input type='radio' name='initialVisibility' value='visible' {{#if (eq initialVisibility "visible")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.VisibilityVisible'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.VisibilityVisibleHint'}}</p>
@@ -72,7 +71,7 @@
       </label>
 
       <label class='radio-option'>
-        <input type='radio' name='initialVisibility' value='hidden' />
+        <input type='radio' name='initialVisibility' value='hidden' {{#if (eq initialVisibility "hidden")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.VisibilityHidden'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.VisibilityHiddenHint'}}</p>
@@ -88,7 +87,7 @@
     <div class='radio-group'>
       {{! Options shown when Initial Visibility = Visible }}
       <label class='radio-option on-trigger-visible'>
-        <input type='radio' name='onTriggerBehavior' value='stays-same' checked />
+        <input type='radio' name='onTriggerBehavior' value='stays-same' {{#if (eq onTriggerBehavior "stays-same")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.OnTriggerStaysSame'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.OnTriggerStaysSameHint'}}</p>
@@ -96,7 +95,7 @@
       </label>
 
       <label class='radio-option on-trigger-visible'>
-        <input type='radio' name='onTriggerBehavior' value='switches-image' />
+        <input type='radio' name='onTriggerBehavior' value='switches-image' {{#if (eq onTriggerBehavior "switches-image")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.OnTriggerSwitchesImage'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.OnTriggerSwitchesImageHint'}}</p>
@@ -104,7 +103,7 @@
       </label>
 
       <label class='radio-option on-trigger-visible'>
-        <input type='radio' name='onTriggerBehavior' value='hides' />
+        <input type='radio' name='onTriggerBehavior' value='hides' {{#if (eq onTriggerBehavior "hides")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.OnTriggerHides'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.OnTriggerHidesHint'}}</p>
@@ -113,7 +112,7 @@
 
       {{! Options shown when Initial Visibility = Hidden }}
       <label class='radio-option on-trigger-hidden' style='display: none;'>
-        <input type='radio' name='onTriggerBehavior' value='stays-hidden' />
+        <input type='radio' name='onTriggerBehavior' value='stays-hidden' {{#if (eq onTriggerBehavior "stays-hidden")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.OnTriggerStaysHidden'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.OnTriggerStaysHiddenHint'}}</p>
@@ -121,7 +120,7 @@
       </label>
 
       <label class='radio-option on-trigger-hidden' style='display: none;'>
-        <input type='radio' name='onTriggerBehavior' value='reveals-same' />
+        <input type='radio' name='onTriggerBehavior' value='reveals-same' {{#if (eq onTriggerBehavior "reveals-same")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.OnTriggerRevealsSame'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.OnTriggerRevealsSameHint'}}</p>
@@ -129,7 +128,7 @@
       </label>
 
       <label class='radio-option on-trigger-hidden' style='display: none;'>
-        <input type='radio' name='onTriggerBehavior' value='reveals-switched' />
+        <input type='radio' name='onTriggerBehavior' value='reveals-switched' {{#if (eq onTriggerBehavior "reveals-switched")}}checked{{/if}} />
         <span class='radio-label'>
           <strong>{{localize 'EMPUZZLES.OnTriggerRevealsSwitched'}}</strong>
           <p class='hint'>{{localize 'EMPUZZLES.OnTriggerRevealsSwitchedHint'}}</p>

@@ -99,12 +99,13 @@ describe('TrapDialog Template Rendering Integration', () => {
 
       // Verify all values match enum constants (not raw string literals)
       expect(nonEmptyValues).toContain(TrapResultType.DAMAGE);
+      expect(nonEmptyValues).toContain(TrapResultType.HEAL);
       expect(nonEmptyValues).toContain(TrapResultType.TELEPORT);
       expect(nonEmptyValues).toContain(TrapResultType.ACTIVE_EFFECT);
       expect(nonEmptyValues).toContain(TrapResultType.COMBAT);
 
-      // Critical: Verify we have exactly 4 result type options (plus empty prompt)
-      expect(nonEmptyValues.length).toBe(4);
+      // Critical: Verify we have exactly 5 result type options (plus empty prompt)
+      expect(nonEmptyValues.length).toBe(5);
     });
 
     it('should NOT have duplicate combat options', async () => {
@@ -128,6 +129,7 @@ describe('TrapDialog Template Rendering Integration', () => {
       const nonEmptyLabels = labels.filter(l => l.trim() !== '' && !l.includes('Select'));
 
       expect(nonEmptyLabels).toContain('EMPUZZLES.ResultDamage');
+      expect(nonEmptyLabels).toContain('EMPUZZLES.ResultHeal');
       expect(nonEmptyLabels).toContain('EMPUZZLES.ResultTeleport');
       expect(nonEmptyLabels).toContain('EMPUZZLES.ResultActiveEffect');
       expect(nonEmptyLabels).toContain('EMPUZZLES.ResultCombat');

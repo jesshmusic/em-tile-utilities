@@ -1,5 +1,5 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
-import { createResetTile } from '../utils/tile-helpers';
+import { createResetTile } from '../utils/creators';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -155,8 +155,12 @@ function calculateStartingPosition(tile: any): { x: number; y: number; rotation:
  */
 export class ResetTileConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   selectedTiles: Map<string, SelectedTileData> = new Map();
+
+  // Form state properties (public for test access)
   resetName: string = 'Reset Tile';
   resetTileImage: string = 'icons/skills/trades/academics-investigation-puzzles.webp';
+  protected customTags: string = '';
+
   private tagInputManager?: TagInputManager;
 
   /** @inheritDoc */
@@ -255,13 +259,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       });
     });
 
-    // Read current form values if the element exists (for re-renders)
-    let customTags = '';
+    // Sync form state before re-render to preserve user input
     if (this.element) {
-      const customTagsInput = this.element.querySelector(
-        'input[name="customTags"]'
-      ) as HTMLInputElement;
-      customTags = customTagsInput?.value || '';
+      this._syncFormToState();
     }
 
     return {
@@ -270,7 +270,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       resetTileImage: this.resetTileImage,
       tiles: tiles,
       hasTiles: tiles.length > 0,
-      customTags: customTags,
+      customTags: this.customTags,
       buttons: [
         {
           type: 'submit',
@@ -285,6 +285,30 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         }
       ]
     };
+  }
+
+  /**
+   * Sync ALL form values from DOM to class properties
+   * Call this before re-rendering to preserve user input
+   */
+  protected _syncFormToState(): void {
+    if (!this.element) return;
+
+    // Text inputs
+    const resetNameInput = this.element.querySelector(
+      'input[name="resetName"]'
+    ) as HTMLInputElement;
+    if (resetNameInput) this.resetName = resetNameInput.value;
+
+    const resetTileImageInput = this.element.querySelector(
+      'input[name="resetTileImage"]'
+    ) as HTMLInputElement;
+    if (resetTileImageInput) this.resetTileImage = resetTileImageInput.value;
+
+    const customTagsInput = this.element.querySelector(
+      'input[name="customTags"]'
+    ) as HTMLInputElement;
+    if (customTagsInput) this.customTags = customTagsInput.value;
   }
 
   /* -------------------------------------------- */

@@ -8,14 +8,14 @@ import { mockFoundry, createMockScene } from '../mocks/foundry';
 // Set up Foundry mocks before importing
 mockFoundry();
 
-import * as TileHelpers from '../../src/utils/tile-helpers';
 import {
   createSwitchTile,
   createLightTile,
   createResetTile,
-  createTrapTile,
-  hasMonksTokenBar
-} from '../../src/utils/tile-helpers';
+  createTrapTile
+} from '../../src/utils/creators';
+import { hasMonksTokenBar } from '../../src/utils/helpers/module-checks';
+import * as ModuleChecks from '../../src/utils/helpers/module-checks';
 import type {
   SwitchConfig,
   LightConfig,
@@ -95,11 +95,19 @@ describe('tile-helpers', () => {
       expect(setVariables[0].data.name).toBe(switchConfig.variableName);
       expect(setVariables[1].data.name).toBe(switchConfig.variableName);
 
-      // Check checkvariable with quoted value
+      // Verify setvariable actions include entity field (Issue: switch image not changing)
+      setVariables.forEach((setVar: any) => {
+        expect(setVar.data.entity).toBeDefined();
+        expect(setVar.data.entity.id).toBe('tile');
+        expect(setVar.data.entity.name).toBe('This Tile');
+      });
+
+      // Check checkvariable with quoted value and type "all"
       const checkVar = actions.find((a: any) => a.action === 'checkvariable');
       expect(checkVar).toBeDefined();
       expect(checkVar.data.value).toBe('"ON"');
       expect(checkVar.data.fail).toBe('off');
+      expect(checkVar.data.type).toBe('all'); // Critical: must be "all" not "eq"
 
       // Check tileimage actions use first/last
       const tileImages = actions.filter((a: any) => a.action === 'tileimage');
@@ -107,7 +115,7 @@ describe('tile-helpers', () => {
       expect(tileImages[0].data.select).toBe('first'); // ON image
       expect(tileImages[1].data.select).toBe('last'); // OFF image
 
-      // Check for anchor with stop: true
+      // Check for anchor with stop: true (checkvariable type "all" allows continuation)
       const anchor = actions.find((a: any) => a.action === 'anchor');
       expect(anchor).toBeDefined();
       expect(anchor.data.tag).toBe('off');
@@ -430,6 +438,81 @@ describe('tile-helpers', () => {
       expect(doorAction).toBeDefined();
       expect(doorAction.data.state).toBe('locked');
     });
+
+    it('should create showhide action when tile has showHideAction', async () => {
+      resetConfig.tilesToReset[0].hasShowHideAction = true;
+      resetConfig.tilesToReset[0].hidden = true;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const showHideAction = actions.find(
+        (a: any) => a.action === 'showhide' && a.data.entity.id.includes('tile-1')
+      );
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('hide');
+    });
+
+    it('should create showhide action when tile has no other actions', async () => {
+      resetConfig.tilesToReset[0].hasActivateAction = false;
+      resetConfig.tilesToReset[0].hasMovementAction = false;
+      resetConfig.tilesToReset[0].hasTileImageAction = false;
+      resetConfig.tilesToReset[0].hasShowHideAction = false;
+      resetConfig.tilesToReset[0].hidden = false;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const showHideAction = actions.find(
+        (a: any) => a.action === 'showhide' && a.data.entity.id.includes('tile-1')
+      );
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('show');
+    });
+
+    it('should create movement action when tile has movementAction', async () => {
+      resetConfig.tilesToReset[0].hasMovementAction = true;
+      resetConfig.tilesToReset[0].x = 500;
+      resetConfig.tilesToReset[0].y = 600;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const moveAction = actions.find(
+        (a: any) => a.action === 'movetoken' && a.data.entity.id.includes('tile-1')
+      );
+      expect(moveAction).toBeDefined();
+      expect(moveAction.data.x).toBe('500');
+      expect(moveAction.data.y).toBe('600');
+    });
+
+    it('should create rotation action when tile has movement with rotation', async () => {
+      resetConfig.tilesToReset[0].hasMovementAction = true;
+      resetConfig.tilesToReset[0].x = 500;
+      resetConfig.tilesToReset[0].y = 600;
+      resetConfig.tilesToReset[0].rotation = 90;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const rotationAction = actions.find(
+        (a: any) => a.action === 'rotation' && a.data.entity.id.includes('tile-1')
+      );
+      expect(rotationAction).toBeDefined();
+      expect(rotationAction.data.rotation).toBe('90');
+    });
   });
 
   describe('createTrapTile', () => {
@@ -674,7 +757,7 @@ describe('tile-helpers', () => {
     });
 
     it('should create a teleport tile with correct data structure', async () => {
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
@@ -693,7 +776,7 @@ describe('tile-helpers', () => {
     });
 
     it('should include Monk Active Tiles configuration', async () => {
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -707,7 +790,7 @@ describe('tile-helpers', () => {
     });
 
     it('should create teleport action to destination', async () => {
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -721,7 +804,7 @@ describe('tile-helpers', () => {
     });
 
     it('should include sound action when sound is provided', async () => {
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -736,7 +819,7 @@ describe('tile-helpers', () => {
     it('should not include sound action when sound is empty', async () => {
       teleportConfig.sound = '';
 
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -752,7 +835,7 @@ describe('tile-helpers', () => {
       teleportConfig.savingThrow = 'save:dex';
       teleportConfig.dc = 15;
 
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -782,7 +865,7 @@ describe('tile-helpers', () => {
       teleportConfig.savingThrow = 'save:dex';
       teleportConfig.dc = 15;
 
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -799,7 +882,7 @@ describe('tile-helpers', () => {
     it('should support scene change teleportation', async () => {
       teleportConfig.teleportSceneId = 'target-scene-id';
 
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -816,7 +899,7 @@ describe('tile-helpers', () => {
         setTags: jest.fn()
       };
 
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       // Should be called with the tile and an array containing the EM tag plus custom tags
@@ -846,7 +929,7 @@ describe('tile-helpers', () => {
         return undefined;
       });
 
-      const { createTeleportTile } = await import('../../src/utils/tile-helpers');
+      const { createTeleportTile } = await import('../../src/utils/creators');
       await createTeleportTile(mockScene, teleportConfig, 200, 200);
 
       // Should create main tile on source scene
@@ -878,7 +961,7 @@ describe('tile-helpers', () => {
         branches: []
       };
 
-      const { createCheckStateTile } = await import('../../src/utils/tile-helpers');
+      const { createCheckStateTile } = await import('../../src/utils/creators');
       await createCheckStateTile(mockScene, config, 200, 200);
 
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledTimes(1);
@@ -897,7 +980,7 @@ describe('tile-helpers', () => {
         branches: []
       };
 
-      const { createCheckStateTile } = await import('../../src/utils/tile-helpers');
+      const { createCheckStateTile } = await import('../../src/utils/creators');
       await createCheckStateTile(mockScene, config, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -914,7 +997,7 @@ describe('tile-helpers', () => {
         branches: []
       };
 
-      const { createCheckStateTile } = await import('../../src/utils/tile-helpers');
+      const { createCheckStateTile } = await import('../../src/utils/creators');
       await createCheckStateTile(mockScene, config, 200, 200);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
@@ -971,7 +1054,7 @@ describe('tile-helpers', () => {
         maxTriggers: 0
       };
 
-      const { createCombatTrapTile } = await import('../../src/utils/tile-helpers');
+      const { createCombatTrapTile } = await import('../../src/utils/creators');
       await createCombatTrapTile(mockScene, config, 200, 200);
 
       // Should create both tile and token
@@ -991,7 +1074,7 @@ describe('tile-helpers', () => {
         maxTriggers: 0
       };
 
-      const { createCombatTrapTile } = await import('../../src/utils/tile-helpers');
+      const { createCombatTrapTile } = await import('../../src/utils/creators');
       await createCombatTrapTile(mockScene, config, 200, 200);
 
       expect((global as any).game.actors.documentClass.create).toHaveBeenCalled();
@@ -1012,7 +1095,7 @@ describe('tile-helpers', () => {
         maxTriggers: 3
       };
 
-      const { createCombatTrapTile } = await import('../../src/utils/tile-helpers');
+      const { createCombatTrapTile } = await import('../../src/utils/creators');
       await createCombatTrapTile(mockScene, config, 200, 200);
 
       // Verify trigger limit logic is included
@@ -1043,6 +1126,40 @@ describe('tile-helpers', () => {
           return null;
         })
       };
+    });
+
+    it('should tag lights in scene along with tiles', async () => {
+      // Create mock light with tags
+      const mockLight = {
+        id: 'light-1',
+        _tags: ['EMTorch']
+      };
+      mockScene.lights.set('light-1', mockLight);
+
+      // Mock getTags to return tags for light
+      mockTagger.getTags = jest.fn((doc: any) => {
+        if (doc.id === 'light-1') {
+          return ['EMTorch'];
+        }
+        return doc._tags || [];
+      });
+
+      const config = {
+        name: 'Torch',
+        variableName: 'torch_1',
+        onImage: 'on.png',
+        offImage: 'off.png',
+        sound: ''
+      };
+
+      await createSwitchTile(mockScene, config, 200, 200);
+
+      // Should detect existing EMTorch tag and create EMTorch2
+      expect(mockTagger.setTags).toHaveBeenCalled();
+      const tagArgs = mockTagger.setTags.mock.calls[0];
+      const tags = tagArgs[1];
+      // Should have numbered tag to avoid collision
+      expect(tags[0]).toMatch(/EMTorch\d+/);
     });
 
     it('should tag switch tiles with EM prefix', async () => {
@@ -1190,14 +1307,14 @@ describe('tile-helpers', () => {
     });
 
     it('should return 1 when no matching tiles exist', async () => {
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('Switch');
       expect(result).toBe(1);
     });
 
     it('should return 1 when scene is null', async () => {
       (global as any).canvas.scene = null;
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('Switch');
       expect(result).toBe(1);
     });
@@ -1217,7 +1334,7 @@ describe('tile-helpers', () => {
       mockScene.tiles.set('tile1', tile1);
       mockScene.tiles.set('tile2', tile2);
 
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('Switch');
       expect(result).toBe(3);
     });
@@ -1230,7 +1347,7 @@ describe('tile-helpers', () => {
       };
       mockScene.tiles.set('tile1', tile1);
 
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('Trap');
       expect(result).toBe(6);
     });
@@ -1249,7 +1366,7 @@ describe('tile-helpers', () => {
       mockScene.tiles.set('tile1', tile1);
       mockScene.tiles.set('tile2', tile2);
 
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('Light');
       expect(result).toBe(11);
     });
@@ -1261,7 +1378,7 @@ describe('tile-helpers', () => {
       };
       mockScene.tiles.set('tile1', tile1);
 
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('Reset');
       expect(result).toBe(4);
     });
@@ -1274,7 +1391,7 @@ describe('tile-helpers', () => {
       };
       mockScene.tiles.set('tile1', tile1);
 
-      const { getNextTileNumber } = await import('../../src/utils/tile-helpers');
+      const { getNextTileNumber } = await import('../../src/utils/helpers/naming-helpers');
       const result = getNextTileNumber('switch');
       expect(result).toBe(8);
     });
@@ -1383,6 +1500,77 @@ describe('tile-helpers', () => {
       expect(lightData.config.darkness.min).toBe(0);
       expect(lightData.config.darkness.max).toBe(1);
     });
+
+    it('should create ambient sound when sound is provided', async () => {
+      const config: LightConfig = {
+        name: 'Torch with Sound',
+        onImage: 'torch-on.png',
+        offImage: 'torch-off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: '#ff9900',
+        colorIntensity: 0.8,
+        useOverlay: false,
+        sound: 'sounds/torch-crackle.ogg',
+        soundRadius: 30,
+        soundVolume: 0.6
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      // Should create AmbientLight and AmbientSound
+      const soundCall = mockScene.createEmbeddedDocuments.mock.calls.find(
+        (call: any) => call[0] === 'AmbientSound'
+      );
+      expect(soundCall).toBeDefined();
+
+      const soundData = soundCall[1][0];
+      expect(soundData.path).toBe('sounds/torch-crackle.ogg');
+      expect(soundData.radius).toBe(30);
+      expect(soundData.volume).toBe(0.6);
+      expect(soundData.repeat).toBe(true);
+      expect(soundData.walls).toBe(true);
+      expect(soundData.hidden).toBe(true); // Hidden initially for manual toggle
+    });
+
+    it('should create overlay tile when useOverlay is true', async () => {
+      // Reset mock before this test to ensure clean state
+      mockScene.createEmbeddedDocuments.mockClear();
+
+      const config: LightConfig = {
+        name: 'Light with Overlay',
+        onImage: 'light-on.png',
+        offImage: 'light-off.png',
+        useDarkness: false,
+        darknessMin: 0,
+        dimLight: 40,
+        brightLight: 20,
+        lightColor: null,
+        colorIntensity: 0.5,
+        useOverlay: true,
+        overlayImage: 'light-glow.webm'
+      };
+
+      await createLightTile(mockScene, config, 200, 200);
+
+      // Find ALL tile calls and search for the overlay
+      const tileCalls = mockScene.createEmbeddedDocuments.mock.calls.filter(
+        (call: any) => call[0] === 'Tile'
+      );
+      expect(tileCalls.length).toBeGreaterThanOrEqual(2); // At least main + overlay
+
+      // Find the tile with overlay image
+      const overlayTile = tileCalls
+        .map((call: any) => call[1][0])
+        .find((tile: any) => tile.texture.src === 'light-glow.webm');
+
+      expect(overlayTile).toBeDefined();
+      expect(overlayTile.elevation).toBe(1); // Above main tile
+      expect(overlayTile.hidden).toBe(true); // Start hidden
+      expect(overlayTile.flags['monks-active-tiles'].name).toContain('(Overlay)');
+    });
   });
 
   describe('trap creation with different result types', () => {
@@ -1486,7 +1674,7 @@ describe('tile-helpers', () => {
 
     it("should detect Monk's Token Bar as available when mocked", () => {
       // Mock hasMonksTokenBar to return true for this test
-      const spy = jest.spyOn(TileHelpers, 'hasMonksTokenBar').mockReturnValue(true);
+      const spy = jest.spyOn(ModuleChecks, 'hasMonksTokenBar').mockReturnValue(true);
       expect(hasMonksTokenBar()).toBe(true);
       spy.mockRestore();
     });
@@ -1654,6 +1842,7 @@ describe('tile-helpers', () => {
 
       expect(actions[6].action).toBe('anchor'); // 'off' label
       expect(actions[6].data.tag).toBe('off');
+      expect(actions[6].data.stop).toBe(true);
 
       expect(actions[7].action).toBe('tileimage'); // Show OFF image
       expect(actions[7].data.select).toBe('last');

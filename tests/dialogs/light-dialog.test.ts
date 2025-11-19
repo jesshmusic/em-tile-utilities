@@ -591,4 +591,282 @@ describe('LightConfigDialog', () => {
       expect(tileData.flags['monks-active-tiles'].name).toBe('Light');
     });
   });
+
+  describe('_syncFormToState', () => {
+    it('should sync all text inputs from form to state', () => {
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          const mocks: Record<string, any> = {
+            'input[name="lightName"]': { value: 'Updated Light' },
+            'input[name="offImage"]': { value: 'off-updated.png' },
+            'input[name="onImage"]': { value: 'on-updated.png' },
+            'input[name="overlayImage"]': { value: 'overlay.webm' },
+            'input[name="sound"]': { value: 'updated-sound.ogg' },
+            'input[name="lightColor"]': { value: '#ff0000' },
+            'input[name="customTags"]': { value: 'tag1,tag2' },
+            'input[name="useDarkness"]': { checked: true },
+            'input[name="useOverlay"]': { checked: true },
+            'input[name="darknessMin"]': { value: '0.7' },
+            'input[name="dimLight"]': { value: '50' },
+            'input[name="brightLight"]': { value: '25' },
+            'input[name="colorIntensity"]': { value: '0.9' },
+            'input[name="soundRadius"]': { value: '60' },
+            'input[name="soundVolume"]': { value: '0.8' }
+          };
+          return mocks[selector] || null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any)._syncFormToState();
+
+      expect((dialog as any).lightName).toBe('Updated Light');
+      expect((dialog as any).offImage).toBe('off-updated.png');
+      expect((dialog as any).onImage).toBe('on-updated.png');
+      expect((dialog as any).overlayImage).toBe('overlay.webm');
+      expect((dialog as any).sound).toBe('updated-sound.ogg');
+      expect((dialog as any).lightColor).toBe('#ff0000');
+      expect((dialog as any).customTags).toBe('tag1,tag2');
+      expect((dialog as any).useDarkness).toBe(true);
+      expect((dialog as any).useOverlay).toBe(true);
+      expect((dialog as any).darknessMin).toBe(0.7);
+      expect((dialog as any).dimLight).toBe(50);
+      expect((dialog as any).brightLight).toBe(25);
+      expect((dialog as any).colorIntensity).toBe(0.9);
+      expect((dialog as any).soundRadius).toBe(60);
+      expect((dialog as any).soundVolume).toBe(0.8);
+    });
+
+    it('should not throw if element is null', () => {
+      dialog.element = null as any;
+      expect(() => (dialog as any)._syncFormToState()).not.toThrow();
+    });
+
+    it('should handle missing form inputs gracefully', () => {
+      const mockElement = {
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      expect(() => (dialog as any)._syncFormToState()).not.toThrow();
+    });
+  });
+
+  describe('_onClose', () => {
+    it('should close the dialog', () => {
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+      expect(dialog.close).toHaveBeenCalled();
+    });
+
+    it('should maximize tile manager if it exists', () => {
+      const mockTileManager = { maximize: jest.fn() };
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(mockTileManager);
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      expect(mockTileManager.maximize).toHaveBeenCalled();
+    });
+
+    it('should not throw if tile manager does not exist', () => {
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(null);
+
+      dialog.close = jest.fn();
+
+      expect(() => (dialog as any)._onClose()).not.toThrow();
+    });
+  });
+
+  describe('_prepareContext with existing element', () => {
+    it('should call _syncFormToState when element exists', async () => {
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          const mocks: Record<string, any> = {
+            'input[name="lightName"]': { value: 'Synced Name' },
+            'input[name="offImage"]': { value: 'synced-off.png' },
+            'input[name="onImage"]': { value: 'synced-on.png' },
+            'input[name="overlayImage"]': { value: '' },
+            'input[name="sound"]': { value: '' },
+            'input[name="lightColor"]': { value: '#ffffff' },
+            'input[name="customTags"]': { value: '' },
+            'input[name="useDarkness"]': { checked: false },
+            'input[name="useOverlay"]': { checked: false },
+            'input[name="darknessMin"]': { value: '0' },
+            'input[name="dimLight"]': { value: '40' },
+            'input[name="brightLight"]': { value: '20' },
+            'input[name="colorIntensity"]': { value: '0.5' },
+            'input[name="soundRadius"]': { value: '40' },
+            'input[name="soundVolume"]': { value: '0.5' }
+          };
+          return mocks[selector] || null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      const context = await dialog._prepareContext({});
+
+      // Verify that form state was synced
+      expect(context.lightName).toBe('Synced Name');
+      expect(context.offImage).toBe('synced-off.png');
+      expect(context.onImage).toBe('synced-on.png');
+    });
+  });
+
+  describe('_onRender DOM event handlers', () => {
+    it('should toggle darkness settings visibility when darkness checkbox changes', () => {
+      const darknessToggle = { checked: false, addEventListener: jest.fn() };
+      const darknessSettings = { style: { display: '' } };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return darknessToggle;
+          if (selector === '.darkness-settings') return darknessSettings;
+          if (selector === 'input[name="useOverlay"]') return null;
+          if (selector === '.overlay-settings') return null;
+          return null;
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).useDarkness = false;
+
+      dialog._onRender({}, {});
+
+      // Get the event listener that was registered
+      expect(darknessToggle.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      const changeHandler = (darknessToggle.addEventListener as any).mock.calls[0][1];
+
+      // Simulate checking the box
+      darknessToggle.checked = true;
+      (changeHandler as any)();
+      expect(darknessSettings.style.display).toBe('block');
+
+      // Simulate unchecking the box
+      darknessToggle.checked = false;
+      (changeHandler as any)();
+      expect(darknessSettings.style.display).toBe('none');
+    });
+
+    it('should toggle overlay settings visibility when overlay checkbox changes', () => {
+      const overlayToggle = { checked: false, addEventListener: jest.fn() };
+      const overlaySettings = { style: { display: '' } };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return null;
+          if (selector === '.darkness-settings') return null;
+          if (selector === 'input[name="useOverlay"]') return overlayToggle;
+          if (selector === '.overlay-settings') return overlaySettings;
+          return null;
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).useOverlay = false;
+
+      dialog._onRender({}, {});
+
+      // Get the event listener
+      expect(overlayToggle.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      const changeHandler = (overlayToggle.addEventListener as any).mock.calls[0][1];
+
+      // Simulate checking the box
+      overlayToggle.checked = true;
+      (changeHandler as any)();
+      expect(overlaySettings.style.display).toBe('block');
+      expect((dialog as any).useOverlay).toBe(true);
+
+      // Simulate unchecking
+      overlayToggle.checked = false;
+      (changeHandler as any)();
+      expect(overlaySettings.style.display).toBe('none');
+      expect((dialog as any).useOverlay).toBe(false);
+    });
+
+    it('should update range slider display when slider value changes', () => {
+      const rangeInput = {
+        dataset: { updateDisplay: 'dimLight-display' },
+        value: '50',
+        addEventListener: jest.fn()
+      };
+      const displayElement = { textContent: '40' };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return null;
+          if (selector === 'input[name="useOverlay"]') return null;
+          if (selector === '#dimLight-display') return displayElement;
+          return null;
+        }),
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === 'input[type="range"][data-update-display]') {
+            return [rangeInput];
+          }
+          return [];
+        })
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      // Get the input event listener
+      expect(rangeInput.addEventListener).toHaveBeenCalledWith('input', expect.any(Function));
+      const inputHandler = (rangeInput.addEventListener as any).mock.calls[0][1];
+
+      // Simulate slider change
+      rangeInput.value = '75';
+      (inputHandler as any)();
+      expect(displayElement.textContent).toBe('75');
+    });
+
+    it('should sync color picker with text input bidirectionally', () => {
+      const colorTextInput = {
+        value: '#ffffff',
+        addEventListener: jest.fn(),
+        dispatchEvent: jest.fn()
+      };
+      const colorPicker = {
+        value: '#ffffff',
+        addEventListener: jest.fn()
+      };
+
+      const mockElement = {
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="useDarkness"]') return null;
+          if (selector === 'input[name="useOverlay"]') return null;
+          if (selector === 'input[name="lightColor"]') return colorTextInput;
+          if (selector === 'input[type="color"][data-edit="lightColor"]') return colorPicker;
+          return null;
+        }),
+        querySelectorAll: jest.fn().mockReturnValue([])
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      // Check both event listeners were registered
+      expect(colorTextInput.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(colorPicker.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+      // Test text input → color picker
+      const textChangeHandler = (colorTextInput.addEventListener as any).mock.calls[0][1];
+      colorTextInput.value = '#ff0000';
+      (textChangeHandler as any)();
+      expect(colorPicker.value).toBe('#ff0000');
+
+      // Test color picker → text input
+      const pickerChangeHandler = (colorPicker.addEventListener as any).mock.calls[0][1];
+      colorPicker.value = '#00ff00';
+      (pickerChangeHandler as any)();
+      expect(colorTextInput.value).toBe('#00ff00');
+      expect(colorTextInput.dispatchEvent).toHaveBeenCalled();
+    });
+  });
 });

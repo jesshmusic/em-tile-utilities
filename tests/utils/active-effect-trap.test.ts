@@ -16,12 +16,12 @@ import { mockFoundry, createMockScene } from '../mocks/foundry';
 // Set up Foundry mocks before importing
 mockFoundry();
 
-import * as TileHelpers from '../../src/utils/tile-helpers';
-import { createTrapTile } from '../../src/utils/tile-helpers';
+import { createTrapTile } from '../../src/utils/creators';
 import { TrapConfig, TrapResultType, TrapTargetType } from '../../src/types/module';
+import * as ModuleChecks from '../../src/utils/helpers/module-checks';
 
 // Mock hasMonksTokenBar to return true
-jest.spyOn(TileHelpers, 'hasMonksTokenBar').mockReturnValue(true);
+jest.spyOn(ModuleChecks, 'hasMonksTokenBar').mockReturnValue(true);
 
 describe('Active Effect Trap Creation (Issue #22)', () => {
   let scene: any;

@@ -65,8 +65,7 @@
   border-radius: 3px;
 }
 
-.trap-config .tile-list-scroll,
-.reset-config .tile-list-scroll {
+.trap-config .tile-list-scroll {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -78,6 +77,11 @@
   border: 1px solid var(--color-border-light-tertiary);
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.05);
+}
+
+/* Add spacing between reset tile entries */
+.reset-config .tile-entry:not(:last-child) {
+  margin-bottom: 1rem;
 }
 
 .trap-config .tile-header,
@@ -1829,6 +1833,124 @@ button .game-icon,
 .em-puzzles fieldset.tagger {
   margin: 5px 0;
   flex: auto;
+}
+
+/* Tagger section in trap dialog */
+.trap-config fieldset.tagger {
+  margin: 0;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border-light-tertiary);
+}
+
+/* Required field indicator */
+.required {
+  color: #ff4444;
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
+/* Form validation styles */
+input:invalid,
+select:invalid,
+textarea:invalid {
+  border-color: rgba(255, 68, 68, 0.5);
+}
+
+input:valid,
+select:valid,
+textarea:valid {
+  border-color: var(--color-border-light-primary);
+}
+
+/* Trap footer - two row layout */
+.trap-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* Row 1: Setup tasks styling */
+.trap-footer .trap-todo-list {
+  background: transparent;
+  margin: 0;
+  padding: 0 0 0.75rem 0;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+  width: 100%;
+}
+
+/* Row 2: Footer buttons */
+.trap-footer .footer-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  width: 100%;
+}
+
+.trap-footer .debug-btn {
+  background: rgba(150, 100, 200, 0.2);
+  border: 1px solid rgba(150, 100, 200, 0.4);
+  color: #b19cd9;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.trap-footer .debug-btn:hover {
+  background: rgba(150, 100, 200, 0.3);
+  border-color: rgba(150, 100, 200, 0.6);
+}
+
+.trap-footer .main-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* State Debug Dialog Styling */
+.state-debug {
+  font-family: 'Roboto', sans-serif;
+}
+
+.state-debug-content {
+  padding: 1rem;
+}
+
+.state-debug .debug-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary);
+}
+
+.state-debug .debug-header h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2em;
+  color: var(--color-text-light-heading);
+}
+
+.state-debug .last-update {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--color-text-dark-secondary);
+}
+
+.state-debug .state-json {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  padding: 1rem;
+  margin: 0;
+  overflow: auto;
+  max-height: 600px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: #e0e0e0;
+  white-space: pre;
 }
 
 .em-puzzles fieldset.tagger .tag-container {
