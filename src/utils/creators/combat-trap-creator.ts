@@ -2,7 +2,6 @@ import type { CombatTrapConfig } from '../../types/module';
 import { TrapTargetType } from '../../types/module';
 import { createBaseTileData } from '../builders/base-tile-builder';
 import { createMonksConfig } from '../builders/monks-config-builder';
-import { createTrapActorData } from '../builders/entity-builders';
 import {
   createSetVariableAction,
   createCheckVariableAction,

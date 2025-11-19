@@ -7,8 +7,7 @@ import {
   createStopAction,
   createActivateAction,
   createShowHideAction,
-  createTriggerAction,
-  createChangeDoorAction
+  createTriggerAction
 } from '../actions';
 import { generateUniqueEMTag, showTaggerWithWarning } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
@@ -37,10 +36,9 @@ export async function createCheckStateTile(
   if (config.branches.length === 0) {
     // No branches - just show a chat message
     actions.push(
-      createChatMessageAction(
-        `<h3>${config.name}</h3><p><em>No branches configured</em></p>`,
-        { whisper: 'gm' }
-      )
+      createChatMessageAction(`<h3>${config.name}</h3><p><em>No branches configured</em></p>`, {
+        whisper: 'gm'
+      })
     );
   } else {
     // Process each branch

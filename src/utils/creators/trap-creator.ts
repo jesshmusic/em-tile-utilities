@@ -5,7 +5,6 @@ import { createMonksConfig } from '../builders/monks-config-builder';
 import {
   createActivateAction,
   createShowHideAction,
-  createMoveTokenAction,
   createChangeDoorAction,
   createTileImageAction,
   createPlaySoundAction,
@@ -14,7 +13,6 @@ import {
   createFilterRequestAction,
   createAnchorAction,
   createHurtHealAction,
-  createTeleportAction,
   createApplyEffectAction
 } from '../actions';
 import {

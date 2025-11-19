@@ -54,7 +54,7 @@ export function createAmbientLightData(
         max: 1
       }
     },
-    hidden: config.hidden ?? (!config.useDarkness) // Start hidden for click-based, visible for darkness-based
+    hidden: config.hidden ?? !config.useDarkness // Start hidden for click-based, visible for darkness-based
   };
 }
 

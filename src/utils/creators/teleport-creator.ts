@@ -7,7 +7,11 @@ import {
   createTeleportAction,
   createRequestRollAction
 } from '../actions';
-import { generateUniqueEMTag, parseCustomTags, showTaggerWithWarning } from '../helpers/tag-helpers';
+import {
+  generateUniqueEMTag,
+  parseCustomTags,
+  showTaggerWithWarning
+} from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 
@@ -63,16 +67,11 @@ export async function createTeleportTile(
   // Add teleport action
   const hasSavingThrowAction = config.hasSavingThrow && hasMonksTokenBar();
   actions.push(
-    createTeleportAction(
-      config.teleportX,
-      config.teleportY,
-      config.teleportSceneId,
-      {
-        entityId: hasSavingThrowAction ? 'previous' : 'token',
-        entityName: hasSavingThrowAction ? 'Current tokens' : 'Triggering Token',
-        deletesource: config.deleteSourceToken
-      }
-    )
+    createTeleportAction(config.teleportX, config.teleportY, config.teleportSceneId, {
+      entityId: hasSavingThrowAction ? 'previous' : 'token',
+      entityName: hasSavingThrowAction ? 'Current tokens' : 'Triggering Token',
+      deletesource: config.deleteSourceToken
+    })
   );
 
   // Create main teleport tile

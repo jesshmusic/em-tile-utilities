@@ -23,19 +23,15 @@ export async function createLightTile(
   const position = getDefaultPosition(x, y);
 
   // Create the light source (centered on the tile)
-  const lightData = createAmbientLightData(
-    position.x + gridSize / 2,
-    position.y + gridSize / 2,
-    {
-      color: config.lightColor || null,
-      dimLight: config.dimLight,
-      brightLight: config.brightLight,
-      colorIntensity: config.colorIntensity || 0.5,
-      useDarkness: config.useDarkness,
-      darknessMin: config.darknessMin,
-      hidden: !config.useDarkness
-    }
-  );
+  const lightData = createAmbientLightData(position.x + gridSize / 2, position.y + gridSize / 2, {
+    color: config.lightColor || null,
+    dimLight: config.dimLight,
+    brightLight: config.brightLight,
+    colorIntensity: config.colorIntensity || 0.5,
+    useDarkness: config.useDarkness,
+    darknessMin: config.darknessMin,
+    hidden: !config.useDarkness
+  });
 
   const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
   const lightId = (light as any).id;

@@ -12,7 +12,11 @@ import {
   createChatMessageAction,
   createChangeDoorAction
 } from '../actions';
-import { generateUniqueEMTag, parseCustomTags, showTaggerWithWarning } from '../helpers/tag-helpers';
+import {
+  generateUniqueEMTag,
+  parseCustomTags,
+  showTaggerWithWarning
+} from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 
 /**

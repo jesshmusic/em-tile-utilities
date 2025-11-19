@@ -477,8 +477,9 @@ describe('SwitchConfigDialog', () => {
     });
 
     it('should not throw if tile manager does not exist', () => {
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager =
-        jest.fn().mockReturnValue(null);
+      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
+        .fn()
+        .mockReturnValue(null);
 
       dialog.close = jest.fn();
 
