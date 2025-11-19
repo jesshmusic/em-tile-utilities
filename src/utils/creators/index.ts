@@ -8,20 +8,9 @@
 
 // Export refactored creators
 export { createSwitchTile } from './switch-creator';
-
-// Temporarily re-export from tile-helpers until all creators are refactored
-import {
-  createResetTile as _createResetTile,
-  createLightTile as _createLightTile,
-  createTeleportTile as _createTeleportTile,
-  createTrapTile as _createTrapTile,
-  createCheckStateTile as _createCheckStateTile,
-  createCombatTrapTile as _createCombatTrapTile
-} from '../tile-helpers';
-
-export const createResetTile = _createResetTile;
-export const createLightTile = _createLightTile;
-export const createTeleportTile = _createTeleportTile;
-export const createTrapTile = _createTrapTile;
-export const createCheckStateTile = _createCheckStateTile;
-export const createCombatTrapTile = _createCombatTrapTile;
+export { createLightTile } from './light-creator';
+export { createResetTile } from './reset-creator';
+export { createTeleportTile } from './teleport-creator';
+export { createCombatTrapTile } from './combat-trap-creator';
+export { createCheckStateTile } from './check-state-creator';
+export { createTrapTile } from './trap-creator';

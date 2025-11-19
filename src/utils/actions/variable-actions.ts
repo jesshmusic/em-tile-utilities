@@ -35,14 +35,17 @@ export function createSetVariableAction(
 export function createCheckVariableAction(
   name: string,
   value: string,
-  failAnchor?: string
+  failAnchor?: string,
+  comparisonType?: string
 ): any {
   return {
     action: 'checkvariable',
     data: {
       name,
       value,
-      fail: failAnchor ?? ''
+      fail: failAnchor ?? '',
+      entity: { id: 'tile', name: 'This Tile' },
+      type: comparisonType ?? 'eq'
     },
     id: foundry.utils.randomID()
   };

@@ -15,36 +15,45 @@ export function createRequestRollAction(
   options?: {
     flavor?: string;
     rollmode?: string;
+    silent?: boolean;
+    fastforward?: boolean;
+    usetokens?: string;
+    continue?: string;
   }
 ): any {
   return {
     action: 'monks-tokenbar.requestroll',
     data: {
-      entity: { id: '' },
+      entity: { id: 'token', name: 'Triggering Token' },
       request: rollType,
       dc: dc.toString(),
       flavor: options?.flavor || '',
-      rollmode: options?.rollmode || 'roll'
+      rollmode: options?.rollmode || 'roll',
+      silent: options?.silent ?? false,
+      fastforward: options?.fastforward ?? false,
+      usetokens: options?.usetokens ?? 'fail',
+      continue: options?.continue ?? 'failed'
     },
     id: foundry.utils.randomID()
   };
 }
 
 /**
- * Create a filter request action (conditional based on roll result)
- * @param saveName - Saving throw name (e.g., "dex", "str")
- * @param failAnchor - Anchor to jump to on failure
+ * Create a filter request action (splits tokens into passed/failed saving throw branches)
+ * @param options - Filter options with passed, failed, and resume anchors
  * @returns Monk's Active Tiles action object
  */
-export function createFilterRequestAction(saveName: string, failAnchor: string): any {
+export function createFilterRequestAction(options: {
+  passed: string;
+  failed: string;
+  resume: string;
+}): any {
   return {
     action: 'monks-tokenbar.filterrequest',
     data: {
-      entity: { id: '' },
-      collection: '',
-      for: saveName,
-      unpass: 'fail',
-      pass: failAnchor
+      passed: options.passed,
+      failed: options.failed,
+      resume: options.resume
     },
     id: foundry.utils.randomID()
   };

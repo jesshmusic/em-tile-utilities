@@ -518,8 +518,8 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     }
 
     try {
-      // Import the helper function dynamically
-      const { createCheckStateTile } = await import('../utils/tile-helpers');
+      // Import the creator function dynamically
+      const { createCheckStateTile } = await import('../utils/creators');
 
       // Prepare config
       const config = {

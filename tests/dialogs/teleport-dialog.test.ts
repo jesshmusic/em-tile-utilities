@@ -391,7 +391,10 @@ describe('TeleportDialog', () => {
       dialog.render = jest.fn();
       dialog._onRender({}, {});
 
-      expect(targetSceneSelect.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(targetSceneSelect.addEventListener).toHaveBeenCalledWith(
+        'change',
+        expect.any(Function)
+      );
 
       // Trigger the change event to cover line 245
       const changeHandler = (targetSceneSelect.addEventListener as any).mock.calls.find(

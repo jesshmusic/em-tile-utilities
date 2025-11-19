@@ -35,16 +35,35 @@ export function createHurtHealAction(
  * @returns Monk's Active Tiles action object
  */
 export function createAttackAction(
-  actorId: string,
-  options?: {
-    targets?: string;
-  }
+  targetEntityId: string,
+  targetEntityName: string,
+  actorEntityId: string,
+  actorEntityName: string,
+  itemId: string,
+  attackName: string
 ): any {
   return {
     action: 'attack',
     data: {
-      actor: { id: actorId },
-      targets: options?.targets ?? ''
+      entity: {
+        id: targetEntityId,
+        name: targetEntityName
+      },
+      actor: {
+        id: actorEntityId,
+        name: actorEntityName
+      },
+      itemid: itemId,
+      rollmode: 'roll',
+      chatbubble: false,
+      attack: {
+        id: itemId,
+        name: attackName
+      },
+      rollattack: 'false', // Use "Use" mode
+      chatcard: true,
+      fastforward: true,
+      rolldamage: true
     },
     id: foundry.utils.randomID()
   };
@@ -63,6 +82,8 @@ export function createTeleportAction(
   y: number,
   sceneId?: string,
   options?: {
+    entityId?: string;
+    entityName?: string;
     snap?: boolean;
     deletesource?: boolean;
     remotesnap?: boolean;
@@ -74,6 +95,10 @@ export function createTeleportAction(
   return {
     action: 'teleport',
     data: {
+      entity: {
+        id: options?.entityId ?? 'token',
+        name: options?.entityName ?? 'Triggering Token'
+      },
       location: {
         x,
         y,
@@ -92,7 +117,7 @@ export function createTeleportAction(
 }
 
 /**
- * Create an active effect action
+ * Create an active effect action (creates new custom effects)
  * @param effectData - Active effect configuration
  * @returns Monk's Active Tiles action object
  */
@@ -110,6 +135,34 @@ export function createActiveEffectAction(effectData: {
       icon: effectData.icon || 'icons/svg/aura.svg',
       duration: effectData.duration || 0,
       changes: effectData.changes || []
+    },
+    id: foundry.utils.randomID()
+  };
+}
+
+/**
+ * Apply or remove an existing active effect by ID
+ * @param entityId - Entity ID to apply effect to
+ * @param entityName - Entity name for display
+ * @param effectId - Effect ID to apply/remove
+ * @param addEffect - Action to perform ('add', 'remove', 'toggle')
+ * @param alterEffect - Additional effect alteration
+ * @returns Monk's Active Tiles action object
+ */
+export function createApplyEffectAction(
+  entityId: string,
+  entityName: string,
+  effectId: string,
+  addEffect: string,
+  alterEffect?: string
+): any {
+  return {
+    action: 'activeeffect',
+    data: {
+      entity: { id: entityId, name: entityName },
+      effectid: effectId,
+      addeffect: addEffect,
+      altereffect: alterEffect || ''
     },
     id: foundry.utils.randomID()
   };
