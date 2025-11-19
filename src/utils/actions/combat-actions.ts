@@ -35,16 +35,35 @@ export function createHurtHealAction(
  * @returns Monk's Active Tiles action object
  */
 export function createAttackAction(
-  actorId: string,
-  options?: {
-    targets?: string;
-  }
+  targetEntityId: string,
+  targetEntityName: string,
+  actorEntityId: string,
+  actorEntityName: string,
+  itemId: string,
+  attackName: string
 ): any {
   return {
     action: 'attack',
     data: {
-      actor: { id: actorId },
-      targets: options?.targets ?? ''
+      entity: {
+        id: targetEntityId,
+        name: targetEntityName
+      },
+      actor: {
+        id: actorEntityId,
+        name: actorEntityName
+      },
+      itemid: itemId,
+      rollmode: 'roll',
+      chatbubble: false,
+      attack: {
+        id: itemId,
+        name: attackName
+      },
+      rollattack: 'false', // Use "Use" mode
+      chatcard: true,
+      fastforward: true,
+      rolldamage: true
     },
     id: foundry.utils.randomID()
   };

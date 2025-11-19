@@ -11,14 +11,13 @@ export { createSwitchTile } from './switch-creator';
 export { createLightTile } from './light-creator';
 export { createResetTile } from './reset-creator';
 export { createTeleportTile } from './teleport-creator';
+export { createCombatTrapTile } from './combat-trap-creator';
 
 // Temporarily re-export from tile-helpers until all creators are refactored
 import {
   createTrapTile as _createTrapTile,
-  createCheckStateTile as _createCheckStateTile,
-  createCombatTrapTile as _createCombatTrapTile
+  createCheckStateTile as _createCheckStateTile
 } from '../tile-helpers';
 
 export const createTrapTile = _createTrapTile;
 export const createCheckStateTile = _createCheckStateTile;
-export const createCombatTrapTile = _createCombatTrapTile;
