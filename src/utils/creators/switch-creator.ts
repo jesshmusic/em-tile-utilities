@@ -38,10 +38,10 @@ export async function createSwitchTile(
 
   // Build actions using action builders
   const actions = [
-    // Initialize variable if it doesn't exist
+    // Initialize variable if it doesn't exist (use conditional instead of 'default' helper)
     createSetVariableAction(
       config.variableName,
-      `{{default variable.${config.variableName} "OFF"}}`,
+      `{{#if variable.${config.variableName}}}{{variable.${config.variableName}}}{{else}}"OFF"{{/if}}`,
       'scene'
     ),
     // Play sound

@@ -170,19 +170,9 @@ Hooks.once('init', async () => {
     requiresReload: true
   });
 
-  // Patreon support button
-  game.settings.registerMenu('em-tile-utilities', 'patreonSupport', {
-    name: 'Support on Patreon',
-    label: 'Visit Patreon',
-    hint: 'Support the development of this module on Patreon',
-    icon: 'fab fa-patreon',
-    type: class PatreonLink {
-      render() {
-        window.open('https://www.patreon.com/c/DormanLakely', '_blank');
-      }
-    },
-    restricted: false
-  });
+  // Note: Patreon support link removed from settings menu
+  // registerMenu requires a FormApplication/ApplicationV2 subclass
+  // For support links, see README.md
 });
 
 // Check for dependencies

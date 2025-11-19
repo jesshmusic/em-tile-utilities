@@ -929,9 +929,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const hasEffects = target && target.value && target.value.length > 0;
 
         if (hasEffects) {
-          this.additionalEffects = Array.isArray(target.value)
-            ? target.value
-            : [target.value];
+          this.additionalEffects = Array.isArray(target.value) ? target.value : [target.value];
         } else {
           this.additionalEffects = [];
         }

@@ -19,7 +19,8 @@ export function createSetVariableAction(
     data: {
       name,
       value: value.toString(),
-      scope
+      scope,
+      entity: { id: 'tile', name: 'This Tile' }
     },
     id: foundry.utils.randomID()
   };
@@ -30,6 +31,7 @@ export function createSetVariableAction(
  * @param name - Variable name to check (e.g., "variable.myVar")
  * @param value - Expected value
  * @param failAnchor - Anchor tag to jump to if check fails
+ * @param comparisonType - Comparison type: 'all', 'eq', 'gt', 'lt', etc.
  * @returns Monk's Active Tiles action object
  */
 export function createCheckVariableAction(
@@ -45,7 +47,7 @@ export function createCheckVariableAction(
       value,
       fail: failAnchor ?? '',
       entity: { id: 'tile', name: 'This Tile' },
-      type: comparisonType ?? 'eq'
+      type: comparisonType ?? 'all'
     },
     id: foundry.utils.randomID()
   };

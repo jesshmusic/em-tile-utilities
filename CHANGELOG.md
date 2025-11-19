@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.18.0] - 2025-11-18
 
 ### Added
+
 - Add add/remove toggle for Additional Effects
 - add Heal result type to trap dialog
 - make Custom Tags section sticky at bottom with Create/Cancel buttons
@@ -12,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - test: add selectOptions helper mock for Foundry multi-select tests
 
 ### Fixed
+
 - Restore Setup Tasks list and remove Tagger sticky positioning
 - Remove accordion from Tagger section in trap dialog
 - Sync radio button UI with state + remove accordion + full-width footer
@@ -24,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - replace custom additional effects dropdown with native multi-select
 
 ### Changed
+
 - claude settings
 - replace FormStateManager with React-style state pattern (Issue #38)
 - Complete React-style state refactoring - remove FormStateManager
@@ -31,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - convert TrapDialog to React-style component state (Part 1)
 
 ### Other
+
 - test: improve teleport-dialog coverage from 33.47% to 65.25%
 - test: improve light-dialog.ts coverage from 85.45% to 97.57%
 - test: improve dialog and utility test coverage to 75%+

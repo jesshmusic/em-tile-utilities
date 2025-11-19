@@ -95,11 +95,19 @@ describe('tile-helpers', () => {
       expect(setVariables[0].data.name).toBe(switchConfig.variableName);
       expect(setVariables[1].data.name).toBe(switchConfig.variableName);
 
-      // Check checkvariable with quoted value
+      // Verify setvariable actions include entity field (Issue: switch image not changing)
+      setVariables.forEach((setVar: any) => {
+        expect(setVar.data.entity).toBeDefined();
+        expect(setVar.data.entity.id).toBe('tile');
+        expect(setVar.data.entity.name).toBe('This Tile');
+      });
+
+      // Check checkvariable with quoted value and type "all"
       const checkVar = actions.find((a: any) => a.action === 'checkvariable');
       expect(checkVar).toBeDefined();
       expect(checkVar.data.value).toBe('"ON"');
       expect(checkVar.data.fail).toBe('off');
+      expect(checkVar.data.type).toBe('all'); // Critical: must be "all" not "eq"
 
       // Check tileimage actions use first/last
       const tileImages = actions.filter((a: any) => a.action === 'tileimage');
@@ -107,7 +115,7 @@ describe('tile-helpers', () => {
       expect(tileImages[0].data.select).toBe('first'); // ON image
       expect(tileImages[1].data.select).toBe('last'); // OFF image
 
-      // Check for anchor with stop: true
+      // Check for anchor with stop: true (checkvariable type "all" allows continuation)
       const anchor = actions.find((a: any) => a.action === 'anchor');
       expect(anchor).toBeDefined();
       expect(anchor.data.tag).toBe('off');
@@ -1834,6 +1842,7 @@ describe('tile-helpers', () => {
 
       expect(actions[6].action).toBe('anchor'); // 'off' label
       expect(actions[6].data.tag).toBe('off');
+      expect(actions[6].data.stop).toBe(true);
 
       expect(actions[7].action).toBe('tileimage'); // Show OFF image
       expect(actions[7].data.select).toBe('last');
