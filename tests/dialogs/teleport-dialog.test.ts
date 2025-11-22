@@ -445,7 +445,7 @@ describe('TeleportDialog', () => {
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
-      tileManagerState.getActiveTileManager = jest.fn().mockReturnValue(mockTileManager);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
       dialog.close = jest.fn();
       (dialog as any)._onClose();
@@ -454,7 +454,7 @@ describe('TeleportDialog', () => {
     });
 
     it('should not throw if tile manager does not exist', () => {
-      tileManagerState.getActiveTileManager = jest.fn().mockReturnValue(null);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
       dialog.close = jest.fn();
 

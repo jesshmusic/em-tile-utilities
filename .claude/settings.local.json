@@ -47,7 +47,9 @@
       "Bash(find:*)",
       "Bash(npm run test)",
       "Bash(npm run test:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(/opt/homebrew/bin/gh pr view 41)",
+      "Bash(/opt/homebrew/bin/gh pr checks 41)"
     ],
     "deny": [],
     "ask": [

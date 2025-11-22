@@ -72,6 +72,14 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       'experimentalFeatures'
     ) as boolean;
 
+    // Get version and build info
+    const moduleData = (game as any).modules.get('em-tile-utilities');
+    const version = moduleData?.version || '1.0.0';
+    const buildInfo = await fetch(`modules/em-tile-utilities/build-info.json?v=${Date.now()}`)
+      .then(r => r.json())
+      .catch(() => ({ buildNumber: 0 }));
+    const buildNumber = buildInfo.buildNumber || 0;
+
     if (!scene) {
       return {
         ...context,
@@ -79,7 +87,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         hasTiles: false,
         sortBy: this.sortBy,
         searchQuery: this.searchQuery,
-        experimentalFeatures: experimentalFeatures
+        experimentalFeatures: experimentalFeatures,
+        version: version,
+        buildNumber: buildNumber
       };
     }
 
@@ -163,7 +173,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       tileCount: tiles.length,
       sortBy: this.sortBy,
       searchQuery: this.searchQuery,
-      experimentalFeatures: experimentalFeatures
+      experimentalFeatures: experimentalFeatures,
+      version: version,
+      buildNumber: buildNumber
     };
   }
 
