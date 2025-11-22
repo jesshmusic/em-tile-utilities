@@ -53,7 +53,7 @@
 
     <div class="form-group">
       <label>
-        <input type="checkbox" id="pauseGameOnTrigger" name="pauseGameOnTrigger" />
+        <input type="checkbox" id="pauseGameOnTrigger" name="pauseGameOnTrigger" {{#if pauseGameOnTrigger}}checked{{/if}} />
         {{localize "EMPUZZLES.PauseGameOnTrigger"}}
       </label>
       <p class="hint">{{localize "EMPUZZLES.PauseGameOnTriggerHint"}}</p>
@@ -61,7 +61,7 @@
 
     <div class="form-group">
       <label>
-        <input type="checkbox" id="deactivateAfterTrigger" name="deactivateAfterTrigger" />
+        <input type="checkbox" id="deactivateAfterTrigger" name="deactivateAfterTrigger" {{#if deactivateAfterTrigger}}checked{{/if}} />
         {{localize "EMPUZZLES.DeactivateAfterTrigger"}}
       </label>
       <p class="hint">{{localize "EMPUZZLES.DeactivateAfterTriggerHint"}}</p>

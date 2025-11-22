@@ -9,6 +9,7 @@ import { mockFoundry, createMockScene } from '../mocks/foundry';
 mockFoundry();
 
 import { LightConfigDialog, showLightDialog } from '../../src/dialogs/light-dialog';
+import * as tileManagerState from '../../src/dialogs/tile-manager-state';
 
 describe('LightConfigDialog', () => {
   let dialog: LightConfigDialog;
@@ -661,9 +662,7 @@ describe('LightConfigDialog', () => {
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(mockTileManager);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
       dialog.close = jest.fn();
       (dialog as any)._onClose();
@@ -672,9 +671,7 @@ describe('LightConfigDialog', () => {
     });
 
     it('should not throw if tile manager does not exist', () => {
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(null);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
       dialog.close = jest.fn();
 

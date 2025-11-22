@@ -9,6 +9,7 @@ import { mockFoundry, createMockScene, createMockTile } from '../mocks/foundry';
 mockFoundry();
 
 import { ResetTileConfigDialog, showResetTileDialog } from '../../src/dialogs/reset-dialog';
+import * as tileManagerState from '../../src/dialogs/tile-manager-state';
 
 describe('ResetTileConfigDialog', () => {
   let dialog: ResetTileConfigDialog;
@@ -538,9 +539,7 @@ describe('ResetTileConfigDialog', () => {
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(mockTileManager);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
       dialog.close = jest.fn();
       (dialog as any)._onClose();
@@ -549,9 +548,7 @@ describe('ResetTileConfigDialog', () => {
     });
 
     it('should not throw if tile manager does not exist', () => {
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(null);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
       dialog.close = jest.fn();
 
@@ -1389,9 +1386,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
     it('should close dialog and restore tile manager after placement', async () => {
       (global as any).canvas.scene = mockScene;
       const mockTileManager = { maximize: jest.fn() };
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(mockTileManager);
+      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
       dialog.selectedTiles.set('tile-1', {
         tileId: 'tile-1',
