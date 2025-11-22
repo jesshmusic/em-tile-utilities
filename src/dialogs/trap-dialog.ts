@@ -2169,6 +2169,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const pauseGameOnTrigger =
       (form.querySelector('input[name="pauseGameOnTrigger"]') as HTMLInputElement)?.checked ||
       false;
+    const deactivateAfterTrigger =
+      (form.querySelector('input[name="deactivateAfterTrigger"]') as HTMLInputElement)?.checked ||
+      false;
 
     // Extract additional effects from multi-select element
     const additionalEffectsSelect = form.querySelector(
@@ -2203,6 +2206,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       )?.value as 'add' | 'remove' | undefined,
       hasSavingThrow: hasSavingThrow,
       pauseGameOnTrigger: pauseGameOnTrigger,
+      deactivateAfterTrigger: deactivateAfterTrigger,
       customTags: customTags
     };
 

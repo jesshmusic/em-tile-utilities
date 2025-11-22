@@ -9,6 +9,7 @@ import { mockFoundry, createMockScene } from '../mocks/foundry';
 mockFoundry();
 
 import { SwitchConfigDialog, showSwitchDialog } from '../../src/dialogs/switch-dialog';
+import * as tileManagerState from '../../src/dialogs/tile-manager-state';
 
 describe('SwitchConfigDialog', () => {
   let dialog: SwitchConfigDialog;
@@ -466,9 +467,7 @@ describe('SwitchConfigDialog', () => {
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(mockTileManager);
+      tileManagerState.getActiveTileManager = jest.fn().mockReturnValue(mockTileManager);
 
       dialog.close = jest.fn();
       (dialog as any)._onClose();
@@ -477,9 +476,7 @@ describe('SwitchConfigDialog', () => {
     });
 
     it('should not throw if tile manager does not exist', () => {
-      (require('../../src/dialogs/tile-manager-state') as any).getActiveTileManager = jest
-        .fn()
-        .mockReturnValue(null);
+      tileManagerState.getActiveTileManager = jest.fn().mockReturnValue(null);
 
       dialog.close = jest.fn();
 

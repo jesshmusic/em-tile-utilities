@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.18.1] - 2025-11-22
+
+### Added
+
+- Add add/remove toggle for Additional Effects
+- add Heal result type to trap dialog
+- make Custom Tags section sticky at bottom with Create/Cancel buttons
+- add FormStateManager utility for form state preservation (Issue #38 Phase 1)
+- test: add selectOptions helper mock for Foundry multi-select tests
+
+### Fixed
+
+- resolve switch image toggle and update documentation
+- Restore Setup Tasks list and remove Tagger sticky positioning
+- Remove accordion from Tagger section in trap dialog
+- Sync radio button UI with state + remove accordion + full-width footer
+- Change Setup Tasks from fixed to sticky positioning
+- make Setup Tasks fixed at bottom (not scrollable)
+- reorder sticky sections - Setup Tasks now directly above buttons
+- preserve visibility radio button state and make setup tasks sticky
+- accordion and radio button state preservation (Issue #38 Phase 1 improvements)
+- replace custom additional effects dropdown with Foundry multi-select element
+- replace custom additional effects dropdown with native multi-select
+
+### Changed
+
+- cleanup - remove unused imports and format code
+- delete legacy tile-helpers.ts (Phase 6)
+- extract trap-creator (Phase 5 - Final Creator)
+- extract check-state-creator (Phase 4)
+- extract combat-trap creator (Phase 3)
+- extract light, reset, and teleport creators (Phase 2)
+- bump version to 1.18.0
+- modularize tile-helpers (WIP - Phase 1)
+- claude settings
+- replace FormStateManager with React-style state pattern (Issue #38)
+- Complete React-style state refactoring - remove FormStateManager
+- convert TrapDialog to React-style state (Part 2)
+- convert TrapDialog to React-style component state (Part 1)
+
+### Other
+
+- docs: update CHANGELOG with switch fixes and documentation improvements
+- test: update imports to use new modular structure
+- test: improve teleport-dialog coverage from 33.47% to 65.25%
+- test: improve light-dialog.ts coverage from 85.45% to 97.57%
+- test: improve dialog and utility test coverage to 75%+
+
 ## [1.18.0] - 2025-11-18
 
 ### Added
