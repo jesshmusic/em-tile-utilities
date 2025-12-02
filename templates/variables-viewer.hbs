@@ -10,21 +10,26 @@
 
   <div style="max-height: 500px; overflow-y: auto;">
     {{#if hasVariables}}
-      <table>
+      <table class="variables-table">
         <thead>
           <tr>
             <th>{{localize "EMPUZZLES.Variable"}}</th>
             <th>{{localize "EMPUZZLES.Value"}}</th>
-            <th>{{localize "EMPUZZLES.UsedBy"}}</th>
           </tr>
         </thead>
         <tbody>
-          {{#each variables as |varData varName|}}
-            <tr>
-              <td><code>{{varName}}</code></td>
-              <td>{{{varData.valueDisplay}}}</td>
-              <td style="font-size: 0.9em;">{{varData.tilesDisplay}}</td>
+          {{#each tileGroups as |group|}}
+            <tr class="tile-group-header">
+              <td colspan="2">
+                <strong><i class="fas fa-cube"></i> {{group.tileName}}</strong>
+              </td>
             </tr>
+            {{#each group.variables as |varData|}}
+              <tr class="variable-row">
+                <td><code>{{varData.name}}</code></td>
+                <td>{{{varData.valueDisplay}}}</td>
+              </tr>
+            {{/each}}
           {{/each}}
         </tbody>
       </table>

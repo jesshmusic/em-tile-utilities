@@ -1,4 +1,3 @@
-import type { VariableData } from '../types/module';
 import { DialogPositions } from '../types/dialog-positions';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
@@ -54,7 +53,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
       return {
         ...context,
         hasVariables: false,
-        variables: {},
+        tileGroups: [],
         buttons: [
           {
             type: 'button',
@@ -69,51 +68,53 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
     // Get all tiles with Monk's Active Tiles variables
     const tiles = scene.tiles.filter((t: any) => t.flags['monks-active-tiles']?.variables);
 
-    // Collect all variables
-    const variables: Record<string, VariableData & { valueDisplay: string; tilesDisplay: string }> =
-      {};
+    // Collect variables grouped by tile
+    const tileGroups: Array<{
+      tileName: string;
+      tileId: string;
+      variables: Array<{ name: string; value: any; valueDisplay: string }>;
+    }> = [];
+
     tiles.forEach((tile: any) => {
       const tileVars = tile.flags['monks-active-tiles'].variables;
-      if (tileVars) {
-        Object.entries(tileVars).forEach(([key, value]) => {
-          if (!variables[key]) {
-            // Create value display with color for booleans
-            const valueDisplay =
-              typeof value === 'boolean'
-                ? `<span style="color: ${value ? 'green' : 'red'}; font-weight: bold;">${value}</span>`
-                : String(value);
+      if (tileVars && Object.keys(tileVars).length > 0) {
+        const tileName = tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile';
 
-            variables[key] = {
-              value: value,
-              tiles: [],
-              valueDisplay: valueDisplay,
-              tilesDisplay: ''
-            };
-          }
-          variables[key].tiles.push({
-            name: tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile',
-            id: tile.id
-          });
+        // Sort variables alphabetically within each tile
+        const sortedVarNames = Object.keys(tileVars).sort();
+
+        const variables = sortedVarNames.map(varName => {
+          const value = tileVars[varName];
+          const valueDisplay =
+            typeof value === 'boolean'
+              ? `<span style="color: ${value ? 'green' : 'red'}; font-weight: bold;">${value}</span>`
+              : String(value);
+
+          return {
+            name: varName,
+            value: value,
+            valueDisplay: valueDisplay
+          };
+        });
+
+        tileGroups.push({
+          tileName: tileName,
+          tileId: tile.id,
+          variables: variables
         });
       }
     });
 
-    // Sort variables and create tiles display
-    const sortedVariables: Record<string, any> = {};
-    Object.keys(variables)
-      .sort()
-      .forEach(varName => {
-        const varData = variables[varName];
-        sortedVariables[varName] = {
-          ...varData,
-          tilesDisplay: varData.tiles.map(t => t.name).join(', ')
-        };
-      });
+    // Sort tile groups alphabetically by tile name
+    tileGroups.sort((a, b) => a.tileName.localeCompare(b.tileName));
+
+    // Calculate total variable count for hasVariables check
+    const totalVariables = tileGroups.reduce((sum, group) => sum + group.variables.length, 0);
 
     return {
       ...context,
-      hasVariables: Object.keys(sortedVariables).length > 0,
-      variables: sortedVariables,
+      hasVariables: totalVariables > 0,
+      tileGroups: tileGroups,
       buttons: [
         {
           type: 'button',
