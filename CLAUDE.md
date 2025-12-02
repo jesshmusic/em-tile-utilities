@@ -347,6 +347,10 @@ Follow conventional format:
 
 Use present tense, keep first line under 72 characters.
 
+### Pull Requests
+
+**IMPORTANT**: Do NOT include "Generated with Claude Code" or similar AI attribution in PR titles, descriptions, or commit messages. Some users may be turned off by AI-generated content attribution.
+
 ### Automated Releases
 
 When PR merges to `main`:

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [1.18.2] - 2025-12-02
 
+### Fixed
+
+- Scene Variables panel now groups variables by tile name (Issue #42)
+
 ## [1.18.1] - 2025-11-22
 
 ### Fixed

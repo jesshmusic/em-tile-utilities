@@ -26,5 +26,6 @@ Follow this workflow to create a major release:
    - Use `gh pr create` to create a pull request
    - Use the CHANGELOG entry for the PR description
    - Add the `major` label to the PR
+   - Do NOT include "Generated with Claude Code" or any AI attribution in the PR
 
 After all steps are complete, provide the PR URL to the user.
