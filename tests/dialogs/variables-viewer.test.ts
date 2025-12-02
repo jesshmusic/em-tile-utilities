@@ -67,13 +67,13 @@ describe('SceneVariablesViewer', () => {
   });
 
   describe('_prepareContext', () => {
-    it('should return empty variables when no scene', async () => {
+    it('should return empty tileGroups when no scene', async () => {
       (global as any).canvas.scene = null;
 
       const context = await dialog._prepareContext({});
 
       expect(context.hasVariables).toBe(false);
-      expect(context.variables).toEqual({});
+      expect(context.tileGroups).toEqual([]);
     });
 
     it('should include close button', async () => {
@@ -86,8 +86,8 @@ describe('SceneVariablesViewer', () => {
       expect(context.buttons[0].action).toBe('close');
     });
 
-    it('should extract variables from tiles', async () => {
-      const tile = createMockTile();
+    it('should extract variables from tiles grouped by tile', async () => {
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = {
         switch_1: true,
         switch_2: false
@@ -97,13 +97,13 @@ describe('SceneVariablesViewer', () => {
       const context = await dialog._prepareContext({});
 
       expect(context.hasVariables).toBe(true);
-      expect(Object.keys(context.variables)).toHaveLength(2);
-      expect(context.variables.switch_1).toBeDefined();
-      expect(context.variables.switch_2).toBeDefined();
+      expect(context.tileGroups).toHaveLength(1);
+      expect(context.tileGroups[0].tileName).toBe('Test Tile');
+      expect(context.tileGroups[0].variables).toHaveLength(2);
     });
 
     it('should display boolean values with color', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = {
         switch_1: true,
         switch_2: false
@@ -112,14 +112,17 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.switch_1.valueDisplay).toContain('green');
-      expect(context.variables.switch_1.valueDisplay).toContain('true');
-      expect(context.variables.switch_2.valueDisplay).toContain('red');
-      expect(context.variables.switch_2.valueDisplay).toContain('false');
+      const trueVar = context.tileGroups[0].variables.find((v: any) => v.name === 'switch_1');
+      const falseVar = context.tileGroups[0].variables.find((v: any) => v.name === 'switch_2');
+
+      expect(trueVar.valueDisplay).toContain('green');
+      expect(trueVar.valueDisplay).toContain('true');
+      expect(falseVar.valueDisplay).toContain('red');
+      expect(falseVar.valueDisplay).toContain('false');
     });
 
     it('should display non-boolean values as strings', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = {
         count: 5,
         name: 'value'
@@ -128,11 +131,14 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.count.valueDisplay).toBe('5');
-      expect(context.variables.name.valueDisplay).toBe('value');
+      const countVar = context.tileGroups[0].variables.find((v: any) => v.name === 'count');
+      const nameVar = context.tileGroups[0].variables.find((v: any) => v.name === 'name');
+
+      expect(countVar.valueDisplay).toBe('5');
+      expect(nameVar.valueDisplay).toBe('value');
     });
 
-    it('should list tiles using each variable', async () => {
+    it('should show same variable on different tiles with separate values', async () => {
       const tile1 = createMockTile({ id: 'tile-1', name: 'Tile 1' });
       tile1.flags['monks-active-tiles'].variables = { switch_1: true };
       const tile2 = createMockTile({ id: 'tile-2', name: 'Tile 2' });
@@ -143,12 +149,17 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.switch_1.tiles).toHaveLength(2);
-      expect(context.variables.switch_1.tilesDisplay).toBe('Tile 1, Tile 2');
+      expect(context.tileGroups).toHaveLength(2);
+
+      const tile1Group = context.tileGroups.find((g: any) => g.tileName === 'Tile 1');
+      const tile2Group = context.tileGroups.find((g: any) => g.tileName === 'Tile 2');
+
+      expect(tile1Group.variables[0].value).toBe(true);
+      expect(tile2Group.variables[0].value).toBe(false);
     });
 
-    it('should sort variables alphabetically', async () => {
-      const tile = createMockTile();
+    it('should sort variables alphabetically within each tile', async () => {
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = {
         zebra: true,
         apple: true,
@@ -158,7 +169,7 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      const varNames = Object.keys(context.variables);
+      const varNames = context.tileGroups[0].variables.map((v: any) => v.name);
       expect(varNames[0]).toBe('apple');
       expect(varNames[1]).toBe('middle');
       expect(varNames[2]).toBe('zebra');
@@ -172,7 +183,7 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.switch_1.tilesDisplay).toBe('Monks Name');
+      expect(context.tileGroups[0].tileName).toBe('Monks Name');
     });
 
     it('should use "Unnamed Tile" when no name available', async () => {
@@ -183,13 +194,13 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.switch_1.tilesDisplay).toBe('Unnamed Tile');
+      expect(context.tileGroups[0].tileName).toBe('Unnamed Tile');
     });
 
     it('should handle tiles without variables', async () => {
-      const tile1 = createMockTile({ id: 'tile-1' });
+      const tile1 = createMockTile({ id: 'tile-1', name: 'Tile 1' });
       delete tile1.flags['monks-active-tiles'].variables;
-      const tile2 = createMockTile({ id: 'tile-2' });
+      const tile2 = createMockTile({ id: 'tile-2', name: 'Tile 2' });
       tile2.flags['monks-active-tiles'].variables = { switch_1: true };
 
       mockScene.tiles.set(tile1.id, tile1);
@@ -198,18 +209,19 @@ describe('SceneVariablesViewer', () => {
       const context = await dialog._prepareContext({});
 
       expect(context.hasVariables).toBe(true);
-      expect(Object.keys(context.variables)).toHaveLength(1);
+      expect(context.tileGroups).toHaveLength(1);
+      expect(context.tileGroups[0].tileName).toBe('Tile 2');
     });
 
     it('should handle empty variables object', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Empty Tile' });
       tile.flags['monks-active-tiles'].variables = {};
       mockScene.tiles.set(tile.id, tile);
 
       const context = await dialog._prepareContext({});
 
       expect(context.hasVariables).toBe(false);
-      expect(Object.keys(context.variables)).toHaveLength(0);
+      expect(context.tileGroups).toHaveLength(0);
     });
 
     it('should handle scene with no tiles', async () => {
@@ -218,11 +230,11 @@ describe('SceneVariablesViewer', () => {
       const context = await dialog._prepareContext({});
 
       expect(context.hasVariables).toBe(false);
-      expect(Object.keys(context.variables)).toHaveLength(0);
+      expect(context.tileGroups).toHaveLength(0);
     });
 
     it('should store actual value alongside display value', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = {
         switch_1: true,
         count: 5
@@ -231,18 +243,36 @@ describe('SceneVariablesViewer', () => {
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.switch_1.value).toBe(true);
-      expect(context.variables.count.value).toBe(5);
+      const switchVar = context.tileGroups[0].variables.find((v: any) => v.name === 'switch_1');
+      const countVar = context.tileGroups[0].variables.find((v: any) => v.name === 'count');
+
+      expect(switchVar.value).toBe(true);
+      expect(countVar.value).toBe(5);
     });
 
-    it('should include tile IDs in variable data', async () => {
-      const tile = createMockTile({ id: 'tile-123' });
+    it('should include tile ID in group data', async () => {
+      const tile = createMockTile({ id: 'tile-123', name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = { switch_1: true };
       mockScene.tiles.set(tile.id, tile);
 
       const context = await dialog._prepareContext({});
 
-      expect(context.variables.switch_1.tiles[0].id).toBe('tile-123');
+      expect(context.tileGroups[0].tileId).toBe('tile-123');
+    });
+
+    it('should sort tile groups alphabetically by tile name', async () => {
+      const tileZ = createMockTile({ id: 'tile-z', name: 'Zebra Tile' });
+      tileZ.flags['monks-active-tiles'].variables = { var1: true };
+      const tileA = createMockTile({ id: 'tile-a', name: 'Apple Tile' });
+      tileA.flags['monks-active-tiles'].variables = { var1: true };
+
+      mockScene.tiles.set(tileZ.id, tileZ);
+      mockScene.tiles.set(tileA.id, tileA);
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.tileGroups[0].tileName).toBe('Apple Tile');
+      expect(context.tileGroups[1].tileName).toBe('Zebra Tile');
     });
   });
 
@@ -275,43 +305,43 @@ describe('SceneVariablesViewer', () => {
 
   describe('variable display formatting', () => {
     it('should format true values with green color and bold', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = { switch_1: true };
       mockScene.tiles.set(tile.id, tile);
 
       const context = await dialog._prepareContext({});
 
-      const display = context.variables.switch_1.valueDisplay;
-      expect(display).toContain('style=');
-      expect(display).toContain('green');
-      expect(display).toContain('font-weight: bold');
-      expect(display).toContain('true');
+      const switchVar = context.tileGroups[0].variables.find((v: any) => v.name === 'switch_1');
+      expect(switchVar.valueDisplay).toContain('style=');
+      expect(switchVar.valueDisplay).toContain('green');
+      expect(switchVar.valueDisplay).toContain('font-weight: bold');
+      expect(switchVar.valueDisplay).toContain('true');
     });
 
     it('should format false values with red color and bold', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = { switch_1: false };
       mockScene.tiles.set(tile.id, tile);
 
       const context = await dialog._prepareContext({});
 
-      const display = context.variables.switch_1.valueDisplay;
-      expect(display).toContain('style=');
-      expect(display).toContain('red');
-      expect(display).toContain('font-weight: bold');
-      expect(display).toContain('false');
+      const switchVar = context.tileGroups[0].variables.find((v: any) => v.name === 'switch_1');
+      expect(switchVar.valueDisplay).toContain('style=');
+      expect(switchVar.valueDisplay).toContain('red');
+      expect(switchVar.valueDisplay).toContain('font-weight: bold');
+      expect(switchVar.valueDisplay).toContain('false');
     });
 
     it('should not apply color formatting to non-boolean values', async () => {
-      const tile = createMockTile();
+      const tile = createMockTile({ name: 'Test Tile' });
       tile.flags['monks-active-tiles'].variables = { count: 42 };
       mockScene.tiles.set(tile.id, tile);
 
       const context = await dialog._prepareContext({});
 
-      const display = context.variables.count.valueDisplay;
-      expect(display).not.toContain('style=');
-      expect(display).toBe('42');
+      const countVar = context.tileGroups[0].variables.find((v: any) => v.name === 'count');
+      expect(countVar.valueDisplay).not.toContain('style=');
+      expect(countVar.valueDisplay).toBe('42');
     });
   });
 });
