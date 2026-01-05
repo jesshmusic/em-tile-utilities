@@ -898,3 +898,6 @@ When referencing code, use pattern `file_path:line_number` for navigation:
 ```
 Clients fail in connectToServer function in src/services/process.ts:712
 ```
+
+- Always ensure all tests pass before completing a task. Never leave failing tests.
+- Always add tests for new functionality.

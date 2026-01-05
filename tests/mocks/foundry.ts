@@ -84,12 +84,27 @@ export function mockFoundry() {
   (global as any).game = mockGameObject;
   (globalThis as any).game = mockGameObject;
 
-  // Mock PIXI.Graphics
+  // Mock PIXI.Graphics and PIXI.Sprite
   (global as any).PIXI = {
     Graphics: class MockGraphics {
       clear = jest.fn(() => this);
       lineStyle = jest.fn(() => this);
       drawRect = jest.fn(() => this);
+    },
+    Sprite: class MockSprite {
+      x = 0;
+      y = 0;
+      width = 100;
+      height = 100;
+      alpha = 1;
+      destroy = jest.fn();
+
+      constructor(_texture?: any) {}
+    },
+    Assets: {
+      load: jest.fn(async (_path: string) => {
+        return { width: 100, height: 100 }; // Mock texture
+      })
     }
   };
 
@@ -155,6 +170,15 @@ export function mockFoundry() {
   (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {
     return Promise.resolve();
   });
+
+  // Mock document if not in jsdom environment
+  if (typeof document === 'undefined') {
+    (global as any).document = {
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn()
+    };
+  }
 
   // Mock Handlebars
   (global as any).Handlebars = {

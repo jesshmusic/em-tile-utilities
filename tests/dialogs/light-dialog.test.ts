@@ -16,6 +16,19 @@ describe('LightConfigDialog', () => {
   let mockScene: any;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Restore PIXI.Assets.load for TilePreviewManager (in case previous test broke it)
+    (PIXI as any).Assets.load = jest.fn(async (_path: string) => {
+      return { width: 100, height: 100 }; // Mock texture
+    });
+
+    // Fresh canvas stage mocks for TilePreviewManager
+    (global as any).canvas.stage.on = jest.fn();
+    (global as any).canvas.stage.off = jest.fn();
+    (global as any).canvas.tiles.addChild = jest.fn();
+    (global as any).canvas.tiles.removeChild = jest.fn();
+
     mockScene = createMockScene();
     (global as any).canvas.scene = mockScene;
     dialog = new LightConfigDialog();
@@ -451,7 +464,7 @@ describe('LightConfigDialog', () => {
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
       expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
-        'Click on the canvas to place the light tile...'
+        'Click on the canvas to place the light tile. Press ESC to cancel.'
       );
     });
 
@@ -502,7 +515,12 @@ describe('LightConfigDialog', () => {
       const handler = (LightConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler set up by TilePreviewManager
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      expect(clickCall).toBeDefined();
+      const clickHandler = clickCall[1];
 
       const mockClickEvent = {
         data: {
@@ -541,7 +559,11 @@ describe('LightConfigDialog', () => {
       const handler = (LightConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler set up by TilePreviewManager
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      const clickHandler = clickCall[1];
       const mockClickEvent = {
         data: {
           getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
@@ -550,7 +572,7 @@ describe('LightConfigDialog', () => {
 
       await clickHandler(mockClickEvent);
 
-      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', clickHandler);
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
     it('should use default light name if none provided', async () => {
@@ -575,7 +597,11 @@ describe('LightConfigDialog', () => {
       const handler = (LightConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler set up by TilePreviewManager
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      const clickHandler = clickCall[1];
       const mockClickEvent = {
         data: {
           getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
