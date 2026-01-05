@@ -1,7 +1,12 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
 import { TrapTargetType, TrapResultType } from '../types/module';
 import { createTrapTile, createCombatTrapTile } from '../utils/creators';
-import { getNextTileNumber, hasMonksTokenBar } from '../utils/helpers';
+import {
+  getNextTileNumber,
+  hasMonksTokenBar,
+  startDragPlacePreview,
+  DragPlacePreviewManager
+} from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -130,6 +135,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Tag input manager for custom tags
    */
   private tagInputManager?: TagInputManager;
+
+  /**
+   * Drag-to-place preview manager
+   */
+  private dragPreviewManager?: DragPlacePreviewManager;
 
   /* -------------------------------------------- */
 
@@ -1545,6 +1555,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle dialog close (cancel button)
    */
   protected _onClose(): void {
+    // Clean up drag preview manager if it exists
+    if (this.dragPreviewManager) {
+      this.dragPreviewManager.stop();
+      this.dragPreviewManager = undefined;
+    }
+
     // Close the dialog
     this.close();
 
@@ -1733,94 +1749,37 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.minimize();
 
     // Set up drag-to-place handlers for activating trap
-    ui.notifications.info('Drag on the canvas to place and size the activating trap...');
+    ui.notifications.info(
+      'Drag on the canvas to place and size the activating trap. Press ESC to cancel.'
+    );
 
-    let startPos: { x: number; y: number } | null = null;
-    let previewGraphics: any = null;
+    // Start drag-to-place preview with ghost image
+    this.dragPreviewManager = await startDragPlacePreview({
+      imagePath: trapConfig.startingImage,
+      snapToGrid: false,
+      alpha: 0.5,
+      minSize: 10,
+      onPlace: async (x: number, y: number, width: number, height: number) => {
+        if (TrapDialog._isValidTileSize(width, height)) {
+          await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
+          ui.notifications.info(`Activating trap "${trapConfig.name}" created!`);
+        }
 
-    const onMouseDown = (event: any) => {
-      // Ignore clicks on existing tiles to prevent moving them during creation
-      if (event.target?.document?.documentName === 'Tile') {
-        return;
+        this.close();
+        this.dragPreviewManager = undefined;
+
+        // Restore Tile Manager if it was minimized
+        const tileManager = getActiveTileManager();
+        if (tileManager) {
+          tileManager.maximize();
+        }
+      },
+      onCancel: () => {
+        // Restore the dialog if cancelled
+        this.maximize();
+        this.dragPreviewManager = undefined;
       }
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during drag - use raw position
-      startPos = { x: position.x, y: position.y };
-
-      // Create preview graphics
-      previewGraphics = new PIXI.Graphics();
-      (canvas as any).tiles.addChild(previewGraphics);
-    };
-
-    const onMouseMove = (event: any) => {
-      if (!startPos || !previewGraphics) return;
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during drag - use raw position for smooth preview
-
-      // Calculate width and height
-      const width = Math.abs(position.x - startPos.x);
-      const height = Math.abs(position.y - startPos.y);
-
-      // Calculate top-left corner
-      const x = Math.min(startPos.x, position.x);
-      const y = Math.min(startPos.y, position.y);
-
-      // Draw preview rectangle (no snapping)
-      previewGraphics.clear();
-      previewGraphics.lineStyle(2, 0xff6b35, 0.8);
-      previewGraphics.drawRect(x, y, width, height);
-    };
-
-    const onMouseUp = async (event: any) => {
-      if (!startPos) return;
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during calculation - use raw positions
-
-      // Calculate dimensions
-      const width = Math.abs(position.x - startPos.x);
-      const height = Math.abs(position.y - startPos.y);
-
-      // Calculate top-left corner
-      const x = Math.min(startPos.x, position.x);
-      const y = Math.min(startPos.y, position.y);
-
-      // Only create if there's a valid size (minimum 10 pixels)
-      if (TrapDialog._isValidTileSize(width, height)) {
-        // Create the activating trap tile with the exact dragged dimensions (no snapping)
-        await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
-
-        ui.notifications.info(`Activating trap "${trapConfig.name}" created!`);
-      }
-
-      // Clean up
-      if (previewGraphics) {
-        previewGraphics.clear();
-        (canvas as any).tiles.removeChild(previewGraphics);
-        previewGraphics = null;
-      }
-      startPos = null;
-
-      // Remove all handlers
-      (canvas as any).stage.off('mousedown', onMouseDown);
-      (canvas as any).stage.off('mousemove', onMouseMove);
-      (canvas as any).stage.off('mouseup', onMouseUp);
-
-      this.close();
-
-      // Restore Tile Manager if it was minimized
-      const tileManager = getActiveTileManager();
-      if (tileManager) {
-        tileManager.maximize();
-      }
-    };
-
-    // Add the handlers
-    (canvas as any).stage.on('mousedown', onMouseDown);
-    (canvas as any).stage.on('mousemove', onMouseMove);
-    (canvas as any).stage.on('mouseup', onMouseUp);
+    });
   }
 
   /**
@@ -1869,89 +1828,41 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       this.minimize();
 
       // Set up drag-to-place handlers for combat trap
-      ui.notifications.info('Drag on the canvas to place and size the combat trap...');
+      ui.notifications.info(
+        'Drag on the canvas to place and size the combat trap. Press ESC to cancel.'
+      );
 
-      let startPos: { x: number; y: number } | null = null;
-      let previewGraphics: any = null;
+      // Use ghost preview if there's an image, otherwise fall back to rectangle
+      const previewImage =
+        combatConfig.startingImage || 'icons/svg/hazard.svg';
 
-      const onMouseDown = (event: any) => {
-        const position = event.data.getLocalPosition((canvas as any).tiles);
-        // Don't snap during drag - use raw position
-        startPos = { x: position.x, y: position.y };
+      // Start drag-to-place preview with ghost image
+      this.dragPreviewManager = await startDragPlacePreview({
+        imagePath: previewImage,
+        snapToGrid: false,
+        alpha: 0.5,
+        minSize: 10,
+        onPlace: async (x: number, y: number, width: number, height: number) => {
+          if (TrapDialog._isValidTileSize(width, height)) {
+            await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
+            ui.notifications.info(`Combat trap "${combatConfig.name}" created!`);
+          }
 
-        // Create preview graphics
-        previewGraphics = new PIXI.Graphics();
-        (canvas as any).tiles.addChild(previewGraphics);
-      };
+          this.close();
+          this.dragPreviewManager = undefined;
 
-      const onMouseMove = (event: any) => {
-        if (!startPos || !previewGraphics) return;
-
-        const position = event.data.getLocalPosition((canvas as any).tiles);
-        // Don't snap during drag - use raw position for smooth preview
-
-        // Calculate width and height
-        const width = Math.abs(position.x - startPos.x);
-        const height = Math.abs(position.y - startPos.y);
-
-        // Calculate top-left corner
-        const x = Math.min(startPos.x, position.x);
-        const y = Math.min(startPos.y, position.y);
-
-        // Draw preview rectangle (no snapping)
-        previewGraphics.clear();
-        previewGraphics.lineStyle(2, 0xff6b35, 0.8);
-        previewGraphics.drawRect(x, y, width, height);
-      };
-
-      const onMouseUp = async (event: any) => {
-        if (!startPos) return;
-
-        const position = event.data.getLocalPosition((canvas as any).tiles);
-        // Don't snap during calculation - use raw positions
-
-        // Calculate dimensions
-        const width = Math.abs(position.x - startPos.x);
-        const height = Math.abs(position.y - startPos.y);
-
-        // Calculate top-left corner
-        const x = Math.min(startPos.x, position.x);
-        const y = Math.min(startPos.y, position.y);
-
-        // Only create if there's a valid size (minimum 10 pixels)
-        if (TrapDialog._isValidTileSize(width, height)) {
-          // Create the combat trap tile with the exact dragged dimensions (no snapping)
-          await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
-
-          ui.notifications.info(`Combat trap "${combatConfig.name}" created!`);
+          // Restore Tile Manager if it was minimized
+          const tileManager = getActiveTileManager();
+          if (tileManager) {
+            tileManager.maximize();
+          }
+        },
+        onCancel: () => {
+          // Restore the dialog if cancelled
+          this.maximize();
+          this.dragPreviewManager = undefined;
         }
-
-        // Clean up
-        if (previewGraphics) {
-          previewGraphics.clear();
-          (canvas as any).tiles.removeChild(previewGraphics);
-          previewGraphics = null;
-        }
-        startPos = null;
-
-        // Remove all handlers
-        (canvas as any).stage.off('mousedown', onMouseDown);
-        (canvas as any).stage.off('mousemove', onMouseMove);
-        (canvas as any).stage.off('mouseup', onMouseUp);
-
-        this.close();
-
-        // Restore Tile Manager if it was minimized
-        const tileManager = getActiveTileManager();
-        if (tileManager) {
-          tileManager.maximize();
-        }
-      };
-
-      // Add the handlers
-      (canvas as any).stage.on('mousedown', onMouseDown);
-      (canvas as any).stage.on('mousemove', onMouseMove);
-      (canvas as any).stage.on('mouseup', onMouseUp);
+      });
       return;
     } else {
       // Standard image trap config
@@ -2024,94 +1935,35 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.minimize();
 
     // Set up drag-to-place handlers for image trap
-    ui.notifications.info('Drag on the canvas to place and size the trap...');
+    ui.notifications.info('Drag on the canvas to place and size the trap. Press ESC to cancel.');
 
-    let startPos: { x: number; y: number } | null = null;
-    let previewGraphics: any = null;
+    // Start drag-to-place preview with ghost image
+    this.dragPreviewManager = await startDragPlacePreview({
+      imagePath: trapConfig.startingImage,
+      snapToGrid: false,
+      alpha: 0.5,
+      minSize: 10,
+      onPlace: async (x: number, y: number, width: number, height: number) => {
+        if (TrapDialog._isValidTileSize(width, height)) {
+          await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
+          ui.notifications.info(`Trap "${trapConfig.name}" created!`);
+        }
 
-    const onMouseDown = (event: any) => {
-      // Ignore clicks on existing tiles to prevent moving them during creation
-      if (event.target?.document?.documentName === 'Tile') {
-        return;
+        this.close();
+        this.dragPreviewManager = undefined;
+
+        // Restore Tile Manager if it was minimized
+        const tileManager = getActiveTileManager();
+        if (tileManager) {
+          tileManager.maximize();
+        }
+      },
+      onCancel: () => {
+        // Restore the dialog if cancelled
+        this.maximize();
+        this.dragPreviewManager = undefined;
       }
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during drag - use raw position
-      startPos = { x: position.x, y: position.y };
-
-      // Create preview graphics
-      previewGraphics = new PIXI.Graphics();
-      (canvas as any).tiles.addChild(previewGraphics);
-    };
-
-    const onMouseMove = (event: any) => {
-      if (!startPos || !previewGraphics) return;
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during drag - use raw position for smooth preview
-
-      // Calculate width and height
-      const width = Math.abs(position.x - startPos.x);
-      const height = Math.abs(position.y - startPos.y);
-
-      // Calculate top-left corner
-      const x = Math.min(startPos.x, position.x);
-      const y = Math.min(startPos.y, position.y);
-
-      // Draw preview rectangle (no snapping)
-      previewGraphics.clear();
-      previewGraphics.lineStyle(2, 0xff6b35, 0.8);
-      previewGraphics.drawRect(x, y, width, height);
-    };
-
-    const onMouseUp = async (event: any) => {
-      if (!startPos) return;
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during calculation - use raw positions
-
-      // Calculate dimensions
-      const width = Math.abs(position.x - startPos.x);
-      const height = Math.abs(position.y - startPos.y);
-
-      // Calculate top-left corner
-      const x = Math.min(startPos.x, position.x);
-      const y = Math.min(startPos.y, position.y);
-
-      // Only create if there's a valid size (minimum 10 pixels)
-      if (TrapDialog._isValidTileSize(width, height)) {
-        // Create the trap tile with the exact dragged dimensions (no snapping)
-        await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
-
-        ui.notifications.info(`Trap "${trapConfig.name}" created!`);
-      }
-
-      // Clean up
-      if (previewGraphics) {
-        previewGraphics.clear();
-        (canvas as any).tiles.removeChild(previewGraphics);
-        previewGraphics = null;
-      }
-      startPos = null;
-
-      // Remove all handlers
-      (canvas as any).stage.off('mousedown', onMouseDown);
-      (canvas as any).stage.off('mousemove', onMouseMove);
-      (canvas as any).stage.off('mouseup', onMouseUp);
-
-      this.close();
-
-      // Restore Tile Manager if it was minimized
-      const tileManager = getActiveTileManager();
-      if (tileManager) {
-        tileManager.maximize();
-      }
-    };
-
-    // Add the handlers
-    (canvas as any).stage.on('mousedown', onMouseDown);
-    (canvas as any).stage.on('mousemove', onMouseMove);
-    (canvas as any).stage.on('mouseup', onMouseUp);
+    });
   }
 
   /**

@@ -461,40 +461,24 @@ describe('TeleportDialog', () => {
       expect(() => (dialog as any)._onClose()).not.toThrow();
     });
 
-    it('should clean up canvas handlers if they exist', () => {
-      const mockGraphics = { clear: jest.fn() };
-      const mockStage = {
-        off: jest.fn()
-      };
-      const mockControls = {
-        removeChild: jest.fn()
+    it('should clean up drag preview manager if it exists', () => {
+      const mockPreviewManager = {
+        stop: jest.fn()
       };
 
-      (global as any).canvas.stage = mockStage;
-      (global as any).canvas.controls = mockControls;
-
-      // Set up canvas handlers
-      (dialog as any).canvasHandlers = {
-        onMouseDown: jest.fn(),
-        onMouseMove: jest.fn(),
-        onMouseUp: jest.fn(),
-        previewGraphics: mockGraphics
-      };
+      // Set up drag preview manager
+      (dialog as any).dragPreviewManager = mockPreviewManager;
 
       dialog.close = jest.fn();
       (dialog as any)._onClose();
 
       // Verify cleanup
-      expect(mockStage.off).toHaveBeenCalledWith('pointerdown', expect.any(Function));
-      expect(mockStage.off).toHaveBeenCalledWith('pointermove', expect.any(Function));
-      expect(mockStage.off).toHaveBeenCalledWith('pointerup', expect.any(Function));
-      expect(mockGraphics.clear).toHaveBeenCalled();
-      expect(mockControls.removeChild).toHaveBeenCalledWith(mockGraphics);
-      expect((dialog as any).canvasHandlers).toBeUndefined();
+      expect(mockPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).dragPreviewManager).toBeUndefined();
     });
 
-    it('should not throw if canvas handlers do not exist', () => {
-      (dialog as any).canvasHandlers = undefined;
+    it('should not throw if drag preview manager does not exist', () => {
+      (dialog as any).dragPreviewManager = undefined;
       dialog.close = jest.fn();
 
       expect(() => (dialog as any)._onClose()).not.toThrow();
