@@ -315,7 +315,7 @@ describe('SwitchConfigDialog', () => {
       );
     });
 
-    it('should show info notification for canvas placement', async () => {
+    it('should show info notification for canvas placement with ESC hint', async () => {
       (global as any).canvas.scene = mockScene;
 
       const mockEvent = {} as SubmitEvent;
@@ -334,11 +334,11 @@ describe('SwitchConfigDialog', () => {
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
       expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
-        'Click on the canvas to place the switch tile...'
+        'Click on the canvas to place the switch tile. Press ESC to cancel.'
       );
     });
 
-    it('should set up canvas click handler', async () => {
+    it('should set up preview handlers via TilePreviewManager', async () => {
       (global as any).canvas.scene = mockScene;
 
       const mockEvent = {} as SubmitEvent;
@@ -356,10 +356,15 @@ describe('SwitchConfigDialog', () => {
       const handler = (SwitchConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
+      // TilePreviewManager sets up pointermove and click handlers
+      expect((global as any).canvas.stage.on).toHaveBeenCalledWith(
+        'pointermove',
+        expect.any(Function)
+      );
       expect((global as any).canvas.stage.on).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
-    it('should create switch tile on canvas click', async () => {
+    it('should create switch tile when preview click handler is triggered', async () => {
       (global as any).canvas.scene = mockScene;
 
       const mockEvent = {} as SubmitEvent;
@@ -377,8 +382,12 @@ describe('SwitchConfigDialog', () => {
       const handler = (SwitchConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      // Get the click handler that was registered
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler set up by TilePreviewManager
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      expect(clickCall).toBeDefined();
+      const clickHandler = clickCall[1];
 
       // Simulate canvas click
       const mockClickEvent = {
@@ -392,7 +401,7 @@ describe('SwitchConfigDialog', () => {
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
     });
 
-    it('should remove click handler after tile creation', async () => {
+    it('should clean up preview handlers after tile creation', async () => {
       (global as any).canvas.scene = mockScene;
 
       const mockEvent = {} as SubmitEvent;
@@ -410,8 +419,11 @@ describe('SwitchConfigDialog', () => {
       const handler = (SwitchConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      // Get the click handler and simulate click
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler and simulate click
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      const clickHandler = clickCall[1];
       const mockClickEvent = {
         data: {
           getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })
@@ -420,7 +432,12 @@ describe('SwitchConfigDialog', () => {
 
       await clickHandler(mockClickEvent);
 
-      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', clickHandler);
+      // TilePreviewManager cleans up both handlers
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith(
+        'pointermove',
+        expect.any(Function)
+      );
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
     it('should use default switch name if none provided', async () => {
@@ -441,8 +458,11 @@ describe('SwitchConfigDialog', () => {
       const handler = (SwitchConfigDialog as any).DEFAULT_OPTIONS.form.handler;
       await handler.call(dialog, mockEvent, mockForm, mockFormData);
 
-      // Get the click handler and simulate click
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler and simulate click
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      const clickHandler = clickCall[1];
       const mockClickEvent = {
         data: {
           getLocalPosition: jest.fn().mockReturnValue({ x: 150, y: 250 })

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.19.0] - 2026-01-05
+
+### Added
+
+- Ghost tile preview for single-click placement - shows semi-transparent preview following cursor when placing Switch, Light, and Reset tiles
+- Ghost tile preview for drag-to-place - shows resizable semi-transparent preview when placing Teleport and Trap tiles
+- TilePreviewManager utility class for managing click-to-place tile preview lifecycle
+- DragPlacePreviewManager utility class for managing drag-to-place tile preview lifecycle
+- Half-grid snapping for more flexible tile placement (at grid corners and centers)
+- ESC key cancels placement and restores dialog for all tile types
+
+### Changed
+
+- Switch, Light, and Reset dialogs now use ghost tile preview instead of blind click placement
+- Teleport and Trap dialogs now show ghost image during drag-to-place instead of rectangle outline
+- Improved user feedback with notification hints during tile placement
+
 ## [1.18.2] - 2025-12-02
 
 ### Fixed

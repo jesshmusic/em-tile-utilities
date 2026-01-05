@@ -16,6 +16,19 @@ describe('ResetTileConfigDialog', () => {
   let mockScene: any;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Restore PIXI.Assets.load for TilePreviewManager (in case previous test broke it)
+    (PIXI as any).Assets.load = jest.fn(async (_path: string) => {
+      return { width: 100, height: 100 }; // Mock texture
+    });
+
+    // Fresh canvas stage mocks for TilePreviewManager
+    (global as any).canvas.stage.on = jest.fn();
+    (global as any).canvas.stage.off = jest.fn();
+    (global as any).canvas.tiles.addChild = jest.fn();
+    (global as any).canvas.tiles.removeChild = jest.fn();
+
     mockScene = createMockScene();
     (global as any).canvas.scene = mockScene;
     dialog = new ResetTileConfigDialog();
@@ -1325,8 +1338,12 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         }
       });
 
-      // Get the click handler
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler set up by TilePreviewManager
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      expect(clickCall).toBeDefined();
+      const clickHandler = clickCall[1];
 
       // Simulate canvas click
       const mockClickEvent = {
@@ -1383,10 +1400,8 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       expect(dialog.minimize).toHaveBeenCalled();
     });
 
-    it('should close dialog and restore tile manager after placement', async () => {
+    it('should set up preview with correct config for placement', async () => {
       (global as any).canvas.scene = mockScene;
-      const mockTileManager = { maximize: jest.fn() };
-      jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
       dialog.selectedTiles.set('tile-1', {
         tileId: 'tile-1',
@@ -1396,7 +1411,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         fileindex: 0,
         active: true,
         files: [],
-        variables: {},
+        variables: { var1: true },
         rotation: 0,
         x: 100,
         y: 200,
@@ -1417,27 +1432,23 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         object: {
           resetTileImage: 'reset.png',
           resetName: 'Reset',
+          'var_tile-1_var1': 'true',
           'visibility_tile-1': 'show',
           'fileindex_tile-1': '0',
           'active_tile-1': 'true',
           'rotation_tile-1': '0',
           'x_tile-1': '100',
-          'y_tile-1': '200'
+          'y_tile-1': '200',
+          'resetTriggerHistory_tile-1': 'false'
         }
       });
 
-      // Get the click handler
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
-
-      // Simulate canvas click
-      await clickHandler({
-        data: {
-          getLocalPosition: jest.fn().mockReturnValue({ x: 300, y: 400 })
-        }
-      });
-
-      expect(dialog.close).toHaveBeenCalled();
-      expect(mockTileManager.maximize).toHaveBeenCalled();
+      // TilePreviewManager should set up both pointermove and click handlers
+      expect((global as any).canvas.stage.on).toHaveBeenCalledWith(
+        'pointermove',
+        expect.any(Function)
+      );
+      expect((global as any).canvas.stage.on).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
     it('should remove click handler after placement', async () => {
@@ -1480,8 +1491,11 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         }
       });
 
-      // Get the click handler
-      const clickHandler = ((global as any).canvas.stage.on as any).mock.calls[0][1];
+      // Find the click handler set up by TilePreviewManager
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      const clickHandler = clickCall[1];
 
       // Simulate canvas click
       await clickHandler({
@@ -1490,7 +1504,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
         }
       });
 
-      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', clickHandler);
+      expect((global as any).canvas.stage.off).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
     it('should handle wall door states in submission', async () => {

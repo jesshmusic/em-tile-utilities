@@ -1,7 +1,11 @@
 import type { TrapConfig } from '../types/module';
 import { TrapResultType, TrapTargetType } from '../types/module';
 import { createTrapTile } from '../utils/creators';
-import { getNextTileNumber } from '../utils/helpers';
+import {
+  getNextTileNumber,
+  startDragPlacePreview,
+  DragPlacePreviewManager
+} from '../utils/helpers';
 import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
@@ -48,6 +52,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
   // Tag input manager
   protected tagInputManager?: TagInputManager;
+
+  // Drag-to-place preview manager
+  protected dragPreviewManager?: DragPlacePreviewManager;
 
   /**
    * Get the trap type identifier (e.g., 'disappearing', 'switching', 'activating')
@@ -980,85 +987,34 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     const typeSpecificConfig = this._extractTypeSpecificConfig(form);
     const trapConfig = { ...baseTrapConfig, ...typeSpecificConfig };
 
-    // Close the dialog
-    this.close();
+    // Minimize the dialog so user can see the canvas
+    this.minimize();
 
     // Show notification to drag on canvas
-    ui.notifications.info('Drag on the canvas to place and size the trap tile...');
+    ui.notifications.info('Drag on the canvas to place and size the trap tile. Press ESC to cancel.');
 
-    // Set up drag-to-place handlers
-    let startPos: { x: number; y: number } | null = null;
-    let previewGraphics: any = null;
-
-    const onMouseDown = (event: any) => {
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during drag - use raw position
-      startPos = { x: position.x, y: position.y };
-
-      // Create preview graphics
-      previewGraphics = new PIXI.Graphics();
-      (canvas as any).tiles.addChild(previewGraphics);
-    };
-
-    const onMouseMove = (event: any) => {
-      if (!startPos || !previewGraphics) return;
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during drag - use raw position for smooth preview
-
-      // Calculate width and height
-      const width = Math.abs(position.x - startPos.x);
-      const height = Math.abs(position.y - startPos.y);
-
-      // Calculate top-left corner
-      const x = Math.min(startPos.x, position.x);
-      const y = Math.min(startPos.y, position.y);
-
-      // Draw preview rectangle (no snapping)
-      previewGraphics.clear();
-      previewGraphics.lineStyle(2, 0xff0000, 0.8);
-      previewGraphics.drawRect(x, y, width, height);
-    };
-
-    const onMouseUp = async (event: any) => {
-      if (!startPos) return;
-
-      const position = event.data.getLocalPosition((canvas as any).tiles);
-      // Don't snap during calculation - use raw positions
-
-      // Calculate dimensions
-      const width = Math.abs(position.x - startPos.x);
-      const height = Math.abs(position.y - startPos.y);
-
-      // Calculate top-left corner
-      const x = Math.min(startPos.x, position.x);
-      const y = Math.min(startPos.y, position.y);
-
-      // Only create if there's a valid size (minimum 10 pixels)
-      if (width > 10 && height > 10) {
-        // Create the trap tile with the exact dragged dimensions (no snapping)
-        await createTrapTile(scene, trapConfig, x, y, width, height);
-
-        ui.notifications.info('Trap tile created!');
-      }
-
-      // Clean up
-      if (previewGraphics) {
-        previewGraphics.clear();
-        (canvas as any).tiles.removeChild(previewGraphics);
-        previewGraphics = null;
-      }
-      startPos = null;
-
-      // Remove all handlers
-      (canvas as any).stage.off('mousedown', onMouseDown);
-      (canvas as any).stage.off('mousemove', onMouseMove);
-      (canvas as any).stage.off('mouseup', onMouseUp);
-    };
-
-    // Add the handlers
-    (canvas as any).stage.on('mousedown', onMouseDown);
-    (canvas as any).stage.on('mousemove', onMouseMove);
-    (canvas as any).stage.on('mouseup', onMouseUp);
+    // Start drag-to-place preview with ghost image
+    try {
+      this.dragPreviewManager = await startDragPlacePreview({
+        imagePath: trapConfig.startingImage,
+        snapToGrid: false, // Don't snap during drag for smooth preview
+        alpha: 0.5,
+        minSize: 10,
+        onPlace: async (x: number, y: number, width: number, height: number) => {
+          await createTrapTile(scene, trapConfig, x, y, width, height);
+          ui.notifications.info('Trap tile created!');
+          this.dragPreviewManager = undefined;
+          this.close();
+        },
+        onCancel: () => {
+          // Restore the dialog if cancelled
+          this.maximize();
+          this.dragPreviewManager = undefined;
+        }
+      });
+    } catch (error) {
+      console.error("Dorman Lakely's Tile Utilities - Error starting drag preview:", error);
+      this.maximize();
+    }
   }
 }
