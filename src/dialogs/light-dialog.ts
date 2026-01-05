@@ -1,4 +1,5 @@
 import { createLightTile } from '../utils/creators';
+import { startTilePreview, TilePreviewManager } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -13,6 +14,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  */
 export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   private tagInputManager?: TagInputManager;
+  private previewManager?: TilePreviewManager;
 
   // Form state properties
   protected lightName: string = 'Light';
@@ -202,6 +204,12 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
    * Handle dialog close (cancel button)
    */
   protected _onClose(): void {
+    // Clean up preview if active
+    if (this.previewManager) {
+      this.previewManager.stop();
+      this.previewManager = undefined;
+    }
+
     // Close the dialog
     this.close();
 
@@ -381,61 +389,65 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const data = formData.object;
 
+    // Get the image to preview (use offImage as the light starts off)
+    const previewImage = data.offImage || data.onImage;
+
+    if (!previewImage) {
+      ui.notifications.error('Tile Utilities Error: No image selected for the light tile!');
+      return;
+    }
+
     // Minimize the dialog so user can see the canvas
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the light tile...');
+    ui.notifications.info('Click on the canvas to place the light tile. Press ESC to cancel.');
 
-    // Set up click handler for placement
-    const handler = async (clickEvent: any) => {
-      // Get the click position
-      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+    // Start tile preview with ghost image
+    this.previewManager = await startTilePreview({
+      imagePath: previewImage,
+      alpha: 0.5,
+      onPlace: async (x: number, y: number) => {
+        // Create the light tile at the clicked position
+        await createLightTile(
+          scene,
+          {
+            name: data.lightName || 'Light',
+            offImage: data.offImage,
+            onImage: data.onImage,
+            useDarkness: !!data.useDarkness,
+            darknessMin: parseFloat(data.darknessMin) || 0.5,
+            dimLight: parseInt(data.dimLight) || 40,
+            brightLight: parseInt(data.brightLight) || 20,
+            lightColor: data.lightColor || '#ffffff',
+            colorIntensity: parseFloat(data.colorIntensity) || 0.5,
+            useOverlay: !!data.useOverlay,
+            overlayImage: data.overlayImage || '',
+            sound: data.sound || '',
+            soundRadius: parseInt(data.soundRadius) || 40,
+            soundVolume: parseFloat(data.soundVolume) || 0.5,
+            customTags: data.customTags || ''
+          },
+          x,
+          y
+        );
 
-      // Snap to grid
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+        ui.notifications.info('Light tile created!');
 
-      // Create the light tile at the clicked position
-      await createLightTile(
-        scene,
-        {
-          name: data.lightName || 'Light',
-          offImage: data.offImage,
-          onImage: data.onImage,
-          useDarkness: !!data.useDarkness,
-          darknessMin: parseFloat(data.darknessMin) || 0.5,
-          dimLight: parseInt(data.dimLight) || 40,
-          brightLight: parseInt(data.brightLight) || 20,
-          lightColor: data.lightColor || '#ffffff',
-          colorIntensity: parseFloat(data.colorIntensity) || 0.5,
-          useOverlay: !!data.useOverlay,
-          overlayImage: data.overlayImage || '',
-          sound: data.sound || '',
-          soundRadius: parseInt(data.soundRadius) || 40,
-          soundVolume: parseFloat(data.soundVolume) || 0.5,
-          customTags: data.customTags || ''
-        },
-        snapped.x,
-        snapped.y
-      );
+        // Close the dialog
+        this.close();
 
-      ui.notifications.info('Light tile created!');
-
-      // Remove the handler after placement
-      (canvas as any).stage.off('click', handler);
-
-      // Close the dialog
-      this.close();
-
-      // Restore Tile Manager if it was minimized
-      const tileManager = getActiveTileManager();
-      if (tileManager) {
-        tileManager.maximize();
+        // Restore Tile Manager if it was minimized
+        const tileManager = getActiveTileManager();
+        if (tileManager) {
+          tileManager.maximize();
+        }
+      },
+      onCancel: () => {
+        // Restore the dialog if cancelled
+        this.maximize();
       }
-    };
-
-    // Add the click handler
-    (canvas as any).stage.on('click', handler);
+    });
   }
 }
 

@@ -1,5 +1,5 @@
 import { createSwitchTile } from '../utils/creators';
-import { getNextTileNumber } from '../utils/helpers';
+import { getNextTileNumber, startTilePreview, TilePreviewManager } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -14,6 +14,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applicati
  */
 export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   private tagInputManager?: TagInputManager;
+  private previewManager?: TilePreviewManager;
 
   // Form state properties
   protected switchName: string = '';
@@ -147,6 +148,12 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
    * Handle dialog close (cancel button)
    */
   protected _onClose(): void {
+    // Clean up preview if active
+    if (this.previewManager) {
+      this.previewManager.stop();
+      this.previewManager = undefined;
+    }
+
     // Close the dialog
     this.close();
 
@@ -259,52 +266,56 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
 
     const data = formData.object;
 
+    // Get the image to preview (use offImage as the starting state)
+    const previewImage = data.offImage || data.onImage;
+
+    if (!previewImage) {
+      ui.notifications.error('Tile Utilities Error: No image selected for the switch tile!');
+      return;
+    }
+
     // Minimize the dialog so user can see the canvas
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the switch tile...');
+    ui.notifications.info('Click on the canvas to place the switch tile. Press ESC to cancel.');
 
-    // Set up click handler for placement
-    const handler = async (clickEvent: any) => {
-      // Get the click position
-      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+    // Start tile preview with ghost image
+    this.previewManager = await startTilePreview({
+      imagePath: previewImage,
+      alpha: 0.5,
+      onPlace: async (x: number, y: number) => {
+        // Create the switch at the clicked position
+        await createSwitchTile(
+          scene,
+          {
+            name: data.switchName || 'Switch',
+            variableName: data.variableName,
+            onImage: data.onImage,
+            offImage: data.offImage,
+            sound: data.sound,
+            customTags: data.customTags || ''
+          },
+          x,
+          y
+        );
 
-      // Snap to grid
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+        ui.notifications.info('Switch tile created!');
 
-      // Create the switch at the clicked position
-      await createSwitchTile(
-        scene,
-        {
-          name: data.switchName || 'Switch',
-          variableName: data.variableName,
-          onImage: data.onImage,
-          offImage: data.offImage,
-          sound: data.sound,
-          customTags: data.customTags || ''
-        },
-        snapped.x,
-        snapped.y
-      );
+        // Close the dialog
+        this.close();
 
-      ui.notifications.info('Switch tile created!');
-
-      // Remove the handler after placement
-      (canvas as any).stage.off('click', handler);
-
-      // Close the dialog
-      this.close();
-
-      // Restore Tile Manager if it was minimized
-      const tileManager = getActiveTileManager();
-      if (tileManager) {
-        tileManager.maximize();
+        // Restore Tile Manager if it was minimized
+        const tileManager = getActiveTileManager();
+        if (tileManager) {
+          tileManager.maximize();
+        }
+      },
+      onCancel: () => {
+        // Restore the dialog if cancelled
+        this.maximize();
       }
-    };
-
-    // Add the click handler
-    (canvas as any).stage.on('click', handler);
+    });
   }
 }
 

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.19.0] - 2026-01-05
+
+### Added
+
+- Ghost tile preview for single-click placement - shows semi-transparent preview following cursor when placing Switch, Light, and Reset tiles
+- TilePreviewManager utility class for managing tile preview lifecycle
+- Half-grid snapping for more flexible tile placement (at grid corners and centers)
+- ESC key cancels placement and restores dialog
+
+### Changed
+
+- Switch, Light, and Reset dialogs now use ghost tile preview instead of blind click placement
+- Improved user feedback with notification hints during tile placement
+
 ## [1.18.2] - 2025-12-02
 
 ### Fixed

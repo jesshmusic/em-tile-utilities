@@ -1,5 +1,6 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
 import { createResetTile } from '../utils/creators';
+import { startTilePreview, TilePreviewManager } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -162,6 +163,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   protected customTags: string = '';
 
   private tagInputManager?: TagInputManager;
+  private previewManager?: TilePreviewManager;
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -317,6 +319,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
    * Handle dialog close (cancel button)
    */
   protected _onClose(): void {
+    // Clean up preview if active
+    if (this.previewManager) {
+      this.previewManager.stop();
+      this.previewManager = undefined;
+    }
+
     // Close the dialog
     this.close();
 
@@ -627,47 +635,43 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the reset tile...');
+    ui.notifications.info('Click on the canvas to place the reset tile. Press ESC to cancel.');
 
-    // Set up click handler for placement
-    const handler = async (clickEvent: any) => {
-      // Get the click position
-      const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+    // Start tile preview with ghost image
+    this.previewManager = await startTilePreview({
+      imagePath: resetTileImage,
+      alpha: 0.5,
+      onPlace: async (x: number, y: number) => {
+        // Create the reset tile at the clicked position
+        await createResetTile(
+          scene,
+          {
+            name: data.resetName || 'Reset Tile',
+            image: resetTileImage,
+            varsToReset: varsToReset,
+            tilesToReset: tilesToReset,
+            customTags: data.customTags || ''
+          },
+          x,
+          y
+        );
 
-      // Snap to grid
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+        ui.notifications.info('Reset tile created!');
 
-      // Create the reset tile at the clicked position
-      await createResetTile(
-        scene,
-        {
-          name: data.resetName || 'Reset Tile',
-          image: resetTileImage,
-          varsToReset: varsToReset,
-          tilesToReset: tilesToReset,
-          customTags: data.customTags || ''
-        },
-        snapped.x,
-        snapped.y
-      );
+        // Close the dialog
+        this.close();
 
-      ui.notifications.info('Reset tile created!');
-
-      // Remove the handler after placement
-      (canvas as any).stage.off('click', handler);
-
-      // Close the dialog
-      this.close();
-
-      // Restore Tile Manager if it was minimized
-      const tileManager = getActiveTileManager();
-      if (tileManager) {
-        tileManager.maximize();
+        // Restore Tile Manager if it was minimized
+        const tileManager = getActiveTileManager();
+        if (tileManager) {
+          tileManager.maximize();
+        }
+      },
+      onCancel: () => {
+        // Restore the dialog if cancelled
+        this.maximize();
       }
-    };
-
-    // Add the click handler
-    (canvas as any).stage.on('click', handler);
+    });
   }
 }
 
