@@ -71,6 +71,7 @@ export class TilePreviewManager {
       this.updatePositionFromMouse();
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
+      ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
       this.cleanup();
       this.config.onCancel?.();
     }

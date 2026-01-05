@@ -434,8 +434,9 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         ui.notifications.info('Light tile created!');
 
-        // Close the dialog
+        // Close the dialog and clear preview reference
         this.close();
+        this.previewManager = undefined;
 
         // Restore Tile Manager if it was minimized
         const tileManager = getActiveTileManager();
