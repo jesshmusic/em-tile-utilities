@@ -987,26 +987,34 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     const typeSpecificConfig = this._extractTypeSpecificConfig(form);
     const trapConfig = { ...baseTrapConfig, ...typeSpecificConfig };
 
-    // Close the dialog
-    this.close();
+    // Minimize the dialog so user can see the canvas
+    this.minimize();
 
     // Show notification to drag on canvas
     ui.notifications.info('Drag on the canvas to place and size the trap tile. Press ESC to cancel.');
 
     // Start drag-to-place preview with ghost image
-    this.dragPreviewManager = await startDragPlacePreview({
-      imagePath: trapConfig.startingImage,
-      snapToGrid: false, // Don't snap during drag for smooth preview
-      alpha: 0.5,
-      minSize: 10,
-      onPlace: async (x: number, y: number, width: number, height: number) => {
-        await createTrapTile(scene, trapConfig, x, y, width, height);
-        ui.notifications.info('Trap tile created!');
-        this.dragPreviewManager = undefined;
-      },
-      onCancel: () => {
-        this.dragPreviewManager = undefined;
-      }
-    });
+    try {
+      this.dragPreviewManager = await startDragPlacePreview({
+        imagePath: trapConfig.startingImage,
+        snapToGrid: false, // Don't snap during drag for smooth preview
+        alpha: 0.5,
+        minSize: 10,
+        onPlace: async (x: number, y: number, width: number, height: number) => {
+          await createTrapTile(scene, trapConfig, x, y, width, height);
+          ui.notifications.info('Trap tile created!');
+          this.dragPreviewManager = undefined;
+          this.close();
+        },
+        onCancel: () => {
+          // Restore the dialog if cancelled
+          this.maximize();
+          this.dragPreviewManager = undefined;
+        }
+      });
+    } catch (error) {
+      console.error("Dorman Lakely's Tile Utilities - Error starting drag preview:", error);
+      this.maximize();
+    }
   }
 }

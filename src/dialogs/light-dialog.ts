@@ -404,51 +404,56 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     ui.notifications.info('Click on the canvas to place the light tile. Press ESC to cancel.');
 
     // Start tile preview with ghost image
-    this.previewManager = await startTilePreview({
-      imagePath: previewImage,
-      alpha: 0.5,
-      onPlace: async (x: number, y: number) => {
-        // Create the light tile at the clicked position
-        await createLightTile(
-          scene,
-          {
-            name: data.lightName || 'Light',
-            offImage: data.offImage,
-            onImage: data.onImage,
-            useDarkness: !!data.useDarkness,
-            darknessMin: parseFloat(data.darknessMin) || 0.5,
-            dimLight: parseInt(data.dimLight) || 40,
-            brightLight: parseInt(data.brightLight) || 20,
-            lightColor: data.lightColor || '#ffffff',
-            colorIntensity: parseFloat(data.colorIntensity) || 0.5,
-            useOverlay: !!data.useOverlay,
-            overlayImage: data.overlayImage || '',
-            sound: data.sound || '',
-            soundRadius: parseInt(data.soundRadius) || 40,
-            soundVolume: parseFloat(data.soundVolume) || 0.5,
-            customTags: data.customTags || ''
-          },
-          x,
-          y
-        );
+    try {
+      this.previewManager = await startTilePreview({
+        imagePath: previewImage,
+        alpha: 0.5,
+        onPlace: async (x: number, y: number) => {
+          // Create the light tile at the clicked position
+          await createLightTile(
+            scene,
+            {
+              name: data.lightName || 'Light',
+              offImage: data.offImage,
+              onImage: data.onImage,
+              useDarkness: !!data.useDarkness,
+              darknessMin: parseFloat(data.darknessMin) || 0.5,
+              dimLight: parseInt(data.dimLight) || 40,
+              brightLight: parseInt(data.brightLight) || 20,
+              lightColor: data.lightColor || '#ffffff',
+              colorIntensity: parseFloat(data.colorIntensity) || 0.5,
+              useOverlay: !!data.useOverlay,
+              overlayImage: data.overlayImage || '',
+              sound: data.sound || '',
+              soundRadius: parseInt(data.soundRadius) || 40,
+              soundVolume: parseFloat(data.soundVolume) || 0.5,
+              customTags: data.customTags || ''
+            },
+            x,
+            y
+          );
 
-        ui.notifications.info('Light tile created!');
+          ui.notifications.info('Light tile created!');
 
-        // Close the dialog and clear preview reference
-        this.close();
-        this.previewManager = undefined;
+          // Clear preview reference before closing to avoid race condition with _onClose
+          this.previewManager = undefined;
+          this.close();
 
-        // Restore Tile Manager if it was minimized
-        const tileManager = getActiveTileManager();
-        if (tileManager) {
-          tileManager.maximize();
+          // Restore Tile Manager if it was minimized
+          const tileManager = getActiveTileManager();
+          if (tileManager) {
+            tileManager.maximize();
+          }
+        },
+        onCancel: () => {
+          // Restore the dialog if cancelled
+          this.maximize();
         }
-      },
-      onCancel: () => {
-        // Restore the dialog if cancelled
-        this.maximize();
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Dorman Lakely's Tile Utilities - Error starting tile preview:", error);
+      this.maximize();
+    }
   }
 }
 

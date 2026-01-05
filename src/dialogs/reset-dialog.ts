@@ -639,43 +639,48 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
     // Start tile preview with ghost image (reset tile is 2x2 grid squares)
     const gridSize = getGridSize();
-    this.previewManager = await startTilePreview({
-      imagePath: resetTileImage,
-      width: gridSize * 2,
-      height: gridSize * 2,
-      alpha: 0.5,
-      onPlace: async (x: number, y: number) => {
-        // Create the reset tile at the clicked position
-        await createResetTile(
-          scene,
-          {
-            name: data.resetName || 'Reset Tile',
-            image: resetTileImage,
-            varsToReset: varsToReset,
-            tilesToReset: tilesToReset,
-            customTags: data.customTags || ''
-          },
-          x,
-          y
-        );
+    try {
+      this.previewManager = await startTilePreview({
+        imagePath: resetTileImage,
+        width: gridSize * 2,
+        height: gridSize * 2,
+        alpha: 0.5,
+        onPlace: async (x: number, y: number) => {
+          // Create the reset tile at the clicked position
+          await createResetTile(
+            scene,
+            {
+              name: data.resetName || 'Reset Tile',
+              image: resetTileImage,
+              varsToReset: varsToReset,
+              tilesToReset: tilesToReset,
+              customTags: data.customTags || ''
+            },
+            x,
+            y
+          );
 
-        ui.notifications.info('Reset tile created!');
+          ui.notifications.info('Reset tile created!');
 
-        // Close the dialog and clear preview reference
-        this.close();
-        this.previewManager = undefined;
+          // Clear preview reference before closing to avoid race condition with _onClose
+          this.previewManager = undefined;
+          this.close();
 
-        // Restore Tile Manager if it was minimized
-        const tileManager = getActiveTileManager();
-        if (tileManager) {
-          tileManager.maximize();
+          // Restore Tile Manager if it was minimized
+          const tileManager = getActiveTileManager();
+          if (tileManager) {
+            tileManager.maximize();
+          }
+        },
+        onCancel: () => {
+          // Restore the dialog if cancelled
+          this.maximize();
         }
-      },
-      onCancel: () => {
-        // Restore the dialog if cancelled
-        this.maximize();
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Dorman Lakely's Tile Utilities - Error starting tile preview:", error);
+      this.maximize();
+    }
   }
 }
 

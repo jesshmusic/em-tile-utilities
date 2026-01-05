@@ -281,42 +281,47 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     ui.notifications.info('Click on the canvas to place the switch tile. Press ESC to cancel.');
 
     // Start tile preview with ghost image
-    this.previewManager = await startTilePreview({
-      imagePath: previewImage,
-      alpha: 0.5,
-      onPlace: async (x: number, y: number) => {
-        // Create the switch at the clicked position
-        await createSwitchTile(
-          scene,
-          {
-            name: data.switchName || 'Switch',
-            variableName: data.variableName,
-            onImage: data.onImage,
-            offImage: data.offImage,
-            sound: data.sound,
-            customTags: data.customTags || ''
-          },
-          x,
-          y
-        );
+    try {
+      this.previewManager = await startTilePreview({
+        imagePath: previewImage,
+        alpha: 0.5,
+        onPlace: async (x: number, y: number) => {
+          // Create the switch at the clicked position
+          await createSwitchTile(
+            scene,
+            {
+              name: data.switchName || 'Switch',
+              variableName: data.variableName,
+              onImage: data.onImage,
+              offImage: data.offImage,
+              sound: data.sound,
+              customTags: data.customTags || ''
+            },
+            x,
+            y
+          );
 
-        ui.notifications.info('Switch tile created!');
+          ui.notifications.info('Switch tile created!');
 
-        // Close the dialog and clear preview reference
-        this.close();
-        this.previewManager = undefined;
+          // Clear preview reference before closing to avoid race condition with _onClose
+          this.previewManager = undefined;
+          this.close();
 
-        // Restore Tile Manager if it was minimized
-        const tileManager = getActiveTileManager();
-        if (tileManager) {
-          tileManager.maximize();
+          // Restore Tile Manager if it was minimized
+          const tileManager = getActiveTileManager();
+          if (tileManager) {
+            tileManager.maximize();
+          }
+        },
+        onCancel: () => {
+          // Restore the dialog if cancelled
+          this.maximize();
         }
-      },
-      onCancel: () => {
-        // Restore the dialog if cancelled
-        this.maximize();
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Dorman Lakely's Tile Utilities - Error starting tile preview:", error);
+      this.maximize();
+    }
   }
 }
 

@@ -200,10 +200,15 @@ export class TilePreviewManager {
 
     // Remove sprite from canvas
     if (this.sprite) {
-      (canvas as any).tiles.removeChild(this.sprite);
-      // Destroy sprite to free texture resources
-      if (this.sprite.destroy) {
-        this.sprite.destroy();
+      try {
+        (canvas as any).tiles.removeChild(this.sprite);
+        // Destroy sprite to free texture resources
+        if (this.sprite.destroy) {
+          this.sprite.destroy();
+        }
+      } catch (error) {
+        // Sprite may have already been removed or canvas changed
+        console.warn("Dorman Lakely's Tile Utilities - Error cleaning up preview sprite:", error);
       }
       this.sprite = null;
     }
@@ -441,9 +446,14 @@ export class DragPlacePreviewManager {
    */
   private removeSprite(): void {
     if (this.sprite) {
-      (canvas as any).tiles.removeChild(this.sprite);
-      if (this.sprite.destroy) {
-        this.sprite.destroy();
+      try {
+        (canvas as any).tiles.removeChild(this.sprite);
+        if (this.sprite.destroy) {
+          this.sprite.destroy();
+        }
+      } catch (error) {
+        // Sprite may have already been removed or canvas changed
+        console.warn("Dorman Lakely's Tile Utilities - Error cleaning up preview sprite:", error);
       }
       this.sprite = null;
     }
