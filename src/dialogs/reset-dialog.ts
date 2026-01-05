@@ -1,6 +1,6 @@
 import type { SelectedTileData, TileFile, WallDoorAction } from '../types/module';
 import { createResetTile } from '../utils/creators';
-import { startTilePreview, TilePreviewManager } from '../utils/helpers';
+import { startTilePreview, TilePreviewManager, getGridSize } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -637,9 +637,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     // Show notification to click on canvas
     ui.notifications.info('Click on the canvas to place the reset tile. Press ESC to cancel.');
 
-    // Start tile preview with ghost image
+    // Start tile preview with ghost image (reset tile is 2x2 grid squares)
+    const gridSize = getGridSize();
     this.previewManager = await startTilePreview({
       imagePath: resetTileImage,
+      width: gridSize * 2,
+      height: gridSize * 2,
       alpha: 0.5,
       onPlace: async (x: number, y: number) => {
         // Create the reset tile at the clicked position
