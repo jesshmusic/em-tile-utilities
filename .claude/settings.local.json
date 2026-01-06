@@ -49,7 +49,12 @@
       "Bash(npm run test:*)",
       "Bash(git rm:*)",
       "Bash(/opt/homebrew/bin/gh pr view 41)",
-      "Bash(/opt/homebrew/bin/gh pr checks 41)"
+      "Bash(/opt/homebrew/bin/gh pr checks 41)",
+      "Bash(gh pr edit:*)",
+      "Bash(echo:*)",
+      "Skill(minor)",
+      "WebFetch(domain:game-icons.net)",
+      "WebFetch(domain:api.github.com)"
     ],
     "deny": [],
     "ask": [

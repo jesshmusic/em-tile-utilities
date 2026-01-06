@@ -11,3 +11,13 @@ export function hasMonksTokenBar(): boolean {
   const g = (globalThis as any).game || game;
   return !!g?.modules?.get('monks-tokenbar')?.active;
 }
+
+/**
+ * Check if Enhanced Region Behaviors module is installed and active
+ * @returns true if Enhanced Region Behaviors is available, false otherwise
+ */
+export function hasEnhancedRegionBehaviors(): boolean {
+  // Use globalThis.game for test compatibility, fall back to global game
+  const g = (globalThis as any).game || game;
+  return !!g?.modules?.get('enhanced-region-behavior')?.active;
+}

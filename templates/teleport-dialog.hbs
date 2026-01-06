@@ -10,7 +10,25 @@
     <p class="hint">{{localize "EMPUZZLES.TileNameHint"}}</p>
   </div>
 
-  <div class="form-group">
+  {{! Creation Type Toggle (Tile vs Region) - only shown if Enhanced Region Behaviors is installed }}
+  {{#if hasEnhancedRegionBehaviors}}
+  <div class="form-group creation-type-group">
+    <label>{{localize "EMPUZZLES.CreationType"}}</label>
+    <div class="toggle-group">
+      <label class="toggle-option {{#if (eq creationType 'tile')}}active{{/if}}">
+        <input type="radio" name="creationType" value="tile" {{#if (eq creationType "tile")}}checked{{/if}} />
+        <i class="fa-solid fa-cubes"></i> {{localize "EMPUZZLES.CreateAsTile"}}
+      </label>
+      <label class="toggle-option {{#if (eq creationType 'region')}}active{{/if}}">
+        <input type="radio" name="creationType" value="region" {{#if (eq creationType "region")}}checked{{/if}} />
+        <i class="fa-solid fa-chess-board"></i> {{localize "EMPUZZLES.CreateAsRegion"}}
+      </label>
+    </div>
+    <p class="hint">{{localize "EMPUZZLES.CreationTypeHint"}}</p>
+  </div>
+  {{/if}}
+
+  <div class="form-group tile-only-option">
     <label for="tileImage">{{localize "EMPUZZLES.TileImage"}}</label>
     <div class="form-fields">
       <input type="text" name="tileImage" value="{{tileImage}}" />
@@ -76,8 +94,11 @@
       <p class="position-display">
         <strong>{{localize "EMPUZZLES.Destination"}}:</strong>
         X: {{teleportX}}, Y: {{teleportY}}
+        {{#if teleportWidth}}
+          ({{teleportWidth}} × {{teleportHeight}})
+        {{/if}}
         {{#if teleportSceneName}}
-          (Scene: {{teleportSceneName}})
+          <br><em>Scene: {{teleportSceneName}}</em>
         {{/if}}
       </p>
     {{else}}
@@ -117,7 +138,7 @@
     {{/if}}
   {{/if}}
 
-  <div class="form-group">
+  <div class="form-group tile-only-option">
     <label>
       <input type="checkbox" name="createReturnTeleport" {{#if createReturnTeleport}}checked{{/if}} />
       {{localize "EMPUZZLES.CreateReturnTeleport"}}
@@ -126,6 +147,7 @@
   </div>
 
   {{#if hasMonksTokenBar}}
+  <div class="tile-only-option">
     <div class="form-group">
       <label>
         <input type="checkbox" name="hasSavingThrow" {{#if hasSavingThrow}}checked{{/if}} />
@@ -158,8 +180,9 @@
         <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
       </div>
     {{/if}}
+  </div>
   {{else}}
-    <div class="form-group" style="background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 0.75rem; margin-bottom: 1rem;">
+    <div class="form-group tile-only-option" style="background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 0.75rem; margin-bottom: 1rem;">
       <p style="margin: 0; color: #ff9800;">
         <i class="fa-solid fa-circle-info"></i>
         <strong>{{localize "EMPUZZLES.SavingThrowUnavailable"}}</strong>

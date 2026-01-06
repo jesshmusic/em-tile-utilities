@@ -2221,6 +2221,104 @@ textarea:valid {
   line-height: 1.4;
 }
 
+/* ====================================
+   Toggle Group Styling (Tile vs Region)
+   ==================================== */
+
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.toggle-option:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--color-border-light-primary);
+}
+
+.toggle-option.active {
+  background: rgba(100, 150, 200, 0.3);
+  border-color: rgba(100, 150, 200, 0.6);
+  color: var(--color-text-light-heading);
+}
+
+.toggle-option input[type='radio'] {
+  display: none;
+}
+
+.toggle-option i {
+  font-size: 1.1em;
+}
+
+/* Creation Type Group */
+.creation-type-group .toggle-group {
+  flex-wrap: wrap;
+}
+
+/* Behavior Mode Group */
+.behavior-mode-group {
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border-light-tertiary);
+}
+
+.behavior-mode-group .toggle-group {
+  flex-wrap: wrap;
+}
+
+/* GameIcons mesh-ball icon for regions */
+.gi-mesh-ball,
+i.gi-mesh-ball,
+.gi.gi-mesh-ball {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url('../icons/mesh-ball.svg');
+  vertical-align: middle;
+}
+
+/* Region thumbnail icon styling */
+.region-thumbnail i {
+  font-size: 24px;
+  color: #fff;
+}
+
+/* Region thumbnail container */
+.region-thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+/* Item type icon in tile name (to the right of name) */
+.item-type-icon {
+  margin-left: 0.5rem;
+  color: #fff;
+  opacity: 0.8;
+}
+
+/* Region badge styling */
+.status-badge.region-badge {
+  background: rgba(68, 136, 255, 0.3);
+  border: 1px solid rgba(68, 136, 255, 0.6);
+}
+
 /* Triggered Image Field Styling */
 .visibility-section .triggered-image-group {
   margin-top: 1rem;

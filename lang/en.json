@@ -17,6 +17,7 @@
     }
   },
   "EMPUZZLES": {
+    "ModuleTitle": "Dorman Lakely's Tile Utilities",
     "CreateTile": "Create Tile",
     "CreateSwitch": "Create Switch",
     "CreateSwitchDesc": "Interactive switch with ON/OFF states and variable tracking",
@@ -347,6 +348,24 @@
     "ActionTriggerTile": "Trigger Tile",
     "ActionDoorState": "Change Door State",
     "SelectWall": "Select Wall/Door",
-    "SupportOnPatreon": "Love this module? Please support me on Patreon!"
+    "SupportOnPatreon": "Love this module? Please support me on Patreon!",
+    "CreationType": "Creation Type",
+    "CreateAsTile": "Tile",
+    "CreateAsRegion": "Region",
+    "CreationTypeHint": "Choose whether to create a Tile (uses Monk's Active Tiles) or a Region (uses FoundryVTT v13 native regions with Enhanced Region Behaviors)",
+    "RegionTrapConfig": "Region Trap Configuration",
+    "DamageFormula": "Damage Formula",
+    "DamageFormulaHint": "Dice formula for damage (e.g., 2d6, 3d8+4)",
+    "DamageOnSave": "Damage on Save",
+    "DamageOnSaveHint": "Damage formula on successful save (leave empty for no damage on save)",
+    "DamageType": "Damage Type",
+    "Region": "Region",
+    "Regions": "Regions",
+    "EnhancedRegionBehaviorsRequired": "Enhanced Region Behaviors module required for native trap behaviors",
+    "SelectRegion": "Select Region",
+    "EditRegion": "Edit Region",
+    "DeleteRegion": "Delete Region",
+    "DeleteRegionConfirmTitle": "Delete Region?",
+    "DeleteRegionConfirmMessage": "Are you sure you want to delete '{name}'? This action cannot be undone."
   }
 }

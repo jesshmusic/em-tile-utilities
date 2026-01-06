@@ -1,9 +1,10 @@
 import type { TrapConfig, CombatTrapConfig } from '../types/module';
-import { TrapTargetType, TrapResultType } from '../types/module';
-import { createTrapTile, createCombatTrapTile } from '../utils/creators';
+import { TrapTargetType, TrapResultType, CreationType } from '../types/module';
+import { createTrapTile, createCombatTrapTile, createTrapRegion } from '../utils/creators';
 import {
   getNextTileNumber,
   hasMonksTokenBar,
+  hasEnhancedRegionBehaviors,
   startDragPlacePreview,
   DragPlacePreviewManager
 } from '../utils/helpers';
@@ -52,6 +53,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected targetType: TrapTargetType = TrapTargetType.TRIGGERING;
   protected pauseGameOnTrigger: boolean = false;
   protected deactivateAfterTrigger: boolean = false;
+
+  // Creation Type (Tile vs Region)
+  protected creationType: CreationType = CreationType.TILE;
 
   // Visibility & Image Behavior
   protected startingImage: string = '';
@@ -399,6 +403,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       pauseGameOnTrigger: this.pauseGameOnTrigger,
       deactivateAfterTrigger: this.deactivateAfterTrigger,
 
+      // Creation Type (Tile vs Region)
+      creationType: this.creationType,
+
       // Visibility & Image Behavior - use class properties
       initialVisibility: this.initialVisibility,
       onTriggerBehavior: this.onTriggerBehavior,
@@ -461,11 +468,19 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportX: this.teleportX,
       teleportY: this.teleportY,
 
+      // Region-specific defaults (for Enhanced Region Behaviors Trap)
+      regionSaveAbility: 'dex',
+      regionSaveDC: 15,
+      regionDamage: '2d6',
+      regionSavedDamage: '',
+      regionDamageType: 'piercing',
+
       // Validation state
       canSubmit: this._canSubmit(),
 
       // Feature availability
       hasMonksTokenBar: hasMonksTokenBar(),
+      hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors(),
 
       // Footer buttons
       buttons: [
@@ -514,6 +529,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       '[name="deactivateAfterTrigger"]'
     ) as HTMLInputElement;
     if (deactivateCheckbox) this.deactivateAfterTrigger = deactivateCheckbox.checked;
+
+    // Creation Type (Tile vs Region)
+    const creationTypeRadio = this.element.querySelector(
+      '[name="creationType"]:checked'
+    ) as HTMLInputElement;
+    if (creationTypeRadio) this.creationType = creationTypeRadio.value as CreationType;
 
     // Visibility & Image Behavior
     const startingImageInput = this.element.querySelector(
@@ -626,6 +647,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return false;
     }
 
+    // Region traps: only need trap name (region-specific fields have defaults)
+    if (this.creationType === CreationType.REGION) {
+      return true;
+    }
+
     // Activating trap: must have tiles selected
     if (this.trapType === TrapType.ACTIVATING) {
       return this.selectedTiles.size > 0;
@@ -720,6 +746,43 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render(); // Re-render using class properties
       });
     }
+
+    // Set up creation type toggle change handler (Tile vs Region)
+    const creationTypeRadios = this.element.querySelectorAll(
+      'input[name="creationType"]'
+    ) as NodeListOf<HTMLInputElement>;
+
+    creationTypeRadios.forEach(radio => {
+      radio.addEventListener('change', (event: Event) => {
+        const value = (event.target as HTMLInputElement).value as CreationType;
+        this.creationType = value;
+
+        // Update toggle visual state
+        this.element.querySelectorAll('.creation-type-group .toggle-option').forEach(option => {
+          const optionRadio = option.querySelector('input[type="radio"]') as HTMLInputElement;
+          if (optionRadio?.checked) {
+            option.classList.add('active');
+          } else {
+            option.classList.remove('active');
+          }
+        });
+
+        // Show/hide tile-only options based on creation type
+        this.#updateTileOnlyOptions();
+
+        // Update submit button state and setup tasks
+        const submitButton = this.element.querySelector(
+          'button[type="submit"]'
+        ) as HTMLButtonElement;
+        if (submitButton) {
+          submitButton.disabled = !this._canSubmit();
+        }
+        this._updateSetupTasks();
+      });
+    });
+
+    // Initialize tile-only options visibility
+    this.#updateTileOnlyOptions();
 
     // Handle Initial Visibility and On Trigger Behavior radio button interactions
     const initialVisibilityRadios = this.element.querySelectorAll(
@@ -985,23 +1048,28 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       tasks.push('Enter a trap name');
     }
 
-    // Check for required fields based on trap type
-    if (this.trapType === TrapType.IMAGE) {
-      if (!this.resultType) {
-        tasks.push('Select a result type');
+    // Region traps: only need trap name (other fields have defaults)
+    if (this.creationType === CreationType.REGION) {
+      // No additional tasks for regions
+    } else {
+      // Check for required fields based on trap type (tile mode only)
+      if (this.trapType === TrapType.IMAGE) {
+        if (!this.resultType) {
+          tasks.push('Select a result type');
+        }
+
+        if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
+          tasks.push('Add a DMG trap item for combat');
+        }
+
+        if (this.resultType === TrapResultType.TELEPORT && (!this.teleportX || !this.teleportY)) {
+          tasks.push('Select teleport destination');
+        }
       }
 
-      if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
-        tasks.push('Add a DMG trap item for combat');
+      if (this.trapType === TrapType.ACTIVATING && this.selectedTiles.size === 0) {
+        tasks.push('Add at least one tile to activate');
       }
-
-      if (this.resultType === TrapResultType.TELEPORT && (!this.teleportX || !this.teleportY)) {
-        tasks.push('Select teleport destination');
-      }
-    }
-
-    if (this.trapType === TrapType.ACTIVATING && this.selectedTiles.size === 0) {
-      tasks.push('Add at least one tile to activate');
     }
 
     // Update the DOM
@@ -1047,6 +1115,42 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Initial validation check
     updateSubmitButton();
+  }
+
+  /**
+   * Show/hide tile-only and region-only options based on creation type
+   */
+  #updateTileOnlyOptions(): void {
+    const tileOnlyOptions = this.element.querySelectorAll(
+      '.tile-only-option'
+    ) as NodeListOf<HTMLElement>;
+    const regionOnlyOptions = this.element.querySelectorAll(
+      '.region-only-option'
+    ) as NodeListOf<HTMLElement>;
+    const isRegion = this.creationType === CreationType.REGION;
+
+    // Hide tile-only options when Region is selected
+    tileOnlyOptions.forEach(option => {
+      option.style.display = isRegion ? 'none' : '';
+    });
+
+    // Show region-only options when Region is selected
+    regionOnlyOptions.forEach(option => {
+      option.style.display = isRegion ? '' : 'none';
+    });
+
+    // Toggle required attribute on resultType based on creation type
+    // (can't have required on hidden fields - browser validation fails)
+    const resultTypeSelect = this.element.querySelector(
+      'select[name="resultType"]'
+    ) as HTMLSelectElement;
+    if (resultTypeSelect) {
+      if (isRegion) {
+        resultTypeSelect.removeAttribute('required');
+      } else {
+        resultTypeSelect.setAttribute('required', '');
+      }
+    }
   }
 
   /* -------------------------------------------- */
@@ -1637,6 +1741,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return { valid: false, message: 'Trap name is required!' };
     }
 
+    // Region traps: only need trap name (region-specific fields have defaults)
+    if (this.creationType === CreationType.REGION) {
+      return { valid: true };
+    }
+
     // Activating trap validation
     if (this.trapType === TrapType.ACTIVATING) {
       if (this.selectedTiles.size === 0) {
@@ -1761,8 +1870,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       minSize: 10,
       onPlace: async (x: number, y: number, width: number, height: number) => {
         if (TrapDialog._isValidTileSize(width, height)) {
-          await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
-          ui.notifications.info(`Activating trap "${trapConfig.name}" created!`);
+          // Branch based on creation type (Tile vs Region)
+          if (this.creationType === CreationType.REGION) {
+            // Build region-specific config from form
+            const regionConfig = this._buildRegionTrapConfig(form);
+            await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
+          } else {
+            await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
+            ui.notifications.info(`Activating trap "${trapConfig.name}" created!`);
+          }
         }
 
         this.close();
@@ -1833,8 +1949,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       );
 
       // Use ghost preview if there's an image, otherwise fall back to rectangle
-      const previewImage =
-        combatConfig.startingImage || 'icons/svg/hazard.svg';
+      const previewImage = combatConfig.startingImage || 'icons/svg/hazard.svg';
 
       // Start drag-to-place preview with ghost image
       this.dragPreviewManager = await startDragPlacePreview({
@@ -1844,6 +1959,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         minSize: 10,
         onPlace: async (x: number, y: number, width: number, height: number) => {
           if (TrapDialog._isValidTileSize(width, height)) {
+            // Combat traps only support tile creation (not regions)
+            // Region creation for combat would require significant additional work
             await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
             ui.notifications.info(`Combat trap "${combatConfig.name}" created!`);
           }
@@ -1934,19 +2051,34 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Minimize the dialog so user can see the canvas
     this.minimize();
 
-    // Set up drag-to-place handlers for image trap
-    ui.notifications.info('Drag on the canvas to place and size the trap. Press ESC to cancel.');
+    // Switch to appropriate canvas layer based on creation type
+    const isRegion = this.creationType === CreationType.REGION;
+    if (isRegion) {
+      (canvas as any).regions?.activate();
+      ui.notifications.info(
+        'Drag on the canvas to place and size the region trap. Press ESC to cancel.'
+      );
+    } else {
+      (canvas as any).tiles?.activate();
+      ui.notifications.info('Drag on the canvas to place and size the trap. Press ESC to cancel.');
+    }
 
-    // Start drag-to-place preview with ghost image
-    this.dragPreviewManager = await startDragPlacePreview({
-      imagePath: trapConfig.startingImage,
+    // Configure preview based on creation type
+    const previewConfig: any = {
       snapToGrid: false,
       alpha: 0.5,
       minSize: 10,
       onPlace: async (x: number, y: number, width: number, height: number) => {
         if (TrapDialog._isValidTileSize(width, height)) {
-          await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
-          ui.notifications.info(`Trap "${trapConfig.name}" created!`);
+          // Branch based on creation type (Tile vs Region)
+          if (this.creationType === CreationType.REGION) {
+            // Build region-specific config from form
+            const regionConfig = this._buildRegionTrapConfig(form);
+            await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
+          } else {
+            await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
+            ui.notifications.info(`Trap "${trapConfig.name}" created!`);
+          }
         }
 
         this.close();
@@ -1963,12 +2095,61 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         this.maximize();
         this.dragPreviewManager = undefined;
       }
-    });
+    };
+
+    // Use colored rectangle for regions, image for tiles
+    if (isRegion) {
+      previewConfig.color = '#ff4444'; // Red color for trap regions
+      previewConfig.layer = 'regions';
+    } else {
+      previewConfig.imagePath = trapConfig.startingImage;
+      previewConfig.layer = 'tiles';
+    }
+
+    // Start drag-to-place preview
+    this.dragPreviewManager = await startDragPlacePreview(previewConfig);
   }
 
   /**
-   * Extract common configuration from form
+   * Build region-specific trap config from form data
+   * Uses the dedicated region trap settings
    */
+  protected _buildRegionTrapConfig(form: HTMLFormElement): any {
+    const name = (form.querySelector('input[name="trapName"]') as HTMLInputElement)?.value || '';
+    const sound = (form.querySelector('input[name="sound"]') as HTMLInputElement)?.value || '';
+    const pauseGameOnTrigger =
+      (form.querySelector('input[name="pauseGameOnTrigger"]') as HTMLInputElement)?.checked ||
+      false;
+    const customTags =
+      (form.querySelector('input[name="customTags"]') as HTMLInputElement)?.value || '';
+
+    // Region-specific settings
+    const saveAbility =
+      (form.querySelector('select[name="regionSaveAbility"]') as HTMLSelectElement)?.value || 'dex';
+    const saveDC = parseInt(
+      (form.querySelector('input[name="regionSaveDC"]') as HTMLInputElement)?.value || '15'
+    );
+    const damage =
+      (form.querySelector('input[name="regionDamage"]') as HTMLInputElement)?.value || '2d6';
+    const savedDamage =
+      (form.querySelector('input[name="regionSavedDamage"]') as HTMLInputElement)?.value || '';
+    const damageType =
+      (form.querySelector('select[name="regionDamageType"]') as HTMLSelectElement)?.value ||
+      'piercing';
+
+    return {
+      name,
+      saveAbility,
+      saveDC,
+      damage,
+      savedDamage,
+      damageType,
+      sound: sound || undefined,
+      pauseGameOnTrigger,
+      customTags: customTags || undefined
+    };
+  }
+
   protected _extractCommonConfig(form: HTMLFormElement): any {
     const name = (form.querySelector('input[name="trapName"]') as HTMLInputElement)?.value || '';
     const startingImage =

@@ -3,6 +3,10 @@
     {{#if hasTiles}}
       <div class="tile-count-info">
         <strong>{{localize "EMPUZZLES.TotalTiles"}}:</strong> {{tileCount}}
+        {{#if regionCount}}
+          <span class="region-count-separator">|</span>
+          <strong>{{localize "EMPUZZLES.Regions"}}:</strong> {{regionCount}}
+        {{/if}}
       </div>
     {{/if}}
     <div class="header-actions">
@@ -113,57 +117,78 @@
             {{#if item.expanded}}
               <div class="group-tiles">
                 {{#each item.tiles as |tile|}}
-                  <div class="tile-entry tile-entry-grouped" data-tile-id="{{tile.id}}">
+                  <div class="tile-entry tile-entry-grouped {{#if tile.isRegion}}is-region{{/if}}" data-tile-id="{{tile.id}}" data-item-type="{{tile.itemType}}">
                     <div class="tile-header">
                       <div class="tile-info">
-                        {{#if tile.image}}
-                          {{#if tile.isVideo}}
-                            <video src="{{tile.image}}" class="tile-thumbnail" autoplay loop muted></video>
-                          {{else}}
-                            <img src="{{tile.image}}" class="tile-thumbnail" alt="" />
-                          {{/if}}
+                        {{#if tile.isRegion}}
+                          <div class="tile-thumbnail region-thumbnail" style="background-color: {{tile.color}};">
+                            <i class="fa-solid fa-chess-board"></i>
+                          </div>
                         {{else}}
-                          <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" alt="" />
+                          {{#if tile.image}}
+                            {{#if tile.isVideo}}
+                              <video src="{{tile.image}}" class="tile-thumbnail" autoplay loop muted></video>
+                            {{else}}
+                              <img src="{{tile.image}}" class="tile-thumbnail" alt="" />
+                            {{/if}}
+                          {{else}}
+                            <img src="icons/svg/hazard.svg" class="tile-thumbnail tile-thumbnail-placeholder" alt="" />
+                          {{/if}}
                         {{/if}}
                         <div class="tile-details">
-                          <strong class="tile-name">{{tile.name}}</strong>
+                          <strong class="tile-name">
+                            {{tile.name}}
+                            {{#if tile.isRegion}}<i class="fa-solid fa-chess-board item-type-icon" title="{{localize 'EMPUZZLES.Region'}}"></i>{{else}}<i class="fa-solid fa-cubes item-type-icon" title="Tile"></i>{{/if}}
+                          </strong>
                           <div class="tile-meta">
                             <span class="tile-position">{{localize "EMPUZZLES.Position"}}: ({{tile.x}}, {{tile.y}})</span>
                             <span class="tile-size">{{localize "EMPUZZLES.Size"}}: {{tile.width}}x{{tile.height}}</span>
                             <span class="tile-elevation">Elevation: {{tile.elevation}}</span>
-                            <span class="tile-sort">Sort: {{tile.sort}}</span>
+                            {{#unless tile.isRegion}}<span class="tile-sort">Sort: {{tile.sort}}</span>{{/unless}}
                           </div>
                         </div>
                       </div>
                       <div class="tile-actions">
-                        <button type="button" class="tile-action-btn toggle-btn {{#unless tile.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}">
-                          {{#if tile.hidden}}
-                            <i class="fas fa-eye-slash"></i>
-                          {{else}}
-                            <i class="fas fa-eye"></i>
-                          {{/if}}
-                        </button>
-                        {{#if tile.hasMonksData}}
-                          <button type="button" class="tile-action-btn toggle-btn {{#if tile.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}">
-                            {{#if tile.active}}
-                              <i class="fas fa-check-circle"></i>
+                        {{#if tile.isRegion}}
+                          <button type="button" class="tile-action-btn" data-action="selectRegion" data-region-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectRegion'}}">
+                            <i class="fas fa-crosshairs"></i>
+                          </button>
+                          <button type="button" class="tile-action-btn" data-action="editRegion" data-region-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditRegion'}}">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button type="button" class="tile-action-btn delete-btn" data-action="deleteRegion" data-region-id="{{tile.id}}" data-region-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteRegion'}}">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        {{else}}
+                          <button type="button" class="tile-action-btn toggle-btn {{#unless tile.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}">
+                            {{#if tile.hidden}}
+                              <i class="fas fa-eye-slash"></i>
                             {{else}}
-                              <i class="fas fa-times-circle"></i>
+                              <i class="fas fa-eye"></i>
                             {{/if}}
                           </button>
+                          {{#if tile.hasMonksData}}
+                            <button type="button" class="tile-action-btn toggle-btn {{#if tile.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}">
+                              {{#if tile.active}}
+                                <i class="fas fa-check-circle"></i>
+                              {{else}}
+                                <i class="fas fa-times-circle"></i>
+                              {{/if}}
+                            </button>
+                          {{/if}}
+                          <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}">
+                            <i class="fas fa-crosshairs"></i>
+                          </button>
+                          <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditTile'}}">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}">
+                            <i class="fas fa-file-export"></i>
+                          </button>
+                          <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}">
+                            <i class="fas fa-trash"></i>
+                          </button>
                         {{/if}}
-                        <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}">
-                          <i class="fas fa-crosshairs"></i>
-                        </button>
-                        <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditTile'}}">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}">
-                          <i class="fas fa-file-export"></i>
-                        </button>
-                        <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}">
-                          <i class="fas fa-trash"></i>
-                        </button>
                       </div>
                     </div>
 
@@ -186,25 +211,36 @@
                     {{/if}}
 
                     <div class="tile-status">
-                      {{#if tile.hasMonksData}}
-                        <span class="status-badge monks-active">
-                          <i class="fas fa-puzzle-piece"></i> {{localize "EMPUZZLES.MonksActiveTile"}}
+                      {{#if tile.isRegion}}
+                        <span class="status-badge region-badge">
+                          <i class="fa-solid fa-chess-board"></i> {{localize "EMPUZZLES.Region"}}
                         </span>
                         {{#if tile.actionCount}}
                           <span class="status-badge">
-                            <i class="fas fa-bolt"></i> {{tile.actionCount}} {{localize "EMPUZZLES.Actions"}}
+                            <i class="fas fa-bolt"></i> {{tile.actionCount}} Behaviors
                           </span>
                         {{/if}}
-                        {{#if tile.variableCount}}
-                          <span class="status-badge">
-                            <i class="fas fa-code"></i> {{tile.variableCount}} {{localize "EMPUZZLES.Variables"}}
+                      {{else}}
+                        {{#if tile.hasMonksData}}
+                          <span class="status-badge monks-active">
+                            <i class="fas fa-puzzle-piece"></i> {{localize "EMPUZZLES.MonksActiveTile"}}
                           </span>
+                          {{#if tile.actionCount}}
+                            <span class="status-badge">
+                              <i class="fas fa-bolt"></i> {{tile.actionCount}} {{localize "EMPUZZLES.Actions"}}
+                            </span>
+                          {{/if}}
+                          {{#if tile.variableCount}}
+                            <span class="status-badge">
+                              <i class="fas fa-code"></i> {{tile.variableCount}} {{localize "EMPUZZLES.Variables"}}
+                            </span>
+                          {{/if}}
+                          {{#unless tile.active}}
+                            <span class="status-badge inactive">
+                              <i class="fas fa-pause"></i> {{localize "EMPUZZLES.Inactive"}}
+                            </span>
+                          {{/unless}}
                         {{/if}}
-                        {{#unless tile.active}}
-                          <span class="status-badge inactive">
-                            <i class="fas fa-pause"></i> {{localize "EMPUZZLES.Inactive"}}
-                          </span>
-                        {{/unless}}
                       {{/if}}
                       {{#if tile.hidden}}
                         <span class="status-badge hidden">

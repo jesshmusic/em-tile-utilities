@@ -991,7 +991,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     this.minimize();
 
     // Show notification to drag on canvas
-    ui.notifications.info('Drag on the canvas to place and size the trap tile. Press ESC to cancel.');
+    ui.notifications.info(
+      'Drag on the canvas to place and size the trap tile. Press ESC to cancel.'
+    );
 
     // Start drag-to-place preview with ghost image
     try {

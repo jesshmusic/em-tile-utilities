@@ -205,23 +205,26 @@ Hooks.once('ready', () => {
 });
 
 /**
- * Add buttons to tiles toolbar
+ * Add Dorman Lakely's Tile Utilities to the main left toolbar
  */
 Hooks.on('getSceneControlButtons', (controls: any) => {
-  const tilesControl = controls.tiles;
-  if (!tilesControl) return;
-
-  const tools = tilesControl.tools;
-  if (!tools) return;
-
-  // Add tile manager tool (primary UI for the module)
-  tools['em-puzzles-tile-manager'] = {
-    name: 'em-puzzles-tile-manager',
-    title: 'EMPUZZLES.TileManager',
+  // Add as a main toolbar control (between Notes and other controls)
+  controls['em-tile-utilities'] = {
+    name: 'em-tile-utilities',
+    title: 'EMPUZZLES.ModuleTitle',
     icon: 'gi-floor-hatch',
-    button: true,
-    onClick: () => showTileManagerDialog(),
-    order: 1003
+    visible: true,
+    order: 7, // After Notes (6)
+    tools: {
+      'tile-manager': {
+        name: 'tile-manager',
+        title: 'EMPUZZLES.TileManager',
+        icon: 'fa-solid fa-list',
+        button: true,
+        onClick: () => showTileManagerDialog()
+      }
+    },
+    activeTool: 'tile-manager'
   };
 });
 

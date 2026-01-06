@@ -4,7 +4,26 @@
     {{localize "EMPUZZLES.BasicInfo"}}
   </legend>
   <div>
-    <div class="form-group">
+    {{! Creation Type Toggle (Tile vs Region) - only shown if Enhanced Region Behaviors is installed }}
+    {{#if hasEnhancedRegionBehaviors}}
+    <div class="form-group creation-type-group">
+      <label>{{localize "EMPUZZLES.CreationType"}}</label>
+      <div class="toggle-group">
+        <label class="toggle-option {{#if (eq creationType 'tile')}}active{{/if}}">
+          <input type="radio" name="creationType" value="tile" {{#if (eq creationType "tile")}}checked{{/if}} />
+          <i class="fa-solid fa-cubes"></i> {{localize "EMPUZZLES.CreateAsTile"}}
+        </label>
+        <label class="toggle-option {{#if (eq creationType 'region')}}active{{/if}}">
+          <input type="radio" name="creationType" value="region" {{#if (eq creationType "region")}}checked{{/if}} />
+          <i class="fa-solid fa-chess-board"></i> {{localize "EMPUZZLES.CreateAsRegion"}}
+        </label>
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.CreationTypeHint"}}</p>
+    </div>
+    {{/if}}
+
+    {{! Tile-only: Trap Type selector }}
+    <div class="form-group tile-only-option">
       <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
       <select id="trapType" name="trapType">
         {{#each trapTypeOptions as |option|}}
@@ -33,13 +52,14 @@
       <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
     </div>
 
-    <div class="form-group">
+    {{! Tile-only options }}
+    <div class="form-group tile-only-option">
       <label for="minRequired">{{localize "EMPUZZLES.MinRequired"}}</label>
       <input type="number" id="minRequired" name="minRequired" value="" min="1" data-dtype="Number" />
       <p class="hint">{{localize "EMPUZZLES.MinRequiredHint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group tile-only-option">
       <label for="targetType">{{localize "EMPUZZLES.TargetType"}}</label>
       <select id="targetType" name="targetType">
         {{#each targetTypeOptions as |option|}}
@@ -59,7 +79,7 @@
       <p class="hint">{{localize "EMPUZZLES.PauseGameOnTriggerHint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group tile-only-option">
       <label>
         <input type="checkbox" id="deactivateAfterTrigger" name="deactivateAfterTrigger" {{#if deactivateAfterTrigger}}checked{{/if}} />
         {{localize "EMPUZZLES.DeactivateAfterTrigger"}}
@@ -69,7 +89,64 @@
   </div>
 </fieldset>
 
-{{! Visibility Section - wrapped in accordion in the partial itself }}
+{{! Region-Only: Trap Configuration Section }}
+<fieldset class="region-trap-section region-only-option">
+  <legend>
+    {{localize "EMPUZZLES.RegionTrapConfig"}}
+  </legend>
+  <div>
+    <div class="form-group">
+      <label for="regionSaveAbility">{{localize "EMPUZZLES.SavingThrow"}} <span class="required">*</span></label>
+      <select id="regionSaveAbility" name="regionSaveAbility">
+        <option value="dex" {{#if (eq regionSaveAbility "dex")}}selected{{/if}}>{{localize "EMPUZZLES.DexteritySave"}}</option>
+        <option value="str" {{#if (eq regionSaveAbility "str")}}selected{{/if}}>{{localize "EMPUZZLES.StrengthSave"}}</option>
+        <option value="con" {{#if (eq regionSaveAbility "con")}}selected{{/if}}>{{localize "EMPUZZLES.ConstitutionSave"}}</option>
+        <option value="int" {{#if (eq regionSaveAbility "int")}}selected{{/if}}>{{localize "EMPUZZLES.IntelligenceSave"}}</option>
+        <option value="wis" {{#if (eq regionSaveAbility "wis")}}selected{{/if}}>{{localize "EMPUZZLES.WisdomSave"}}</option>
+        <option value="cha" {{#if (eq regionSaveAbility "cha")}}selected{{/if}}>{{localize "EMPUZZLES.CharismaSave"}}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="regionSaveDC">{{localize "EMPUZZLES.DC"}} <span class="required">*</span></label>
+      <input type="number" id="regionSaveDC" name="regionSaveDC" value="{{regionSaveDC}}" min="1" max="30" />
+    </div>
+
+    <div class="form-group">
+      <label for="regionDamage">{{localize "EMPUZZLES.DamageFormula"}} <span class="required">*</span></label>
+      <input type="text" id="regionDamage" name="regionDamage" value="{{regionDamage}}" placeholder="2d6" />
+      <p class="hint">{{localize "EMPUZZLES.DamageFormulaHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="regionSavedDamage">{{localize "EMPUZZLES.DamageOnSave"}}</label>
+      <input type="text" id="regionSavedDamage" name="regionSavedDamage" value="{{regionSavedDamage}}" placeholder="1d6" />
+      <p class="hint">{{localize "EMPUZZLES.DamageOnSaveHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label for="regionDamageType">{{localize "EMPUZZLES.DamageType"}} <span class="required">*</span></label>
+      <select id="regionDamageType" name="regionDamageType">
+        <option value="piercing" {{#if (eq regionDamageType "piercing")}}selected{{/if}}>Piercing</option>
+        <option value="slashing" {{#if (eq regionDamageType "slashing")}}selected{{/if}}>Slashing</option>
+        <option value="bludgeoning" {{#if (eq regionDamageType "bludgeoning")}}selected{{/if}}>Bludgeoning</option>
+        <option value="fire" {{#if (eq regionDamageType "fire")}}selected{{/if}}>Fire</option>
+        <option value="cold" {{#if (eq regionDamageType "cold")}}selected{{/if}}>Cold</option>
+        <option value="lightning" {{#if (eq regionDamageType "lightning")}}selected{{/if}}>Lightning</option>
+        <option value="thunder" {{#if (eq regionDamageType "thunder")}}selected{{/if}}>Thunder</option>
+        <option value="acid" {{#if (eq regionDamageType "acid")}}selected{{/if}}>Acid</option>
+        <option value="poison" {{#if (eq regionDamageType "poison")}}selected{{/if}}>Poison</option>
+        <option value="necrotic" {{#if (eq regionDamageType "necrotic")}}selected{{/if}}>Necrotic</option>
+        <option value="radiant" {{#if (eq regionDamageType "radiant")}}selected{{/if}}>Radiant</option>
+        <option value="psychic" {{#if (eq regionDamageType "psychic")}}selected{{/if}}>Psychic</option>
+        <option value="force" {{#if (eq regionDamageType "force")}}selected{{/if}}>Force</option>
+      </select>
+    </div>
+  </div>
+</fieldset>
+
+{{! Visibility Section - wrapped in accordion in the partial itself (tile-only) }}
+<div class="tile-only-option">
 {{> partials/visibility-section
   isImageTrap=(eq trapType "image")
   imageBehavior=imageBehavior
@@ -77,17 +154,18 @@
   startingImage=defaultTrapImage
   triggeredImage=defaultTrapTriggeredImage
 }}
+</div>
 
-{{! Image Trap - Result Configuration Section }}
+{{! Image Trap - Result Configuration Section (tile-only - regions use native behaviors) }}
 {{#if (eq trapType "image")}}
-  <fieldset class="result-config-section">
+  <fieldset class="result-config-section tile-only-option">
     <legend>
       {{localize "EMPUZZLES.ResultConfiguration"}}
     </legend>
     <div>
       <div class="form-group">
         <label for="resultType">{{localize "EMPUZZLES.ResultType"}} <span class="required">*</span></label>
-        <select id="resultType" name="resultType" required>
+        <select id="resultType" name="resultType">
           {{#each resultTypeOptions as |option|}}
             <option value="{{option.value}}" {{#if (eq option.value ../resultType)}}selected{{/if}}>
               {{localize option.label}}
@@ -99,8 +177,8 @@
 
     {{! Damage Result Type }}
     {{#if (eq resultType "damage")}}
-      {{! DMG Trap Item Integration }}
-      <div class="form-group dmg-trap-section">
+      {{! DMG Trap Item Integration (tile-only - uses Monk's Active Tiles) }}
+      <div class="form-group dmg-trap-section tile-only-option">
         <label>{{localize "EMPUZZLES.DMGTrapItem"}}</label>
         {{#if hasDmgTrap}}
           <div class="dmg-trap-item-display">
@@ -277,8 +355,9 @@
       </div>
     {{/if}}
 
-    {{! Combat Result Type }}
+    {{! Combat Result Type (tile-only - complex tile features) }}
     {{#if (eq resultType "combat")}}
+    <div class="combat-result-section tile-only-option">
       <div class="form-group attack-item-section">
         <label>{{localize "EMPUZZLES.AttackItem"}}</label>
         {{#if hasAttackItem}}
@@ -365,14 +444,15 @@
         <input type="number" id="maxTriggers" name="maxTriggers" value="0" min="0" data-dtype="Number" />
         <p class="hint">{{localize "EMPUZZLES.MaxTriggersHint"}}</p>
       </div>
+    </div>
     {{/if}}
     </div>
   </fieldset>
 {{/if}}
 
-{{! Activating Trap - Tiles & Doors Section }}
+{{! Activating Trap - Tiles & Doors Section (tile-only - uses Monk's Active Tiles) }}
 {{#if (eq trapType "activating")}}
-  <fieldset class="tiles-doors-section">
+  <fieldset class="tiles-doors-section tile-only-option">
     <legend>
       {{localize "EMPUZZLES.TilesAndDoors"}}
     </legend>
