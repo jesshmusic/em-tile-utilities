@@ -54,7 +54,8 @@
       "Bash(echo:*)",
       "Skill(minor)",
       "WebFetch(domain:game-icons.net)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [
