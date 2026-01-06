@@ -18,13 +18,20 @@ import { hasEnhancedRegionBehaviors } from '../helpers/module-checks';
  */
 export interface TrapRegionConfig {
   name: string;
+  // Trigger events
+  events?: string[]; // e.g., ['tokenEnter', 'tokenMoveIn']
   // Saving throw settings
-  saveAbility: string; // e.g., 'dex', 'con', 'wis'
+  saveAbility: string | string[]; // e.g., 'dex' or ['dex', 'str'] for multiple abilities
   saveDC: number;
+  skillChecks?: string[]; // Alternative skill checks e.g., ['acr', 'ath']
   // Damage settings
+  automateDamage?: boolean; // Whether to auto-apply damage
   damage: string; // Damage formula e.g., '2d6'
   savedDamage?: string; // Damage on successful save (empty for no damage on save)
   damageType: string; // e.g., 'piercing', 'fire', 'cold'
+  // Messages
+  saveFailedMessage?: string; // Message when save fails
+  saveSuccessMessage?: string; // Message when save succeeds
   // Optional behaviors
   sound?: string; // Sound file path
   pauseGameOnTrigger?: boolean;
@@ -89,17 +96,23 @@ export async function createTrapRegion(
     );
   }
 
+  // Determine trigger events (default to tokenEnter)
+  const triggerEvents = config.events?.length ? config.events : [RegionEvents.TOKEN_ENTER];
+
   // Add trap behavior (Enhanced Region Behaviors Trap)
   behaviors.push(
     createEnhancedTrapRegionBehavior({
       name: config.name,
       saveAbility: config.saveAbility,
       saveDC: config.saveDC,
+      skillChecks: config.skillChecks,
       damage: config.damage,
       savedDamage: config.savedDamage || '',
       damageType: config.damageType,
-      automateDamage: true,
-      events: [RegionEvents.TOKEN_ENTER]
+      automateDamage: config.automateDamage ?? true,
+      saveFailedMessage: config.saveFailedMessage,
+      saveSuccessMessage: config.saveSuccessMessage,
+      events: triggerEvents
     })
   );
 
@@ -111,16 +124,21 @@ export async function createTrapRegion(
     height: regionHeight
   });
 
-  // Create region data
+  // Create region data (without behaviors - we'll add them after)
   const regionData = createBaseRegionData({
     name: config.name,
     shapes: [shape],
-    behaviors: behaviors,
+    behaviors: [], // Empty - behaviors added separately for proper schema initialization
     color: '#ff4444' // Red color for trap regions
   });
 
-  // Create the region
-  const [region] = await scene.createEmbeddedDocuments('Region', [regionData]);
+  // Create the region first
+  const [region] = (await scene.createEmbeddedDocuments('Region', [regionData])) as any[];
+
+  // Now add behaviors to the region - this ensures proper schema initialization
+  if (behaviors.length > 0 && region) {
+    await region.createEmbeddedDocuments('RegionBehavior', behaviors);
+  }
 
   // Tag the trap region using Tagger if available
   if ((game as any).modules.get('tagger')?.active) {

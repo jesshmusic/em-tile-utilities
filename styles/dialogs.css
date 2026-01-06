@@ -2478,3 +2478,58 @@ i.gi-mesh-ball,
 .trap-todo-list.all-complete .todo-header i {
   color: #4caf50;
 }
+
+/* Tag Select Component - for multi-value selections like trigger events and skills */
+.tag-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag-select-container .tag-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 24px;
+}
+
+.tag-select-container .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--color-cool-5);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--color-text-light-primary);
+}
+
+.tag-select-container .tag .tag-remove {
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.tag-select-container .tag .tag-remove:hover {
+  opacity: 1;
+  color: #ff6b6b;
+}
+
+.tag-select-container .tag-select-dropdown {
+  flex: 1;
+}
+
+/* Disabled state for tag-select (mutual exclusivity between save abilities and skills) */
+.tag-select-container.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tag-select-container.disabled .tag-select-dropdown {
+  cursor: not-allowed;
+}
+
+.tag-select-container.disabled .tag .tag-remove {
+  display: none;
+}

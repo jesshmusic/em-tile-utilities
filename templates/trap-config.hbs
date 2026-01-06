@@ -95,35 +95,109 @@
     {{localize "EMPUZZLES.RegionTrapConfig"}}
   </legend>
   <div>
+    {{! Trigger Events - Tag-based selection }}
     <div class="form-group">
-      <label for="regionSaveAbility">{{localize "EMPUZZLES.SavingThrow"}} <span class="required">*</span></label>
-      <select id="regionSaveAbility" name="regionSaveAbility">
-        <option value="dex" {{#if (eq regionSaveAbility "dex")}}selected{{/if}}>{{localize "EMPUZZLES.DexteritySave"}}</option>
-        <option value="str" {{#if (eq regionSaveAbility "str")}}selected{{/if}}>{{localize "EMPUZZLES.StrengthSave"}}</option>
-        <option value="con" {{#if (eq regionSaveAbility "con")}}selected{{/if}}>{{localize "EMPUZZLES.ConstitutionSave"}}</option>
-        <option value="int" {{#if (eq regionSaveAbility "int")}}selected{{/if}}>{{localize "EMPUZZLES.IntelligenceSave"}}</option>
-        <option value="wis" {{#if (eq regionSaveAbility "wis")}}selected{{/if}}>{{localize "EMPUZZLES.WisdomSave"}}</option>
-        <option value="cha" {{#if (eq regionSaveAbility "cha")}}selected{{/if}}>{{localize "EMPUZZLES.CharismaSave"}}</option>
-      </select>
+      <label>{{localize "EMPUZZLES.TriggerEvents"}}</label>
+      <div class="tag-select-container" data-tag-select="regionTriggerEvents">
+        <div class="tag-display">
+          <span class="tag" data-value="tokenEnter">{{localize "EMPUZZLES.EventTokenEnter"}} <i class="fa-solid fa-times tag-remove"></i></span>
+        </div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          <option value="tokenEnter" data-label="{{localize 'EMPUZZLES.EventTokenEnter'}}">{{localize "EMPUZZLES.EventTokenEnter"}}</option>
+          <option value="tokenExit" data-label="{{localize 'EMPUZZLES.EventTokenExit'}}">{{localize "EMPUZZLES.EventTokenExit"}}</option>
+          <option value="tokenMoveIn" data-label="{{localize 'EMPUZZLES.EventTokenMoveIn'}}">{{localize "EMPUZZLES.EventTokenMoveIn"}}</option>
+          <option value="tokenTurnStart" data-label="{{localize 'EMPUZZLES.EventTokenTurnStart'}}">{{localize "EMPUZZLES.EventTokenTurnStart"}}</option>
+          <option value="tokenTurnEnd" data-label="{{localize 'EMPUZZLES.EventTokenTurnEnd'}}">{{localize "EMPUZZLES.EventTokenTurnEnd"}}</option>
+        </select>
+        <input type="hidden" name="regionTriggerEvents" value="tokenEnter" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.TriggerEventsHint"}}</p>
     </div>
 
+    {{! Automate Damage }}
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="regionAutomateDamage" name="regionAutomateDamage" {{#if regionAutomateDamage}}checked{{/if}} />
+        {{localize "EMPUZZLES.AutomateDamage"}}
+      </label>
+      <p class="hint">{{localize "EMPUZZLES.AutomateDamageHint"}}</p>
+    </div>
+
+    {{! DC }}
     <div class="form-group">
       <label for="regionSaveDC">{{localize "EMPUZZLES.DC"}} <span class="required">*</span></label>
       <input type="number" id="regionSaveDC" name="regionSaveDC" value="{{regionSaveDC}}" min="1" max="30" />
+      <p class="hint">{{localize "EMPUZZLES.DCHint"}}</p>
     </div>
 
+    {{! Save Ability - Tag-based selection (multi-select) }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.SavingThrow"}}</label>
+      <div class="tag-select-container" data-tag-select="regionSaveAbility">
+        <div class="tag-display">
+          <span class="tag" data-value="dex">{{localize "EMPUZZLES.AbilityDex"}} <i class="fa-solid fa-times tag-remove"></i></span>
+        </div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          <option value="str" data-label="{{localize 'EMPUZZLES.AbilityStr'}}">{{localize "EMPUZZLES.AbilityStr"}}</option>
+          <option value="dex" data-label="{{localize 'EMPUZZLES.AbilityDex'}}">{{localize "EMPUZZLES.AbilityDex"}}</option>
+          <option value="con" data-label="{{localize 'EMPUZZLES.AbilityCon'}}">{{localize "EMPUZZLES.AbilityCon"}}</option>
+          <option value="int" data-label="{{localize 'EMPUZZLES.AbilityInt'}}">{{localize "EMPUZZLES.AbilityInt"}}</option>
+          <option value="wis" data-label="{{localize 'EMPUZZLES.AbilityWis'}}">{{localize "EMPUZZLES.AbilityWis"}}</option>
+          <option value="cha" data-label="{{localize 'EMPUZZLES.AbilityCha'}}">{{localize "EMPUZZLES.AbilityCha"}}</option>
+        </select>
+        <input type="hidden" name="regionSaveAbility" value="dex" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.SaveAbilityHint"}}</p>
+    </div>
+
+    {{! Skill Checks - Tag-based selection (all DnD5e skills) }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.SkillChecks"}}</label>
+      <div class="tag-select-container" data-tag-select="regionSkillChecks">
+        <div class="tag-display"></div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          <option value="acr" data-label="{{localize 'EMPUZZLES.SkillAcrobatics'}}">{{localize "EMPUZZLES.SkillAcrobatics"}}</option>
+          <option value="ani" data-label="{{localize 'EMPUZZLES.SkillAnimalHandling'}}">{{localize "EMPUZZLES.SkillAnimalHandling"}}</option>
+          <option value="arc" data-label="{{localize 'EMPUZZLES.SkillArcana'}}">{{localize "EMPUZZLES.SkillArcana"}}</option>
+          <option value="ath" data-label="{{localize 'EMPUZZLES.SkillAthletics'}}">{{localize "EMPUZZLES.SkillAthletics"}}</option>
+          <option value="dec" data-label="{{localize 'EMPUZZLES.SkillDeception'}}">{{localize "EMPUZZLES.SkillDeception"}}</option>
+          <option value="his" data-label="{{localize 'EMPUZZLES.SkillHistory'}}">{{localize "EMPUZZLES.SkillHistory"}}</option>
+          <option value="ins" data-label="{{localize 'EMPUZZLES.SkillInsight'}}">{{localize "EMPUZZLES.SkillInsight"}}</option>
+          <option value="itm" data-label="{{localize 'EMPUZZLES.SkillIntimidation'}}">{{localize "EMPUZZLES.SkillIntimidation"}}</option>
+          <option value="inv" data-label="{{localize 'EMPUZZLES.SkillInvestigation'}}">{{localize "EMPUZZLES.SkillInvestigation"}}</option>
+          <option value="med" data-label="{{localize 'EMPUZZLES.SkillMedicine'}}">{{localize "EMPUZZLES.SkillMedicine"}}</option>
+          <option value="nat" data-label="{{localize 'EMPUZZLES.SkillNature'}}">{{localize "EMPUZZLES.SkillNature"}}</option>
+          <option value="prc" data-label="{{localize 'EMPUZZLES.SkillPerception'}}">{{localize "EMPUZZLES.SkillPerception"}}</option>
+          <option value="prf" data-label="{{localize 'EMPUZZLES.SkillPerformance'}}">{{localize "EMPUZZLES.SkillPerformance"}}</option>
+          <option value="per" data-label="{{localize 'EMPUZZLES.SkillPersuasion'}}">{{localize "EMPUZZLES.SkillPersuasion"}}</option>
+          <option value="rel" data-label="{{localize 'EMPUZZLES.SkillReligion'}}">{{localize "EMPUZZLES.SkillReligion"}}</option>
+          <option value="slt" data-label="{{localize 'EMPUZZLES.SkillSleightOfHand'}}">{{localize "EMPUZZLES.SkillSleightOfHand"}}</option>
+          <option value="ste" data-label="{{localize 'EMPUZZLES.SkillStealth'}}">{{localize "EMPUZZLES.SkillStealth"}}</option>
+          <option value="sur" data-label="{{localize 'EMPUZZLES.SkillSurvival'}}">{{localize "EMPUZZLES.SkillSurvival"}}</option>
+        </select>
+        <input type="hidden" name="regionSkillChecks" value="" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.SkillChecksHint"}}</p>
+    </div>
+
+    {{! Damage Formula }}
     <div class="form-group">
       <label for="regionDamage">{{localize "EMPUZZLES.DamageFormula"}} <span class="required">*</span></label>
       <input type="text" id="regionDamage" name="regionDamage" value="{{regionDamage}}" placeholder="2d6" />
       <p class="hint">{{localize "EMPUZZLES.DamageFormulaHint"}}</p>
     </div>
 
+    {{! Damage If Saved }}
     <div class="form-group">
       <label for="regionSavedDamage">{{localize "EMPUZZLES.DamageOnSave"}}</label>
       <input type="text" id="regionSavedDamage" name="regionSavedDamage" value="{{regionSavedDamage}}" placeholder="1d6" />
       <p class="hint">{{localize "EMPUZZLES.DamageOnSaveHint"}}</p>
     </div>
 
+    {{! Damage Type }}
     <div class="form-group">
       <label for="regionDamageType">{{localize "EMPUZZLES.DamageType"}} <span class="required">*</span></label>
       <select id="regionDamageType" name="regionDamageType">
@@ -141,6 +215,20 @@
         <option value="psychic" {{#if (eq regionDamageType "psychic")}}selected{{/if}}>Psychic</option>
         <option value="force" {{#if (eq regionDamageType "force")}}selected{{/if}}>Force</option>
       </select>
+    </div>
+
+    {{! Save Failed Message }}
+    <div class="form-group">
+      <label for="regionSaveFailedMessage">{{localize "EMPUZZLES.SaveFailedMessage"}}</label>
+      <input type="text" id="regionSaveFailedMessage" name="regionSaveFailedMessage" value="{{regionSaveFailedMessage}}" />
+      <p class="hint">{{localize "EMPUZZLES.SaveFailedMessageHint"}}</p>
+    </div>
+
+    {{! Save Success Message }}
+    <div class="form-group">
+      <label for="regionSaveSuccessMessage">{{localize "EMPUZZLES.SaveSuccessMessage"}}</label>
+      <input type="text" id="regionSaveSuccessMessage" name="regionSaveSuccessMessage" value="{{regionSaveSuccessMessage}}" />
+      <p class="hint">{{localize "EMPUZZLES.SaveSuccessMessageHint"}}</p>
     </div>
   </div>
 </fieldset>

@@ -469,11 +469,26 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportY: this.teleportY,
 
       // Region-specific defaults (for Enhanced Region Behaviors Trap)
+      regionEventTokenEnter: true, // Default to tokenEnter
+      regionEventTokenExit: false,
+      regionEventTokenMoveIn: false,
+      regionEventTokenTurnStart: false,
+      regionEventTokenTurnEnd: false,
+      regionAutomateDamage: true,
       regionSaveAbility: 'dex',
       regionSaveDC: 15,
+      regionSkillAcr: false,
+      regionSkillAth: false,
+      regionSkillPer: false,
+      regionSkillSte: false,
+      regionSkillInv: false,
+      regionSkillSur: false,
+      regionSkillSlt: false,
       regionDamage: '2d6',
       regionSavedDamage: '',
       regionDamageType: 'piercing',
+      regionSaveFailedMessage: '',
+      regionSaveSuccessMessage: '',
 
       // Validation state
       canSubmit: this._canSubmit(),
@@ -783,6 +798,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Initialize tile-only options visibility
     this.#updateTileOnlyOptions();
+
+    // Initialize tag-select components for region trap settings
+    this.#initializeTagSelects();
 
     // Handle Initial Visibility and On Trigger Behavior radio button interactions
     const initialVisibilityRadios = this.element.querySelectorAll(
@@ -1151,6 +1169,158 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         resultTypeSelect.setAttribute('required', '');
       }
     }
+  }
+
+  /**
+   * Initialize tag-select components for multi-value selections
+   * Used for trigger events, save abilities, and skill checks in region trap configuration
+   */
+  #initializeTagSelects(): void {
+    const tagSelects = this.element.querySelectorAll('.tag-select-container');
+
+    tagSelects.forEach(container => {
+      const dropdown = container.querySelector('.tag-select-dropdown') as HTMLSelectElement;
+      const tagDisplay = container.querySelector('.tag-display') as HTMLElement;
+      const hiddenInput = container.querySelector('input[type="hidden"]') as HTMLInputElement;
+      const selectName = (container as HTMLElement).dataset.tagSelect;
+
+      if (!dropdown || !tagDisplay || !hiddenInput) return;
+
+      // Sync hidden input with existing tags (only if tags exist, otherwise keep template default)
+      const existingTags = tagDisplay.querySelectorAll('.tag');
+      if (existingTags.length > 0) {
+        this.#updateTagSelectValue(tagDisplay, hiddenInput);
+      }
+
+      // Handle dropdown change - add tag
+      dropdown.addEventListener('change', () => {
+        const value = dropdown.value;
+        if (!value) return;
+
+        const option = dropdown.querySelector(`option[value="${value}"]`) as HTMLOptionElement;
+        const label = option?.dataset.label || option?.textContent || value;
+
+        // Check if tag already exists
+        if (tagDisplay.querySelector(`[data-value="${value}"]`)) {
+          dropdown.value = '';
+          return;
+        }
+
+        // For save ability / skill checks: clear the other when adding
+        if (selectName === 'regionSaveAbility') {
+          this.#clearTagSelect('regionSkillChecks');
+        } else if (selectName === 'regionSkillChecks') {
+          this.#clearTagSelect('regionSaveAbility');
+        }
+
+        // Create tag element
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.dataset.value = value;
+        tag.innerHTML = `${label} <i class="fa-solid fa-times tag-remove"></i>`;
+
+        // Add remove handler
+        tag.querySelector('.tag-remove')?.addEventListener('click', () => {
+          tag.remove();
+          this.#updateTagSelectValue(tagDisplay, hiddenInput);
+          this.#updateSaveAbilitySkillExclusivity();
+        });
+
+        tagDisplay.appendChild(tag);
+        this.#updateTagSelectValue(tagDisplay, hiddenInput);
+        this.#updateSaveAbilitySkillExclusivity();
+
+        // Reset dropdown
+        dropdown.value = '';
+      });
+
+      // Add remove handlers to existing tags
+      tagDisplay.querySelectorAll('.tag-remove').forEach(removeBtn => {
+        removeBtn.addEventListener('click', () => {
+          removeBtn.closest('.tag')?.remove();
+          this.#updateTagSelectValue(tagDisplay, hiddenInput);
+          this.#updateSaveAbilitySkillExclusivity();
+        });
+      });
+    });
+
+    // Initialize mutual exclusivity state
+    this.#updateSaveAbilitySkillExclusivity();
+  }
+
+  /**
+   * Clear all tags from a tag-select container
+   */
+  #clearTagSelect(selectName: string): void {
+    const container = this.element.querySelector(`[data-tag-select="${selectName}"]`);
+    if (!container) return;
+
+    const tagDisplay = container.querySelector('.tag-display') as HTMLElement;
+    const hiddenInput = container.querySelector('input[type="hidden"]') as HTMLInputElement;
+
+    if (tagDisplay && hiddenInput) {
+      // Remove all tags
+      tagDisplay.querySelectorAll('.tag').forEach(tag => tag.remove());
+      // Clear hidden input
+      hiddenInput.value = '';
+    }
+  }
+
+  /**
+   * Update the mutual exclusivity between Save Ability and Skill Checks
+   * When save abilities are selected, disable skill checks and vice versa
+   */
+  #updateSaveAbilitySkillExclusivity(): void {
+    const saveAbilityContainer = this.element.querySelector(
+      '[data-tag-select="regionSaveAbility"]'
+    );
+    const skillChecksContainer = this.element.querySelector(
+      '[data-tag-select="regionSkillChecks"]'
+    );
+
+    if (!saveAbilityContainer || !skillChecksContainer) return;
+
+    const saveAbilityTags = saveAbilityContainer.querySelectorAll('.tag-display .tag');
+    const skillChecksTags = skillChecksContainer.querySelectorAll('.tag-display .tag');
+
+    const saveAbilityDropdown = saveAbilityContainer.querySelector(
+      '.tag-select-dropdown'
+    ) as HTMLSelectElement;
+    const skillChecksDropdown = skillChecksContainer.querySelector(
+      '.tag-select-dropdown'
+    ) as HTMLSelectElement;
+
+    if (!saveAbilityDropdown || !skillChecksDropdown) return;
+
+    // If save abilities are selected, disable skill checks
+    if (saveAbilityTags.length > 0) {
+      skillChecksDropdown.disabled = true;
+      skillChecksContainer.classList.add('disabled');
+    } else {
+      skillChecksDropdown.disabled = false;
+      skillChecksContainer.classList.remove('disabled');
+    }
+
+    // If skill checks are selected, disable save abilities
+    if (skillChecksTags.length > 0) {
+      saveAbilityDropdown.disabled = true;
+      saveAbilityContainer.classList.add('disabled');
+    } else {
+      saveAbilityDropdown.disabled = false;
+      saveAbilityContainer.classList.remove('disabled');
+    }
+  }
+
+  /**
+   * Update the hidden input value based on current tags
+   */
+  #updateTagSelectValue(tagDisplay: HTMLElement, hiddenInput: HTMLInputElement): void {
+    const values: string[] = [];
+    tagDisplay.querySelectorAll('.tag').forEach(tag => {
+      const value = (tag as HTMLElement).dataset.value;
+      if (value) values.push(value);
+    });
+    hiddenInput.value = values.join(',');
   }
 
   /* -------------------------------------------- */
@@ -2123,12 +2293,81 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const customTags =
       (form.querySelector('input[name="customTags"]') as HTMLInputElement)?.value || '';
 
-    // Region-specific settings
-    const saveAbility =
-      (form.querySelector('select[name="regionSaveAbility"]') as HTMLSelectElement)?.value || 'dex';
+    // Trigger events (from hidden input, comma-separated)
+    // Fallback to reading from visible tags if hidden input is empty
+    const eventsInput = form.querySelector('input[name="regionTriggerEvents"]') as HTMLInputElement;
+    let events: string[] = [];
+    if (eventsInput?.value) {
+      events = eventsInput.value.split(',').filter(v => v.trim());
+    }
+    // If hidden input is empty, try reading from visible tags
+    if (events.length === 0) {
+      const eventsContainer = form.querySelector('[data-tag-select="regionTriggerEvents"]');
+      if (eventsContainer) {
+        eventsContainer.querySelectorAll('.tag-display .tag').forEach(tag => {
+          const value = (tag as HTMLElement).dataset.value;
+          if (value) events.push(value);
+        });
+      }
+    }
+    // Default to tokenEnter if still none selected
+    if (events.length === 0) {
+      events.push('tokenEnter');
+    }
+
+    // Automate damage checkbox
+    const automateDamage =
+      (form.querySelector('input[name="regionAutomateDamage"]') as HTMLInputElement)?.checked ??
+      true;
+
+    // Region-specific settings - saveAbility from hidden input (comma-separated)
+    // Fallback to reading from visible tags if hidden input is empty
+    const saveAbilityInput = form.querySelector(
+      'input[name="regionSaveAbility"]'
+    ) as HTMLInputElement;
+    let saveAbility: string[] = [];
+    if (saveAbilityInput?.value) {
+      saveAbility = saveAbilityInput.value.split(',').filter(v => v.trim());
+    }
+    // If hidden input is empty, try reading from visible tags
+    if (saveAbility.length === 0) {
+      const saveContainer = form.querySelector('[data-tag-select="regionSaveAbility"]');
+      if (saveContainer) {
+        saveContainer.querySelectorAll('.tag-display .tag').forEach(tag => {
+          const value = (tag as HTMLElement).dataset.value;
+          if (value) saveAbility.push(value);
+        });
+      }
+    }
+
     const saveDC = parseInt(
       (form.querySelector('input[name="regionSaveDC"]') as HTMLInputElement)?.value || '15'
     );
+
+    // Skill checks (from hidden input, comma-separated)
+    // Fallback to reading from visible tags if hidden input is empty
+    const skillsInput = form.querySelector('input[name="regionSkillChecks"]') as HTMLInputElement;
+    let skillChecks: string[] = [];
+    if (skillsInput?.value) {
+      skillChecks = skillsInput.value.split(',').filter(v => v.trim());
+    }
+    // If hidden input is empty, try reading from visible tags
+    if (skillChecks.length === 0) {
+      const skillsContainer = form.querySelector('[data-tag-select="regionSkillChecks"]');
+      if (skillsContainer) {
+        skillsContainer.querySelectorAll('.tag-display .tag').forEach(tag => {
+          const value = (tag as HTMLElement).dataset.value;
+          if (value) skillChecks.push(value);
+        });
+      }
+    }
+
+    // Only default to dex if BOTH saveAbility AND skillChecks are empty
+    // If user selected skill checks, don't force a save ability
+    if (saveAbility.length === 0 && skillChecks.length === 0) {
+      saveAbility = ['dex'];
+    }
+
     const damage =
       (form.querySelector('input[name="regionDamage"]') as HTMLInputElement)?.value || '2d6';
     const savedDamage =
@@ -2137,13 +2376,26 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (form.querySelector('select[name="regionDamageType"]') as HTMLSelectElement)?.value ||
       'piercing';
 
+    // Messages
+    const saveFailedMessage =
+      (form.querySelector('input[name="regionSaveFailedMessage"]') as HTMLInputElement)?.value ||
+      '';
+    const saveSuccessMessage =
+      (form.querySelector('input[name="regionSaveSuccessMessage"]') as HTMLInputElement)?.value ||
+      '';
+
     return {
       name,
-      saveAbility,
+      events,
+      automateDamage,
+      saveAbility, // Array of abilities (default to ['dex'] if empty, handled above)
       saveDC,
+      skillChecks: skillChecks.length > 0 ? skillChecks : undefined,
       damage,
       savedDamage,
       damageType,
+      saveFailedMessage: saveFailedMessage || undefined,
+      saveSuccessMessage: saveSuccessMessage || undefined,
       sound: sound || undefined,
       pauseGameOnTrigger,
       customTags: customTags || undefined
