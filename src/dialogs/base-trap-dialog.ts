@@ -101,7 +101,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-skull-crossbones'
+      icon: 'gi-skull-crossed-bones'
     },
     position: {
       width: 576
@@ -338,13 +338,13 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       buttons: [
         {
           type: 'submit',
-          icon: 'fa-solid fa-check',
+          icon: 'gi-check-mark',
           label: 'EMPUZZLES.Create'
         },
         {
           type: 'button',
           action: 'close',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Cancel'
         }
       ],
@@ -508,7 +508,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
       // Store the teleport position
       this.teleportX = snapped.x;

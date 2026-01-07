@@ -136,6 +136,18 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected teleportY?: number;
 
   /**
+   * Region trap trigger behaviors (for Enhanced Region Behaviors)
+   */
+  protected regionTriggerOnSave: string[] = [];
+  protected regionTriggerOnFail: string[] = [];
+
+  /**
+   * Region trap tiles to trigger (MAT tiles triggered via Execute Script behavior)
+   */
+  protected regionTilesToTrigger: Map<string, { id: string; name: string; image: string }> =
+    new Map();
+
+  /**
    * Tag input manager for custom tags
    */
   private tagInputManager?: TagInputManager;
@@ -154,7 +166,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-triangle-exclamation',
+      icon: 'gi-hazard-sign',
       title: 'EMPUZZLES.CreateTrap',
       resizable: true
     },
@@ -174,6 +186,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       selectMovePosition: TrapDialog.prototype._onSelectMovePosition,
       addWall: TrapDialog.prototype._onAddWall,
       removeWall: TrapDialog.prototype._onRemoveWall,
+      // Region trap tile trigger actions
+      addRegionTile: TrapDialog.prototype._onAddRegionTile,
+      removeRegionTile: TrapDialog.prototype._onRemoveRegionTile,
       // Teleport action
       selectTeleportPosition: TrapDialog.prototype._onSelectTeleportPosition,
       // Combat trap actions
@@ -195,6 +210,29 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       template: 'modules/em-tile-utilities/templates/form-footer.hbs'
     }
   };
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get all region behaviors from the current scene for trigger selection
+   * @returns Array of behavior options with UUID and label
+   */
+  #getSceneBehaviors(): { value: string; label: string }[] {
+    const behaviors: { value: string; label: string }[] = [];
+    const scene = canvas.scene as any;
+    if (!scene) return behaviors;
+
+    // Iterate through all regions and their behaviors
+    for (const region of scene.regions?.values() ?? []) {
+      for (const behavior of region.behaviors?.values() ?? []) {
+        behaviors.push({
+          value: behavior.uuid,
+          label: `${region.name} - ${behavior.name}`
+        });
+      }
+    }
+    return behaviors;
+  }
 
   /* -------------------------------------------- */
 
@@ -474,7 +512,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       regionEventTokenMoveIn: false,
       regionEventTokenTurnStart: false,
       regionEventTokenTurnEnd: false,
-      regionAutomateDamage: true,
+      regionAutomateDamage: false,
       regionSaveAbility: 'dex',
       regionSaveDC: 15,
       regionSkillAcr: false,
@@ -490,6 +528,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       regionSaveFailedMessage: '',
       regionSaveSuccessMessage: '',
 
+      // Region trigger behaviors (for Enhanced Region Behaviors)
+      sceneBehaviors: this.#getSceneBehaviors(),
+      regionTriggerOnSave: this.regionTriggerOnSave,
+      regionTriggerOnFail: this.regionTriggerOnFail,
+
+      // Region tiles to trigger (MAT tiles)
+      regionTilesToTrigger: Array.from(this.regionTilesToTrigger.values()),
+      hasRegionTilesToTrigger: this.regionTilesToTrigger.size > 0,
+      regionTilesToTriggerValue: Array.from(this.regionTilesToTrigger.keys()).join(','),
+
       // Validation state
       canSubmit: this._canSubmit(),
 
@@ -501,14 +549,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       buttons: [
         {
           type: 'submit',
-          icon: 'fa-solid fa-check',
+          icon: 'gi-check-mark',
           label: 'EMPUZZLES.Create',
           disabled: !this._canSubmit()
         },
         {
           type: 'button',
           action: 'close',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Cancel'
         }
       ]
@@ -781,6 +829,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             option.classList.remove('active');
           }
         });
+
+        // Switch canvas layer based on creation type
+        if (value === CreationType.REGION) {
+          (canvas as any).regions?.activate();
+        } else {
+          (canvas as any).tiles?.activate();
+        }
+
+        // Bring dialog back to front after layer switch
+        this.bringToFront();
 
         // Show/hide tile-only options based on creation type
         this.#updateTileOnlyOptions();
@@ -1217,7 +1275,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const tag = document.createElement('span');
         tag.className = 'tag';
         tag.dataset.value = value;
-        tag.innerHTML = `${label} <i class="fa-solid fa-times tag-remove"></i>`;
+        tag.innerHTML = `${label} <i class="gi-cancel tag-remove"></i>`;
 
         // Add remove handler
         tag.querySelector('.tag-remove')?.addEventListener('click', () => {
@@ -1585,7 +1643,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
       this.tokenX = snapped.x;
       this.tokenY = snapped.y;
@@ -1685,6 +1743,70 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
+   * Handle adding a tile to the region trap trigger list
+   * Uses canvas click selection similar to Reset Tile
+   */
+  async _onAddRegionTile(_event: Event, _target: HTMLElement): Promise<void> {
+    // Sync form state to class properties before minimizing
+    this._syncFormToState();
+
+    // Minimize this dialog
+    await this.minimize();
+    ui.notifications.info('Click on a tile to add it to the trigger list...');
+
+    const handler = async (clickEvent: any) => {
+      const tile = clickEvent.interactionData?.object?.document;
+
+      if (!tile) {
+        ui.notifications.warn('No tile selected!');
+        (canvas as any).stage.off('click', handler);
+        this.maximize();
+        return;
+      }
+
+      // Add tile to region trigger list
+      this.regionTilesToTrigger.set(tile.id, {
+        id: tile.id,
+        name: tile.name || tile.flags?.['monks-active-tiles']?.name || 'Unnamed Tile',
+        image: tile.texture?.src || 'icons/svg/hazard.svg'
+      });
+
+      // Remove the handler after selection
+      (canvas as any).stage.off('click', handler);
+
+      // Re-render to show updated list
+      await this.render(true);
+      this.maximize();
+      ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
+    };
+
+    (canvas as any).stage.on('click', handler);
+  }
+
+  /**
+   * Handle removing a tile from the region trap trigger list
+   */
+  async _onRemoveRegionTile(event: Event, target: HTMLElement): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const button = target.closest('[data-tile-id]') as HTMLElement;
+    if (!button) return;
+
+    const tileId = button.dataset.tileId;
+    if (!tileId) return;
+
+    // Sync form state to class properties
+    this._syncFormToState();
+
+    // Remove tile from selection
+    this.regionTilesToTrigger.delete(tileId);
+
+    // Re-render to show updated list
+    this.render(true);
+  }
+
+  /**
    * Handle selecting a move position for a tile
    */
   async _onSelectMovePosition(event: Event, target: HTMLElement): Promise<void> {
@@ -1700,7 +1822,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
       // Update tile data with position
       const tileData = this.selectedTiles.get(tileId);
@@ -1806,7 +1928,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
       this.teleportX = snapped.x;
       this.teleportY = snapped.y;
@@ -2318,7 +2440,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Automate damage checkbox
     const automateDamage =
       (form.querySelector('input[name="regionAutomateDamage"]') as HTMLInputElement)?.checked ??
-      true;
+      false;
 
     // Region-specific settings - saveAbility from hidden input (comma-separated)
     // Fallback to reading from visible tags if hidden input is empty
@@ -2384,6 +2506,52 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (form.querySelector('input[name="regionSaveSuccessMessage"]') as HTMLInputElement)?.value ||
       '';
 
+    // Trigger behaviors on save/fail (from hidden inputs, comma-separated)
+    const triggerOnSaveInput = form.querySelector(
+      'input[name="regionTriggerOnSave"]'
+    ) as HTMLInputElement;
+    let triggerBehaviorOnSave: string[] = [];
+    if (triggerOnSaveInput?.value) {
+      triggerBehaviorOnSave = triggerOnSaveInput.value.split(',').filter(v => v.trim());
+    }
+    // Fallback to reading from visible tags if hidden input is empty
+    if (triggerBehaviorOnSave.length === 0) {
+      const saveContainer = form.querySelector('[data-tag-select="regionTriggerOnSave"]');
+      if (saveContainer) {
+        saveContainer.querySelectorAll('.tag-display .tag').forEach(tag => {
+          const value = (tag as HTMLElement).dataset.value;
+          if (value) triggerBehaviorOnSave.push(value);
+        });
+      }
+    }
+
+    const triggerOnFailInput = form.querySelector(
+      'input[name="regionTriggerOnFail"]'
+    ) as HTMLInputElement;
+    let triggerBehaviorOnFail: string[] = [];
+    if (triggerOnFailInput?.value) {
+      triggerBehaviorOnFail = triggerOnFailInput.value.split(',').filter(v => v.trim());
+    }
+    // Fallback to reading from visible tags if hidden input is empty
+    if (triggerBehaviorOnFail.length === 0) {
+      const failContainer = form.querySelector('[data-tag-select="regionTriggerOnFail"]');
+      if (failContainer) {
+        failContainer.querySelectorAll('.tag-display .tag').forEach(tag => {
+          const value = (tag as HTMLElement).dataset.value;
+          if (value) triggerBehaviorOnFail.push(value);
+        });
+      }
+    }
+
+    // Tiles to trigger (from hidden input, comma-separated)
+    const tilesToTriggerInput = form.querySelector(
+      'input[name="regionTilesToTrigger"]'
+    ) as HTMLInputElement;
+    let tilesToTrigger: string[] = [];
+    if (tilesToTriggerInput?.value) {
+      tilesToTrigger = tilesToTriggerInput.value.split(',').filter(v => v.trim());
+    }
+
     return {
       name,
       events,
@@ -2396,6 +2564,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       damageType,
       saveFailedMessage: saveFailedMessage || undefined,
       saveSuccessMessage: saveSuccessMessage || undefined,
+      triggerBehaviorOnSave: triggerBehaviorOnSave.length > 0 ? triggerBehaviorOnSave : undefined,
+      triggerBehaviorOnFail: triggerBehaviorOnFail.length > 0 ? triggerBehaviorOnFail : undefined,
+      tilesToTrigger: tilesToTrigger.length > 0 ? tilesToTrigger : undefined,
       sound: sound || undefined,
       pauseGameOnTrigger,
       customTags: customTags || undefined

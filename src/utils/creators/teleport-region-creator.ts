@@ -4,6 +4,7 @@ import { createBaseRegionData, createRectangleShape } from '../builders/base-reg
 import {
   createExecuteMacroRegionBehavior,
   createTeleportTokenRegionBehavior,
+  createPauseGameRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import {
@@ -19,6 +20,8 @@ import { hasMonksTokenBar } from '../helpers/module-checks';
  */
 export interface TeleportRegionConfig extends TeleportTileConfig {
   behaviorMode: RegionBehaviorMode;
+  allowChoice?: boolean; // Prompt user for confirmation before teleporting
+  returnAllowChoice?: boolean; // Prompt user for confirmation on return teleport
 }
 
 /**
@@ -144,10 +147,10 @@ export async function createTeleportRegion(
 
   if (config.behaviorMode === RegionBehaviorMode.NATIVE) {
     // Native mode: Use FoundryVTT core teleport behavior
-    // Note: Native teleport requires a destination REGION UUID, not coordinates
-    // For now, we'll create a destination region and use its UUID
+    // For return teleport to work, we need to create BOTH regions first,
+    // then add behaviors pointing to each other
 
-    // First, create the destination region on the target scene
+    // Get the destination scene
     const destScene =
       config.teleportSceneId === scene.id
         ? scene
@@ -158,18 +161,21 @@ export async function createTeleportRegion(
       return;
     }
 
-    // Create destination region (small marker region)
+    // Create destination region using the user-selected destination size
+    const destWidth = config.teleportWidth ?? gridSize;
+    const destHeight = config.teleportHeight ?? gridSize;
     const destShape = createRectangleShape({
       x: config.teleportX,
       y: config.teleportY,
-      width: gridSize,
-      height: gridSize
+      width: destWidth,
+      height: destHeight
     });
 
+    // Create destination region WITHOUT behaviors first (we'll add them after)
     const destRegionData = createBaseRegionData({
       name: `${config.name} - Destination`,
       shapes: [destShape],
-      behaviors: [], // No behaviors on destination
+      behaviors: [], // No behaviors yet
       color: '#44ff44' // Green for destination
     });
 
@@ -182,15 +188,112 @@ export async function createTeleportRegion(
       await Tagger.setTags(destRegion, [`${tag}_Dest`, 'EM_Region']);
     }
 
-    // Now create the teleport behavior pointing to destination region
-    behaviors.push(
+    // Create the source region shape
+    const sourceShape = createRectangleShape({
+      x: position.x,
+      y: position.y,
+      width: regionWidth,
+      height: regionHeight
+    });
+
+    // Create source region WITHOUT behaviors first
+    const sourceRegionData = createBaseRegionData({
+      name: config.name,
+      shapes: [sourceShape],
+      behaviors: [], // No behaviors yet
+      color: '#4488ff' // Blue for source
+    });
+
+    const [sourceRegion] = await scene.createEmbeddedDocuments('Region', [sourceRegionData]);
+    const sourceRegionUUID = `Scene.${scene.id}.Region.${sourceRegion.id}`;
+
+    // Tag source region
+    if ((game as any).modules.get('tagger')?.active) {
+      const Tagger = (globalThis as any).Tagger;
+      const allTags = [tag, 'EM_Region', ...parseCustomTags(config.customTags)];
+      await Tagger.setTags(sourceRegion, allTags);
+      await showTaggerWithWarning(sourceRegion, tag);
+    }
+
+    // Now create behaviors for the SOURCE region
+    const sourceBehaviors: any[] = [];
+
+    // Add Sound behavior FIRST if sound is set
+    // Uses Execute Script with AudioHelper.play() for reliable sound playback
+    if (config.sound && config.sound.trim() !== '') {
+      const soundScript = `// Play teleport sound
+await AudioHelper.play({ src: '${config.sound}', volume: 0.8, loop: false });`;
+      sourceBehaviors.push(
+        createExecuteMacroRegionBehavior({
+          name: `${config.name} - Sound`,
+          macroScript: soundScript,
+          events: [RegionEvents.TOKEN_ENTER]
+        })
+      );
+    }
+
+    // Add Pause Game behavior if enabled
+    if (config.pauseGameOnTrigger) {
+      sourceBehaviors.push(
+        createPauseGameRegionBehavior({
+          name: `${config.name} - Pause Game`,
+          events: [RegionEvents.TOKEN_MOVE_IN]
+        })
+      );
+    }
+
+    // Add teleport behavior pointing to destination
+    sourceBehaviors.push(
       createTeleportTokenRegionBehavior({
         name: config.name,
         destination: destRegionUUID,
-        choice: false,
+        choice: config.allowChoice ?? false,
         events: [RegionEvents.TOKEN_MOVE_IN]
       })
     );
+
+    // Add behaviors to the source region
+    if (sourceBehaviors.length > 0) {
+      await sourceRegion.createEmbeddedDocuments('RegionBehavior', sourceBehaviors);
+    }
+
+    // Now create behaviors for the DESTINATION region (return teleport)
+    if (config.createReturnTeleport) {
+      const destBehaviors: any[] = [];
+
+      // Add Sound behavior FIRST to destination if sound is set
+      // Uses Execute Script with AudioHelper.play() for reliable sound playback
+      if (config.sound && config.sound.trim() !== '') {
+        const returnSoundScript = `// Play return teleport sound
+await AudioHelper.play({ src: '${config.sound}', volume: 0.8, loop: false });`;
+        destBehaviors.push(
+          createExecuteMacroRegionBehavior({
+            name: `Return: ${config.name} - Sound`,
+            macroScript: returnSoundScript,
+            events: [RegionEvents.TOKEN_ENTER]
+          })
+        );
+      }
+
+      // Add return teleport behavior pointing back to source
+      destBehaviors.push(
+        createTeleportTokenRegionBehavior({
+          name: `Return: ${config.name}`,
+          destination: sourceRegionUUID,
+          choice: config.returnAllowChoice ?? false,
+          events: [RegionEvents.TOKEN_MOVE_IN]
+        })
+      );
+
+      // Add behaviors to destination region
+      if (destBehaviors.length > 0) {
+        await destRegion.createEmbeddedDocuments('RegionBehavior', destBehaviors);
+      }
+
+      ui.notifications.info(
+        `Dorman Lakely's Tile Utilities | Return teleport region created at destination.`
+      );
+    }
 
     // Note: Native mode doesn't support saving throws or delete source token
     if (config.hasSavingThrow) {
@@ -198,6 +301,9 @@ export async function createTeleportRegion(
         "Native region teleport doesn't support saving throws. Consider using Monk's mode for full features."
       );
     }
+
+    // Return early since we've already created all regions
+    return;
   } else {
     // Monk's Macro mode: Use ExecuteMacro behavior
     const macroScript = generateTeleportMacroScript(config, scene.id as string);

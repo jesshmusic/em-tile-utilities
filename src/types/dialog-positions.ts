@@ -100,5 +100,15 @@ export const DialogPositions: Record<string, DialogPosition> = {
     ...DEFAULT_DIALOG_POSITION,
     left: 240,
     top: 240
+  },
+
+  /**
+   * Elevation Region dialog
+   */
+  ELEVATION: {
+    ...DEFAULT_DIALOG_POSITION,
+    height: 700,
+    left: 260,
+    top: 260
   }
 };

@@ -107,13 +107,13 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       buttons: [
         {
           type: 'submit',
-          icon: 'fa-solid fa-check',
+          icon: 'gi-check-mark',
           label: 'EMPUZZLES.Create'
         },
         {
           type: 'button',
           action: 'close',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Cancel'
         }
       ]

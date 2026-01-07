@@ -372,6 +372,7 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
+    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
     const snapped = this.config.snapToGrid
       ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
       : position;
@@ -431,6 +432,7 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
+    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
     const snapped = this.config.snapToGrid
       ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
       : position;
@@ -461,6 +463,7 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
+    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
     const snapped = this.config.snapToGrid
       ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
       : position;

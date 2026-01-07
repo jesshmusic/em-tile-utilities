@@ -3,6 +3,7 @@ import {
   createEnhancedTrapRegionBehavior,
   createEnhancedSoundRegionBehavior,
   createPauseGameRegionBehavior,
+  createExecuteMacroRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import {
@@ -32,6 +33,11 @@ export interface TrapRegionConfig {
   // Messages
   saveFailedMessage?: string; // Message when save fails
   saveSuccessMessage?: string; // Message when save succeeds
+  // Trigger behaviors on save/fail (Enhanced Region Behaviors)
+  triggerBehaviorOnSave?: string[]; // Behavior UUIDs to trigger on save success
+  triggerBehaviorOnFail?: string[]; // Behavior UUIDs to trigger on save failure
+  // Tiles to trigger (MAT tiles, triggered via Execute Script behavior)
+  tilesToTrigger?: string[]; // Array of tile IDs to trigger
   // Optional behaviors
   sound?: string; // Sound file path
   pauseGameOnTrigger?: boolean;
@@ -112,9 +118,38 @@ export async function createTrapRegion(
       automateDamage: config.automateDamage ?? true,
       saveFailedMessage: config.saveFailedMessage,
       saveSuccessMessage: config.saveSuccessMessage,
-      events: triggerEvents
+      events: triggerEvents,
+      triggerBehaviorOnSave: config.triggerBehaviorOnSave,
+      triggerBehaviorOnFail: config.triggerBehaviorOnFail
     })
   );
+
+  // Add Execute Script behavior to trigger MAT tiles if tilesToTrigger is provided
+  if (config.tilesToTrigger && config.tilesToTrigger.length > 0) {
+    const tileIds = config.tilesToTrigger;
+    const triggerScript = `// Trigger MAT tiles when trap fires
+const tileIds = ${JSON.stringify(tileIds)};
+const scene = canvas.scene;
+
+for (const tileId of tileIds) {
+  const tile = scene.tiles.get(tileId);
+  if (tile && tile.flags?.['monks-active-tiles']) {
+    // Trigger the tile using Monk's Active Tiles API
+    const mat = game.modules.get('monks-active-tiles')?.api;
+    if (mat) {
+      await mat.triggerTile(tile, event?.data?.token || null);
+    }
+  }
+}`;
+
+    behaviors.push(
+      createExecuteMacroRegionBehavior({
+        name: `${config.name} - Trigger Tiles`,
+        macroScript: triggerScript,
+        events: triggerEvents
+      })
+    );
+  }
 
   // Create the region shape
   const shape = createRectangleShape({

@@ -219,7 +219,7 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
       'tile-manager': {
         name: 'tile-manager',
         title: 'EMPUZZLES.TileManager',
-        icon: 'fa-solid fa-list',
+        icon: 'gi-checklist',
         button: true,
         onClick: () => showTileManagerDialog()
       }

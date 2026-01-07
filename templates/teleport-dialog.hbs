@@ -21,10 +21,19 @@
       </label>
       <label class="toggle-option {{#if (eq creationType 'region')}}active{{/if}}">
         <input type="radio" name="creationType" value="region" {{#if (eq creationType "region")}}checked{{/if}} />
-        <i class="fa-solid fa-chess-board"></i> {{localize "EMPUZZLES.CreateAsRegion"}}
+        <i class="fa-regular fa-game-board"></i> {{localize "EMPUZZLES.CreateAsRegion"}}
       </label>
     </div>
     <p class="hint">{{localize "EMPUZZLES.CreationTypeHint"}}</p>
+  </div>
+
+  {{! Region-only: Allow Choice option }}
+  <div class="form-group region-only-option">
+    <label>
+      <input type="checkbox" name="regionAllowChoice" {{#if regionAllowChoice}}checked{{/if}} />
+      {{localize "EMPUZZLES.AllowChoice"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.AllowChoiceHint"}}</p>
   </div>
   {{/if}}
 
@@ -33,24 +42,13 @@
     <div class="form-fields">
       <input type="text" name="tileImage" value="{{tileImage}}" />
       <button type="button" class="file-picker" data-target="tileImage" data-type="imagevideo">
-        <i class="fas fa-file-import fa-fw"></i>
+        <i class="gi-load"></i>
       </button>
     </div>
     <p class="hint">{{localize "EMPUZZLES.TileImageHint"}}</p>
   </div>
 
-  <div class="form-group">
-    <label for="sound">{{localize "EMPUZZLES.TeleportSound"}}</label>
-    <div class="form-fields">
-      <input type="text" name="sound" value="{{sound}}" />
-      <button type="button" class="file-picker" data-target="sound" data-type="audio">
-        <i class="fas fa-file-import fa-fw"></i>
-      </button>
-    </div>
-    <p class="hint">{{localize "EMPUZZLES.TeleportSoundHint"}}</p>
-  </div>
-
-  <div class="form-group">
+  <div class="form-group tile-only-option">
     <label>
       <input type="checkbox" name="hidden" {{#if hidden}}checked{{/if}} />
       {{localize "EMPUZZLES.HiddenTile"}}
@@ -87,7 +85,7 @@
 
   <div class="form-group">
     <button type="button" data-action="selectPosition" class="select-position-btn">
-      <i class="fas fa-crosshairs"></i>
+      <i class="gi-convergence-target"></i>
       {{localize "EMPUZZLES.SelectPosition"}}
     </button>
     {{#if teleportX}}
@@ -109,7 +107,7 @@
   {{#if isDifferentScene}}
     <div class="form-group warning-box">
       <p>
-        <i class="fa-solid fa-triangle-exclamation"></i>
+        <i class="gi-hazard-sign"></i>
         <strong>{{localize "EMPUZZLES.CrossSceneTeleportWarning"}}</strong>
       </p>
       <p>
@@ -128,7 +126,7 @@
     {{#if deleteSourceToken}}
       <div class="form-group danger-box">
         <p>
-          <i class="fa-solid fa-circle-exclamation"></i>
+          <i class="gi-hazard-sign"></i>
           <strong>{{localize "EMPUZZLES.DeleteSourceCombatWarning"}}</strong>
         </p>
         <p>
@@ -138,13 +136,24 @@
     {{/if}}
   {{/if}}
 
-  <div class="form-group tile-only-option">
+  <div class="form-group">
     <label>
       <input type="checkbox" name="createReturnTeleport" {{#if createReturnTeleport}}checked{{/if}} />
       {{localize "EMPUZZLES.CreateReturnTeleport"}}
     </label>
     <p class="hint">{{localize "EMPUZZLES.CreateReturnTeleportHint"}}</p>
   </div>
+
+  {{! Return Allow Choice - only shown for regions when return teleport is enabled }}
+  {{#if createReturnTeleport}}
+  <div class="form-group region-only-option">
+    <label>
+      <input type="checkbox" name="returnAllowChoice" {{#if returnAllowChoice}}checked{{/if}} />
+      {{localize "EMPUZZLES.ReturnAllowChoice"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.ReturnAllowChoiceHint"}}</p>
+  </div>
+  {{/if}}
 
   {{#if hasMonksTokenBar}}
   <div class="tile-only-option">
@@ -184,7 +193,7 @@
   {{else}}
     <div class="form-group tile-only-option" style="background: rgba(255, 152, 0, 0.1); border-left: 4px solid #ff9800; padding: 0.75rem; margin-bottom: 1rem;">
       <p style="margin: 0; color: #ff9800;">
-        <i class="fa-solid fa-circle-info"></i>
+        <i class="gi-info"></i>
         <strong>{{localize "EMPUZZLES.SavingThrowUnavailable"}}</strong>
       </p>
       <p style="margin: 0.5rem 0 0 0; font-size: 0.9em;">

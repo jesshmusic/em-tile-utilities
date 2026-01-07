@@ -27,7 +27,7 @@ describe('TeleportDialog', () => {
 
       expect(options.id).toBe('em-puzzles-teleport-config');
       expect(options.tag).toBe('form');
-      expect(options.window.icon).toBe('fa-solid fa-right-left');
+      expect(options.window.icon).toBe('gi-swap-bag');
       expect(options.window.title).toBe('EMPUZZLES.CreateTeleport');
       expect(options.position.width).toBe(650);
     });
@@ -50,12 +50,6 @@ describe('TeleportDialog', () => {
   });
 
   describe('_prepareContext', () => {
-    it('should include default sound from settings', async () => {
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBe('sounds/doors/industrial/unlock.ogg');
-    });
-
     it('should include default tile name', async () => {
       const context = await dialog._prepareContext({});
 
@@ -132,40 +126,6 @@ describe('TeleportDialog', () => {
       const options = (TeleportDialog as any).DEFAULT_OPTIONS;
 
       expect(typeof options.form.handler).toBe('function');
-    });
-  });
-
-  describe('settings integration', () => {
-    it('should read default sound from settings', async () => {
-      (global as any).game.settings.get = (module: string, key: string) => {
-        if (module === 'em-tile-utilities' && key === 'defaultSound') {
-          return 'custom/sound.ogg';
-        }
-        return null;
-      };
-
-      dialog = new TeleportDialog();
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBe('custom/sound.ogg');
-    });
-  });
-
-  describe('teleport sound configuration', () => {
-    it('should include sound field in context', async () => {
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBeDefined();
-      expect(typeof context.sound).toBe('string');
-    });
-
-    it('should use empty string if no sound is set', async () => {
-      (global as any).game.settings.get = () => '';
-      dialog = new TeleportDialog();
-
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBe('');
     });
   });
 
@@ -312,7 +272,6 @@ describe('TeleportDialog', () => {
             'input[name="tileName"]': { value: 'Updated Teleport' },
             'input[name="tileImage"]': { value: 'custom/portal.webp' },
             'input[name="hidden"]': { checked: true },
-            'input[name="sound"]': { value: 'custom/woosh.ogg' },
             'select[name="targetScene"]': { value: 'scene-123' },
             'input[name="hasSavingThrow"]': { checked: true },
             'select[name="savingThrow"]': { value: 'str' },
@@ -333,7 +292,6 @@ describe('TeleportDialog', () => {
       expect((dialog as any).tileName).toBe('Updated Teleport');
       expect((dialog as any).tileImage).toBe('custom/portal.webp');
       expect((dialog as any).hidden).toBe(true);
-      expect((dialog as any).sound).toBe('custom/woosh.ogg');
       expect((dialog as any).selectedSceneId).toBe('scene-123');
       expect((dialog as any).hasSavingThrow).toBe(true);
       expect((dialog as any).savingThrow).toBe('str');
@@ -493,7 +451,6 @@ describe('TeleportDialog', () => {
             'input[name="tileName"]': { value: 'Synced Teleport' },
             'input[name="tileImage"]': { value: 'synced.webp' },
             'input[name="hidden"]': { checked: false },
-            'input[name="sound"]': { value: 'synced.ogg' },
             'select[name="targetScene"]': { value: 'synced-scene' },
             'input[name="hasSavingThrow"]': { checked: false },
             'select[name="savingThrow"]': { value: 'dex' },
@@ -514,7 +471,6 @@ describe('TeleportDialog', () => {
       // Verify that form state was synced
       expect(context.tileName).toBe('Synced Teleport');
       expect(context.tileImage).toBe('synced.webp');
-      expect(context.sound).toBe('synced.ogg');
     });
   });
 

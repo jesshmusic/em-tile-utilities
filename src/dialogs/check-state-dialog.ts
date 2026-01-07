@@ -26,7 +26,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-diagram-project',
+      icon: 'gi-diagram',
       title: 'EMPUZZLES.CreateCheckStateTile',
       resizable: true
     },
@@ -145,13 +145,13 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       buttons: [
         {
           type: 'submit',
-          icon: 'fa-solid fa-check',
+          icon: 'gi-check-mark',
           label: 'EMPUZZLES.Create'
         },
         {
           type: 'button',
           action: 'close',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Cancel'
         }
       ]
@@ -539,7 +539,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       const handler = async (clickEvent: any) => {
         try {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
           await createCheckStateTile(canvas.scene, config, snapped.x, snapped.y);
 

@@ -10,7 +10,7 @@
     <div class="form-fields">
       <input type="text" id="startingImage" name="startingImage" value="{{defaultTrapImage}}" placeholder="path/to/floor.png" data-dtype="String" />
       <button type="button" class="file-picker" data-type="imagevideo" data-target="startingImage" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
+        <i class="gi-load"></i>
       </button>
     </div>
     <p class="hint">{{localize "EMPUZZLES.StartingImageHint"}}</p>
@@ -21,7 +21,7 @@
     <div class="form-fields">
       <input type="text" id="triggeredImage" name="triggeredImage" value="{{defaultTrapTriggeredImage}}" placeholder="path/to/broken-floor.png" data-dtype="String" />
       <button type="button" class="file-picker" data-type="imagevideo" data-target="triggeredImage" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
+        <i class="gi-load"></i>
       </button>
     </div>
     <p class="hint">{{localize "EMPUZZLES.TriggeredImageHint"}}</p>
@@ -32,7 +32,7 @@
     <div class="form-fields">
       <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
       <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
+        <i class="gi-load"></i>
       </button>
     </div>
     <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
@@ -90,7 +90,7 @@
           <div class="dmg-trap-item-details">
             <span class="dmg-trap-item-name">{{dmgTrap.itemName}}</span>
             <button type="button" class="dmg-trap-remove-button" data-action="removeDmgTrapItem" title="{{localize 'EMPUZZLES.RemoveDMGTrapItem'}}">
-              <i class="fas fa-times"></i> {{localize "EMPUZZLES.Remove"}}
+              <i class="gi-cancel"></i> {{localize "EMPUZZLES.Remove"}}
             </button>
           </div>
         </div>
@@ -107,7 +107,7 @@
       </div>
     {{else}}
       <div class="dmg-trap-item-drop-zone" data-dmg-trap-drop-zone>
-        <i class="fas fa-file-import"></i>
+        <i class="gi-load"></i>
         <p>{{localize "EMPUZZLES.DMGTrapDropZone"}}</p>
       </div>
     {{/if}}
@@ -174,7 +174,7 @@
     <div class="form-group">
       <label>{{localize "EMPUZZLES.TeleportDestination"}}</label>
       <button type="button" class="select-position-button" data-action="selectTeleportPosition">
-        <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+        <i class="gi-convergence-target"></i> {{localize "EMPUZZLES.SelectPosition"}}
       </button>
       <input type="hidden" name="teleportX" value="{{teleportX}}" />
       <input type="hidden" name="teleportY" value="{{teleportY}}" />

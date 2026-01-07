@@ -99,6 +99,29 @@ export function createScrollingTextRegionBehavior(config: {
 }
 
 /**
+ * Create an Adjust Elevation region behavior (FoundryVTT core)
+ * @param config - Behavior configuration
+ * @returns Adjust Elevation behavior object
+ */
+export function createAdjustElevationRegionBehavior(config: {
+  name?: string;
+  elevation: number;
+  mode?: 'set' | 'add'; // 'set' = absolute, 'add' = relative
+  events?: string[];
+}): any {
+  return {
+    type: 'adjustElevation',
+    name: config.name ?? 'Adjust Elevation',
+    system: {
+      elevation: config.elevation,
+      mode: config.mode ?? 'set'
+    },
+    disabled: false,
+    events: config.events ?? [RegionEvents.TOKEN_ENTER]
+  };
+}
+
+/**
  * Create an Enhanced Region Behaviors trap behavior
  * Requires the Enhanced Region Behaviors module (dnd5e only)
  * @see https://github.com/txm3278/Enhanced-Region-Behaviors
@@ -117,6 +140,8 @@ export function createEnhancedTrapRegionBehavior(config: {
   saveFailedMessage?: string;
   saveSuccessMessage?: string;
   events?: string[];
+  triggerBehaviorOnSave?: string[]; // Array of behavior UUIDs to trigger on save success
+  triggerBehaviorOnFail?: string[]; // Array of behavior UUIDs to trigger on save failure
 }): any {
   // Handle saveAbility as string or array
   let abilities: string[] = [];
@@ -145,8 +170,8 @@ export function createEnhancedTrapRegionBehavior(config: {
       damageType: config.damageType ?? 'piercing',
       saveFailedMessage: config.saveFailedMessage ?? '',
       saveSucceededMessage: config.saveSuccessMessage ?? '',
-      triggerBehaviorOnSave: [],
-      triggerBehaviorOnFail: []
+      triggerBehaviorOnSave: config.triggerBehaviorOnSave ?? [],
+      triggerBehaviorOnFail: config.triggerBehaviorOnFail ?? []
     },
     disabled: false
   };

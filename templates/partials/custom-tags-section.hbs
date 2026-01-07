@@ -2,7 +2,7 @@
   {{!-- Accordion version for trap dialog --}}
   <fieldset class='tagger accordion-section' data-section='tagger'>
     <legend class='accordion-header'>
-      <i class='fas fa-chevron-right accordion-icon'></i>
+      <i class='gi-expand accordion-icon'></i>
       {{localize 'EMPUZZLES.TaggerLegend'}}
     </legend>
     <div class='accordion-content' style='display: none;'>
@@ -11,7 +11,7 @@
         <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
         <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
         <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
-          <i class='fas fa-check'></i>
+          <i class='gi-check-mark'></i>
         </button>
       </div>
       <div class='tag-container' data-tags-container></div>
@@ -27,7 +27,7 @@
       <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
       <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
       <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
-        <i class='fas fa-check'></i>
+        <i class='gi-check-mark'></i>
       </button>
     </div>
     <div class='tag-container' data-tags-container></div>

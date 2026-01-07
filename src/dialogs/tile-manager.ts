@@ -5,6 +5,7 @@ import { showTrapDialog } from './trap-dialog';
 import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
+import { showElevationDialog } from './elevation-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 
@@ -27,7 +28,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     classes: ['tile-manager', 'em-puzzles'],
     window: {
       contentClasses: ['standard-form'],
-      icon: 'gi-card-pile',
+      icon: 'gi-card-pickup',
       title: 'EMPUZZLES.TileManager',
       resizable: true
     },
@@ -38,6 +39,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createReset: TileManagerDialog.#onCreateReset,
       createTrap: TileManagerDialog.#onCreateTrap,
       createTeleport: TileManagerDialog.#onCreateTeleport,
+      createElevation: TileManagerDialog.#onCreateElevation,
       createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
@@ -547,6 +549,21 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
+   * Handle create elevation region button click
+   */
+  static async #onCreateElevation(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showElevationDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle create check state tile button click
    */
   static async #onCreateCheckState(
@@ -834,7 +851,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         const handler = async (clickEvent: any) => {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
           // Create the tile at the clicked position
           const newTileData = {

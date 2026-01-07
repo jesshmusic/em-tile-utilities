@@ -21,3 +21,5 @@ export { createTrapRegion } from './trap-region-creator';
 export type { TrapRegionConfig } from './trap-region-creator';
 export { createTeleportRegion } from './teleport-region-creator';
 export type { TeleportRegionConfig } from './teleport-region-creator';
+export { createElevationRegion } from './elevation-region-creator';
+export type { ElevationRegionConfig } from './elevation-region-creator';

@@ -57,7 +57,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
         buttons: [
           {
             type: 'button',
-            icon: 'fa-solid fa-times',
+            icon: 'gi-cancel',
             label: 'EMPUZZLES.Close',
             action: 'close'
           }
@@ -118,7 +118,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
       buttons: [
         {
           type: 'button',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Close',
           action: 'close'
         }
@@ -172,7 +172,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
       content: content,
       buttons: {
         close: {
-          icon: '<i class="fas fa-times"></i>',
+          icon: '<i class="gi-cancel"></i>',
           label: 'Close'
         }
       },

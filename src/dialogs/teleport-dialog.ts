@@ -25,7 +25,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected tileName: string = '';
   protected tileImage: string = 'icons/magic/movement/portal-vortex-orange.webp';
   protected hidden: boolean = false;
-  protected sound: string = '';
   protected selectedSceneId: string = '';
   protected hasSavingThrow: boolean = false;
   protected savingThrow: string = 'dex';
@@ -38,6 +37,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   // Creation Type (Tile vs Region)
   protected creationType: CreationType = CreationType.TILE;
+
+  // Region-specific options
+  protected regionAllowChoice: boolean = false;
+  protected returnAllowChoice: boolean = false;
 
   /** Teleport destination coordinates and size */
   protected teleportX?: number;
@@ -60,7 +63,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-right-left',
+      icon: 'gi-swap-bag',
       title: 'EMPUZZLES.CreateTeleport',
       resizable: true
     },
@@ -108,9 +111,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const nextNumber = getNextTileNumber('Teleport');
       this.tileName = `Teleport ${nextNumber}`;
 
-      const defaultSound = game.settings.get('em-tile-utilities', 'defaultSound') as string;
-      this.sound = defaultSound;
-
       this.selectedSceneId = currentScene?.id || (scenes.length > 0 ? scenes[0].id : '');
     } else {
       // Sync form state before re-render to preserve user input
@@ -130,7 +130,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       tileName: this.tileName,
       tileImage: this.tileImage,
       hidden: this.hidden,
-      sound: this.sound,
       scenes: scenes,
       selectedSceneId: this.selectedSceneId,
       currentSceneId: currentScene?.id,
@@ -152,16 +151,18 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       hasMonksTokenBar: hasMonksTokenBar(),
       hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors(),
       creationType: this.creationType,
+      regionAllowChoice: this.regionAllowChoice,
+      returnAllowChoice: this.returnAllowChoice,
       buttons: [
         {
           type: 'submit',
-          icon: 'fa-solid fa-check',
+          icon: 'gi-check-mark',
           label: 'EMPUZZLES.Create'
         },
         {
           type: 'button',
           action: 'close',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Cancel'
         }
       ]
@@ -183,9 +184,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       'input[name="tileImage"]'
     ) as HTMLInputElement;
     if (tileImageInput) this.tileImage = tileImageInput.value;
-
-    const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
-    if (soundInput) this.sound = soundInput.value;
 
     const savingThrowInput = this.element.querySelector(
       'select[name="savingThrow"]'
@@ -241,6 +239,17 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       '[name="creationType"]:checked'
     ) as HTMLInputElement;
     if (creationTypeRadio) this.creationType = creationTypeRadio.value as CreationType;
+
+    // Region-specific options
+    const regionAllowChoiceCheckbox = this.element.querySelector(
+      'input[name="regionAllowChoice"]'
+    ) as HTMLInputElement;
+    if (regionAllowChoiceCheckbox) this.regionAllowChoice = regionAllowChoiceCheckbox.checked;
+
+    const returnAllowChoiceCheckbox = this.element.querySelector(
+      'input[name="returnAllowChoice"]'
+    ) as HTMLInputElement;
+    if (returnAllowChoiceCheckbox) this.returnAllowChoice = returnAllowChoiceCheckbox.checked;
   }
 
   /* -------------------------------------------- */
@@ -277,6 +286,16 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
+    // Set up createReturnTeleport checkbox to re-render when toggled
+    const createReturnTeleportCheckbox = this.element.querySelector(
+      'input[name="createReturnTeleport"]'
+    ) as HTMLInputElement;
+    if (createReturnTeleportCheckbox) {
+      createReturnTeleportCheckbox.addEventListener('change', () => {
+        this.render();
+      });
+    }
+
     // Set up tag input functionality
     if (this.element) {
       this.tagInputManager = new TagInputManager(this.element);
@@ -303,6 +322,16 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           }
         });
 
+        // Switch canvas layer based on creation type
+        if (value === CreationType.REGION) {
+          (canvas as any).regions?.activate();
+        } else {
+          (canvas as any).tiles?.activate();
+        }
+
+        // Bring dialog back to front after layer switch
+        this.bringToFront();
+
         // Show/hide tile-only options based on creation type
         this.#updateTileOnlyOptions();
       });
@@ -313,16 +342,23 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Show/hide tile-only options based on creation type
+   * Show/hide tile-only and region-only options based on creation type
    */
   #updateTileOnlyOptions(): void {
     const tileOnlyOptions = this.element.querySelectorAll(
       '.tile-only-option'
     ) as NodeListOf<HTMLElement>;
+    const regionOnlyOptions = this.element.querySelectorAll(
+      '.region-only-option'
+    ) as NodeListOf<HTMLElement>;
     const isRegion = this.creationType === CreationType.REGION;
 
     tileOnlyOptions.forEach(option => {
       option.style.display = isRegion ? 'none' : '';
+    });
+
+    regionOnlyOptions.forEach(option => {
+      option.style.display = isRegion ? '' : 'none';
     });
   }
 
@@ -431,7 +467,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Use drag-to-place for destination selection
     this.destDragPreviewManager = await startDragPlacePreview({
       imagePath: imagePath,
-      snapToGrid: true,
+      snapToGrid: false, // Free placement for teleports
       alpha: 0.5,
       onPlace: async (x: number, y: number, width: number, height: number) => {
         this.teleportX = x;
@@ -544,6 +580,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
 
+    const isRegion = this.creationType === CreationType.REGION;
+
     // Build teleport config
     const config: TeleportTileConfig = {
       name: data.tileName,
@@ -551,6 +589,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       hidden: data.hidden || false,
       teleportX: this.teleportX,
       teleportY: this.teleportY,
+      teleportWidth: this.teleportWidth,
+      teleportHeight: this.teleportHeight,
       teleportSceneId: this.teleportSceneId,
       pauseGameOnTrigger: data.pauseGameOnTrigger || false,
       deleteSourceToken: data.deleteSourceToken || false,
@@ -559,21 +599,30 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       savingThrow: data.savingThrow || 'dex',
       dc: parseInt(data.dc) || 15,
       flavorText: data.flavorText || '',
-      customTags: data.customTags || '',
-      sound: data.sound || ''
+      customTags: data.customTags || ''
     };
 
     // Minimize dialog so user can see canvas
     this.minimize();
 
-    ui.notifications.info(
-      'Drag on the canvas to place and size the teleport tile. Press ESC to cancel.'
-    );
+    // Switch to appropriate canvas layer based on creation type
+    if (isRegion) {
+      (canvas as any).regions?.activate();
+      ui.notifications.info(
+        'Drag on the canvas to place and size the teleport region. Press ESC to cancel.'
+      );
+    } else {
+      (canvas as any).tiles?.activate();
+      ui.notifications.info(
+        'Drag on the canvas to place and size the teleport tile. Press ESC to cancel.'
+      );
+    }
 
     // Start drag-to-place preview with ghost image
     this.dragPreviewManager = await startDragPlacePreview({
       imagePath: config.tileImage,
-      snapToGrid: true,
+      snapToGrid: false, // Free placement for teleports
+      layer: isRegion ? 'regions' : 'tiles',
       alpha: 0.5,
       onPlace: async (x: number, y: number, width: number, height: number) => {
         try {
@@ -581,7 +630,12 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           if (this.creationType === CreationType.REGION) {
             await createTeleportRegion(
               scene,
-              { ...config, behaviorMode: RegionBehaviorMode.NATIVE },
+              {
+                ...config,
+                behaviorMode: RegionBehaviorMode.NATIVE,
+                allowChoice: this.regionAllowChoice,
+                returnAllowChoice: this.returnAllowChoice
+              },
               x,
               y,
               width,

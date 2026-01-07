@@ -190,6 +190,8 @@ export interface TeleportTileConfig {
   hidden: boolean;
   teleportX: number;
   teleportY: number;
+  teleportWidth?: number; // Optional destination width
+  teleportHeight?: number; // Optional destination height
   teleportSceneId: string;
   deleteSourceToken: boolean;
   createReturnTeleport: boolean;

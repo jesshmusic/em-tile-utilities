@@ -103,7 +103,7 @@ export class TagInputManager {
     tagLabel.textContent = tag;
 
     const removeButton = document.createElement('i');
-    removeButton.className = 'fas fa-times';
+    removeButton.className = 'gi-cancel';
     removeButton.onclick = () => {
       tagElement.remove();
       this.updateHiddenInput();

@@ -276,7 +276,7 @@ describe('Main Module', () => {
       expect(tools['tile-manager']).toBeDefined();
       expect(tools['tile-manager'].name).toBe('tile-manager');
       expect(tools['tile-manager'].title).toBe('EMPUZZLES.TileManager');
-      expect(tools['tile-manager'].icon).toBe('fa-solid fa-list');
+      expect(tools['tile-manager'].icon).toBe('gi-checklist');
     });
 
     it('should add tile manager tool as button', () => {
