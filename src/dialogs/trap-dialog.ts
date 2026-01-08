@@ -830,16 +830,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           }
         });
 
-        // Switch canvas layer based on creation type
-        if (value === CreationType.REGION) {
-          (canvas as any).regions?.activate();
-        } else {
-          (canvas as any).tiles?.activate();
-        }
-
-        // Bring dialog back to front after layer switch
-        this.bringToFront();
-
         // Show/hide tile-only options based on creation type
         this.#updateTileOnlyOptions();
 

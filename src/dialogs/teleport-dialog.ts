@@ -322,16 +322,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           }
         });
 
-        // Switch canvas layer based on creation type
-        if (value === CreationType.REGION) {
-          (canvas as any).regions?.activate();
-        } else {
-          (canvas as any).tiles?.activate();
-        }
-
-        // Bring dialog back to front after layer switch
-        this.bringToFront();
-
         // Show/hide tile-only options based on creation type
         this.#updateTileOnlyOptions();
       });
@@ -451,6 +441,13 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
+    // Switch to the appropriate canvas layer based on creation type
+    if (this.creationType === CreationType.REGION) {
+      (canvas as any).regions?.activate();
+    } else {
+      (canvas as any).tiles?.activate();
+    }
+
     // Minimize this dialog so user can see the canvas
     this.minimize();
 
@@ -464,10 +461,14 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLInputElement;
     const imagePath = tileImageInput?.value || 'icons/svg/target.svg';
 
+    // Determine layer based on creation type
+    const isRegion = this.creationType === CreationType.REGION;
+
     // Use drag-to-place for destination selection
     this.destDragPreviewManager = await startDragPlacePreview({
       imagePath: imagePath,
       snapToGrid: false, // Free placement for teleports
+      layer: isRegion ? 'regions' : 'tiles',
       alpha: 0.5,
       onPlace: async (x: number, y: number, width: number, height: number) => {
         this.teleportX = x;
