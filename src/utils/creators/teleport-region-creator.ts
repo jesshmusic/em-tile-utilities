@@ -16,6 +16,20 @@ import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 
 /**
+ * Escape a string for safe embedding in JavaScript code
+ * Handles quotes, backslashes, and newlines
+ */
+function escapeJsString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\') // Escape backslashes first
+    .replace(/'/g, "\\'") // Escape single quotes
+    .replace(/"/g, '\\"') // Escape double quotes
+    .replace(/\n/g, '\\n') // Escape newlines
+    .replace(/\r/g, '\\r') // Escape carriage returns
+    .replace(/\t/g, '\\t'); // Escape tabs
+}
+
+/**
  * Extended teleport config with region-specific options
  */
 export interface TeleportRegionConfig extends TeleportTileConfig {
@@ -40,7 +54,9 @@ function generateTeleportMacroScript(config: TeleportTileConfig, sourceSceneId: 
   // Play sound if provided
   if (config.sound && config.sound.trim() !== '') {
     parts.push(`// Play teleport sound`);
-    parts.push(`await AudioHelper.play({ src: '${config.sound}', volume: 1, loop: false });`);
+    parts.push(
+      `await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 1, loop: false });`
+    );
     parts.push(``);
   }
 
@@ -53,13 +69,14 @@ function generateTeleportMacroScript(config: TeleportTileConfig, sourceSceneId: 
 
   // Handle saving throw if enabled
   if (config.hasSavingThrow && hasMonksTokenBar()) {
+    const flavorText = escapeJsString(config.flavorText || 'Save to resist teleportation!');
     parts.push(`// Request saving throw via Monk's Token Bar`);
     parts.push(`const mtb = game.modules.get('monks-tokenbar')?.api;`);
     parts.push(`if (mtb) {`);
     parts.push(`  const result = await mtb.requestRoll([token.document], {`);
-    parts.push(`    request: '${config.savingThrow}',`);
+    parts.push(`    request: '${escapeJsString(config.savingThrow)}',`);
     parts.push(`    dc: ${config.dc},`);
-    parts.push(`    flavor: '${config.flavorText || 'Save to resist teleportation!'}'`);
+    parts.push(`    flavor: '${flavorText}'`);
     parts.push(`  });`);
     parts.push(`  const entry = result.entries?.[0];`);
     parts.push(`  if (entry?.passed) {`);
@@ -222,7 +239,7 @@ export async function createTeleportRegion(
     // Uses Execute Script with AudioHelper.play() for reliable sound playback
     if (config.sound && config.sound.trim() !== '') {
       const soundScript = `// Play teleport sound
-await AudioHelper.play({ src: '${config.sound}', volume: 0.8, loop: false });`;
+await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
       sourceBehaviors.push(
         createExecuteMacroRegionBehavior({
           name: `${config.name} - Sound`,
@@ -265,7 +282,7 @@ await AudioHelper.play({ src: '${config.sound}', volume: 0.8, loop: false });`;
       // Uses Execute Script with AudioHelper.play() for reliable sound playback
       if (config.sound && config.sound.trim() !== '') {
         const returnSoundScript = `// Play return teleport sound
-await AudioHelper.play({ src: '${config.sound}', volume: 0.8, loop: false });`;
+await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
         destBehaviors.push(
           createExecuteMacroRegionBehavior({
             name: `Return: ${config.name} - Sound`,

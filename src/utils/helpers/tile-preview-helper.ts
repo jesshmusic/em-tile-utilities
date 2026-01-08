@@ -51,9 +51,10 @@ export class TilePreviewManager {
     const height = this.config.height ?? gridSize;
     const alpha = this.config.alpha ?? 0.5;
 
+    let texture: any = null;
     try {
       // Load the texture using PIXI.Assets
-      const texture = await (PIXI as any).Assets.load(this.config.imagePath);
+      texture = await (PIXI as any).Assets.load(this.config.imagePath);
 
       // Create sprite from texture
       this.sprite = new (PIXI as any).Sprite(texture);
@@ -72,6 +73,16 @@ export class TilePreviewManager {
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
       ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
+
+      // Ensure texture is unloaded if it was partially loaded
+      if (texture && this.config.imagePath) {
+        try {
+          (PIXI as any).Assets.unload(this.config.imagePath);
+        } catch {
+          // Ignore unload errors - texture may not have been cached
+        }
+      }
+
       this.cleanup();
       this.config.onCancel?.();
     }
@@ -314,6 +325,17 @@ export class DragPlacePreviewManager {
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
       ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
+
+      // Ensure texture is unloaded if it was partially loaded
+      if (this.texture && this.config.imagePath) {
+        try {
+          (PIXI as any).Assets.unload(this.config.imagePath);
+        } catch {
+          // Ignore unload errors - texture may not have been cached
+        }
+        this.texture = null;
+      }
+
       this.cleanup();
       this.config.onCancel?.();
     }

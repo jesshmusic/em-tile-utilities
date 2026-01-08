@@ -508,7 +508,8 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners) for consistent tile placement
+      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Store the teleport position
       this.teleportX = snapped.x;

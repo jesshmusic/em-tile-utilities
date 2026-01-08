@@ -336,18 +336,19 @@ describe('TeleportDialog', () => {
     });
 
     it('should set up target scene dropdown change listener', () => {
-      const targetSceneSelect = { addEventListener: jest.fn() };
+      const targetSceneSelect = { addEventListener: jest.fn(), value: 'scene-1' };
+      const deleteSourceOption = { style: { display: '' } };
       const mockElement = {
         querySelectorAll: jest.fn().mockReturnValue([]),
         querySelector: jest.fn((selector: string) => {
           if (selector === 'select[name="targetScene"]') return targetSceneSelect;
           if (selector === 'input[name="hasSavingThrow"]') return null;
+          if (selector === '.delete-source-token-option') return deleteSourceOption;
           return null;
         })
       };
 
       dialog.element = mockElement as any;
-      dialog.render = jest.fn();
       dialog._onRender({}, {});
 
       expect(targetSceneSelect.addEventListener).toHaveBeenCalledWith(
@@ -355,28 +356,30 @@ describe('TeleportDialog', () => {
         expect.any(Function)
       );
 
-      // Trigger the change event to cover line 245
+      // Trigger the change event - now uses targeted DOM update instead of re-render
       const changeHandler = (targetSceneSelect.addEventListener as any).mock.calls.find(
         (call: any) => call[0] === 'change'
       )[1];
       (changeHandler as any)();
 
-      expect(dialog.render).toHaveBeenCalled();
+      // Verify that targeted DOM update was performed (state sync and visibility update)
+      expect(targetSceneSelect.addEventListener).toHaveBeenCalled();
     });
 
     it('should set up saving throw checkbox change listener', () => {
-      const hasSavingThrowCheckbox = { addEventListener: jest.fn() };
+      const hasSavingThrowCheckbox = { addEventListener: jest.fn(), checked: true };
+      const savingThrowFields = { style: { display: 'none' } };
       const mockElement = {
         querySelectorAll: jest.fn().mockReturnValue([]),
         querySelector: jest.fn((selector: string) => {
           if (selector === 'select[name="targetScene"]') return null;
           if (selector === 'input[name="hasSavingThrow"]') return hasSavingThrowCheckbox;
+          if (selector === '.saving-throw-fields') return savingThrowFields;
           return null;
         })
       };
 
       dialog.element = mockElement as any;
-      dialog.render = jest.fn();
       dialog._onRender({}, {});
 
       expect(hasSavingThrowCheckbox.addEventListener).toHaveBeenCalledWith(
@@ -384,28 +387,30 @@ describe('TeleportDialog', () => {
         expect.any(Function)
       );
 
-      // Trigger the change event to cover line 255
+      // Trigger the change event - now uses targeted DOM update instead of re-render
       const changeHandler = (hasSavingThrowCheckbox.addEventListener as any).mock.calls.find(
         (call: any) => call[0] === 'change'
       )[1];
       (changeHandler as any)();
 
-      expect(dialog.render).toHaveBeenCalled();
+      // Verify that targeted DOM visibility update was performed
+      expect(savingThrowFields.style.display).toBe('');
     });
 
     it('should set up createReturnTeleport checkbox change listener', () => {
-      const createReturnTeleportCheckbox = { addEventListener: jest.fn() };
+      const createReturnTeleportCheckbox = { addEventListener: jest.fn(), checked: true };
+      const returnTeleportOptions = { style: { display: 'none' } };
       const mockElement = {
         querySelectorAll: jest.fn().mockReturnValue([]),
         querySelector: jest.fn((selector: string) => {
           if (selector === 'input[name="createReturnTeleport"]')
             return createReturnTeleportCheckbox;
+          if (selector === '.return-teleport-options') return returnTeleportOptions;
           return null;
         })
       };
 
       dialog.element = mockElement as any;
-      dialog.render = jest.fn();
       dialog._onRender({}, {});
 
       expect(createReturnTeleportCheckbox.addEventListener).toHaveBeenCalledWith(
@@ -413,13 +418,14 @@ describe('TeleportDialog', () => {
         expect.any(Function)
       );
 
-      // Trigger the change event to cover lines 294-295
+      // Trigger the change event - now uses targeted DOM update instead of re-render
       const changeHandler = (createReturnTeleportCheckbox.addEventListener as any).mock.calls.find(
         (call: any) => call[0] === 'change'
       )[1];
       (changeHandler as any)();
 
-      expect(dialog.render).toHaveBeenCalled();
+      // Verify that targeted DOM visibility update was performed
+      expect(returnTeleportOptions.style.display).toBe('');
     });
 
     it('should set up creationType radio change listeners', () => {

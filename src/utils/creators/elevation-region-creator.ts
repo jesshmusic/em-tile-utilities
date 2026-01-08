@@ -9,6 +9,7 @@ import {
   showTaggerWithWarning
 } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
+import { hasEnhancedRegionBehaviors } from '../helpers/module-checks';
 
 /**
  * Configuration for elevation regions
@@ -37,6 +38,20 @@ export async function createElevationRegion(
   width?: number,
   height?: number
 ): Promise<void> {
+  // Verify Enhanced Region Behaviors is available
+  if (!hasEnhancedRegionBehaviors()) {
+    ui.notifications.error(
+      "Dorman Lakely's Tile Utilities | Enhanced Region Behaviors module is required for elevation regions. " +
+        'Please install and enable it from the FoundryVTT module browser. ' +
+        'Without this module, elevation regions cannot modify token elevation.'
+    );
+    console.error(
+      "Dorman Lakely's Tile Utilities | Cannot create elevation region: Enhanced Region Behaviors module is not installed or not active. " +
+        'Install from: https://foundryvtt.com/packages/enhanced-region-behaviors'
+    );
+    return;
+  }
+
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
   const regionWidth = width ?? gridSize;

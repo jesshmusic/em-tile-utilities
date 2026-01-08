@@ -67,7 +67,13 @@ export async function createTrapRegion(
   // Verify Enhanced Region Behaviors is available
   if (!hasEnhancedRegionBehaviors()) {
     ui.notifications.error(
-      'Enhanced Region Behaviors module is required for trap regions. Please install and enable it.'
+      "Dorman Lakely's Tile Utilities | Enhanced Region Behaviors module is required for trap regions. " +
+        'Please install and enable it from the FoundryVTT module browser. ' +
+        'Without this module, trap regions cannot apply damage or request saving throws.'
+    );
+    console.error(
+      "Dorman Lakely's Tile Utilities | Cannot create trap region: Enhanced Region Behaviors module is not installed or not active. " +
+        'Install from: https://foundryvtt.com/packages/enhanced-region-behaviors'
     );
     return;
   }

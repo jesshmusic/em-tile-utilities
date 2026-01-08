@@ -93,6 +93,41 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /* -------------------------------------------- */
 
+  /**
+   * Wait for canvas to be ready after scene change
+   * Uses hooks for reliable detection with timeout fallback
+   */
+  static #waitForCanvasReady(maxWaitMs: number = 10000): Promise<void> {
+    return new Promise(resolve => {
+      // Check if already ready
+      if ((canvas as any).ready) {
+        resolve();
+        return;
+      }
+
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          Hooks.off('canvasReady', hookId);
+          // Resolve anyway after timeout - canvas might be usable
+          console.warn("Dorman Lakely's Tile Utilities | Canvas ready timeout - proceeding anyway");
+          resolve();
+        }
+      }, maxWaitMs);
+
+      const hookId = Hooks.once('canvasReady', () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+  }
+
+  /* -------------------------------------------- */
+
   /** @inheritDoc */
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
@@ -266,33 +301,36 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (button as HTMLElement).onclick = this._onFilePicker.bind(this);
     });
 
-    // Set up target scene dropdown to re-render when changed (for delete source token option)
+    // Set up target scene dropdown - use targeted DOM update instead of full re-render
     const targetSceneSelect = this.element.querySelector(
       'select[name="targetScene"]'
     ) as HTMLSelectElement;
     if (targetSceneSelect) {
       targetSceneSelect.addEventListener('change', () => {
-        this.render();
+        this._syncFormToState();
+        this.#updateDeleteSourceTokenVisibility();
       });
     }
 
-    // Set up saving throw checkbox to re-render when toggled
+    // Set up saving throw checkbox - use targeted DOM update instead of full re-render
     const hasSavingThrowCheckbox = this.element.querySelector(
       'input[name="hasSavingThrow"]'
     ) as HTMLInputElement;
     if (hasSavingThrowCheckbox) {
       hasSavingThrowCheckbox.addEventListener('change', () => {
-        this.render();
+        this.hasSavingThrow = hasSavingThrowCheckbox.checked;
+        this.#updateSavingThrowFieldsVisibility();
       });
     }
 
-    // Set up createReturnTeleport checkbox to re-render when toggled
+    // Set up createReturnTeleport checkbox - use targeted DOM update instead of full re-render
     const createReturnTeleportCheckbox = this.element.querySelector(
       'input[name="createReturnTeleport"]'
     ) as HTMLInputElement;
     if (createReturnTeleportCheckbox) {
       createReturnTeleportCheckbox.addEventListener('change', () => {
-        this.render();
+        this.createReturnTeleport = createReturnTeleportCheckbox.checked;
+        this.#updateReturnTeleportOptionsVisibility();
       });
     }
 
@@ -327,8 +365,11 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     });
 
-    // Initialize tile-only options visibility
+    // Initialize all visibility states
     this.#updateTileOnlyOptions();
+    this.#updateSavingThrowFieldsVisibility();
+    this.#updateReturnTeleportOptionsVisibility();
+    this.#updateDeleteSourceTokenVisibility();
   }
 
   /**
@@ -350,6 +391,40 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     regionOnlyOptions.forEach(option => {
       option.style.display = isRegion ? '' : 'none';
     });
+  }
+
+  /**
+   * Show/hide saving throw fields based on checkbox state
+   */
+  #updateSavingThrowFieldsVisibility(): void {
+    const savingThrowFields = this.element.querySelector('.saving-throw-fields') as HTMLElement;
+    if (savingThrowFields) {
+      savingThrowFields.style.display = this.hasSavingThrow ? '' : 'none';
+    }
+  }
+
+  /**
+   * Show/hide return teleport options based on checkbox state
+   */
+  #updateReturnTeleportOptionsVisibility(): void {
+    const returnOptions = this.element.querySelector('.return-teleport-options') as HTMLElement;
+    if (returnOptions) {
+      returnOptions.style.display = this.createReturnTeleport ? '' : 'none';
+    }
+  }
+
+  /**
+   * Show/hide delete source token option based on scene selection
+   */
+  #updateDeleteSourceTokenVisibility(): void {
+    const currentScene = canvas.scene;
+    const isDifferentScene = this.selectedSceneId !== currentScene?.id;
+    const deleteSourceOption = this.element.querySelector(
+      '.delete-source-token-option'
+    ) as HTMLElement;
+    if (deleteSourceOption) {
+      deleteSourceOption.style.display = isDifferentScene ? '' : 'none';
+    }
   }
 
   /* -------------------------------------------- */
@@ -437,8 +512,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (canvas.scene?.id !== selectedSceneId) {
       ui.notifications.info(`Switching to scene "${targetScene.name}" to select destination...`);
       await targetScene.view();
-      // Wait a moment for the scene to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for canvas to be ready after scene change
+      await TeleportDialog.#waitForCanvasReady();
     }
 
     // Switch to the appropriate canvas layer based on creation type
@@ -489,8 +564,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           const originalScene = (game as any).scenes.get(originalSceneId);
           if (originalScene) {
             await originalScene.view();
-            // Wait for scene to load
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Wait for canvas to be ready
+            await TeleportDialog.#waitForCanvasReady();
           }
         }
 
@@ -506,7 +581,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           const originalScene = (game as any).scenes.get(originalSceneId);
           if (originalScene) {
             await originalScene.view();
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await TeleportDialog.#waitForCanvasReady();
           }
         }
 
