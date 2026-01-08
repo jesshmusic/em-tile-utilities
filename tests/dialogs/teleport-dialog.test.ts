@@ -392,6 +392,126 @@ describe('TeleportDialog', () => {
 
       expect(dialog.render).toHaveBeenCalled();
     });
+
+    it('should set up createReturnTeleport checkbox change listener', () => {
+      const createReturnTeleportCheckbox = { addEventListener: jest.fn() };
+      const mockElement = {
+        querySelectorAll: jest.fn().mockReturnValue([]),
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="createReturnTeleport"]')
+            return createReturnTeleportCheckbox;
+          return null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      dialog.render = jest.fn();
+      dialog._onRender({}, {});
+
+      expect(createReturnTeleportCheckbox.addEventListener).toHaveBeenCalledWith(
+        'change',
+        expect.any(Function)
+      );
+
+      // Trigger the change event to cover lines 294-295
+      const changeHandler = (createReturnTeleportCheckbox.addEventListener as any).mock.calls.find(
+        (call: any) => call[0] === 'change'
+      )[1];
+      (changeHandler as any)();
+
+      expect(dialog.render).toHaveBeenCalled();
+    });
+
+    it('should set up creationType radio change listeners', () => {
+      const radio1 = { addEventListener: jest.fn(), checked: true };
+      const radio2 = { addEventListener: jest.fn(), checked: false };
+      const toggleOption1 = {
+        querySelector: jest.fn().mockReturnValue({ checked: true }),
+        classList: { add: jest.fn(), remove: jest.fn() }
+      };
+      const toggleOption2 = {
+        querySelector: jest.fn().mockReturnValue({ checked: false }),
+        classList: { add: jest.fn(), remove: jest.fn() }
+      };
+      const tileOnlyOption = { style: { display: '' } };
+      const regionOnlyOption = { style: { display: 'none' } };
+
+      const mockElement = {
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === 'input[name="creationType"]') return [radio1, radio2];
+          if (selector === '.creation-type-group .toggle-option')
+            return [toggleOption1, toggleOption2];
+          if (selector === '.tile-only-option') return [tileOnlyOption];
+          if (selector === '.region-only-option') return [regionOnlyOption];
+          return [];
+        }),
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      expect(radio1.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(radio2.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+      // Trigger the change event to cover lines 311-326
+      const changeHandler = (radio1.addEventListener as any).mock.calls.find(
+        (call: any) => call[0] === 'change'
+      )[1];
+
+      // Simulate selecting 'region' type
+      const mockChangeEvent = { target: { value: 'region' } };
+      (changeHandler as any)(mockChangeEvent);
+
+      expect((dialog as any).creationType).toBe('region');
+      expect(toggleOption1.classList.add).toHaveBeenCalled();
+    });
+
+    it('should initialize tile-only options visibility', () => {
+      const tileOnlyOption = { style: { display: '' } };
+      const regionOnlyOption = { style: { display: 'none' } };
+
+      const mockElement = {
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === '.tile-only-option') return [tileOnlyOption];
+          if (selector === '.region-only-option') return [regionOnlyOption];
+          return [];
+        }),
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).creationType = 'tile';
+
+      dialog._onRender({}, {});
+
+      // Tile-only options should be visible, region-only options hidden
+      expect(tileOnlyOption.style.display).toBe('');
+      expect(regionOnlyOption.style.display).toBe('none');
+    });
+
+    it('should hide tile-only options when creationType is region', () => {
+      const tileOnlyOption = { style: { display: '' } };
+      const regionOnlyOption = { style: { display: 'none' } };
+
+      const mockElement = {
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === '.tile-only-option') return [tileOnlyOption];
+          if (selector === '.region-only-option') return [regionOnlyOption];
+          return [];
+        }),
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).creationType = 'region';
+
+      dialog._onRender({}, {});
+
+      // Tile-only options should be hidden, region-only options visible
+      expect(tileOnlyOption.style.display).toBe('none');
+      expect(regionOnlyOption.style.display).toBe('');
+    });
   });
 
   describe('_onClose', () => {
@@ -440,6 +560,38 @@ describe('TeleportDialog', () => {
       dialog.close = jest.fn();
 
       expect(() => (dialog as any)._onClose()).not.toThrow();
+    });
+
+    it('should clean up destDragPreviewManager if it exists', () => {
+      const mockDestPreviewManager = {
+        stop: jest.fn()
+      };
+
+      // Set up destination drag preview manager
+      (dialog as any).destDragPreviewManager = mockDestPreviewManager;
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      // Verify cleanup
+      expect(mockDestPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).destDragPreviewManager).toBeUndefined();
+    });
+
+    it('should clean up both drag preview managers if they exist', () => {
+      const mockDragPreviewManager = { stop: jest.fn() };
+      const mockDestPreviewManager = { stop: jest.fn() };
+
+      (dialog as any).dragPreviewManager = mockDragPreviewManager;
+      (dialog as any).destDragPreviewManager = mockDestPreviewManager;
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      expect(mockDragPreviewManager.stop).toHaveBeenCalled();
+      expect(mockDestPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).dragPreviewManager).toBeUndefined();
+      expect((dialog as any).destDragPreviewManager).toBeUndefined();
     });
   });
 

@@ -2136,6 +2136,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       wallActions: wallActions
     };
 
+    // IMPORTANT: Extract region config BEFORE minimizing the dialog!
+    // After minimize(), the form element may be in an invalid state and
+    // querySelector calls may return null/default values.
+    const regionConfig =
+      this.creationType === CreationType.REGION ? this._buildRegionTrapConfig(form) : null;
+
     // Minimize the dialog so user can see the canvas
     this.minimize();
 
@@ -2153,9 +2159,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       onPlace: async (x: number, y: number, width: number, height: number) => {
         if (TrapDialog._isValidTileSize(width, height)) {
           // Branch based on creation type (Tile vs Region)
-          if (this.creationType === CreationType.REGION) {
-            // Build region-specific config from form
-            const regionConfig = this._buildRegionTrapConfig(form);
+          if (this.creationType === CreationType.REGION && regionConfig) {
+            // Use the region config that was extracted BEFORE minimizing
             await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
           } else {
             await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
@@ -2330,11 +2335,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       trapConfig = imageTrapConfig;
     }
 
+    // IMPORTANT: Extract region config BEFORE minimizing the dialog!
+    // After minimize(), the form element may be in an invalid state and
+    // querySelector calls may return null/default values.
+    const isRegion = this.creationType === CreationType.REGION;
+    const regionConfig = isRegion ? this._buildRegionTrapConfig(form) : null;
+
     // Minimize the dialog so user can see the canvas
     this.minimize();
 
     // Switch to appropriate canvas layer based on creation type
-    const isRegion = this.creationType === CreationType.REGION;
     if (isRegion) {
       (canvas as any).regions?.activate();
       ui.notifications.info(
@@ -2353,9 +2363,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       onPlace: async (x: number, y: number, width: number, height: number) => {
         if (TrapDialog._isValidTileSize(width, height)) {
           // Branch based on creation type (Tile vs Region)
-          if (this.creationType === CreationType.REGION) {
-            // Build region-specific config from form
-            const regionConfig = this._buildRegionTrapConfig(form);
+          if (isRegion && regionConfig) {
+            // Use the region config that was extracted BEFORE minimizing
             await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
           } else {
             await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);

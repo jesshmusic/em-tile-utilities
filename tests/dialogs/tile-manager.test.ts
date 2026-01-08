@@ -774,4 +774,387 @@ describe('TileManagerDialog', () => {
       expect(true).toBe(true);
     });
   });
+
+  describe('_groupTilesByTag', () => {
+    it('should group tiles by EM tags (each unique tag gets own group)', () => {
+      const tiles = [
+        { id: '1', name: 'Tile 1', hasTags: true, tags: ['EM_Switch_1'] },
+        { id: '2', name: 'Tile 2', hasTags: true, tags: ['EM_Switch_1'] }, // Same tag
+        { id: '3', name: 'Tile 3', hasTags: true, tags: ['EM_Trap_1'] }
+      ];
+
+      const result = dialog._groupTilesByTag(tiles);
+
+      expect(result).toHaveLength(2); // EM_Switch_1 and EM_Trap_1 groups
+      expect(result[0].baseTag).toBe('EM_Switch_1');
+      expect(result[0].tiles).toHaveLength(2);
+      expect(result[1].baseTag).toBe('EM_Trap_1');
+      expect(result[1].tiles).toHaveLength(1);
+    });
+
+    it('should put non-EM tagged tiles in Misc group', () => {
+      const tiles = [
+        { id: '1', name: 'Tile 1', hasTags: true, tags: ['custom-tag'] },
+        { id: '2', name: 'Tile 2', hasTags: false, tags: [] }
+      ];
+
+      const result = dialog._groupTilesByTag(tiles);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].baseTag).toBe('Misc');
+      expect(result[0].tiles).toHaveLength(2);
+    });
+
+    it('should sort EM tag groups alphabetically', () => {
+      const tiles = [
+        { id: '1', name: 'Tile 1', hasTags: true, tags: ['EM_Zebra'] },
+        { id: '2', name: 'Tile 2', hasTags: true, tags: ['EM_Alpha'] },
+        { id: '3', name: 'Tile 3', hasTags: true, tags: ['EM_Beta'] }
+      ];
+
+      const result = dialog._groupTilesByTag(tiles);
+
+      expect(result[0].baseTag).toBe('EM_Alpha');
+      expect(result[1].baseTag).toBe('EM_Beta');
+      expect(result[2].baseTag).toBe('EM_Zebra');
+    });
+
+    it('should track expanded groups', () => {
+      dialog.expandedGroups.add('EM_Test');
+      const tiles = [{ id: '1', name: 'Tile 1', hasTags: true, tags: ['EM_Test'] }];
+
+      const result = dialog._groupTilesByTag(tiles);
+
+      expect(result[0].expanded).toBe(true);
+    });
+
+    it('should handle empty tiles array', () => {
+      const result = dialog._groupTilesByTag([]);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle tiles with multiple tags using first EM tag', () => {
+      const tiles = [
+        { id: '1', name: 'Tile 1', hasTags: true, tags: ['custom', 'EM_Group1', 'EM_Group2'] }
+      ];
+
+      const result = dialog._groupTilesByTag(tiles);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].baseTag).toBe('EM_Group1');
+    });
+  });
+
+  describe('create action handlers', () => {
+    beforeEach(() => {
+      (dialog as any).minimize = jest.fn();
+    });
+
+    describe('#onCreateSwitch', () => {
+      it('should minimize and show switch dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createSwitch;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onCreateLight', () => {
+      it('should minimize and show light dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createLight;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onCreateReset', () => {
+      it('should minimize and show reset dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createReset;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onCreateTrap', () => {
+      it('should minimize and show trap dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createTrap;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onCreateTeleport', () => {
+      it('should minimize and show teleport dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createTeleport;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onCreateElevation', () => {
+      it('should minimize and show elevation dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createElevation;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onCreateCheckState', () => {
+      it('should minimize and show check state dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.createCheckState;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        expect((dialog as any).minimize).toHaveBeenCalled();
+      });
+    });
+
+    describe('#onViewVariables', () => {
+      it('should show variables dialog', async () => {
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.viewVariables;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, {} as HTMLElement);
+
+        // Function should complete without error
+        expect(true).toBe(true);
+      });
+    });
+  });
+
+  describe('#onToggleGroup', () => {
+    it('should toggle group expansion', async () => {
+      dialog.render = jest.fn();
+      const target = { dataset: { baseTag: 'EM_Test' } };
+
+      const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.toggleGroup;
+      await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+      expect(dialog.expandedGroups.has('EM_Test')).toBe(true);
+      expect(dialog.render).toHaveBeenCalled();
+    });
+
+    it('should collapse already expanded group', async () => {
+      dialog.expandedGroups.add('EM_Test');
+      dialog.render = jest.fn();
+      const target = { dataset: { baseTag: 'EM_Test' } };
+
+      const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.toggleGroup;
+      await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+      expect(dialog.expandedGroups.has('EM_Test')).toBe(false);
+      expect(dialog.render).toHaveBeenCalled();
+    });
+
+    it('should do nothing if no baseTag', async () => {
+      dialog.render = jest.fn();
+      const target = { dataset: {} };
+
+      const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.toggleGroup;
+      await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+      expect(dialog.render).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('regions in _prepareContext', () => {
+    beforeEach(() => {
+      // Set up regions mock
+      const mockRegion = {
+        id: 'region-1',
+        name: 'Test Region',
+        shapes: [{ x: 100, y: 100, width: 200, height: 200 }],
+        behaviors: new Map([['b1', {}]]),
+        elevation: { bottom: 5 },
+        locked: false,
+        color: '#ff0000'
+      };
+
+      mockScene.regions = new Map([['region-1', mockRegion]]);
+
+      // Set up Tagger to return EM tags for regions
+      (globalThis as any).Tagger = {
+        getTags: jest.fn((item: any) => {
+          if (item.id === 'region-1') return ['EM_Trap_1', 'EM_Region'];
+          return [];
+        })
+      };
+    });
+
+    it('should include regions with EM tags', async () => {
+      const context = await dialog._prepareContext({});
+      const allItems = extractTilesFromGroups(context.tiles);
+
+      const region = allItems.find((item: any) => item.id === 'region-1');
+      expect(region).toBeDefined();
+      expect(region.isRegion).toBe(true);
+    });
+
+    it('should extract region bounds from shapes', async () => {
+      const context = await dialog._prepareContext({});
+      const allItems = extractTilesFromGroups(context.tiles);
+
+      const region = allItems.find((item: any) => item.id === 'region-1');
+      expect(region.x).toBe(100);
+      expect(region.y).toBe(100);
+      expect(region.width).toBe(200);
+      expect(region.height).toBe(200);
+    });
+
+    it('should count behaviors', async () => {
+      const context = await dialog._prepareContext({});
+      const allItems = extractTilesFromGroups(context.tiles);
+
+      const region = allItems.find((item: any) => item.id === 'region-1');
+      expect(region.actionCount).toBe(1);
+    });
+
+    it('should detect region type from tags', async () => {
+      const context = await dialog._prepareContext({});
+      const allItems = extractTilesFromGroups(context.tiles);
+
+      const region = allItems.find((item: any) => item.id === 'region-1');
+      expect(region.regionType).toBe('trap');
+    });
+
+    it('should include region count in context', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.regionCount).toBe(1);
+      expect(context.totalCount).toBe(4); // 3 tiles + 1 region
+    });
+
+    it('should filter out regions without EM tags', async () => {
+      // Add a region without EM tags
+      const nonEmRegion = {
+        id: 'region-2',
+        name: 'Non-EM Region',
+        shapes: [],
+        behaviors: new Map()
+      };
+      mockScene.regions.set('region-2', nonEmRegion);
+
+      (globalThis as any).Tagger.getTags = jest.fn((item: any) => {
+        if (item.id === 'region-1') return ['EM_Trap_1'];
+        return ['custom-tag']; // Non-EM tag
+      });
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.regionCount).toBe(1); // Only EM-tagged region
+    });
+  });
+
+  describe('region action handlers', () => {
+    let mockRegion: any;
+
+    beforeEach(() => {
+      mockRegion = {
+        id: 'region-1',
+        name: 'Test Region',
+        sheet: { render: jest.fn() },
+        object: { control: jest.fn() },
+        delete: jest.fn()
+      };
+
+      mockScene.regions = new Map([['region-1', mockRegion]]);
+    });
+
+    describe('#onEditRegion', () => {
+      it('should open region sheet', async () => {
+        const target = { dataset: { regionId: 'region-1' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.editRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect(mockRegion.sheet.render).toHaveBeenCalledWith(true);
+      });
+
+      it('should show warning if region not found', async () => {
+        const target = { dataset: { regionId: 'nonexistent' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.editRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect((global as any).ui.notifications.warn).toHaveBeenCalledWith('Region not found!');
+      });
+
+      it('should return early if no regionId', async () => {
+        const target = { dataset: {} };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.editRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect((global as any).ui.notifications.warn).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('#onSelectRegion', () => {
+      it('should select region on canvas', async () => {
+        const target = { dataset: { regionId: 'region-1' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.selectRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect(mockRegion.object.control).toHaveBeenCalledWith({ releaseOthers: true });
+      });
+
+      it('should show warning if region not found', async () => {
+        const target = { dataset: { regionId: 'nonexistent' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.selectRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect((global as any).ui.notifications.warn).toHaveBeenCalledWith('Region not found!');
+      });
+    });
+
+    describe('#onDeleteRegion', () => {
+      it('should delete region after confirmation', async () => {
+        (global as any).foundry.applications.api.DialogV2.confirm = jest.fn(async () => true);
+        const target = { dataset: { regionId: 'region-1', regionName: 'Test Region' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.deleteRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect(mockRegion.delete).toHaveBeenCalled();
+      });
+
+      it('should not delete if confirmation cancelled', async () => {
+        (global as any).foundry.applications.api.DialogV2.confirm = jest.fn(async () => false);
+        const target = { dataset: { regionId: 'region-1', regionName: 'Test Region' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.deleteRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect(mockRegion.delete).not.toHaveBeenCalled();
+      });
+
+      it('should show warning if region not found', async () => {
+        const target = { dataset: { regionId: 'nonexistent' } };
+
+        const handler = (TileManagerDialog as any).DEFAULT_OPTIONS.actions.deleteRegion;
+        await handler.call(dialog, { preventDefault: jest.fn() } as any, target as any);
+
+        expect((global as any).ui.notifications.warn).toHaveBeenCalledWith('Region not found!');
+      });
+    });
+  });
+
+  describe('version and build info', () => {
+    it('should include version in context', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.version).toBeDefined();
+    });
+
+    it('should include build number in context', async () => {
+      const context = await dialog._prepareContext({});
+
+      expect(context.buildNumber).toBeDefined();
+    });
+  });
 });

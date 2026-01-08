@@ -154,13 +154,13 @@ export function createEnhancedTrapRegionBehavior(config: {
     abilities = [ability];
   }
 
-  // Events are part of the TypeDataModel schema, so they go INSIDE system
-  // See: TrapRegionBehaviorType.defineSchema() which includes events in the schema
+  // Events go at top level for RegionBehavior document AND in system for TypeDataModel
+  const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
     type: 'enhanced-region-behavior.Trap',
     name: config.name ?? 'Trap',
     system: {
-      events: config.events ?? [RegionEvents.TOKEN_ENTER], // Events inside system!
+      events: events, // Also in system for ERB schema
       automateDamage: config.automateDamage ?? true,
       saveDC: config.saveDC,
       saveAbility: abilities, // Set of ability strings
@@ -173,7 +173,8 @@ export function createEnhancedTrapRegionBehavior(config: {
       triggerBehaviorOnSave: config.triggerBehaviorOnSave ?? [],
       triggerBehaviorOnFail: config.triggerBehaviorOnFail ?? []
     },
-    disabled: false
+    disabled: false,
+    events: events // Top level for RegionBehavior
   };
 }
 
@@ -190,15 +191,17 @@ export function createEnhancedSoundRegionBehavior(config: {
   volume?: number; // 0 to 1, default 0.8
   events?: string[];
 }): any {
+  const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
     type: 'enhanced-region-behavior.SoundEffect',
     name: config.name ?? 'Sound Effect',
     system: {
-      events: config.events ?? [RegionEvents.TOKEN_ENTER], // Events inside system!
+      events: events, // Also in system for ERB schema
       soundPath: config.soundPath,
       volume: config.volume ?? 0.8
     },
-    disabled: false
+    disabled: false,
+    events: events // Top level for RegionBehavior
   };
 }
 
@@ -214,14 +217,16 @@ export function createEnhancedElevationRegionBehavior(config: {
   elevation: number;
   events?: string[];
 }): any {
+  const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
     type: 'enhanced-region-behavior.Elevation',
     name: config.name ?? 'Set Elevation',
     system: {
-      events: config.events ?? [RegionEvents.TOKEN_ENTER], // Events inside system!
+      events: events, // Also in system for ERB schema
       elevation: config.elevation
     },
-    disabled: false
+    disabled: false,
+    events: events // Top level for RegionBehavior
   };
 }
 
@@ -238,13 +243,15 @@ export function createEnhancedTriggerActionRegionBehavior(config: {
   itemId: string; // Item UUID
   events?: string[];
 }): any {
+  const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
     type: 'enhanced-region-behavior.TriggerAction',
     name: config.name ?? 'Trigger Action',
     system: {
-      events: config.events ?? [RegionEvents.TOKEN_ENTER], // Events inside system!
+      events: events, // Also in system for ERB schema
       itemId: config.itemId
     },
-    disabled: false
+    disabled: false,
+    events: events // Top level for RegionBehavior
   };
 }

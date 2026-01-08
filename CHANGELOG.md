@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-01-08
+
+### Added
+
+- replace FA icons with game-icons.net SVGs and add elevation region
+- add Region support for Trap dialogs
+- add ghost image preview for drag-to-place tiles
+- test: add tile preview tests and update dialog tests
+
+### Fixed
+
+- center dialogs on screen and improve canvas layer switching
+- correct Enhanced Region Behaviors data structure and UI
+- address Copilot PR review comments
+- address PR review comments
+- reset tile preview now shows correct 2x2 size
+
+### Changed
+
+- claude settings
+- update build number
+- bump version to 1.19.0
+
 ## [1.19.0] - 2026-01-05
 
 ### Added
