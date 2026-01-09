@@ -51,9 +51,10 @@ export class TilePreviewManager {
     const height = this.config.height ?? gridSize;
     const alpha = this.config.alpha ?? 0.5;
 
+    let texture: any = null;
     try {
       // Load the texture using PIXI.Assets
-      const texture = await (PIXI as any).Assets.load(this.config.imagePath);
+      texture = await (PIXI as any).Assets.load(this.config.imagePath);
 
       // Create sprite from texture
       this.sprite = new (PIXI as any).Sprite(texture);
@@ -72,6 +73,16 @@ export class TilePreviewManager {
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
       ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
+
+      // Ensure texture is unloaded if it was partially loaded
+      if (texture && this.config.imagePath) {
+        try {
+          (PIXI as any).Assets.unload(this.config.imagePath);
+        } catch {
+          // Ignore unload errors - texture may not have been cached
+        }
+      }
+
       this.cleanup();
       this.config.onCancel?.();
     }
@@ -246,14 +257,18 @@ export async function startTilePreview(config: TilePreviewConfig): Promise<TileP
  * Configuration for drag-to-place preview
  */
 export interface DragPlacePreviewConfig {
-  /** Path to the tile image */
-  imagePath: string;
+  /** Path to the tile image (optional if using color) */
+  imagePath?: string;
+  /** Color for rectangle preview (hex string like '#ff4444') - used for regions */
+  color?: string;
   /** Alpha/opacity for ghost effect (default: 0.5) */
   alpha?: number;
   /** Whether to snap to grid (default: false for smooth dragging) */
   snapToGrid?: boolean;
   /** Minimum size in pixels to create tile (default: 10) */
   minSize?: number;
+  /** Canvas layer to add preview to ('tiles' or 'regions', default: 'tiles') */
+  layer?: 'tiles' | 'regions';
   /** Callback when placement is complete */
   onPlace: (x: number, y: number, width: number, height: number) => Promise<void>;
   /** Callback when placement is cancelled */
@@ -262,10 +277,11 @@ export interface DragPlacePreviewConfig {
 
 /**
  * Manages drag-to-place preview
- * Shows a semi-transparent ghost tile that resizes as the user drags
+ * Shows a semi-transparent ghost tile/region that resizes as the user drags
  */
 export class DragPlacePreviewManager {
   private sprite: any = null;
+  private graphics: any = null;
   private texture: any = null;
   private config: DragPlacePreviewConfig;
   private mouseDownHandler: ((event: any) => void) | null = null;
@@ -275,28 +291,51 @@ export class DragPlacePreviewManager {
   private isActive: boolean = false;
   private isDragging: boolean = false;
   private startPos: { x: number; y: number } | null = null;
+  private useColorRect: boolean = false;
 
   constructor(config: DragPlacePreviewConfig) {
     this.config = config;
+    this.useColorRect = !!config.color && !config.imagePath;
+  }
+
+  /**
+   * Get the canvas layer to use for the preview
+   */
+  private getLayer(): any {
+    const layerName = this.config.layer ?? 'tiles';
+    return (canvas as any)[layerName];
   }
 
   /**
    * Start the drag-to-place mode
-   * Pre-loads the texture and sets up event handlers
+   * Pre-loads the texture (if using image) and sets up event handlers
    */
   async start(): Promise<void> {
     if (this.isActive) return;
     this.isActive = true;
 
     try {
-      // Pre-load the texture
-      this.texture = await (PIXI as any).Assets.load(this.config.imagePath);
+      // Pre-load the texture if using image mode
+      if (!this.useColorRect && this.config.imagePath) {
+        this.texture = await (PIXI as any).Assets.load(this.config.imagePath);
+      }
 
       // Set up event handlers
       this.setupEventHandlers();
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
       ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
+
+      // Ensure texture is unloaded if it was partially loaded
+      if (this.texture && this.config.imagePath) {
+        try {
+          (PIXI as any).Assets.unload(this.config.imagePath);
+        } catch {
+          // Ignore unload errors - texture may not have been cached
+        }
+        this.texture = null;
+      }
+
       this.cleanup();
       this.config.onCancel?.();
     }
@@ -347,12 +386,15 @@ export class DragPlacePreviewManager {
   private handleMouseDown(event: any): void {
     if (!this.isActive || this.isDragging) return;
 
-    // Ignore clicks on existing tiles
-    if (event.target?.document?.documentName === 'Tile') {
+    // Ignore clicks on existing tiles/regions
+    const docName = event.target?.document?.documentName;
+    if (docName === 'Tile' || docName === 'Region') {
       return;
     }
 
-    const position = event.data.getLocalPosition((canvas as any).tiles);
+    const layer = this.getLayer();
+    const position = event.data.getLocalPosition(layer);
+    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
     const snapped = this.config.snapToGrid
       ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
       : position;
@@ -360,26 +402,59 @@ export class DragPlacePreviewManager {
     this.startPos = { x: snapped.x, y: snapped.y };
     this.isDragging = true;
 
-    // Create the ghost sprite
     const alpha = this.config.alpha ?? 0.5;
-    this.sprite = new (PIXI as any).Sprite(this.texture);
-    this.sprite.x = this.startPos.x;
-    this.sprite.y = this.startPos.y;
-    this.sprite.width = 1;
-    this.sprite.height = 1;
-    this.sprite.alpha = alpha;
 
-    // Add to tiles layer
-    (canvas as any).tiles.addChild(this.sprite);
+    if (this.useColorRect) {
+      // Create a colored rectangle for region preview
+      this.graphics = new (PIXI as any).Graphics();
+      this.graphics.alpha = alpha;
+      layer.addChild(this.graphics);
+      // Draw initial rectangle (will be updated on mouse move)
+      this.drawColorRect(this.startPos.x, this.startPos.y, 1, 1);
+    } else {
+      // Create the ghost sprite for tile preview
+      this.sprite = new (PIXI as any).Sprite(this.texture);
+      this.sprite.x = this.startPos.x;
+      this.sprite.y = this.startPos.y;
+      this.sprite.width = 1;
+      this.sprite.height = 1;
+      this.sprite.alpha = alpha;
+      layer.addChild(this.sprite);
+    }
+  }
+
+  /**
+   * Draw a colored rectangle (for region preview)
+   * Uses PIXI v7 compatible API for FoundryVTT v13
+   */
+  private drawColorRect(x: number, y: number, width: number, height: number): void {
+    if (!this.graphics) return;
+
+    const color = this.config.color || '#ff4444';
+    // Convert hex color to number
+    const colorNum = parseInt(color.replace('#', ''), 16);
+    const alpha = this.config.alpha ?? 0.5;
+
+    this.graphics.clear();
+    // Fill
+    this.graphics.beginFill(colorNum, alpha);
+    this.graphics.drawRect(x, y, width, height);
+    this.graphics.endFill();
+    // Border
+    this.graphics.lineStyle(2, colorNum, 1);
+    this.graphics.drawRect(x, y, width, height);
   }
 
   /**
    * Handle mouse move - update preview size
    */
   private handleMouseMove(event: any): void {
-    if (!this.isActive || !this.isDragging || !this.sprite || !this.startPos) return;
+    if (!this.isActive || !this.isDragging || !this.startPos) return;
+    if (!this.sprite && !this.graphics) return;
 
-    const position = event.data.getLocalPosition((canvas as any).tiles);
+    const layer = this.getLayer();
+    const position = event.data.getLocalPosition(layer);
+    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
     const snapped = this.config.snapToGrid
       ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
       : position;
@@ -390,11 +465,16 @@ export class DragPlacePreviewManager {
     const x = Math.min(this.startPos.x, snapped.x);
     const y = Math.min(this.startPos.y, snapped.y);
 
-    // Update sprite position and size
-    this.sprite.x = x;
-    this.sprite.y = y;
-    this.sprite.width = Math.max(width, 1);
-    this.sprite.height = Math.max(height, 1);
+    if (this.useColorRect && this.graphics) {
+      // Redraw the colored rectangle
+      this.drawColorRect(x, y, Math.max(width, 1), Math.max(height, 1));
+    } else if (this.sprite) {
+      // Update sprite position and size
+      this.sprite.x = x;
+      this.sprite.y = y;
+      this.sprite.width = Math.max(width, 1);
+      this.sprite.height = Math.max(height, 1);
+    }
   }
 
   /**
@@ -403,7 +483,9 @@ export class DragPlacePreviewManager {
   private async handleMouseUp(event: any): Promise<void> {
     if (!this.isActive || !this.isDragging || !this.startPos) return;
 
-    const position = event.data.getLocalPosition((canvas as any).tiles);
+    const layer = this.getLayer();
+    const position = event.data.getLocalPosition(layer);
+    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
     const snapped = this.config.snapToGrid
       ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
       : position;
@@ -418,7 +500,7 @@ export class DragPlacePreviewManager {
     const minSize = this.config.minSize ?? 10;
     if (width < minSize || height < minSize) {
       // Too small, cancel
-      this.removeSprite();
+      this.removePreview();
       this.isDragging = false;
       this.startPos = null;
       return;
@@ -442,12 +524,14 @@ export class DragPlacePreviewManager {
   }
 
   /**
-   * Remove sprite from canvas
+   * Remove preview (sprite or graphics) from canvas
    */
-  private removeSprite(): void {
+  private removePreview(): void {
+    const layer = this.getLayer();
+
     if (this.sprite) {
       try {
-        (canvas as any).tiles.removeChild(this.sprite);
+        layer.removeChild(this.sprite);
         if (this.sprite.destroy) {
           this.sprite.destroy();
         }
@@ -456,6 +540,19 @@ export class DragPlacePreviewManager {
         console.warn("Dorman Lakely's Tile Utilities - Error cleaning up preview sprite:", error);
       }
       this.sprite = null;
+    }
+
+    if (this.graphics) {
+      try {
+        layer.removeChild(this.graphics);
+        if (this.graphics.destroy) {
+          this.graphics.destroy();
+        }
+      } catch (error) {
+        // Graphics may have already been removed or canvas changed
+        console.warn("Dorman Lakely's Tile Utilities - Error cleaning up preview graphics:", error);
+      }
+      this.graphics = null;
     }
   }
 
@@ -467,8 +564,8 @@ export class DragPlacePreviewManager {
     this.isDragging = false;
     this.startPos = null;
 
-    // Remove sprite
-    this.removeSprite();
+    // Remove preview (sprite or graphics)
+    this.removePreview();
 
     // Remove event handlers
     if (this.mouseDownHandler) {

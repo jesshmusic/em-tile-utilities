@@ -1,10 +1,10 @@
 <div class="em-puzzles-variables-dialog">
   <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
     <button type="button" class="refresh-variables" data-action="refresh">
-      <i class="fas fa-sync"></i> {{localize "EMPUZZLES.Refresh"}}
+      <i class="gi-clockwise-rotation"></i> {{localize "EMPUZZLES.Refresh"}}
     </button>
     <button type="button" data-action="showHelp" title="How to use variables">
-      <i class="fas fa-question-circle"></i> {{localize "EMPUZZLES.Help"}}
+      <i class="gi-help"></i> {{localize "EMPUZZLES.Help"}}
     </button>
   </div>
 
@@ -21,7 +21,7 @@
           {{#each tileGroups as |group|}}
             <tr class="tile-group-header">
               <td colspan="2">
-                <strong><i class="fas fa-cube"></i> {{group.tileName}}</strong>
+                <strong><i class="fa-solid fa-cubes"></i> {{group.tileName}}</strong>
               </td>
             </tr>
             {{#each group.variables as |varData|}}

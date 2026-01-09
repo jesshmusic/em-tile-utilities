@@ -101,7 +101,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     tag: 'form',
     window: {
       contentClasses: ['standard-form'],
-      icon: 'fa-solid fa-skull-crossbones'
+      icon: 'gi-skull-crossed-bones'
     },
     position: {
       width: 576
@@ -338,13 +338,13 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       buttons: [
         {
           type: 'submit',
-          icon: 'fa-solid fa-check',
+          icon: 'gi-check-mark',
           label: 'EMPUZZLES.Create'
         },
         {
           type: 'button',
           action: 'close',
-          icon: 'fa-solid fa-times',
+          icon: 'gi-cancel',
           label: 'EMPUZZLES.Cancel'
         }
       ],
@@ -508,6 +508,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
+      // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners) for consistent tile placement
       const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
 
       // Store the teleport position
@@ -991,7 +992,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     this.minimize();
 
     // Show notification to drag on canvas
-    ui.notifications.info('Drag on the canvas to place and size the trap tile. Press ESC to cancel.');
+    ui.notifications.info(
+      'Drag on the canvas to place and size the trap tile. Press ESC to cancel.'
+    );
 
     // Start drag-to-place preview with ghost image
     try {

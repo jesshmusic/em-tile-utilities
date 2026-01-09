@@ -3,7 +3,7 @@
   style='background: rgba(255, 0, 0, 0.1); border: 2px solid #cc0000; border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem;'
 >
   <p style='color: #cc0000; font-weight: bold; margin: 0;'>
-    <i class='fas fa-exclamation-triangle'></i>
+    <i class='gi-hazard-sign'></i>
     EXPERIMENTAL FEATURE: This feature is still in development and may have bugs or may change in future
     versions.
   </p>
@@ -20,7 +20,7 @@
     <div class='file-picker-group'>
       <input type='text' name='tileImage' value='{{tileImage}}' />
       <button type='button' class='file-picker' data-target='tileImage' data-type='imagevideo'>
-        <i class='fas fa-file-image'></i>
+        <i class='gi-load'></i>
       </button>
     </div>
     <p class='hint'>{{localize 'EMPUZZLES.TileImageHint'}}</p>
@@ -39,7 +39,7 @@
           {{/each}}
         </select>
         <button type='button' data-action='addTile' class='add-tile-btn'>
-          <i class='fas fa-plus'></i>
+          <i class='gi-upgrade'></i>
           {{localize 'EMPUZZLES.Add'}}
         </button>
       </div>
@@ -69,7 +69,7 @@
               data-action='removeTile'
               data-tile-id='{{selectedTile.tileId}}'
             >
-              <i class='fas fa-times'></i>
+              <i class='gi-cancel'></i>
             </button>
           </div>
         {{/each}}
@@ -82,7 +82,7 @@
       <div style='display: flex; justify-content: space-between; align-items: center;'>
         <label>{{localize 'EMPUZZLES.Branches'}}</label>
         <button type='button' data-action='addBranch' class='add-branch-btn'>
-          <i class='fas fa-plus'></i>
+          <i class='gi-upgrade'></i>
           {{localize 'EMPUZZLES.AddBranch'}}
         </button>
       </div>
@@ -106,7 +106,7 @@
                   data-action='removeBranch'
                   data-branch-index='{{branchIndex}}'
                 >
-                  <i class='fas fa-times'></i>
+                  <i class='gi-cancel'></i>
                 </button>
               </div>
 
@@ -120,7 +120,7 @@
                     data-action='addCondition'
                     data-branch-index='{{branchIndex}}'
                   >
-                    <i class='fas fa-plus'></i>
+                    <i class='gi-upgrade'></i>
                     {{localize 'EMPUZZLES.AddCondition'}}
                   </button>
                 </div>
@@ -204,7 +204,7 @@
                           data-branch-index='{{branchIndex}}'
                           data-condition-index='{{conditionIndex}}'
                         >
-                          <i class='fas fa-times'></i>
+                          <i class='gi-cancel'></i>
                         </button>
                       </div>
                     {{/each}}
@@ -224,7 +224,7 @@
                     data-action='addAction'
                     data-branch-index='{{branchIndex}}'
                   >
-                    <i class='fas fa-plus'></i>
+                    <i class='gi-upgrade'></i>
                     {{localize 'EMPUZZLES.AddAction'}}
                   </button>
                 </div>
@@ -254,7 +254,7 @@
                             data-branch-index='{{branchIndex}}'
                             data-action-index='{{actionIndex}}'
                           >
-                            <i class='fas fa-crosshairs'></i>
+                            <i class='gi-convergence-target'></i>
                             {{#if action.targetTileId}}
                               {{action.targetTileName}}
                             {{else}}
@@ -327,7 +327,7 @@
                             data-branch-index='{{branchIndex}}'
                             data-action-index='{{actionIndex}}'
                           >
-                            <i class='fas fa-crosshairs'></i>
+                            <i class='gi-convergence-target'></i>
                             {{#if action.wallId}}
                               {{action.wallName}}
                             {{else}}
@@ -361,7 +361,7 @@
                           data-branch-index='{{branchIndex}}'
                           data-action-index='{{actionIndex}}'
                         >
-                          <i class='fas fa-times'></i>
+                          <i class='gi-cancel'></i>
                         </button>
                       </div>
                     {{/each}}

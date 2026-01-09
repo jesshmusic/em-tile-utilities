@@ -136,11 +136,11 @@ describe('ResetTileConfigDialog', () => {
 
       expect(context.buttons).toHaveLength(2);
       expect(context.buttons[0].type).toBe('submit');
-      expect(context.buttons[0].icon).toBe('fa-solid fa-check');
+      expect(context.buttons[0].icon).toBe('gi-check-mark');
       expect(context.buttons[0].label).toBe('EMPUZZLES.Create');
       expect(context.buttons[1].type).toBe('button');
       expect(context.buttons[1].action).toBe('close');
-      expect(context.buttons[1].icon).toBe('fa-solid fa-times');
+      expect(context.buttons[1].icon).toBe('gi-cancel');
       expect(context.buttons[1].label).toBe('EMPUZZLES.Cancel');
     });
 

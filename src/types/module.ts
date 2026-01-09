@@ -1,3 +1,19 @@
+/**
+ * Enum for creation type (Tile vs Region)
+ */
+export enum CreationType {
+  TILE = 'tile',
+  REGION = 'region'
+}
+
+/**
+ * Enum for region behavior mode
+ */
+export enum RegionBehaviorMode {
+  MONKS_MACRO = 'monks-macro',
+  NATIVE = 'native'
+}
+
 export interface SwitchConfig {
   name: string;
   variableName: string;
@@ -105,6 +121,7 @@ export interface TrapConfig {
   dc: number;
   // For damage result type
   damageOnFail: string;
+  damageType?: string; // Damage type (e.g., 'piercing', 'fire', 'cold')
   halfDamageOnSuccess?: boolean; // Whether successful saves take half damage
   flavorText: string;
   // For heal result type
@@ -173,6 +190,8 @@ export interface TeleportTileConfig {
   hidden: boolean;
   teleportX: number;
   teleportY: number;
+  teleportWidth?: number; // Optional destination width
+  teleportHeight?: number; // Optional destination height
   teleportSceneId: string;
   deleteSourceToken: boolean;
   createReturnTeleport: boolean;

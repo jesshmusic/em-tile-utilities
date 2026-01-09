@@ -57,8 +57,9 @@ declare global {
   }
 
   interface HooksManager {
-    once(hook: string, fn: (...args: any[]) => void): void;
-    on(hook: string, fn: (...args: any[]) => void): void;
+    once(hook: string, fn: (...args: any[]) => void): number;
+    on(hook: string, fn: (...args: any[]) => void): number;
+    off(hook: string, id: number): void;
   }
 
   interface Module {

@@ -52,7 +52,11 @@ export function mockFoundry() {
   const mockGameObject = {
     modules: {
       get: jest.fn((id: string) => ({
-        active: id === 'monks-active-tiles' || id === 'monks-tokenbar' || id === 'tagger'
+        active:
+          id === 'monks-active-tiles' ||
+          id === 'monks-tokenbar' ||
+          id === 'tagger' ||
+          id === 'enhanced-region-behavior'
       }))
     },
     settings: {
@@ -87,9 +91,13 @@ export function mockFoundry() {
   // Mock PIXI.Graphics and PIXI.Sprite
   (global as any).PIXI = {
     Graphics: class MockGraphics {
+      alpha = 1;
       clear = jest.fn(() => this);
+      beginFill = jest.fn(() => this);
+      endFill = jest.fn(() => this);
       lineStyle = jest.fn(() => this);
       drawRect = jest.fn(() => this);
+      destroy = jest.fn();
     },
     Sprite: class MockSprite {
       x = 0;

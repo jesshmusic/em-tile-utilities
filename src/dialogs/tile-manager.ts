@@ -5,6 +5,7 @@ import { showTrapDialog } from './trap-dialog';
 import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
+import { showElevationDialog } from './elevation-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 
@@ -27,7 +28,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     classes: ['tile-manager', 'em-puzzles'],
     window: {
       contentClasses: ['standard-form'],
-      icon: 'gi-card-pile',
+      icon: 'gi-card-pickup',
       title: 'EMPUZZLES.TileManager',
       resizable: true
     },
@@ -38,6 +39,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createReset: TileManagerDialog.#onCreateReset,
       createTrap: TileManagerDialog.#onCreateTrap,
       createTeleport: TileManagerDialog.#onCreateTeleport,
+      createElevation: TileManagerDialog.#onCreateElevation,
       createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
@@ -48,7 +50,10 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       toggleActive: TileManagerDialog.#onToggleActive,
       exportTile: TileManagerDialog.#onExportTile,
       importTile: TileManagerDialog.#onImportTile,
-      toggleGroup: TileManagerDialog.#onToggleGroup
+      toggleGroup: TileManagerDialog.#onToggleGroup,
+      editRegion: TileManagerDialog.#onEditRegion,
+      selectRegion: TileManagerDialog.#onSelectRegion,
+      deleteRegion: TileManagerDialog.#onDeleteRegion
     }
   };
 
@@ -72,6 +77,10 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       'experimentalFeatures'
     ) as boolean;
 
+    // Check if Enhanced Region Behaviors is installed
+    const hasEnhancedRegionBehaviors =
+      (game as any).modules.get('enhanced-region-behavior')?.active ?? false;
+
     // Get version and build info
     const moduleData = (game as any).modules.get('em-tile-utilities');
     const version = moduleData?.version || '1.0.0';
@@ -88,6 +97,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         sortBy: this.sortBy,
         searchQuery: this.searchQuery,
         experimentalFeatures: experimentalFeatures,
+        hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
         version: version,
         buildNumber: buildNumber
       };
@@ -140,40 +150,122 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         variableCount: variableCount,
         variables: variablesList,
         tags: tags,
-        hasTags: tags.length > 0
+        hasTags: tags.length > 0,
+        isRegion: false,
+        itemType: 'tile'
       };
     });
+
+    // Get all regions from the scene with EM tags
+    const regions = Array.from((scene as any).regions?.values() || [])
+      .filter((region: any) => {
+        // Only include regions with EM tags
+        if ((game as any).modules.get('tagger')?.active) {
+          const Tagger = (globalThis as any).Tagger;
+          const tags = Tagger.getTags(region) || [];
+          return tags.some((tag: string) => tag.startsWith('EM'));
+        }
+        return false;
+      })
+      .map((region: any) => {
+        const regionName = region.name || 'Unnamed Region';
+
+        // Get tags from Tagger
+        let tags: string[] = [];
+        if ((game as any).modules.get('tagger')?.active) {
+          const Tagger = (globalThis as any).Tagger;
+          tags = Tagger.getTags(region) || [];
+        }
+
+        // Get region bounds from shapes
+        const shapes = region.shapes || [];
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
+        shapes.forEach((shape: any) => {
+          if (shape.x !== undefined) minX = Math.min(minX, shape.x);
+          if (shape.y !== undefined) minY = Math.min(minY, shape.y);
+          if (shape.x !== undefined && shape.width !== undefined)
+            maxX = Math.max(maxX, shape.x + shape.width);
+          if (shape.y !== undefined && shape.height !== undefined)
+            maxY = Math.max(maxY, shape.y + shape.height);
+        });
+
+        const width = maxX !== -Infinity ? maxX - minX : 0;
+        const height = maxY !== -Infinity ? maxY - minY : 0;
+
+        // Count behaviors
+        const behaviorCount = region.behaviors?.size || 0;
+
+        // Determine region type from tags
+        let regionType = 'region';
+        if (tags.some((t: string) => t.includes('Trap'))) regionType = 'trap';
+        else if (tags.some((t: string) => t.includes('Teleport'))) regionType = 'teleport';
+
+        return {
+          id: region.id,
+          name: regionName,
+          image: '', // Regions don't have images
+          isVideo: false,
+          x: minX !== Infinity ? Math.round(minX) : 0,
+          y: minY !== Infinity ? Math.round(minY) : 0,
+          width: Math.round(width),
+          height: Math.round(height),
+          elevation: region.elevation?.bottom || 0,
+          sort: 0,
+          hidden: false,
+          locked: region.locked || false,
+          active: true,
+          hasMonksData: false,
+          actionCount: behaviorCount,
+          variableCount: 0,
+          variables: [],
+          tags: tags,
+          hasTags: tags.length > 0,
+          isRegion: true,
+          itemType: 'region',
+          regionType: regionType,
+          color: region.color || '#4488ff'
+        };
+      });
+
+    // Combine tiles and regions
+    const allItems = [...tiles, ...regions];
 
     // Apply sort
     switch (this.sortBy) {
       case 'name':
-        tiles.sort((a: any, b: any) => a.name.localeCompare(b.name));
+        allItems.sort((a: any, b: any) => a.name.localeCompare(b.name));
         break;
       case 'x':
-        tiles.sort((a: any, b: any) => a.x - b.x);
+        allItems.sort((a: any, b: any) => a.x - b.x);
         break;
       case 'y':
-        tiles.sort((a: any, b: any) => a.y - b.y);
+        allItems.sort((a: any, b: any) => a.y - b.y);
         break;
       case 'elevation':
-        tiles.sort((a: any, b: any) => a.elevation - b.elevation);
+        allItems.sort((a: any, b: any) => a.elevation - b.elevation);
         break;
       case 'sort':
-        tiles.sort((a: any, b: any) => a.sort - b.sort);
+        allItems.sort((a: any, b: any) => a.sort - b.sort);
         break;
     }
 
-    // Group tiles by base tag (removing trailing numbers)
-    const groupedTiles = this._groupTilesByTag(tiles);
+    // Group items by base tag (removing trailing numbers)
+    const groupedItems = this._groupTilesByTag(allItems);
 
     return {
       ...context,
-      tiles: groupedTiles,
-      hasTiles: tiles.length > 0,
+      tiles: groupedItems,
+      hasTiles: allItems.length > 0,
       tileCount: tiles.length,
+      regionCount: regions.length,
+      totalCount: allItems.length,
       sortBy: this.sortBy,
       searchQuery: this.searchQuery,
       experimentalFeatures: experimentalFeatures,
+      hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
       version: version,
       buildNumber: buildNumber
     };
@@ -317,19 +409,28 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       });
     }
 
-    // Set up hooks to auto-refresh when tiles change (only once)
+    // Set up hooks to auto-refresh when tiles/regions change (only once)
     if (!(this as any)._hooksRegistered) {
       // Store bound functions for cleanup
-      (this as any)._createHook = (tile: any, data: any, options: any, userId: string) =>
+      (this as any)._createTileHook = (tile: any, data: any, options: any, userId: string) =>
         this._onTileChange(tile, data, options, userId);
-      (this as any)._updateHook = (tile: any, data: any, options: any, userId: string) =>
+      (this as any)._updateTileHook = (tile: any, data: any, options: any, userId: string) =>
         this._onTileChange(tile, data, options, userId);
-      (this as any)._deleteHook = (tile: any, data: any, options: any, userId: string) =>
+      (this as any)._deleteTileHook = (tile: any, data: any, options: any, userId: string) =>
         this._onTileChange(tile, data, options, userId);
+      (this as any)._createRegionHook = (region: any, data: any, options: any, userId: string) =>
+        this._onTileChange(region, data, options, userId);
+      (this as any)._updateRegionHook = (region: any, data: any, options: any, userId: string) =>
+        this._onTileChange(region, data, options, userId);
+      (this as any)._deleteRegionHook = (region: any, data: any, options: any, userId: string) =>
+        this._onTileChange(region, data, options, userId);
 
-      Hooks.on('createTile', (this as any)._createHook);
-      Hooks.on('updateTile', (this as any)._updateHook);
-      Hooks.on('deleteTile', (this as any)._deleteHook);
+      Hooks.on('createTile', (this as any)._createTileHook);
+      Hooks.on('updateTile', (this as any)._updateTileHook);
+      Hooks.on('deleteTile', (this as any)._deleteTileHook);
+      Hooks.on('createRegion', (this as any)._createRegionHook);
+      Hooks.on('updateRegion', (this as any)._updateRegionHook);
+      Hooks.on('deleteRegion', (this as any)._deleteRegionHook);
 
       (this as any)._hooksRegistered = true;
     }
@@ -348,9 +449,12 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Clean up hooks
     if ((this as any)._hooksRegistered) {
-      (Hooks as any).off('createTile', (this as any)._createHook);
-      (Hooks as any).off('updateTile', (this as any)._updateHook);
-      (Hooks as any).off('deleteTile', (this as any)._deleteHook);
+      (Hooks as any).off('createTile', (this as any)._createTileHook);
+      (Hooks as any).off('updateTile', (this as any)._updateTileHook);
+      (Hooks as any).off('deleteTile', (this as any)._deleteTileHook);
+      (Hooks as any).off('createRegion', (this as any)._createRegionHook);
+      (Hooks as any).off('updateRegion', (this as any)._updateRegionHook);
+      (Hooks as any).off('deleteRegion', (this as any)._deleteRegionHook);
 
       (this as any)._hooksRegistered = false;
     }
@@ -446,6 +550,21 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     event.preventDefault();
     this.minimize();
     showTeleportDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create elevation region button click
+   */
+  static async #onCreateElevation(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showElevationDialog();
   }
 
   /* -------------------------------------------- */
@@ -738,7 +857,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         const handler = async (clickEvent: any) => {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
 
           // Create the tile at the clicked position
           const newTileData = {
@@ -787,6 +906,97 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Re-render to show/hide group tiles
     this.render();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle editing a region
+   */
+  static async #onEditRegion(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    const regionId = target.dataset.regionId;
+
+    if (!regionId) return;
+
+    const region = (canvas.scene as any)?.regions?.get(regionId);
+    if (!region) {
+      ui.notifications.warn('Region not found!');
+      return;
+    }
+
+    // Open the region configuration sheet
+    (region as any).sheet.render(true);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle selecting a region on the canvas
+   */
+  static async #onSelectRegion(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    const regionId = target.dataset.regionId;
+
+    if (!regionId) return;
+
+    const region = (canvas.scene as any)?.regions?.get(regionId);
+    if (!region) {
+      ui.notifications.warn('Region not found!');
+      return;
+    }
+
+    // Select the region
+    (region as any).object?.control({ releaseOthers: true });
+    ui.notifications.info(`Selected: ${region.name || 'Region'}`);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle deleting a region
+   */
+  static async #onDeleteRegion(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    const regionId = target.dataset.regionId;
+    const regionName = target.dataset.regionName || 'this region';
+
+    if (!regionId) return;
+
+    const region = (canvas.scene as any)?.regions?.get(regionId);
+    if (!region) {
+      ui.notifications.warn('Region not found!');
+      return;
+    }
+
+    // Show confirmation dialog (V2 API)
+    const DialogV2 = (foundry.applications.api as any).DialogV2;
+    const confirmed = await DialogV2.confirm({
+      window: {
+        title: game.i18n.localize('EMPUZZLES.DeleteRegionConfirmTitle')
+      },
+      content: `<p>${game.i18n.localize('EMPUZZLES.DeleteRegionConfirmMessage').replace('{name}', regionName)}</p>`,
+      rejectClose: false,
+      modal: true
+    });
+
+    if (!confirmed) return;
+
+    // Delete the region
+    await (region as any).delete();
+    ui.notifications.info(`Deleted: ${regionName}`);
   }
 }
 

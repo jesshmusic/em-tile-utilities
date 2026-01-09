@@ -81,7 +81,7 @@ describe('SceneVariablesViewer', () => {
 
       expect(context.buttons).toHaveLength(1);
       expect(context.buttons[0].type).toBe('button');
-      expect(context.buttons[0].icon).toBe('fa-solid fa-times');
+      expect(context.buttons[0].icon).toBe('gi-cancel');
       expect(context.buttons[0].label).toBe('EMPUZZLES.Close');
       expect(context.buttons[0].action).toBe('close');
     });

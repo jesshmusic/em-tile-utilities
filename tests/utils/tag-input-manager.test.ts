@@ -168,7 +168,7 @@ describe('TagInputManager', () => {
       tagInputManager.addTagChip('test-tag');
 
       const tagsContainer = container.querySelector('[data-tags-container]') as HTMLElement;
-      const removeButton = tagsContainer.querySelector('.tag .fa-times');
+      const removeButton = tagsContainer.querySelector('.tag .gi-cancel');
 
       expect(removeButton).toBeTruthy();
     });
@@ -196,7 +196,7 @@ describe('TagInputManager', () => {
       tagInputManager.addTagChip('removable-tag');
 
       const tagsContainer = container.querySelector('[data-tags-container]') as HTMLElement;
-      const removeButton = tagsContainer.querySelector('.tag .fa-times') as HTMLElement;
+      const removeButton = tagsContainer.querySelector('.tag .gi-cancel') as HTMLElement;
 
       removeButton.click();
 

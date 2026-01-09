@@ -13,7 +13,8 @@
 .light-config.window-app,
 .reset-config.window-app,
 .teleport-config.window-app,
-.check-state-dialog.window-app {
+.check-state-dialog.window-app,
+.elevation-config.window-app {
   display: flex;
   flex-direction: column;
   max-height: 90vh; /* Prevent dialogs from exceeding viewport */
@@ -24,7 +25,8 @@
 .light-config .window-content,
 .reset-config .window-content,
 .teleport-config .window-content,
-.check-state-dialog .window-content {
+.check-state-dialog .window-content,
+.elevation-config .window-content {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -40,7 +42,8 @@
 .light-config .form-footer,
 .reset-config .form-footer,
 .teleport-config .form-footer,
-.check-state-dialog .form-footer {
+.check-state-dialog .form-footer,
+.elevation-config .form-footer {
   position: sticky;
   bottom: 0;
   flex-shrink: 0;
@@ -145,7 +148,10 @@
 .reset-config .settings-grid-3,
 .check-state-dialog .settings-grid-1,
 .check-state-dialog .settings-grid-2,
-.check-state-dialog .settings-grid-3 {
+.check-state-dialog .settings-grid-3,
+.elevation-config .settings-grid-1,
+.elevation-config .settings-grid-2,
+.elevation-config .settings-grid-3 {
   display: grid;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
@@ -155,7 +161,8 @@
 .switch-config .settings-grid-1,
 .light-config .settings-grid-1,
 .reset-config .settings-grid-1,
-.check-state-dialog .settings-grid-1 {
+.check-state-dialog .settings-grid-1,
+.elevation-config .settings-grid-1 {
   grid-template-columns: 1fr;
 }
 
@@ -163,7 +170,8 @@
 .switch-config .settings-grid-2,
 .light-config .settings-grid-2,
 .reset-config .settings-grid-2,
-.check-state-dialog .settings-grid-2 {
+.check-state-dialog .settings-grid-2,
+.elevation-config .settings-grid-2 {
   grid-template-columns: 1fr 1fr;
 }
 
@@ -171,7 +179,8 @@
 .switch-config .settings-grid-3,
 .light-config .settings-grid-3,
 .reset-config .settings-grid-3,
-.check-state-dialog .settings-grid-3 {
+.check-state-dialog .settings-grid-3,
+.elevation-config .settings-grid-3 {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
@@ -180,7 +189,8 @@
 .switch-config .field-group,
 .light-config .field-group,
 .reset-config .field-group,
-.check-state-dialog .field-group {
+.check-state-dialog .field-group,
+.elevation-config .field-group {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -190,7 +200,8 @@
 .switch-config .field-label,
 .light-config .field-label,
 .reset-config .field-label,
-.check-state-dialog .field-label {
+.check-state-dialog .field-label,
+.elevation-config .field-label {
   font-weight: bold;
   font-size: 0.9em;
 }
@@ -204,7 +215,9 @@
 .reset-config .field-input,
 .reset-config .field-select,
 .check-state-dialog .field-input,
-.check-state-dialog .field-select {
+.check-state-dialog .field-select,
+.elevation-config .field-input,
+.elevation-config .field-select {
   width: 100%;
 }
 
@@ -212,7 +225,8 @@
 .switch-config .position-hint,
 .light-config .position-hint,
 .reset-config .position-hint,
-.check-state-dialog .position-hint {
+.check-state-dialog .position-hint,
+.elevation-config .position-hint {
   font-size: 0.85em;
   color: var(--color-text-dark-secondary);
   font-style: italic;
@@ -227,7 +241,9 @@
 .reset-config .image-section,
 .reset-config .variables-section,
 .check-state-dialog .image-section,
-.check-state-dialog .variables-section {
+.check-state-dialog .variables-section,
+.elevation-config .image-section,
+.elevation-config .variables-section {
   margin-bottom: 0.75rem;
 }
 
@@ -236,7 +252,8 @@
 .switch-config .section-label,
 .light-config .section-label,
 .reset-config .section-label,
-.check-state-dialog .section-label {
+.check-state-dialog .section-label,
+.elevation-config .section-label {
   display: block;
   font-weight: bold;
   margin-bottom: 0.5rem;
@@ -246,7 +263,8 @@
 .switch-config .image-option,
 .light-config .image-option,
 .reset-config .image-option,
-.check-state-dialog .image-option {
+.check-state-dialog .image-option,
+.elevation-config .image-option {
   margin-left: 1rem;
   margin-bottom: 0.25rem;
 }
@@ -255,7 +273,8 @@
 .switch-config .image-option label,
 .light-config .image-option label,
 .reset-config .image-option label,
-.check-state-dialog .image-option label {
+.check-state-dialog .image-option label,
+.elevation-config .image-option label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -266,7 +285,8 @@
 .switch-config .image-option input[type="radio"],
 .light-config .image-option input[type="radio"],
 .reset-config .image-option input[type="radio"],
-.check-state-dialog .image-option input[type="radio"] {
+.check-state-dialog .image-option input[type="radio"],
+.elevation-config .image-option input[type="radio"] {
   cursor: pointer;
 }
 
@@ -274,7 +294,8 @@
 .switch-config .variable-field,
 .light-config .variable-field,
 .reset-config .variable-field,
-.check-state-dialog .variable-field {
+.check-state-dialog .variable-field,
+.elevation-config .variable-field {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -286,7 +307,8 @@
 .switch-config .variable-label,
 .light-config .variable-label,
 .reset-config .variable-label,
-.check-state-dialog .variable-label {
+.check-state-dialog .variable-label,
+.elevation-config .variable-label {
   min-width: 120px;
   font-weight: bold;
 }
@@ -295,7 +317,8 @@
 .switch-config .variable-input,
 .light-config .variable-input,
 .reset-config .variable-input,
-.check-state-dialog .variable-input {
+.check-state-dialog .variable-input,
+.elevation-config .variable-input {
   flex: 1;
 }
 
@@ -304,7 +327,8 @@
 .switch-config .radio-option,
 .light-config .radio-option,
 .reset-config .radio-option,
-.check-state-dialog .radio-option {
+.check-state-dialog .radio-option,
+.elevation-config .radio-option {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -317,6 +341,7 @@
 .light-config .checkbox-label,
 .reset-config .checkbox-label,
 .check-state-dialog .checkbox-label,
+.elevation-config .checkbox-label,
 .token-config-section .checkbox-label {
   display: flex;
   align-items: center;
@@ -330,6 +355,7 @@
 .light-config .checkbox-label input[type="checkbox"],
 .reset-config .checkbox-label input[type="checkbox"],
 .check-state-dialog .checkbox-label input[type="checkbox"],
+.elevation-config .checkbox-label input[type="checkbox"],
 .token-config-section .checkbox-label input[type="checkbox"] {
   cursor: pointer;
 }
@@ -566,6 +592,42 @@
 .tile-manager-container .create-utility-card:hover .card-icon {
   background: rgba(150, 150, 200, 0.3);
   border-color: rgba(150, 150, 200, 0.5);
+}
+
+.tile-manager-container .enhanced-region-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: rgba(100, 149, 237, 0.1);
+  border: 1px solid rgba(100, 149, 237, 0.3);
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+}
+
+.tile-manager-container .enhanced-region-info > i {
+  font-size: 1.25rem;
+  color: rgba(100, 149, 237, 0.8);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tile-manager-container .enhanced-region-info .info-content {
+  flex: 1;
+}
+
+.tile-manager-container .enhanced-region-info .info-content strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+}
+
+.tile-manager-container .enhanced-region-info .info-content p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .tile-manager-container .tile-manager-controls {
@@ -903,94 +965,6 @@
   background-position: center;
 }
 
-/* Font Awesome compatibility classes */
-/* These allow using game-icons with minimal code changes */
-.gi-lever::before,
-.gi-candle-flame::before,
-.gi-clockwise-rotation::before,
-.gi-scroll-unfurled::before,
-.gi-card-pile::before,
-.gi-spikes::before,
-.gi-floor-hatch::before {
-  content: "";
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.gi-floor-hatch::before {
-  background-size: 1.5em;
-}
-
-/* Make toolbar icons bigger */
-#controls .scene-control .control-tool.gi-lever::before,
-#controls .scene-control .control-tool.gi-candle-flame::before,
-#controls .scene-control .control-tool.gi-clockwise-rotation::before,
-#controls .scene-control .control-tool.gi-scroll-unfurled::before,
-#controls .scene-control .control-tool.gi-card-pile::before,
-#controls .scene-control .control-tool.gi-spikes::before {
-  width: 1.6em;
-  height: 1.6em;
-}
-
-/* Floor hatch needs to be even bigger because the artwork is smaller in the viewBox */
-#controls .scene-control .control-tool.gi-floor-hatch::before {
-  width: 3.5em;
-  height: 3.5em;
-}
-
-.gi-lever::before {
-  background-image: url('../icons/lever.svg');
-}
-
-.gi-candle-flame::before {
-  background-image: url('../icons/candle-flame.svg');
-}
-
-.gi-clockwise-rotation::before {
-  background-image: url('../icons/clockwise-rotation.svg');
-}
-
-.gi-scroll-unfurled::before {
-  background-image: url('../icons/scroll-unfurled.svg');
-}
-
-.gi-card-pile::before {
-  background-image: url('../icons/card-pile.svg');
-}
-
-.gi-spikes::before {
-  background-image: url('../icons/spikes.svg');
-}
-
-.gi-floor-hatch::before {
-  background-image: url('../icons/floor-hatch.svg');
-}
-
-/* Specific icons */
-.game-icon-lever {
-  background-image: url('../icons/lever.svg');
-}
-
-.game-icon-candle-flame {
-  background-image: url('../icons/candle-flame.svg');
-}
-
-.game-icon-clockwise-rotation {
-  background-image: url('../icons/clockwise-rotation.svg');
-}
-
-.game-icon-scroll-unfurled {
-  background-image: url('../icons/scroll-unfurled.svg');
-}
-
-.game-icon-card-pile {
-  background-image: url('../icons/card-pile.svg');
-}
-
 /* Icon sizing variants */
 .game-icon-sm {
   width: 0.875em;
@@ -1013,6 +987,97 @@
 }
 
 /* Icons are already white on black background, no filters needed */
+
+/* ========================================
+   Game-icons.net SVG Icon Classes (gi-*)
+   ======================================== */
+
+/* Base styles for all gi- icons (not in toolbar) */
+[class^="gi-"]:not(button), [class*=" gi-"]:not(button) {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Fix gi- icons in toolbar to match Font Awesome */
+button.control[class*="gi-"],
+button.ui-control[class*="gi-"] {
+  background-image: none !important;
+  background: var(--control-bg-color) !important;
+}
+
+button.control[class*="gi-"]::before,
+button.ui-control[class*="gi-"]::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 20px;
+  background: transparent;
+  background-size: 20px 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+button.control.gi-checklist::before,
+button.ui-control.gi-checklist::before {
+  background-image: url('../icons/checklist.svg');
+}
+
+button.control.gi-floor-hatch::before,
+button.ui-control.gi-floor-hatch::before {
+  background-image: url('../icons/floor-hatch.svg');
+}
+
+/* Main card/dialog icons */
+.gi-lever { background-image: url('../icons/lever.svg'); }
+.gi-candle-flame { background-image: url('../icons/candle-flame.svg'); }
+.gi-clockwise-rotation { background-image: url('../icons/clockwise-rotation.svg'); }
+.gi-scroll-unfurled { background-image: url('../icons/scroll-unfurled.svg'); }
+.gi-card-pickup { background-image: url('../icons/card-pickup.svg'); }
+.gi-floor-hatch { background-image: url('../icons/floor-hatch.svg'); }
+.gi-mountaintop { background-image: url('../icons/mountaintop.svg'); }
+.gi-spikes { background-image: url('../icons/spikes.svg'); }
+.gi-portal { background-image: url('../icons/portal.svg'); }
+.gi-diagram { background-image: url('../icons/diagram.svg'); }
+
+/* Utility icons */
+.gi-check-mark { background-image: url('../icons/check-mark.svg'); }
+.gi-cancel { background-image: url('../icons/cancel.svg'); }
+.gi-confirmed { background-image: url('../icons/confirmed.svg'); }
+.gi-pencil { background-image: url('../icons/pencil.svg'); }
+.gi-trash-can { background-image: url('../icons/trash-can.svg'); }
+.gi-convergence-target { background-image: url('../icons/convergence-target.svg'); }
+.gi-info { background-image: url('../icons/info.svg'); }
+.gi-hazard-sign { background-image: url('../icons/hazard-sign.svg'); }
+.gi-pause-button { background-image: url('../icons/pause-button.svg'); }
+.gi-padlock { background-image: url('../icons/padlock.svg'); }
+.gi-look-at { background-image: url('../icons/look-at.svg'); }
+.gi-sight-disabled { background-image: url('../icons/sight-disabled.svg'); }
+.gi-cube { background-image: url('../icons/cube.svg'); }
+.gi-jigsaw-piece { background-image: url('../icons/jigsaw-piece.svg'); }
+.gi-entry-door { background-image: url('../icons/entry-door.svg'); }
+.gi-lightning-bolt { background-image: url('../icons/lightning-bolt.svg'); }
+.gi-code-fork { background-image: url('../icons/code-fork.svg'); }
+.gi-plain-circle { background-image: url('../icons/plain-circle.svg'); }
+.gi-square { background-image: url('../icons/square.svg'); }
+.gi-upgrade { background-image: url('../icons/upgrade.svg'); }
+.gi-load { background-image: url('../icons/load.svg'); }
+.gi-save { background-image: url('../icons/save.svg'); }
+.gi-help { background-image: url('../icons/help.svg'); }
+.gi-chess-queen { background-image: url('../icons/chess-queen.svg'); }
+.gi-expand { background-image: url('../icons/expand.svg'); }
+.gi-beetle { background-image: url('../icons/beetle.svg'); }
+.gi-broken-trap { background-image: url('../icons/broken-trap.svg'); }
+.gi-mesh-ball { background-image: url('../icons/mesh-ball.svg'); }
+.gi-hearts { background-image: url('../icons/hearts.svg'); }
+.gi-skull-crossed-bones { background-image: url('../icons/skull-crossed-bones.svg'); }
+.gi-swap-bag { background-image: url('../icons/swap-bag.svg'); }
+.gi-bullet-impacts { background-image: url('../icons/bullet-impacts.svg'); }
+.gi-checklist { background-image: url('../icons/checklist.svg'); }
 
 /* Icon in buttons */
 button .game-icon,
@@ -2221,6 +2286,104 @@ textarea:valid {
   line-height: 1.4;
 }
 
+/* ====================================
+   Toggle Group Styling (Tile vs Region)
+   ==================================== */
+
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.toggle-option:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--color-border-light-primary);
+}
+
+.toggle-option.active {
+  background: rgba(100, 150, 200, 0.3);
+  border-color: rgba(100, 150, 200, 0.6);
+  color: var(--color-text-light-heading);
+}
+
+.toggle-option input[type='radio'] {
+  display: none;
+}
+
+.toggle-option i {
+  font-size: 1.1em;
+}
+
+/* Creation Type Group */
+.creation-type-group .toggle-group {
+  flex-wrap: wrap;
+}
+
+/* Behavior Mode Group */
+.behavior-mode-group {
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border-light-tertiary);
+}
+
+.behavior-mode-group .toggle-group {
+  flex-wrap: wrap;
+}
+
+/* GameIcons mesh-ball icon for regions */
+.gi-mesh-ball,
+i.gi-mesh-ball,
+.gi.gi-mesh-ball {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url('../icons/mesh-ball.svg');
+  vertical-align: middle;
+}
+
+/* Region thumbnail icon styling */
+.region-thumbnail i {
+  font-size: 24px;
+  color: #fff;
+}
+
+/* Region thumbnail container */
+.region-thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+/* Item type icon in tile name (to the right of name) */
+.item-type-icon {
+  margin-left: 0.5rem;
+  color: #fff;
+  opacity: 0.8;
+}
+
+/* Region badge styling */
+.status-badge.region-badge {
+  background: rgba(68, 136, 255, 0.3);
+  border: 1px solid rgba(68, 136, 255, 0.6);
+}
+
 /* Triggered Image Field Styling */
 .visibility-section .triggered-image-group {
   margin-top: 1rem;
@@ -2379,4 +2542,59 @@ textarea:valid {
 
 .trap-todo-list.all-complete .todo-header i {
   color: #4caf50;
+}
+
+/* Tag Select Component - for multi-value selections like trigger events and skills */
+.tag-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag-select-container .tag-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 24px;
+}
+
+.tag-select-container .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--color-cool-5);
+  border: 1px solid var(--color-border-light-tertiary);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--color-text-light-primary);
+}
+
+.tag-select-container .tag .tag-remove {
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.tag-select-container .tag .tag-remove:hover {
+  opacity: 1;
+  color: #ff6b6b;
+}
+
+.tag-select-container .tag-select-dropdown {
+  flex: 1;
+}
+
+/* Disabled state for tag-select (mutual exclusivity between save abilities and skills) */
+.tag-select-container.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tag-select-container.disabled .tag-select-dropdown {
+  cursor: not-allowed;
+}
+
+.tag-select-container.disabled .tag .tag-remove {
+  display: none;
 }

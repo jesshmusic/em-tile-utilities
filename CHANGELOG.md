@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-01-08
+
+This major release introduces **FoundryVTT v13 Region support** as an alternative to Monk's Active Tiles, along with a complete visual overhaul using game-icons.net SVG icons.
+
+### Highlights
+
+- **Region Support**: Create traps, teleports, and elevation changes using native FoundryVTT v13 Regions instead of Monk's Active Tiles
+- **New Elevation Dialog**: Automatically change token elevation when entering/exiting regions
+- **Icon Overhaul**: All Font Awesome icons replaced with beautiful game-icons.net SVG icons
+- **Improved Placement**: Ghost image previews now work for both tiles and regions
+
+### Added
+
+- **Region Creation Mode**: All tile dialogs now offer a "Create as Region" toggle to use FoundryVTT v13 Regions instead of Monk's Active Tiles
+- **Trap Regions**: Create trap regions using the Enhanced Region Behaviors module for damage, saving throws, and status effects
+- **Teleport Regions**: Create teleport regions using native FoundryVTT teleport behavior with optional return teleports
+- **Elevation Region Dialog**: New dialog for creating regions that automatically adjust token elevation on enter/exit (requires Enhanced Region Behaviors module)
+- **Ghost Image Preview for Regions**: Drag-to-place now shows colored rectangle preview when creating regions
+- **Cross-Scene Teleport Regions**: Full support for teleporting tokens between scenes using regions
+- **Sound Behaviors for Regions**: Play sounds when tokens enter teleport or trap regions
+
+### Changed
+
+- **Complete Icon Overhaul**: Replaced all Font Awesome icons with game-icons.net SVG icons throughout the module
+  - Tile Manager toolbar and buttons
+  - All dialog headers and action buttons
+  - Form controls and file pickers
+- **Improved Dialog Positioning**: Dialogs now center on screen properly
+- **Canvas Layer Switching**: Automatically switch to the appropriate canvas layer (tiles or regions) when placing
+
+### Fixed
+
+- Race condition in scene switching now uses proper `canvasReady` hooks instead of timeouts
+- Checkbox changes now use targeted DOM updates instead of full dialog re-renders
+- String values in generated macro scripts are now properly escaped to prevent injection
+- Improved error messages when Enhanced Region Behaviors module is missing
+- Consistent snap mode (TOP_LEFT_VERTEX) across all placement operations
+- Potential memory leak fixed by properly unloading textures on error
+
+### Technical
+
+- Added `Hooks.off()` to TypeScript type definitions
+- New region behavior builders in `src/utils/builders/region-behavior-builder.ts`
+- New region creators in `src/utils/creators/` for trap, teleport, and elevation regions
+- Comprehensive test coverage for all new region functionality (827 tests total)
+
+### Dependencies
+
+- **Required**: FoundryVTT v13+, Monk's Active Tiles v11.0+
+- **Optional**: Enhanced Region Behaviors (required for trap and elevation regions)
+
 ## [1.19.0] - 2026-01-05
 
 ### Added

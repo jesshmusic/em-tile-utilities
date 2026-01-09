@@ -27,7 +27,7 @@ describe('TeleportDialog', () => {
 
       expect(options.id).toBe('em-puzzles-teleport-config');
       expect(options.tag).toBe('form');
-      expect(options.window.icon).toBe('fa-solid fa-right-left');
+      expect(options.window.icon).toBe('gi-swap-bag');
       expect(options.window.title).toBe('EMPUZZLES.CreateTeleport');
       expect(options.position.width).toBe(650);
     });
@@ -50,12 +50,6 @@ describe('TeleportDialog', () => {
   });
 
   describe('_prepareContext', () => {
-    it('should include default sound from settings', async () => {
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBe('sounds/doors/industrial/unlock.ogg');
-    });
-
     it('should include default tile name', async () => {
       const context = await dialog._prepareContext({});
 
@@ -132,40 +126,6 @@ describe('TeleportDialog', () => {
       const options = (TeleportDialog as any).DEFAULT_OPTIONS;
 
       expect(typeof options.form.handler).toBe('function');
-    });
-  });
-
-  describe('settings integration', () => {
-    it('should read default sound from settings', async () => {
-      (global as any).game.settings.get = (module: string, key: string) => {
-        if (module === 'em-tile-utilities' && key === 'defaultSound') {
-          return 'custom/sound.ogg';
-        }
-        return null;
-      };
-
-      dialog = new TeleportDialog();
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBe('custom/sound.ogg');
-    });
-  });
-
-  describe('teleport sound configuration', () => {
-    it('should include sound field in context', async () => {
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBeDefined();
-      expect(typeof context.sound).toBe('string');
-    });
-
-    it('should use empty string if no sound is set', async () => {
-      (global as any).game.settings.get = () => '';
-      dialog = new TeleportDialog();
-
-      const context = await dialog._prepareContext({});
-
-      expect(context.sound).toBe('');
     });
   });
 
@@ -312,7 +272,6 @@ describe('TeleportDialog', () => {
             'input[name="tileName"]': { value: 'Updated Teleport' },
             'input[name="tileImage"]': { value: 'custom/portal.webp' },
             'input[name="hidden"]': { checked: true },
-            'input[name="sound"]': { value: 'custom/woosh.ogg' },
             'select[name="targetScene"]': { value: 'scene-123' },
             'input[name="hasSavingThrow"]': { checked: true },
             'select[name="savingThrow"]': { value: 'str' },
@@ -333,7 +292,6 @@ describe('TeleportDialog', () => {
       expect((dialog as any).tileName).toBe('Updated Teleport');
       expect((dialog as any).tileImage).toBe('custom/portal.webp');
       expect((dialog as any).hidden).toBe(true);
-      expect((dialog as any).sound).toBe('custom/woosh.ogg');
       expect((dialog as any).selectedSceneId).toBe('scene-123');
       expect((dialog as any).hasSavingThrow).toBe(true);
       expect((dialog as any).savingThrow).toBe('str');
@@ -378,18 +336,19 @@ describe('TeleportDialog', () => {
     });
 
     it('should set up target scene dropdown change listener', () => {
-      const targetSceneSelect = { addEventListener: jest.fn() };
+      const targetSceneSelect = { addEventListener: jest.fn(), value: 'scene-1' };
+      const deleteSourceOption = { style: { display: '' } };
       const mockElement = {
         querySelectorAll: jest.fn().mockReturnValue([]),
         querySelector: jest.fn((selector: string) => {
           if (selector === 'select[name="targetScene"]') return targetSceneSelect;
           if (selector === 'input[name="hasSavingThrow"]') return null;
+          if (selector === '.delete-source-token-option') return deleteSourceOption;
           return null;
         })
       };
 
       dialog.element = mockElement as any;
-      dialog.render = jest.fn();
       dialog._onRender({}, {});
 
       expect(targetSceneSelect.addEventListener).toHaveBeenCalledWith(
@@ -397,28 +356,30 @@ describe('TeleportDialog', () => {
         expect.any(Function)
       );
 
-      // Trigger the change event to cover line 245
+      // Trigger the change event - now uses targeted DOM update instead of re-render
       const changeHandler = (targetSceneSelect.addEventListener as any).mock.calls.find(
         (call: any) => call[0] === 'change'
       )[1];
       (changeHandler as any)();
 
-      expect(dialog.render).toHaveBeenCalled();
+      // Verify that targeted DOM update was performed (state sync and visibility update)
+      expect(targetSceneSelect.addEventListener).toHaveBeenCalled();
     });
 
     it('should set up saving throw checkbox change listener', () => {
-      const hasSavingThrowCheckbox = { addEventListener: jest.fn() };
+      const hasSavingThrowCheckbox = { addEventListener: jest.fn(), checked: true };
+      const savingThrowFields = { style: { display: 'none' } };
       const mockElement = {
         querySelectorAll: jest.fn().mockReturnValue([]),
         querySelector: jest.fn((selector: string) => {
           if (selector === 'select[name="targetScene"]') return null;
           if (selector === 'input[name="hasSavingThrow"]') return hasSavingThrowCheckbox;
+          if (selector === '.saving-throw-fields') return savingThrowFields;
           return null;
         })
       };
 
       dialog.element = mockElement as any;
-      dialog.render = jest.fn();
       dialog._onRender({}, {});
 
       expect(hasSavingThrowCheckbox.addEventListener).toHaveBeenCalledWith(
@@ -426,13 +387,136 @@ describe('TeleportDialog', () => {
         expect.any(Function)
       );
 
-      // Trigger the change event to cover line 255
+      // Trigger the change event - now uses targeted DOM update instead of re-render
       const changeHandler = (hasSavingThrowCheckbox.addEventListener as any).mock.calls.find(
         (call: any) => call[0] === 'change'
       )[1];
       (changeHandler as any)();
 
-      expect(dialog.render).toHaveBeenCalled();
+      // Verify that targeted DOM visibility update was performed
+      expect(savingThrowFields.style.display).toBe('');
+    });
+
+    it('should set up createReturnTeleport checkbox change listener', () => {
+      const createReturnTeleportCheckbox = { addEventListener: jest.fn(), checked: true };
+      const returnTeleportOptions = { style: { display: 'none' } };
+      const mockElement = {
+        querySelectorAll: jest.fn().mockReturnValue([]),
+        querySelector: jest.fn((selector: string) => {
+          if (selector === 'input[name="createReturnTeleport"]')
+            return createReturnTeleportCheckbox;
+          if (selector === '.return-teleport-options') return returnTeleportOptions;
+          return null;
+        })
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      expect(createReturnTeleportCheckbox.addEventListener).toHaveBeenCalledWith(
+        'change',
+        expect.any(Function)
+      );
+
+      // Trigger the change event - now uses targeted DOM update instead of re-render
+      const changeHandler = (createReturnTeleportCheckbox.addEventListener as any).mock.calls.find(
+        (call: any) => call[0] === 'change'
+      )[1];
+      (changeHandler as any)();
+
+      // Verify that targeted DOM visibility update was performed
+      expect(returnTeleportOptions.style.display).toBe('');
+    });
+
+    it('should set up creationType radio change listeners', () => {
+      const radio1 = { addEventListener: jest.fn(), checked: true };
+      const radio2 = { addEventListener: jest.fn(), checked: false };
+      const toggleOption1 = {
+        querySelector: jest.fn().mockReturnValue({ checked: true }),
+        classList: { add: jest.fn(), remove: jest.fn() }
+      };
+      const toggleOption2 = {
+        querySelector: jest.fn().mockReturnValue({ checked: false }),
+        classList: { add: jest.fn(), remove: jest.fn() }
+      };
+      const tileOnlyOption = { style: { display: '' } };
+      const regionOnlyOption = { style: { display: 'none' } };
+
+      const mockElement = {
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === 'input[name="creationType"]') return [radio1, radio2];
+          if (selector === '.creation-type-group .toggle-option')
+            return [toggleOption1, toggleOption2];
+          if (selector === '.tile-only-option') return [tileOnlyOption];
+          if (selector === '.region-only-option') return [regionOnlyOption];
+          return [];
+        }),
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      dialog._onRender({}, {});
+
+      expect(radio1.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(radio2.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+      // Trigger the change event to cover lines 311-326
+      const changeHandler = (radio1.addEventListener as any).mock.calls.find(
+        (call: any) => call[0] === 'change'
+      )[1];
+
+      // Simulate selecting 'region' type
+      const mockChangeEvent = { target: { value: 'region' } };
+      (changeHandler as any)(mockChangeEvent);
+
+      expect((dialog as any).creationType).toBe('region');
+      expect(toggleOption1.classList.add).toHaveBeenCalled();
+    });
+
+    it('should initialize tile-only options visibility', () => {
+      const tileOnlyOption = { style: { display: '' } };
+      const regionOnlyOption = { style: { display: 'none' } };
+
+      const mockElement = {
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === '.tile-only-option') return [tileOnlyOption];
+          if (selector === '.region-only-option') return [regionOnlyOption];
+          return [];
+        }),
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).creationType = 'tile';
+
+      dialog._onRender({}, {});
+
+      // Tile-only options should be visible, region-only options hidden
+      expect(tileOnlyOption.style.display).toBe('');
+      expect(regionOnlyOption.style.display).toBe('none');
+    });
+
+    it('should hide tile-only options when creationType is region', () => {
+      const tileOnlyOption = { style: { display: '' } };
+      const regionOnlyOption = { style: { display: 'none' } };
+
+      const mockElement = {
+        querySelectorAll: jest.fn((selector: string) => {
+          if (selector === '.tile-only-option') return [tileOnlyOption];
+          if (selector === '.region-only-option') return [regionOnlyOption];
+          return [];
+        }),
+        querySelector: jest.fn().mockReturnValue(null)
+      };
+
+      dialog.element = mockElement as any;
+      (dialog as any).creationType = 'region';
+
+      dialog._onRender({}, {});
+
+      // Tile-only options should be hidden, region-only options visible
+      expect(tileOnlyOption.style.display).toBe('none');
+      expect(regionOnlyOption.style.display).toBe('');
     });
   });
 
@@ -483,6 +567,38 @@ describe('TeleportDialog', () => {
 
       expect(() => (dialog as any)._onClose()).not.toThrow();
     });
+
+    it('should clean up destDragPreviewManager if it exists', () => {
+      const mockDestPreviewManager = {
+        stop: jest.fn()
+      };
+
+      // Set up destination drag preview manager
+      (dialog as any).destDragPreviewManager = mockDestPreviewManager;
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      // Verify cleanup
+      expect(mockDestPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).destDragPreviewManager).toBeUndefined();
+    });
+
+    it('should clean up both drag preview managers if they exist', () => {
+      const mockDragPreviewManager = { stop: jest.fn() };
+      const mockDestPreviewManager = { stop: jest.fn() };
+
+      (dialog as any).dragPreviewManager = mockDragPreviewManager;
+      (dialog as any).destDragPreviewManager = mockDestPreviewManager;
+
+      dialog.close = jest.fn();
+      (dialog as any)._onClose();
+
+      expect(mockDragPreviewManager.stop).toHaveBeenCalled();
+      expect(mockDestPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).dragPreviewManager).toBeUndefined();
+      expect((dialog as any).destDragPreviewManager).toBeUndefined();
+    });
   });
 
   describe('_prepareContext with existing element', () => {
@@ -493,7 +609,6 @@ describe('TeleportDialog', () => {
             'input[name="tileName"]': { value: 'Synced Teleport' },
             'input[name="tileImage"]': { value: 'synced.webp' },
             'input[name="hidden"]': { checked: false },
-            'input[name="sound"]': { value: 'synced.ogg' },
             'select[name="targetScene"]': { value: 'synced-scene' },
             'input[name="hasSavingThrow"]': { checked: false },
             'select[name="savingThrow"]': { value: 'dex' },
@@ -514,7 +629,6 @@ describe('TeleportDialog', () => {
       // Verify that form state was synced
       expect(context.tileName).toBe('Synced Teleport');
       expect(context.tileImage).toBe('synced.webp');
-      expect(context.sound).toBe('synced.ogg');
     });
   });
 

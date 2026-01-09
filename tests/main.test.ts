@@ -250,61 +250,65 @@ describe('Main Module', () => {
       expect(typeof toolbarCallback).toBe('function');
     });
 
-    it('should add tile manager tool to tiles toolbar', () => {
-      const mockControls = { tiles: { tools: {} } };
+    it('should add module as main toolbar control', () => {
+      const mockControls: any = {};
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager']).toBeDefined();
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].title).toBe(
-        'EMPUZZLES.TileManager'
-      );
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].icon).toBe('gi-floor-hatch');
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].order).toBe(1003);
+      expect(mockControls['em-tile-utilities']).toBeDefined();
+      expect(mockControls['em-tile-utilities'].name).toBe('em-tile-utilities');
+      expect(mockControls['em-tile-utilities'].title).toBe('EMPUZZLES.ModuleTitle');
+      expect(mockControls['em-tile-utilities'].icon).toBe('gi-floor-hatch');
+      expect(mockControls['em-tile-utilities'].visible).toBe(true);
+      expect(mockControls['em-tile-utilities'].order).toBe(7);
+    });
+
+    it('should add tile manager tool to module toolbar', () => {
+      const mockControls: any = {};
+
+      if (toolbarCallback) {
+        toolbarCallback(mockControls);
+      }
+
+      const tools = mockControls['em-tile-utilities'].tools;
+      expect(tools['tile-manager']).toBeDefined();
+      expect(tools['tile-manager'].name).toBe('tile-manager');
+      expect(tools['tile-manager'].title).toBe('EMPUZZLES.TileManager');
+      expect(tools['tile-manager'].icon).toBe('gi-checklist');
     });
 
     it('should add tile manager tool as button', () => {
-      const mockControls = { tiles: { tools: {} } };
+      const mockControls: any = {};
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(mockControls.tiles.tools['em-puzzles-tile-manager'].button).toBe(true);
+      expect(mockControls['em-tile-utilities'].tools['tile-manager'].button).toBe(true);
     });
 
     it('should assign onClick handler to tile manager tool', () => {
-      const mockControls = { tiles: { tools: {} } };
+      const mockControls: any = {};
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(typeof mockControls.tiles.tools['em-puzzles-tile-manager'].onClick).toBe('function');
+      expect(typeof mockControls['em-tile-utilities'].tools['tile-manager'].onClick).toBe(
+        'function'
+      );
     });
 
-    it('should handle missing tiles control gracefully', () => {
-      const controlsWithoutTiles = {};
+    it('should set activeTool to tile-manager', () => {
+      const mockControls: any = {};
 
-      expect(() => {
-        if (toolbarCallback) {
-          toolbarCallback(controlsWithoutTiles);
-        }
-      }).not.toThrow();
-    });
+      if (toolbarCallback) {
+        toolbarCallback(mockControls);
+      }
 
-    it('should handle missing tools object gracefully', () => {
-      const controlsWithoutTools = {
-        tiles: {}
-      };
-
-      expect(() => {
-        if (toolbarCallback) {
-          toolbarCallback(controlsWithoutTools);
-        }
-      }).not.toThrow();
+      expect(mockControls['em-tile-utilities'].activeTool).toBe('tile-manager');
     });
   });
 });

@@ -729,6 +729,233 @@ describe('tile-helpers', () => {
       const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
       expect(savingThrowAction.data.flavor).toBe(trapConfig.flavorText);
     });
+
+    it('should reveal hidden trap when revealOnTrigger is true', async () => {
+      trapConfig.hidden = true;
+      trapConfig.revealOnTrigger = true;
+      trapConfig.hideTrapOnTrigger = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const showHideAction = actions.find((a: any) => a.action === 'showhide');
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('show');
+    });
+
+    it('should pause game when pauseGameOnTrigger is true', async () => {
+      trapConfig.pauseGameOnTrigger = true;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const pauseAction = actions.find((a: any) => a.action === 'pause');
+      expect(pauseAction).toBeDefined();
+      expect(pauseAction.data.pause).toBe(true);
+    });
+
+    it('should handle PLAYER_TOKENS target type', async () => {
+      trapConfig.targetType = TrapTargetType.PLAYER_TOKENS;
+      trapConfig.hasSavingThrow = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const hurtHealAction = actions.find((a: any) => a.action === 'hurtheal');
+      expect(hurtHealAction).toBeDefined();
+      expect(hurtHealAction.data.entity.id).toBe('players');
+    });
+
+    it('should handle WITHIN_TILE target type', async () => {
+      trapConfig.targetType = TrapTargetType.WITHIN_TILE;
+      trapConfig.hasSavingThrow = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const hurtHealAction = actions.find((a: any) => a.action === 'hurtheal');
+      expect(hurtHealAction).toBeDefined();
+      expect(hurtHealAction.data.entity.id).toBe('within');
+    });
+
+    it('should handle half damage on success with saving throw', async () => {
+      trapConfig.halfDamageOnSuccess = true;
+      trapConfig.hasSavingThrow = true;
+      trapConfig.damageOnFail = '2d6';
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have filterrequest action for pass/fail branching
+      const filterAction = actions.find((a: any) => a.action === 'monks-tokenbar.filterrequest');
+      expect(filterAction).toBeDefined();
+
+      // Should have anchors for success and fail
+      const anchors = actions.filter((a: any) => a.action === 'anchor');
+      expect(anchors.length).toBeGreaterThanOrEqual(2);
+
+      // Should have multiple hurtheal actions (full and half damage)
+      const hurtHealActions = actions.filter((a: any) => a.action === 'hurtheal');
+      expect(hurtHealActions.length).toBe(2);
+    });
+
+    it('should create heal action for HEAL result type', async () => {
+      trapConfig.resultType = TrapResultType.HEAL;
+      trapConfig.healingAmount = '2d8';
+      trapConfig.hasSavingThrow = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const hurtHealAction = actions.find((a: any) => a.action === 'hurtheal');
+      expect(hurtHealAction).toBeDefined();
+      expect(hurtHealAction.data.value).toBe('[[2d8]]');
+    });
+
+    it('should create teleport action for TELEPORT result type', async () => {
+      trapConfig.resultType = TrapResultType.TELEPORT;
+      trapConfig.teleportX = 300;
+      trapConfig.teleportY = 400;
+      trapConfig.hasSavingThrow = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const teleportAction = actions.find((a: any) => a.action === 'teleport');
+      expect(teleportAction).toBeDefined();
+      expect(teleportAction.data.location.x).toBe(300);
+      expect(teleportAction.data.location.y).toBe(400);
+    });
+
+    it('should create teleport action with saving throw', async () => {
+      trapConfig.resultType = TrapResultType.TELEPORT;
+      trapConfig.teleportX = 300;
+      trapConfig.teleportY = 400;
+      trapConfig.hasSavingThrow = true;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have saving throw action
+      const savingThrowAction = actions.find((a: any) => a.action === 'monks-tokenbar.requestroll');
+      expect(savingThrowAction).toBeDefined();
+
+      // Teleport should target 'previous' (those who failed the save)
+      const teleportAction = actions.find((a: any) => a.action === 'teleport');
+      expect(teleportAction.data.entity.id).toBe('previous');
+    });
+
+    it('should add deactivate action when deactivateAfterTrigger is true', async () => {
+      trapConfig.deactivateAfterTrigger = true;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const deactivateAction = actions.find(
+        (a: any) => a.action === 'activate' && a.data.activate === 'deactivate'
+      );
+      expect(deactivateAction).toBeDefined();
+    });
+
+    it('should handle additional effects', async () => {
+      trapConfig.additionalEffects = ['effect-uuid-1', 'effect-uuid-2'];
+      trapConfig.additionalEffectsAction = 'add';
+      trapConfig.hasSavingThrow = false;
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const applyEffectActions = actions.filter((a: any) => a.action === 'activeeffect');
+      expect(applyEffectActions.length).toBe(2);
+      expect(applyEffectActions[0].data.effectid).toBe('effect-uuid-1');
+      expect(applyEffectActions[1].data.effectid).toBe('effect-uuid-2');
+    });
+
+    it('should handle activating trap with tile actions', async () => {
+      trapConfig.tileActions = [
+        { tileId: 'tile-1', actionType: 'activate', mode: 'toggle' },
+        { tileId: 'tile-2', actionType: 'showhide', mode: 'show' }
+      ];
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const activateAction = actions.find(
+        (a: any) => a.action === 'activate' && a.data.entity.id.includes('tile-1')
+      );
+      expect(activateAction).toBeDefined();
+
+      const showHideAction = actions.find(
+        (a: any) => a.action === 'showhide' && a.data.entity.id.includes('tile-2')
+      );
+      expect(showHideAction).toBeDefined();
+      expect(showHideAction.data.hidden).toBe('show');
+    });
+
+    it('should handle moveto tile action', async () => {
+      trapConfig.tileActions = [{ tileId: 'tile-1', actionType: 'moveto', x: 200, y: 300 }];
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const moveAction = actions.find((a: any) => a.action === 'movetoken');
+      expect(moveAction).toBeDefined();
+      expect(moveAction.data.location.x).toBe(200);
+      expect(moveAction.data.location.y).toBe(300);
+    });
+
+    it('should handle wall actions', async () => {
+      trapConfig.tileActions = [{ tileId: 'tile-1', actionType: 'activate', mode: 'toggle' }];
+      trapConfig.wallActions = [
+        { wallId: 'wall-1', state: 'open' },
+        { wallId: 'wall-2', state: 'locked' }
+      ];
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      const doorActions = actions.filter((a: any) => a.action === 'changedoor');
+      expect(doorActions.length).toBe(2);
+    });
   });
 
   describe('createTeleportTile', () => {
@@ -1004,6 +1231,218 @@ describe('tile-helpers', () => {
       const tileData = callArgs[1][0];
 
       expect(tileData.flags['monks-active-tiles'].name).toBe('Door Logic');
+    });
+
+    it('should create branches with conditions and actions', async () => {
+      const config = {
+        name: 'Branch Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [
+          {
+            tileId: 'tile-abc',
+            tileName: 'Test Tile',
+            variables: [{ variableName: 'myVar', currentValue: 'on' }]
+          }
+        ],
+        branches: [
+          {
+            name: 'Branch One',
+            conditions: [{ variableName: 'myVar', operator: 'eq', value: 'on' }],
+            actions: [
+              {
+                category: 'tile' as const,
+                targetTileId: 'target-tile-1',
+                targetTileName: 'Target Tile',
+                activateMode: 'activate',
+                triggerTile: true,
+                showHideMode: 'show'
+              }
+            ]
+          }
+        ]
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config as any, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have anchor for branch
+      const anchorAction = actions.find((a: any) => a.action === 'anchor');
+      expect(anchorAction).toBeDefined();
+
+      // Should have checkvariable action
+      const checkVarAction = actions.find((a: any) => a.action === 'checkvariable');
+      expect(checkVarAction).toBeDefined();
+      expect(checkVarAction.data.name).toBe('myVar');
+
+      // Should have activate action
+      const activateAction = actions.find((a: any) => a.action === 'activate');
+      expect(activateAction).toBeDefined();
+
+      // Should have trigger action
+      const triggerAction = actions.find((a: any) => a.action === 'trigger');
+      expect(triggerAction).toBeDefined();
+
+      // Should have showhide action
+      const showHideAction = actions.find((a: any) => a.action === 'showhide');
+      expect(showHideAction).toBeDefined();
+
+      // Should have stop action after branch
+      const stopAction = actions.find((a: any) => a.action === 'stop');
+      expect(stopAction).toBeDefined();
+    });
+
+    it('should create door actions', async () => {
+      const config = {
+        name: 'Door Branch Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: [
+          {
+            name: 'Open Door',
+            conditions: [],
+            actions: [
+              {
+                category: 'door' as const,
+                wallId: 'wall-123',
+                wallName: 'Main Door',
+                doorState: 'open'
+              }
+            ]
+          }
+        ]
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config as any, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have changedoor action
+      const doorAction = actions.find((a: any) => a.action === 'changedoor');
+      expect(doorAction).toBeDefined();
+      expect(doorAction.data.state).toBe('OPEN');
+    });
+
+    it('should add end anchor and no-match message', async () => {
+      const config = {
+        name: 'End Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: [
+          {
+            name: 'Single Branch',
+            conditions: [],
+            actions: []
+          }
+        ]
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have end anchor
+      const endAnchor = actions.find((a: any) => a.action === 'anchor' && a.data.tag === 'end');
+      expect(endAnchor).toBeDefined();
+
+      // Should have "no branch matched" message
+      const chatMessages = actions.filter((a: any) => a.action === 'chatmessage');
+      const noMatchMsg = chatMessages.find((a: any) =>
+        a.data.text.includes('No branch conditions matched')
+      );
+      expect(noMatchMsg).toBeDefined();
+    });
+
+    it('should skip tile actions when activateMode is nothing', async () => {
+      const config = {
+        name: 'Skip Actions Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: [
+          {
+            name: 'Skip Branch',
+            conditions: [],
+            actions: [
+              {
+                category: 'tile' as const,
+                targetTileId: 'target-tile-1',
+                targetTileName: 'Target Tile',
+                activateMode: 'nothing',
+                triggerTile: false,
+                showHideMode: 'nothing'
+              }
+            ]
+          }
+        ]
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config as any, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should NOT have activate action
+      const activateAction = actions.find((a: any) => a.action === 'activate');
+      expect(activateAction).toBeUndefined();
+
+      // Should NOT have showhide action
+      const showHideAction = actions.find((a: any) => a.action === 'showhide');
+      expect(showHideAction).toBeUndefined();
+    });
+
+    it('should handle multiple branches with next branch anchors', async () => {
+      const config = {
+        name: 'Multi Branch Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [
+          {
+            tileId: 'tile-1',
+            tileName: 'Switch 1',
+            variables: [{ variableName: 'switch1', currentValue: 'on' }]
+          }
+        ],
+        branches: [
+          {
+            name: 'First Branch',
+            conditions: [{ variableName: 'switch1', operator: 'eq', value: 'on' }],
+            actions: []
+          },
+          {
+            name: 'Second Branch',
+            conditions: [{ variableName: 'switch1', operator: 'eq', value: 'off' }],
+            actions: []
+          }
+        ]
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config as any, 200, 200);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const tileData = callArgs[1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      // Should have anchors for both branches
+      const anchors = actions.filter((a: any) => a.action === 'anchor');
+      expect(anchors.length).toBeGreaterThanOrEqual(3); // first_branch, second_branch, end
+
+      // First branch condition should fail to second branch anchor
+      const firstCheck = actions.find(
+        (a: any) => a.action === 'checkvariable' && a.data.name === 'switch1'
+      );
+      expect(firstCheck).toBeDefined();
+      expect(firstCheck.data.fail).toBe('second_branch');
     });
   });
 

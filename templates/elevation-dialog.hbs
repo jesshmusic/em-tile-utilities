@@ -1,0 +1,34 @@
+{{! Elevation Region Configuration }}
+<fieldset class="basic-info-section">
+  <legend>
+    {{localize "EMPUZZLES.BasicInfo"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="regionName">{{localize "EMPUZZLES.RegionName"}}</label>
+    <input type="text" name="regionName" value="{{regionName}}" />
+    <p class="hint">{{localize "EMPUZZLES.RegionNameHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Elevation Settings Section }}
+<fieldset class="elevation-settings-section">
+  <legend>
+    {{localize "EMPUZZLES.ElevationSettings"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="elevationOnEnter">{{localize "EMPUZZLES.ElevationOnEnter"}}</label>
+    <input type="number" name="elevationOnEnter" value="{{elevationOnEnter}}" step="1" />
+    <p class="hint">{{localize "EMPUZZLES.ElevationOnEnterHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="elevationOnExit">{{localize "EMPUZZLES.ElevationOnExit"}}</label>
+    <input type="number" name="elevationOnExit" value="{{elevationOnExit}}" step="1" />
+    <p class="hint">{{localize "EMPUZZLES.ElevationOnExitHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Custom Tags Section }}
+{{> partials/custom-tags-section customTags=customTags}}

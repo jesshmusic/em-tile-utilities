@@ -1,6 +1,8 @@
 /**
  * Centralized dialog position configurations
  * All dialog window sizes and positions defined in one place
+ * Dialogs are centered on screen by default (no left/top specified)
+ * Tile Manager stays anchored to the left side
  */
 
 /**
@@ -9,23 +11,22 @@
 export interface DialogPosition {
   width: number | 'auto';
   height: number | 'auto';
-  left: number;
-  top: number;
+  left?: number;
+  top?: number;
 }
 
 /**
  * Default dialog position - inherited by all dialogs unless overridden
+ * No left/top = centered on screen
  */
 const DEFAULT_DIALOG_POSITION: DialogPosition = {
   width: 650,
-  height: 750,
-  left: 100,
-  top: 100
+  height: 750
 };
 
 /**
  * Dialog-specific position configurations
- * Each dialog inherits from DEFAULT_DIALOG_POSITION and overrides left/top for cascading effect
+ * Dialogs are centered on screen by default
  */
 export const DialogPositions: Record<string, DialogPosition> = {
   /**
@@ -40,9 +41,7 @@ export const DialogPositions: Record<string, DialogPosition> = {
    * Light tile dialog
    */
   LIGHT: {
-    ...DEFAULT_DIALOG_POSITION,
-    left: 120,
-    top: 120
+    ...DEFAULT_DIALOG_POSITION
   },
 
   /**
@@ -50,8 +49,6 @@ export const DialogPositions: Record<string, DialogPosition> = {
    */
   TRAP: {
     ...DEFAULT_DIALOG_POSITION,
-    left: 140,
-    top: 140,
     height: 800
   },
 
@@ -60,8 +57,6 @@ export const DialogPositions: Record<string, DialogPosition> = {
    */
   RESET: {
     ...DEFAULT_DIALOG_POSITION,
-    left: 160,
-    top: 160,
     height: 525
   },
 
@@ -70,8 +65,6 @@ export const DialogPositions: Record<string, DialogPosition> = {
    */
   TELEPORT: {
     ...DEFAULT_DIALOG_POSITION,
-    left: 180,
-    top: 180,
     height: 800
   },
 
@@ -79,13 +72,11 @@ export const DialogPositions: Record<string, DialogPosition> = {
    * Check State dialog
    */
   CHECK_STATE: {
-    ...DEFAULT_DIALOG_POSITION,
-    left: 200,
-    top: 200
+    ...DEFAULT_DIALOG_POSITION
   },
 
   /**
-   * Tile Manager
+   * Tile Manager - stays anchored on left side
    */
   TILE_MANAGER: {
     ...DEFAULT_DIALOG_POSITION,
@@ -97,8 +88,14 @@ export const DialogPositions: Record<string, DialogPosition> = {
    * Variables Viewer
    */
   VARIABLES_VIEWER: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Elevation Region dialog
+   */
+  ELEVATION: {
     ...DEFAULT_DIALOG_POSITION,
-    left: 240,
-    top: 240
+    height: 700
   }
 };

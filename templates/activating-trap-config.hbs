@@ -10,7 +10,7 @@
     <div class="form-fields">
       <input type="text" id="startingImage" name="startingImage" value="{{defaultTrapImage}}" placeholder="path/to/floor.png" data-dtype="String" />
       <button type="button" class="file-picker" data-type="imagevideo" data-target="startingImage" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
+        <i class="gi-load"></i>
       </button>
     </div>
     <p class="hint">{{localize "EMPUZZLES.StartingImageHint"}}</p>
@@ -21,7 +21,7 @@
     <div class="form-fields">
       <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
       <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
-        <i class="fas fa-file-import fa-fw"></i>
+        <i class="gi-load"></i>
       </button>
     </div>
     <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
@@ -63,7 +63,7 @@
           <div class="dmg-trap-item-details">
             <span class="dmg-trap-item-name">{{dmgTrap.itemName}}</span>
             <button type="button" class="dmg-trap-remove-button" data-action="removeDmgTrapItem" title="{{localize 'EMPUZZLES.RemoveDMGTrapItem'}}">
-              <i class="fas fa-times"></i> {{localize "EMPUZZLES.Remove"}}
+              <i class="gi-cancel"></i> {{localize "EMPUZZLES.Remove"}}
             </button>
           </div>
         </div>
@@ -80,7 +80,7 @@
       </div>
     {{else}}
       <div class="dmg-trap-item-drop-zone" data-dmg-trap-drop-zone>
-        <i class="fas fa-file-import"></i>
+        <i class="gi-load"></i>
         <p>{{localize "EMPUZZLES.DMGTrapDropZone"}}</p>
       </div>
     {{/if}}
@@ -110,7 +110,7 @@
   <div class="form-group">
     <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
     <button type="button" data-action="addTile" class="add-tile-button">
-      <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
+      <i class="gi-upgrade"></i> {{localize "EMPUZZLES.AddTile"}}
     </button>
     <p class="hint">{{localize "EMPUZZLES.ActivatingTrapTilesHint"}}</p>
   </div>
@@ -135,21 +135,21 @@
                 <div class="tile-status">
                   {{#if tile.hasMonksData}}
                     <span class="status-badge monks-active">
-                      <i class="fas fa-puzzle-piece"></i> {{localize "EMPUZZLES.MonksActiveTile"}}
+                      <i class="gi-jigsaw-piece"></i> {{localize "EMPUZZLES.MonksActiveTile"}}
                     </span>
                     {{#if tile.actionCount}}
                       <span class="status-badge">
-                        <i class="fas fa-bolt"></i> {{tile.actionCount}} {{localize "EMPUZZLES.Actions"}}
+                        <i class="gi-lightning-bolt"></i> {{tile.actionCount}} {{localize "EMPUZZLES.Actions"}}
                       </span>
                     {{/if}}
                     {{#if tile.variableCount}}
                       <span class="status-badge">
-                        <i class="fas fa-code"></i> {{tile.variableCount}} {{localize "EMPUZZLES.Variables"}}
+                        <i class="gi-code-fork"></i> {{tile.variableCount}} {{localize "EMPUZZLES.Variables"}}
                       </span>
                     {{/if}}
                     {{#unless tile.active}}
                       <span class="status-badge inactive">
-                        <i class="fas fa-pause"></i> {{localize "EMPUZZLES.Inactive"}}
+                        <i class="gi-pause-button"></i> {{localize "EMPUZZLES.Inactive"}}
                       </span>
                     {{/unless}}
                   {{/if}}
@@ -157,7 +157,7 @@
               </div>
             </div>
             <button type="button" data-action="removeTile" data-tile-id="{{tile.id}}" class="remove-tile-button" title="{{localize 'EMPUZZLES.RemoveTile'}}">
-              <i class="fas fa-times"></i>
+              <i class="gi-cancel"></i>
             </button>
           </div>
 
@@ -197,7 +197,7 @@
               <div class="form-group compact">
                 <label>{{localize "EMPUZZLES.MoveDestination"}}</label>
                 <button type="button" class="select-position-button" data-action="selectMovePosition" data-tile-id="{{tile.id}}">
-                  <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+                  <i class="gi-convergence-target"></i> {{localize "EMPUZZLES.SelectPosition"}}
                 </button>
                 <p class="hint move-position-display">
                   {{#if tile.moveX}}
@@ -219,7 +219,7 @@
   <div class="form-group">
     <label>{{localize "EMPUZZLES.WallDoorActions"}}</label>
     <button type="button" data-action="addWall" class="add-tile-button">
-      <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddWall"}}
+      <i class="gi-upgrade"></i> {{localize "EMPUZZLES.AddWall"}}
     </button>
     <p class="hint">{{localize "EMPUZZLES.WallDoorActionsHint"}}</p>
   </div>
@@ -229,7 +229,7 @@
       {{#each walls as |wall index|}}
         <div class="wall-entry" data-wall-index="{{@index}}">
           <div class="wall-info">
-            <i class="fas fa-door-open"></i>
+            <i class="gi-entry-door"></i>
             <span class="wall-id">{{wall.wallId}}</span>
           </div>
           <div class="wall-state-selector">
@@ -241,7 +241,7 @@
             </select>
           </div>
           <button type="button" data-action="removeWall" data-wall-index="{{@index}}" class="remove-wall-button" title="{{localize 'EMPUZZLES.RemoveWall'}}">
-            <i class="fas fa-times"></i>
+            <i class="gi-cancel"></i>
           </button>
         </div>
       {{/each}}

@@ -4,7 +4,26 @@
     {{localize "EMPUZZLES.BasicInfo"}}
   </legend>
   <div>
-    <div class="form-group">
+    {{! Creation Type Toggle (Tile vs Region) - only shown if Enhanced Region Behaviors is installed }}
+    {{#if hasEnhancedRegionBehaviors}}
+    <div class="form-group creation-type-group">
+      <label>{{localize "EMPUZZLES.CreationType"}}</label>
+      <div class="toggle-group">
+        <label class="toggle-option {{#if (eq creationType 'tile')}}active{{/if}}">
+          <input type="radio" name="creationType" value="tile" {{#if (eq creationType "tile")}}checked{{/if}} />
+          <i class="fa-solid fa-cubes"></i> {{localize "EMPUZZLES.CreateAsTile"}}
+        </label>
+        <label class="toggle-option {{#if (eq creationType 'region')}}active{{/if}}">
+          <input type="radio" name="creationType" value="region" {{#if (eq creationType "region")}}checked{{/if}} />
+          <i class="fa-regular fa-game-board"></i> {{localize "EMPUZZLES.CreateAsRegion"}}
+        </label>
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.CreationTypeHint"}}</p>
+    </div>
+    {{/if}}
+
+    {{! Tile-only: Trap Type selector }}
+    <div class="form-group tile-only-option">
       <label for="trapType">{{localize "EMPUZZLES.TrapType"}}</label>
       <select id="trapType" name="trapType">
         {{#each trapTypeOptions as |option|}}
@@ -27,19 +46,20 @@
       <div class="form-fields">
         <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
         <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
-          <i class="fas fa-file-import fa-fw"></i>
+          <i class="gi-load"></i>
         </button>
       </div>
       <p class="hint">{{localize "EMPUZZLES.SoundHint"}}</p>
     </div>
 
-    <div class="form-group">
+    {{! Tile-only options }}
+    <div class="form-group tile-only-option">
       <label for="minRequired">{{localize "EMPUZZLES.MinRequired"}}</label>
       <input type="number" id="minRequired" name="minRequired" value="" min="1" data-dtype="Number" />
       <p class="hint">{{localize "EMPUZZLES.MinRequiredHint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group tile-only-option">
       <label for="targetType">{{localize "EMPUZZLES.TargetType"}}</label>
       <select id="targetType" name="targetType">
         {{#each targetTypeOptions as |option|}}
@@ -59,7 +79,7 @@
       <p class="hint">{{localize "EMPUZZLES.PauseGameOnTriggerHint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group tile-only-option">
       <label>
         <input type="checkbox" id="deactivateAfterTrigger" name="deactivateAfterTrigger" {{#if deactivateAfterTrigger}}checked{{/if}} />
         {{localize "EMPUZZLES.DeactivateAfterTrigger"}}
@@ -69,7 +89,209 @@
   </div>
 </fieldset>
 
-{{! Visibility Section - wrapped in accordion in the partial itself }}
+{{! Region-Only: Trap Configuration Section }}
+<fieldset class="region-trap-section region-only-option">
+  <legend>
+    {{localize "EMPUZZLES.RegionTrapConfig"}}
+  </legend>
+  <div>
+    {{! Trigger Events - Tag-based selection }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.TriggerEvents"}}</label>
+      <div class="tag-select-container" data-tag-select="regionTriggerEvents">
+        <div class="tag-display">
+          <span class="tag" data-value="tokenEnter">{{localize "EMPUZZLES.EventTokenEnter"}} <i class="gi-cancel tag-remove"></i></span>
+        </div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          <option value="tokenEnter" data-label="{{localize 'EMPUZZLES.EventTokenEnter'}}">{{localize "EMPUZZLES.EventTokenEnter"}}</option>
+          <option value="tokenExit" data-label="{{localize 'EMPUZZLES.EventTokenExit'}}">{{localize "EMPUZZLES.EventTokenExit"}}</option>
+          <option value="tokenMoveIn" data-label="{{localize 'EMPUZZLES.EventTokenMoveIn'}}">{{localize "EMPUZZLES.EventTokenMoveIn"}}</option>
+          <option value="tokenTurnStart" data-label="{{localize 'EMPUZZLES.EventTokenTurnStart'}}">{{localize "EMPUZZLES.EventTokenTurnStart"}}</option>
+          <option value="tokenTurnEnd" data-label="{{localize 'EMPUZZLES.EventTokenTurnEnd'}}">{{localize "EMPUZZLES.EventTokenTurnEnd"}}</option>
+        </select>
+        <input type="hidden" name="regionTriggerEvents" value="tokenEnter" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.TriggerEventsHint"}}</p>
+    </div>
+
+    {{! Automate Damage }}
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="regionAutomateDamage" name="regionAutomateDamage" {{#if regionAutomateDamage}}checked{{/if}} />
+        {{localize "EMPUZZLES.AutomateDamage"}}
+      </label>
+      <p class="hint">{{localize "EMPUZZLES.AutomateDamageHint"}}</p>
+    </div>
+
+    {{! DC }}
+    <div class="form-group">
+      <label for="regionSaveDC">{{localize "EMPUZZLES.DC"}} <span class="required">*</span></label>
+      <input type="number" id="regionSaveDC" name="regionSaveDC" value="{{regionSaveDC}}" min="1" max="30" />
+      <p class="hint">{{localize "EMPUZZLES.DCHint"}}</p>
+    </div>
+
+    {{! Save Ability - Tag-based selection (multi-select) }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.SavingThrow"}}</label>
+      <div class="tag-select-container" data-tag-select="regionSaveAbility">
+        <div class="tag-display">
+          <span class="tag" data-value="dex">{{localize "EMPUZZLES.AbilityDex"}} <i class="gi-cancel tag-remove"></i></span>
+        </div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          <option value="str" data-label="{{localize 'EMPUZZLES.AbilityStr'}}">{{localize "EMPUZZLES.AbilityStr"}}</option>
+          <option value="dex" data-label="{{localize 'EMPUZZLES.AbilityDex'}}">{{localize "EMPUZZLES.AbilityDex"}}</option>
+          <option value="con" data-label="{{localize 'EMPUZZLES.AbilityCon'}}">{{localize "EMPUZZLES.AbilityCon"}}</option>
+          <option value="int" data-label="{{localize 'EMPUZZLES.AbilityInt'}}">{{localize "EMPUZZLES.AbilityInt"}}</option>
+          <option value="wis" data-label="{{localize 'EMPUZZLES.AbilityWis'}}">{{localize "EMPUZZLES.AbilityWis"}}</option>
+          <option value="cha" data-label="{{localize 'EMPUZZLES.AbilityCha'}}">{{localize "EMPUZZLES.AbilityCha"}}</option>
+        </select>
+        <input type="hidden" name="regionSaveAbility" value="dex" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.SaveAbilityHint"}}</p>
+    </div>
+
+    {{! Skill Checks - Tag-based selection (all DnD5e skills) }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.SkillChecks"}}</label>
+      <div class="tag-select-container" data-tag-select="regionSkillChecks">
+        <div class="tag-display"></div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          <option value="acr" data-label="{{localize 'EMPUZZLES.SkillAcrobatics'}}">{{localize "EMPUZZLES.SkillAcrobatics"}}</option>
+          <option value="ani" data-label="{{localize 'EMPUZZLES.SkillAnimalHandling'}}">{{localize "EMPUZZLES.SkillAnimalHandling"}}</option>
+          <option value="arc" data-label="{{localize 'EMPUZZLES.SkillArcana'}}">{{localize "EMPUZZLES.SkillArcana"}}</option>
+          <option value="ath" data-label="{{localize 'EMPUZZLES.SkillAthletics'}}">{{localize "EMPUZZLES.SkillAthletics"}}</option>
+          <option value="dec" data-label="{{localize 'EMPUZZLES.SkillDeception'}}">{{localize "EMPUZZLES.SkillDeception"}}</option>
+          <option value="his" data-label="{{localize 'EMPUZZLES.SkillHistory'}}">{{localize "EMPUZZLES.SkillHistory"}}</option>
+          <option value="ins" data-label="{{localize 'EMPUZZLES.SkillInsight'}}">{{localize "EMPUZZLES.SkillInsight"}}</option>
+          <option value="itm" data-label="{{localize 'EMPUZZLES.SkillIntimidation'}}">{{localize "EMPUZZLES.SkillIntimidation"}}</option>
+          <option value="inv" data-label="{{localize 'EMPUZZLES.SkillInvestigation'}}">{{localize "EMPUZZLES.SkillInvestigation"}}</option>
+          <option value="med" data-label="{{localize 'EMPUZZLES.SkillMedicine'}}">{{localize "EMPUZZLES.SkillMedicine"}}</option>
+          <option value="nat" data-label="{{localize 'EMPUZZLES.SkillNature'}}">{{localize "EMPUZZLES.SkillNature"}}</option>
+          <option value="prc" data-label="{{localize 'EMPUZZLES.SkillPerception'}}">{{localize "EMPUZZLES.SkillPerception"}}</option>
+          <option value="prf" data-label="{{localize 'EMPUZZLES.SkillPerformance'}}">{{localize "EMPUZZLES.SkillPerformance"}}</option>
+          <option value="per" data-label="{{localize 'EMPUZZLES.SkillPersuasion'}}">{{localize "EMPUZZLES.SkillPersuasion"}}</option>
+          <option value="rel" data-label="{{localize 'EMPUZZLES.SkillReligion'}}">{{localize "EMPUZZLES.SkillReligion"}}</option>
+          <option value="slt" data-label="{{localize 'EMPUZZLES.SkillSleightOfHand'}}">{{localize "EMPUZZLES.SkillSleightOfHand"}}</option>
+          <option value="ste" data-label="{{localize 'EMPUZZLES.SkillStealth'}}">{{localize "EMPUZZLES.SkillStealth"}}</option>
+          <option value="sur" data-label="{{localize 'EMPUZZLES.SkillSurvival'}}">{{localize "EMPUZZLES.SkillSurvival"}}</option>
+        </select>
+        <input type="hidden" name="regionSkillChecks" value="" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.SkillChecksHint"}}</p>
+    </div>
+
+    {{! Damage Formula }}
+    <div class="form-group">
+      <label for="regionDamage">{{localize "EMPUZZLES.DamageFormula"}} <span class="required">*</span></label>
+      <input type="text" id="regionDamage" name="regionDamage" value="{{regionDamage}}" placeholder="2d6" />
+      <p class="hint">{{localize "EMPUZZLES.DamageFormulaHint"}}</p>
+    </div>
+
+    {{! Damage If Saved }}
+    <div class="form-group">
+      <label for="regionSavedDamage">{{localize "EMPUZZLES.DamageOnSave"}}</label>
+      <input type="text" id="regionSavedDamage" name="regionSavedDamage" value="{{regionSavedDamage}}" placeholder="1d6" />
+      <p class="hint">{{localize "EMPUZZLES.DamageOnSaveHint"}}</p>
+    </div>
+
+    {{! Damage Type }}
+    <div class="form-group">
+      <label for="regionDamageType">{{localize "EMPUZZLES.DamageType"}} <span class="required">*</span></label>
+      <select id="regionDamageType" name="regionDamageType">
+        <option value="piercing" {{#if (eq regionDamageType "piercing")}}selected{{/if}}>Piercing</option>
+        <option value="slashing" {{#if (eq regionDamageType "slashing")}}selected{{/if}}>Slashing</option>
+        <option value="bludgeoning" {{#if (eq regionDamageType "bludgeoning")}}selected{{/if}}>Bludgeoning</option>
+        <option value="fire" {{#if (eq regionDamageType "fire")}}selected{{/if}}>Fire</option>
+        <option value="cold" {{#if (eq regionDamageType "cold")}}selected{{/if}}>Cold</option>
+        <option value="lightning" {{#if (eq regionDamageType "lightning")}}selected{{/if}}>Lightning</option>
+        <option value="thunder" {{#if (eq regionDamageType "thunder")}}selected{{/if}}>Thunder</option>
+        <option value="acid" {{#if (eq regionDamageType "acid")}}selected{{/if}}>Acid</option>
+        <option value="poison" {{#if (eq regionDamageType "poison")}}selected{{/if}}>Poison</option>
+        <option value="necrotic" {{#if (eq regionDamageType "necrotic")}}selected{{/if}}>Necrotic</option>
+        <option value="radiant" {{#if (eq regionDamageType "radiant")}}selected{{/if}}>Radiant</option>
+        <option value="psychic" {{#if (eq regionDamageType "psychic")}}selected{{/if}}>Psychic</option>
+        <option value="force" {{#if (eq regionDamageType "force")}}selected{{/if}}>Force</option>
+      </select>
+    </div>
+
+    {{! Save Failed Message }}
+    <div class="form-group">
+      <label for="regionSaveFailedMessage">{{localize "EMPUZZLES.SaveFailedMessage"}}</label>
+      <input type="text" id="regionSaveFailedMessage" name="regionSaveFailedMessage" value="{{regionSaveFailedMessage}}" />
+      <p class="hint">{{localize "EMPUZZLES.SaveFailedMessageHint"}}</p>
+    </div>
+
+    {{! Save Success Message }}
+    <div class="form-group">
+      <label for="regionSaveSuccessMessage">{{localize "EMPUZZLES.SaveSuccessMessage"}}</label>
+      <input type="text" id="regionSaveSuccessMessage" name="regionSaveSuccessMessage" value="{{regionSaveSuccessMessage}}" />
+      <p class="hint">{{localize "EMPUZZLES.SaveSuccessMessageHint"}}</p>
+    </div>
+
+    {{! Trigger Behavior on Save }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.TriggerOnSave"}}</label>
+      <div class="tag-select-container" data-tag-select="regionTriggerOnSave">
+        <div class="tag-display"></div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          {{#each sceneBehaviors}}
+            <option value="{{this.value}}" data-label="{{this.label}}">{{this.label}}</option>
+          {{/each}}
+        </select>
+        <input type="hidden" name="regionTriggerOnSave" value="" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.TriggerOnSaveHint"}}</p>
+    </div>
+
+    {{! Trigger Behavior on Fail }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.TriggerOnFail"}}</label>
+      <div class="tag-select-container" data-tag-select="regionTriggerOnFail">
+        <div class="tag-display"></div>
+        <select class="tag-select-dropdown">
+          <option value="">-- {{localize "EMPUZZLES.SelectToAdd"}} --</option>
+          {{#each sceneBehaviors}}
+            <option value="{{this.value}}" data-label="{{this.label}}">{{this.label}}</option>
+          {{/each}}
+        </select>
+        <input type="hidden" name="regionTriggerOnFail" value="" />
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.TriggerOnFailHint"}}</p>
+    </div>
+
+    {{! Tiles to Trigger }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.TilesToTrigger"}}</label>
+      <button type="button" class="add-tile-button" data-action="addRegionTile">
+        <i class="gi-upgrade"></i> {{localize "EMPUZZLES.AddTile"}}
+      </button>
+      {{#if hasRegionTilesToTrigger}}
+        <div class="region-tiles-list">
+          {{#each regionTilesToTrigger}}
+            <div class="tile-entry" data-tile-id="{{this.id}}">
+              <img src="{{this.image}}" class="tile-thumbnail" alt="" />
+              <span class="tile-name">{{this.name}}</span>
+              <button type="button" class="tile-remove-button" data-action="removeRegionTile" data-tile-id="{{this.id}}" title="{{localize 'EMPUZZLES.RemoveTile'}}">
+                <i class="gi-cancel"></i>
+              </button>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="no-content">{{localize "EMPUZZLES.NoTilesToTrigger"}}</p>
+      {{/if}}
+      <input type="hidden" name="regionTilesToTrigger" value="{{regionTilesToTriggerValue}}" />
+      <p class="hint">{{localize "EMPUZZLES.TilesToTriggerHint"}}</p>
+    </div>
+  </div>
+</fieldset>
+
+{{! Visibility Section - wrapped in accordion in the partial itself (tile-only) }}
+<div class="tile-only-option">
 {{> partials/visibility-section
   isImageTrap=(eq trapType "image")
   imageBehavior=imageBehavior
@@ -77,17 +299,18 @@
   startingImage=defaultTrapImage
   triggeredImage=defaultTrapTriggeredImage
 }}
+</div>
 
-{{! Image Trap - Result Configuration Section }}
+{{! Image Trap - Result Configuration Section (tile-only - regions use native behaviors) }}
 {{#if (eq trapType "image")}}
-  <fieldset class="result-config-section">
+  <fieldset class="result-config-section tile-only-option">
     <legend>
       {{localize "EMPUZZLES.ResultConfiguration"}}
     </legend>
     <div>
       <div class="form-group">
         <label for="resultType">{{localize "EMPUZZLES.ResultType"}} <span class="required">*</span></label>
-        <select id="resultType" name="resultType" required>
+        <select id="resultType" name="resultType">
           {{#each resultTypeOptions as |option|}}
             <option value="{{option.value}}" {{#if (eq option.value ../resultType)}}selected{{/if}}>
               {{localize option.label}}
@@ -99,8 +322,8 @@
 
     {{! Damage Result Type }}
     {{#if (eq resultType "damage")}}
-      {{! DMG Trap Item Integration }}
-      <div class="form-group dmg-trap-section">
+      {{! DMG Trap Item Integration (tile-only - uses Monk's Active Tiles) }}
+      <div class="form-group dmg-trap-section tile-only-option">
         <label>{{localize "EMPUZZLES.DMGTrapItem"}}</label>
         {{#if hasDmgTrap}}
           <div class="dmg-trap-item-display">
@@ -109,7 +332,7 @@
               <div class="dmg-trap-item-details">
                 <span class="dmg-trap-item-name">{{dmgTrap.itemName}}</span>
                 <button type="button" class="dmg-trap-remove-button" data-action="removeDmgTrapItem" title="{{localize 'EMPUZZLES.RemoveDMGTrapItem'}}">
-                  <i class="fas fa-times"></i> {{localize "EMPUZZLES.Remove"}}
+                  <i class="gi-cancel"></i> {{localize "EMPUZZLES.Remove"}}
                 </button>
               </div>
             </div>
@@ -126,7 +349,7 @@
           </div>
         {{else}}
           <div class="dmg-trap-item-drop-zone" data-dmg-trap-drop-zone>
-            <i class="fas fa-file-import"></i>
+            <i class="gi-load"></i>
             <p>{{localize "EMPUZZLES.DMGTrapDropZone"}}</p>
           </div>
         {{/if}}
@@ -240,7 +463,7 @@
       <div class="form-group">
         <label>{{localize "EMPUZZLES.TeleportDestination"}}</label>
         <button type="button" class="select-position-button" data-action="selectTeleportPosition">
-          <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+          <i class="gi-convergence-target"></i> {{localize "EMPUZZLES.SelectPosition"}}
         </button>
         <input type="hidden" name="teleportX" value="{{teleportX}}" />
         <input type="hidden" name="teleportY" value="{{teleportY}}" />
@@ -277,8 +500,9 @@
       </div>
     {{/if}}
 
-    {{! Combat Result Type }}
+    {{! Combat Result Type (tile-only - complex tile features) }}
     {{#if (eq resultType "combat")}}
+    <div class="combat-result-section tile-only-option">
       <div class="form-group attack-item-section">
         <label>{{localize "EMPUZZLES.AttackItem"}}</label>
         {{#if hasAttackItem}}
@@ -287,13 +511,13 @@
             <div class="attack-item-details">
               <span class="attack-item-name">{{attackItem.itemName}}</span>
               <button type="button" class="attack-item-remove-button" data-action="removeAttackItem" title="{{localize 'EMPUZZLES.RemoveItem'}}">
-                <i class="fas fa-times"></i> {{localize "EMPUZZLES.Remove"}}
+                <i class="gi-cancel"></i> {{localize "EMPUZZLES.Remove"}}
               </button>
             </div>
           </div>
         {{else}}
           <div class="attack-item-drop-zone" data-attack-item-drop-zone>
-            <i class="fas fa-file-import"></i>
+            <i class="gi-load"></i>
             <p>{{localize "EMPUZZLES.DragItemHere"}}</p>
           </div>
         {{/if}}
@@ -315,7 +539,7 @@
               <div class="form-fields">
                 <input type="text" id="tokenImage" name="tokenImage" value="{{tokenImage}}" data-dtype="String" />
                 <button type="button" class="file-picker" data-type="imagevideo" data-target="tokenImage" title="Browse Files" tabindex="-1">
-                  <i class="fas fa-file-import fa-fw"></i>
+                  <i class="gi-load"></i>
                 </button>
               </div>
               <p class="hint">{{localize "EMPUZZLES.TokenImageHint"}}</p>
@@ -325,7 +549,7 @@
           <div class="form-group">
             <label>{{localize "EMPUZZLES.TokenPosition"}}</label>
             <button type="button" class="select-position-button" data-action="selectTokenPosition">
-              <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+              <i class="gi-convergence-target"></i> {{localize "EMPUZZLES.SelectPosition"}}
             </button>
             <input type="hidden" name="tokenX" value="{{tokenX}}" />
             <input type="hidden" name="tokenY" value="{{tokenY}}" />
@@ -365,14 +589,15 @@
         <input type="number" id="maxTriggers" name="maxTriggers" value="0" min="0" data-dtype="Number" />
         <p class="hint">{{localize "EMPUZZLES.MaxTriggersHint"}}</p>
       </div>
+    </div>
     {{/if}}
     </div>
   </fieldset>
 {{/if}}
 
-{{! Activating Trap - Tiles & Doors Section }}
+{{! Activating Trap - Tiles & Doors Section (tile-only - uses Monk's Active Tiles) }}
 {{#if (eq trapType "activating")}}
-  <fieldset class="tiles-doors-section">
+  <fieldset class="tiles-doors-section tile-only-option">
     <legend>
       {{localize "EMPUZZLES.TilesAndDoors"}}
     </legend>
@@ -380,7 +605,7 @@
       <div class="form-group">
         <label>{{localize "EMPUZZLES.TilesToActivate"}}</label>
         <button type="button" class="add-tile-button" data-action="addTile">
-          <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddTile"}}
+          <i class="gi-upgrade"></i> {{localize "EMPUZZLES.AddTile"}}
       </button>
       <p class="hint">{{localize "EMPUZZLES.ActivatingTrapTilesHint"}}</p>
     </div>
@@ -404,16 +629,16 @@
                 <div class="tile-meta">
                   {{#if tile.hasMonksData}}
                     <span class="tile-meta-badge">
-                      <i class="fas fa-puzzle-piece"></i> {{tile.actionCount}} actions
+                      <i class="gi-jigsaw-piece"></i> {{tile.actionCount}} actions
                     </span>
                     <span class="tile-meta-badge">
-                      <i class="fas fa-code"></i> {{tile.variableCount}} variables
+                      <i class="gi-code-fork"></i> {{tile.variableCount}} variables
                     </span>
                   {{/if}}
                 </div>
               </div>
               <button type="button" class="tile-remove-button" data-action="removeTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.RemoveTile'}}">
-                <i class="fas fa-times"></i>
+                <i class="gi-cancel"></i>
               </button>
             </div>
 
@@ -453,7 +678,7 @@
               <div class="move-options" style="{{#unless (eq tile.actionType "moveto")}}display: none;{{/unless}}">
                 <div class="form-group">
                   <button type="button" class="select-position-button" data-action="selectMovePosition" data-tile-id="{{tile.id}}">
-                    <i class="fas fa-crosshairs"></i> {{localize "EMPUZZLES.SelectPosition"}}
+                    <i class="gi-convergence-target"></i> {{localize "EMPUZZLES.SelectPosition"}}
                   </button>
                   <p class="hint">
                     {{#if tile.moveX}}
@@ -475,7 +700,7 @@
     <div class="form-group">
       <label>{{localize "EMPUZZLES.WallDoorActions"}}</label>
       <button type="button" class="add-wall-button" data-action="addWall">
-        <i class="fas fa-plus"></i> {{localize "EMPUZZLES.AddWall"}}
+        <i class="gi-upgrade"></i> {{localize "EMPUZZLES.AddWall"}}
       </button>
       <p class="hint">{{localize "EMPUZZLES.WallDoorActionsHint"}}</p>
     </div>
@@ -491,7 +716,7 @@
               <option value="LOCKED" {{#if (eq wall.state "LOCKED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorLocked"}}</option>
             </select>
             <button type="button" class="wall-remove-button" data-action="removeWall" data-wall-index="{{index}}" title="{{localize 'EMPUZZLES.RemoveWall'}}">
-              <i class="fas fa-times"></i>
+              <i class="gi-cancel"></i>
             </button>
           </div>
         {{/each}}
