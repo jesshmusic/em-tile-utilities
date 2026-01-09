@@ -72,7 +72,8 @@
       "Bash(then echo \"OK: $f\")",
       "Bash(else echo \"BAD: $f\")",
       "Bash(fi)",
-      "Bash(else echo \"CHECK: $f\")"
+      "Bash(else echo \"CHECK: $f\")",
+      "Bash(gh pr list:*)"
     ],
     "deny": [],
     "ask": [
