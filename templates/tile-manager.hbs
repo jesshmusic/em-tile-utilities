@@ -68,15 +68,17 @@
         <p class="card-description">{{localize "EMPUZZLES.CreateTeleportDesc"}}</p>
       </div>
     </button>
-    <button type="button" class="create-tile-card create-elevation-card" data-action="createElevation">
-      <div class="card-icon">
-        <i class="gi-mountaintop"></i>
-      </div>
-      <div class="card-content">
-        <h3 class="card-title">{{localize "EMPUZZLES.CreateElevation"}}</h3>
-        <p class="card-description">{{localize "EMPUZZLES.CreateElevationDesc"}}</p>
-      </div>
-    </button>
+    {{#if hasEnhancedRegionBehaviors}}
+      <button type="button" class="create-tile-card create-elevation-card" data-action="createElevation">
+        <div class="card-icon">
+          <i class="gi-mountaintop"></i>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{localize "EMPUZZLES.CreateElevation"}}</h3>
+          <p class="card-description">{{localize "EMPUZZLES.CreateElevationDesc"}}</p>
+        </div>
+      </button>
+    {{/if}}
     {{#if experimentalFeatures}}
       <button type="button" class="create-tile-card create-utility-card" data-action="createCheckState">
         <div class="card-icon">
@@ -89,6 +91,16 @@
       </button>
     {{/if}}
   </div>
+
+  {{#unless hasEnhancedRegionBehaviors}}
+    <div class="enhanced-region-info">
+      <i class="gi-info"></i>
+      <div class="info-content">
+        <strong>{{localize "EMPUZZLES.EnhancedRegionModuleTitle"}}</strong>
+        <p>{{localize "EMPUZZLES.EnhancedRegionModuleDescription"}}</p>
+      </div>
+    </div>
+  {{/unless}}
 
   <div class="tile-manager-controls">
     <div class="search-group">

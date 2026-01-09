@@ -77,6 +77,10 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       'experimentalFeatures'
     ) as boolean;
 
+    // Check if Enhanced Region Behaviors is installed
+    const hasEnhancedRegionBehaviors =
+      (game as any).modules.get('enhanced-region-behavior')?.active ?? false;
+
     // Get version and build info
     const moduleData = (game as any).modules.get('em-tile-utilities');
     const version = moduleData?.version || '1.0.0';
@@ -93,6 +97,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         sortBy: this.sortBy,
         searchQuery: this.searchQuery,
         experimentalFeatures: experimentalFeatures,
+        hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
         version: version,
         buildNumber: buildNumber
       };
@@ -260,6 +265,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       sortBy: this.sortBy,
       searchQuery: this.searchQuery,
       experimentalFeatures: experimentalFeatures,
+      hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
       version: version,
       buildNumber: buildNumber
     };

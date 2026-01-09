@@ -1157,4 +1157,58 @@ describe('TileManagerDialog', () => {
       expect(context.buildNumber).toBeDefined();
     });
   });
+
+  describe('hasEnhancedRegionBehaviors', () => {
+    it('should be true when enhanced-region-behavior module is active', async () => {
+      // The mock already has enhanced-region-behavior active
+      const context = await dialog._prepareContext({});
+
+      expect(context.hasEnhancedRegionBehaviors).toBe(true);
+    });
+
+    it('should be false when enhanced-region-behavior module is not active', async () => {
+      // Override the modules.get mock to return inactive
+      const originalGet = (game as any).modules.get;
+      (game as any).modules.get = jest.fn((id: string) => {
+        if (id === 'enhanced-region-behavior') {
+          return { active: false };
+        }
+        return originalGet(id);
+      });
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.hasEnhancedRegionBehaviors).toBe(false);
+
+      // Restore original mock
+      (game as any).modules.get = originalGet;
+    });
+
+    it('should be false when enhanced-region-behavior module is not installed', async () => {
+      // Override the modules.get mock to return undefined
+      const originalGet = (game as any).modules.get;
+      (game as any).modules.get = jest.fn((id: string) => {
+        if (id === 'enhanced-region-behavior') {
+          return undefined;
+        }
+        return originalGet(id);
+      });
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.hasEnhancedRegionBehaviors).toBe(false);
+
+      // Restore original mock
+      (game as any).modules.get = originalGet;
+    });
+
+    it('should include hasEnhancedRegionBehaviors when scene is null', async () => {
+      (global as any).canvas.scene = null;
+
+      const context = await dialog._prepareContext({});
+
+      expect(context.hasEnhancedRegionBehaviors).toBeDefined();
+      expect(typeof context.hasEnhancedRegionBehaviors).toBe('boolean');
+    });
+  });
 });

@@ -429,6 +429,8 @@
     "Region": "Region",
     "Regions": "Regions",
     "EnhancedRegionBehaviorsRequired": "Enhanced Region Behaviors module required for native trap behaviors",
+    "EnhancedRegionModuleTitle": "Want More Region Features?",
+    "EnhancedRegionModuleDescription": "Install Enhanced Region Behaviors to unlock native region-based traps and teleports, elevation regions, and more. Available on the FoundryVTT package manager.",
     "SelectRegion": "Select Region",
     "EditRegion": "Edit Region",
     "DeleteRegion": "Delete Region",
