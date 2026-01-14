@@ -250,65 +250,73 @@ describe('Main Module', () => {
       expect(typeof toolbarCallback).toBe('function');
     });
 
-    it('should add module as main toolbar control', () => {
-      const mockControls: any = {};
+    it('should add tool to tiles control submenu', () => {
+      const mockControls: any = {
+        tiles: {
+          tools: {}
+        }
+      };
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(mockControls['em-tile-utilities']).toBeDefined();
-      expect(mockControls['em-tile-utilities'].name).toBe('em-tile-utilities');
-      expect(mockControls['em-tile-utilities'].title).toBe('EMPUZZLES.ModuleTitle');
-      expect(mockControls['em-tile-utilities'].icon).toBe('gi-floor-hatch');
-      expect(mockControls['em-tile-utilities'].visible).toBe(true);
-      expect(mockControls['em-tile-utilities'].order).toBe(7);
+      expect(mockControls.tiles.tools['em-tile-utilities']).toBeDefined();
+      expect(mockControls.tiles.tools['em-tile-utilities'].name).toBe('em-tile-utilities');
+      expect(mockControls.tiles.tools['em-tile-utilities'].title).toBe('EMPUZZLES.TileManager');
+      expect(mockControls.tiles.tools['em-tile-utilities'].icon).toBe('gi-floor-hatch');
     });
 
-    it('should add tile manager tool to module toolbar', () => {
+    it('should not add tool if tiles control is missing', () => {
       const mockControls: any = {};
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      const tools = mockControls['em-tile-utilities'].tools;
-      expect(tools['tile-manager']).toBeDefined();
-      expect(tools['tile-manager'].name).toBe('tile-manager');
-      expect(tools['tile-manager'].title).toBe('EMPUZZLES.TileManager');
-      expect(tools['tile-manager'].icon).toBe('gi-checklist');
+      expect(mockControls.tiles).toBeUndefined();
     });
 
     it('should add tile manager tool as button', () => {
-      const mockControls: any = {};
+      const mockControls: any = {
+        tiles: {
+          tools: {}
+        }
+      };
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(mockControls['em-tile-utilities'].tools['tile-manager'].button).toBe(true);
+      expect(mockControls.tiles.tools['em-tile-utilities'].button).toBe(true);
     });
 
     it('should assign onClick handler to tile manager tool', () => {
-      const mockControls: any = {};
+      const mockControls: any = {
+        tiles: {
+          tools: {}
+        }
+      };
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(typeof mockControls['em-tile-utilities'].tools['tile-manager'].onClick).toBe(
-        'function'
-      );
+      expect(typeof mockControls.tiles.tools['em-tile-utilities'].onClick).toBe('function');
     });
 
-    it('should set activeTool to tile-manager', () => {
-      const mockControls: any = {};
+    it('should set high order value for tool placement', () => {
+      const mockControls: any = {
+        tiles: {
+          tools: {}
+        }
+      };
 
       if (toolbarCallback) {
         toolbarCallback(mockControls);
       }
 
-      expect(mockControls['em-tile-utilities'].activeTool).toBe('tile-manager');
+      expect(mockControls.tiles.tools['em-tile-utilities'].order).toBe(1000);
     });
   });
 });

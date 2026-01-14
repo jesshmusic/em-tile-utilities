@@ -8,6 +8,7 @@ import { showCheckStateDialog } from './check-state-dialog';
 import { showElevationDialog } from './elevation-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
+import buildInfo from '../../build-info.json';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -84,9 +85,6 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     // Get version and build info
     const moduleData = (game as any).modules.get('em-tile-utilities');
     const version = moduleData?.version || '1.0.0';
-    const buildInfo = await fetch(`modules/em-tile-utilities/build-info.json?v=${Date.now()}`)
-      .then(r => r.json())
-      .catch(() => ({ buildNumber: 0 }));
     const buildNumber = buildInfo.buildNumber || 0;
 
     if (!scene) {
