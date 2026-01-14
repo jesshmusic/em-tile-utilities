@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-01-14
+
+### Fixed
+
+- **Toolbar Button Location**: Moved Tile Utilities button back to Tiles submenu instead of main toolbar
+- **404 Error**: Fixed build-info.json 404 error by importing at build time instead of fetching at runtime
+
 ## [2.0.0] - 2026-01-08
 
 This major release introduces **FoundryVTT v13 Region support** as an alternative to Monk's Active Tiles, along with a complete visual overhaul using game-icons.net SVG icons.
