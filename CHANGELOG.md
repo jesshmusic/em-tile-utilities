@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - **`Dialog.confirm` removed in v14**: Migrated the two teleport-cleanup confirmation dialogs in `src/main.ts` from the legacy `Dialog.confirm` API to `foundry.applications.api.DialogV2.confirm`. The `defaultYes: true` option is replaced with the v14 `yes: { default: true }` shape.
-- **`FilePicker` global removed in v14**: All seven dialog file pickers (switch, light, reset, check-state, base-trap, teleport, trap) now resolve `FilePicker` via `foundry.applications.apps.FilePicker` with a fallback to the legacy global so the dialogs continue to work on both v13 and v14.
+- **`FilePicker` global removed in v14**: All seven dialog file pickers (switch, light, reset, check-state, base-trap, teleport, trap) now resolve `FilePicker` via `foundry.applications.apps.FilePicker`. (A `(globalThis as any).FilePicker` fallback is retained as a safety net so the resolution chain doesn't throw `ReferenceError` if a future v14 release reshapes the namespace, but this release is v14-only — v13 users should stay on the previous tagged release.)
 - **SceneControlTool `onClick` → `onChange`**: The toolbar button registration in `src/main.ts` previously used `onClick`, which v14's SceneControls no longer fires for `button: true` tools. Switched to `onChange`, matching the v14 SceneControlTool shape.
 
 ## [2.0.1] - 2026-01-14
