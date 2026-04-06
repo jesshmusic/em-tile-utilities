@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-04-06
+
+### Added
+
+- Foundry VTT v14 compatibility (`compatibility.verified` bumped to `14`).
+
+### Fixed
+
+- **`Dialog.confirm` removed in v14**: Migrated the two teleport-cleanup confirmation dialogs in `src/main.ts` from the legacy `Dialog.confirm` API to `foundry.applications.api.DialogV2.confirm`. The `defaultYes: true` option is replaced with the v14 `yes: { default: true }` shape.
+- **`FilePicker` global removed in v14**: All seven dialog file pickers (switch, light, reset, check-state, base-trap, teleport, trap) now resolve `FilePicker` via `foundry.applications.apps.FilePicker` with a fallback to the legacy global so the dialogs continue to work on both v13 and v14.
+- **SceneControlTool `onClick` → `onChange`**: The toolbar button registration in `src/main.ts` previously used `onClick`, which v14's SceneControls no longer fires for `button: true` tools. Switched to `onChange`, matching the v14 SceneControlTool shape.
+
 ## [2.0.1] - 2026-01-14
 
 ### Fixed

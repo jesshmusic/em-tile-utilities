@@ -216,7 +216,8 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     title: 'EMPUZZLES.TileManager',
     icon: 'gi-floor-hatch',
     button: true,
-    onClick: () => showTileManagerDialog(),
+    // Foundry v14 SceneControlTool fires `onChange` for button-style tools.
+    onChange: () => showTileManagerDialog(),
     order: 1000
   };
 });
@@ -365,12 +366,10 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
 
         try {
           // Ask user for confirmation before deleting return teleport
-          const confirmed = await (Dialog as any).confirm({
-            title: 'Delete Return Teleport?',
+          const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
+            window: { title: 'Delete Return Teleport?' },
             content: `<p>This teleport has a return tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
-            yes: () => true,
-            no: () => false,
-            defaultYes: true
+            yes: { default: true }
           });
 
           if (confirmed) {
@@ -426,12 +425,10 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
 
           try {
             // Ask user for confirmation before deleting main teleport
-            const confirmed = await (Dialog as any).confirm({
-              title: 'Delete Main Teleport?',
+            const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
+              window: { title: 'Delete Main Teleport?' },
               content: `<p>This return teleport has a main tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
-              yes: () => true,
-              no: () => false,
-              defaultYes: true
+              yes: { default: true }
             });
 
             if (confirmed) {

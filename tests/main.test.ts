@@ -291,7 +291,7 @@ describe('Main Module', () => {
       expect(mockControls.tiles.tools['em-tile-utilities'].button).toBe(true);
     });
 
-    it('should assign onClick handler to tile manager tool', () => {
+    it('should assign onChange handler to tile manager tool (Foundry v14 SceneControlTool API)', () => {
       const mockControls: any = {
         tiles: {
           tools: {}
@@ -302,7 +302,7 @@ describe('Main Module', () => {
         toolbarCallback(mockControls);
       }
 
-      expect(typeof mockControls.tiles.tools['em-tile-utilities'].onClick).toBe('function');
+      expect(typeof mockControls.tiles.tools['em-tile-utilities'].onChange).toBe('function');
     });
 
     it('should set high order value for tool placement', () => {
