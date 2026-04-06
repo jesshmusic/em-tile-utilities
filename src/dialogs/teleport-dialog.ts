@@ -444,7 +444,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!input) return;
 
     // Foundry v14 removed the global FilePicker shim; use the namespaced class.
-    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (FilePicker as any);
+    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (globalThis as any).FilePicker;
     const fp = new FilePickerClass({
       type: type,
       current: input.value,

@@ -829,7 +829,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
     const current = input.value;
 
     // Foundry v14 removed the global FilePicker shim; use the namespaced class.
-    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (FilePicker as any);
+    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (globalThis as any).FilePicker;
     const fp = new FilePickerClass({
       type: type,
       current: current,
