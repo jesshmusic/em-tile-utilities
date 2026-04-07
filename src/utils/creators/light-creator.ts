@@ -144,6 +144,17 @@ export async function createLightTile(
 
   const [mainTile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
 
+  // Guard against tile creation failures (e.g. schema validation rejecting the
+  // tile data). createEmbeddedDocuments returns an empty array on validation
+  // failure, so `mainTile` is undefined; calling `Tagger.setTags(undefined)`
+  // throws a confusing second error that masks the original validation error.
+  if (!mainTile) {
+    ui.notifications?.error(
+      'Tile Utilities: Failed to create light tile. Check the console for validation errors.'
+    );
+    return undefined;
+  }
+
   // Tag all entities with the same identifier using Tagger
   // This allows us to find and delete related entities when the main tile is deleted
   if ((game as any).modules.get('tagger')?.active) {
