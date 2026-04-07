@@ -2166,12 +2166,15 @@ textarea:valid {
   gap: 16px;
 }
 
-.patreon-link {
+/* Shared layout/typography for footer pill-style links — future styling
+   tweaks (padding, typography, shadow) only need to happen here.
+   Background / hover colors are per-link below. */
+.patreon-link,
+.dmguru-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #5b1d12;
   color: white;
   text-decoration: none;
   border-radius: 4px;
@@ -2181,15 +2184,40 @@ textarea:valid {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.patreon-link:hover {
+.patreon-link i,
+.dmguru-link i {
+  font-size: 16px;
+}
+
+/* Patreon-specific colors (dark red) */
+.patreon-link {
+  background: #5b1d12;
+}
+
+/* Both :hover and :focus-visible get the same treatment for keyboard a11y */
+.patreon-link:hover,
+.patreon-link:focus-visible {
   background: #7a2518;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
   color: white;
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
-.patreon-link i {
-  font-size: 16px;
+/* DM Guru-specific colors (slate blue) */
+.dmguru-link {
+  background: #2c3e50;
+}
+
+.dmguru-link:hover,
+.dmguru-link:focus-visible {
+  background: #3d556e;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+  color: white;
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
 .version-info {

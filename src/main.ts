@@ -6,6 +6,63 @@ import { showTileManagerDialog } from './dialogs/tile-manager';
 import buildInfo from '../build-info.json';
 import packageInfo from '../package.json';
 
+const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
+
+/**
+ * Compare an installed dependency's declared Foundry compatibility against
+ * the running Foundry core version and surface a user-visible notification
+ * if the dep declares itself incompatible. Only fires for deps that ARE
+ * installed and active — existing "not installed" / "not active" error
+ * paths continue to handle those cases upstream of this helper.
+ *
+ * This exists because several upstream modules in the Monks stack still
+ * declare themselves v13-only in their manifests. When they happen to run
+ * on v14 anyway (either because the user locally bumped the maximum or
+ * because the dep has no maximum), users get silent breakage. The warning
+ * tells them which specific dep is stale, not just "something is broken".
+ */
+function warnIfDepOutdated(depId: string, displayName: string): void {
+  const mod = (game as any).modules?.get(depId);
+  if (!mod || !mod.active) {
+    // Existing "not installed" / "not active" paths already handle these.
+    return;
+  }
+
+  const coreMajor =
+    (game as any).release?.generation ??
+    parseInt(String((game as any).version ?? '0'), 10);
+  if (!coreMajor || Number.isNaN(coreMajor)) return;
+
+  const parseMajor = (v: unknown): number | null => {
+    if (v == null) return null;
+    const m = String(v).match(/^(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+  };
+
+  const compat = mod.compatibility ?? {};
+  const depMax = parseMajor(compat.maximum);
+  const depVerified = parseMajor(compat.verified);
+
+  // Hard cap below current Foundry major → permanent warning
+  if (depMax != null && depMax < coreMajor) {
+    ui.notifications?.warn(
+      `${MODULE_TITLE}: ${displayName} v${mod.version} declares Foundry v${compat.maximum} as its maximum, ` +
+        `but you are running Foundry v${(game as any).version}. Expect bugs until ${displayName} ships an update.`,
+      { permanent: true }
+    );
+    return;
+  }
+
+  // No hard cap but verified is behind → transient warning
+  if (depVerified != null && depVerified < coreMajor) {
+    ui.notifications?.warn(
+      `${MODULE_TITLE}: ${displayName} v${mod.version} is only verified for Foundry v${compat.verified}. ` +
+        `You're running v${(game as any).version} — some features may not work until ${displayName} ships a v${coreMajor}-verified release.`,
+      { permanent: false }
+    );
+  }
+}
+
 // Module initialization
 Hooks.once('init', async () => {
   // Module initialization banner
@@ -196,6 +253,14 @@ Hooks.once('ready', () => {
     );
     return;
   }
+
+  // Version-compat warnings for installed-and-active deps whose manifest
+  // declares itself incompatible with the running Foundry version. These
+  // are layered on top of the "not active" errors above and only fire when
+  // the dep is present.
+  warnIfDepOutdated('monks-active-tiles', "Monk's Active Tiles");
+  warnIfDepOutdated('tagger', 'Tagger');
+  warnIfDepOutdated('monks-tokenbar', "Monk's Token Bar");
 
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %c✓ Ready!",

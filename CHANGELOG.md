@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.2] - 2026-04-07
+
+### Added
+
+- **Runtime dependency version warnings**. When Monk's Active Tiles, Tagger, or Monk's Token Bar is installed and active but its manifest declares itself incompatible with the running Foundry version (i.e. `compatibility.maximum` is below the current Foundry major, or `compatibility.verified` is behind), a notification now fires on `ready` naming the specific dep and its declared max/verified version. Hard-cap mismatches are permanent notifications; stale-verified mismatches are transient. Only fires for deps that are present and active — the existing "not installed" error paths are untouched.
+- **`dungeonmaster.guru` link in the Tile Manager footer**, alongside the existing Patreon link and version info. Links to Jess's SRD rules and DM tools site.
+
 ## [2.1.1] - 2026-04-07
 
 ### Fixed
