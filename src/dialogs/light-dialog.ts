@@ -411,31 +411,41 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
         imagePath: previewImage,
         alpha: 0.5,
         onPlace: async (x: number, y: number) => {
-          // Create the light tile at the clicked position
-          await createLightTile(
-            scene,
-            {
-              name: data.lightName || 'Light',
-              offImage: data.offImage,
-              onImage: data.onImage,
-              useDarkness: !!data.useDarkness,
-              darknessMin: parseFloat(data.darknessMin) || 0.5,
-              dimLight: parseInt(data.dimLight) || 40,
-              brightLight: parseInt(data.brightLight) || 20,
-              lightColor: data.lightColor || '#ffffff',
-              colorIntensity: parseFloat(data.colorIntensity) || 0.5,
-              useOverlay: !!data.useOverlay,
-              overlayImage: data.overlayImage || '',
-              sound: data.sound || '',
-              soundRadius: parseInt(data.soundRadius) || 40,
-              soundVolume: parseFloat(data.soundVolume) || 0.5,
-              customTags: data.customTags || ''
-            },
-            x,
-            y
-          );
+          // Create the light tile at the clicked position. createLightTile
+          // throws (and rolls back any partially-created entities) on
+          // failure, so the success notification only fires on actual
+          // success — not when validation has rejected the tile data.
+          try {
+            await createLightTile(
+              scene,
+              {
+                name: data.lightName || 'Light',
+                offImage: data.offImage,
+                onImage: data.onImage,
+                useDarkness: !!data.useDarkness,
+                darknessMin: parseFloat(data.darknessMin) || 0.5,
+                dimLight: parseInt(data.dimLight) || 40,
+                brightLight: parseInt(data.brightLight) || 20,
+                lightColor: data.lightColor || '#ffffff',
+                colorIntensity: parseFloat(data.colorIntensity) || 0.5,
+                useOverlay: !!data.useOverlay,
+                overlayImage: data.overlayImage || '',
+                sound: data.sound || '',
+                soundRadius: parseInt(data.soundRadius) || 40,
+                soundVolume: parseFloat(data.soundVolume) || 0.5,
+                customTags: data.customTags || ''
+              },
+              x,
+              y
+            );
 
-          ui.notifications.info('Light tile created!');
+            ui.notifications.info('Light tile created!');
+          } catch (err) {
+            // createLightTile already showed an error notification and
+            // rolled back any partial state. Log for diagnostics, then
+            // fall through to dialog cleanup.
+            console.error("Dorman Lakely's Tile Utilities - createLightTile failed:", err);
+          }
 
           // Clear preview reference before closing to avoid race condition with _onClose
           this.previewManager = undefined;

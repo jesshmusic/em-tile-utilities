@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2026-04-07
+
+### Fixed
+
+- **Tile creation failed for every tile type on Foundry v14** with the error `[TileDocument] validation errors: occlusion: SchemaField#_validateRecursive modes: ArrayField#_validateRecursive 0: 0 is not a valid choice`. Foundry v14 renamed `TileDocument.occlusion.mode` (singular `NumberField`) to `TileDocument.occlusion.modes` (`SetField` of `NumberField`s) and removed `OCCLUSION_MODES.NONE` (`0`) from the valid choices — "no occlusion" is now represented by an empty set. Foundry's compatibility migration `_addDataFieldMigration("occlusion.mode", "occlusion.modes", d => [d.occlusion.mode])` wraps the legacy `mode: 0` value into `modes: [0]`, which then fails validation because `0` is no longer in the allowed choices for the new `SetField`. `createBaseTileData` now emits `occlusion: { modes: [], alpha: 0 }` directly, fixing tile creation for all seven tile types (switch, light, trap, teleport, reset, combat trap, check state).
+- **Cascading `Tagger | setTags | Invalid object provided` error**: when tile creation failed, `createLightTile` passed the `undefined` result to `Tagger.setTags`, which threw a confusing second error that masked the original validation error. `createLightTile` now wraps its document creation in a try/catch that **rolls back** any previously-created `AmbientLight` / `AmbientSound` / overlay `Tile` and **re-throws** the original error so callers (e.g. `LightConfigDialog`) can avoid showing a misleading "Light tile created!" notification on failure.
+
 ## [2.1.0] - 2026-04-06
 
 ### Added
