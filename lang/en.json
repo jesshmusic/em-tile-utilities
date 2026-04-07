@@ -358,6 +358,8 @@
     "ActionDoorState": "Change Door State",
     "SelectWall": "Select Wall/Door",
     "SupportOnPatreon": "Love this module? Please support me on Patreon!",
+    "DungeonMasterGuru": "DM Tools & SRD",
+    "DungeonMasterGuruTooltip": "SRD rules and DM tools at dungeonmaster.guru",
     "CreationType": "Creation Type",
     "CreateAsTile": "Tile",
     "CreateAsRegion": "Region",
