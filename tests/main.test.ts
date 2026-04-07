@@ -242,6 +242,91 @@ describe('Main Module', () => {
 
       expect((global as any).ui.notifications.error).not.toHaveBeenCalled();
     });
+
+    describe('dependency version warnings', () => {
+      /**
+       * Build a game.modules.get mock that returns a dep with a given
+       * `compatibility` shape + version, so we can exercise the three
+       * branches of warnIfDepOutdated (hard-cap mismatch, stale verified,
+       * fully compatible) without reaching into main.ts internals.
+       */
+      const setupDep = (compatibility: Record<string, unknown>) => {
+        const depStub = {
+          active: true,
+          version: '1.2.3',
+          compatibility
+        };
+        (global as any).game.modules.get = jest.fn(() => depStub);
+        (global as any).game.release = { generation: 14 };
+        (global as any).game.version = '14.359';
+        (global as any).ui.notifications = {
+          error: jest.fn(),
+          warn: jest.fn(),
+          info: jest.fn()
+        };
+      };
+
+      it('should emit a PERMANENT warning when compatibility.maximum is below the running core major', () => {
+        jest.clearAllMocks();
+        setupDep({ minimum: '13', verified: '13', maximum: '13' });
+
+        if (readyCallback) {
+          readyCallback();
+        }
+
+        // The helper is called 3x (monks-active-tiles, tagger, monks-tokenbar).
+        // Each of those resolves through the same mock, so the warn mock should
+        // have been invoked at least once with a permanent toast naming v13.
+        const warnMock = (global as any).ui.notifications.warn as jest.Mock;
+        expect(warnMock).toHaveBeenCalled();
+        const permanentCalls = warnMock.mock.calls.filter(
+          (call: any[]) =>
+            typeof call[0] === 'string' &&
+            call[0].includes('declares Foundry v13 as its maximum') &&
+            call[1] &&
+            (call[1] as any).permanent === true
+        );
+        expect(permanentCalls.length).toBeGreaterThan(0);
+      });
+
+      it('should emit a TRANSIENT warning when verified is behind but no maximum blocks', () => {
+        jest.clearAllMocks();
+        setupDep({ minimum: '13', verified: '13' }); // no maximum
+
+        if (readyCallback) {
+          readyCallback();
+        }
+
+        const warnMock = (global as any).ui.notifications.warn as jest.Mock;
+        expect(warnMock).toHaveBeenCalled();
+        const transientCalls = warnMock.mock.calls.filter(
+          (call: any[]) =>
+            typeof call[0] === 'string' &&
+            call[0].includes('only verified for Foundry v13') &&
+            (!call[1] || (call[1] as any).permanent !== true)
+        );
+        expect(transientCalls.length).toBeGreaterThan(0);
+      });
+
+      it('should NOT emit a dep-version warning when the dep is compatible with the running Foundry', () => {
+        jest.clearAllMocks();
+        setupDep({ minimum: '13', verified: '14' });
+
+        if (readyCallback) {
+          readyCallback();
+        }
+
+        // Any `warn` call containing "declares Foundry" or "only verified for"
+        // would indicate the helper fired spuriously.
+        const warnMock = (global as any).ui.notifications.warn as jest.Mock;
+        const outdatedWarnings = warnMock.mock.calls.filter(
+          (call: any[]) =>
+            typeof call[0] === 'string' &&
+            (call[0].includes('declares Foundry') || call[0].includes('only verified for'))
+        );
+        expect(outdatedWarnings.length).toBe(0);
+      });
+    });
   });
 
   describe('toolbar integration', () => {
