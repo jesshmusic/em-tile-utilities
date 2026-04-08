@@ -2191,9 +2191,11 @@ textarea:valid {
 
 /* Shared layout/typography for footer pill-style links — future styling
    tweaks (padding, typography, shadow) only need to happen here.
-   Background / colors are per-link below. */
-.patreon-link,
-.dmguru-link {
+   Background / colors are per-link below. All selectors are scoped to
+   .tile-manager-footer so they don't leak into any other app that
+   happens to use a .patreon-link or .dmguru-link class. */
+.tile-manager-footer .patreon-link,
+.tile-manager-footer .dmguru-link {
   flex: 1 1 0;
   display: inline-flex;
   align-items: center;
@@ -2210,21 +2212,21 @@ textarea:valid {
   border: 1px solid transparent;
 }
 
-.patreon-link i {
+.tile-manager-footer .patreon-link i {
   font-size: 18px;
 }
 
 /* Patreon: solid burgundy (matches the dragon body color in the DM Guru
    logo, which is also the brand burgundy) */
-.patreon-link {
+.tile-manager-footer .patreon-link {
   background: var(--dmguru-burgundy);
   color: white;
   border-color: var(--dmguru-burgundy);
 }
 
 /* Both :hover and :focus-visible get the same treatment for keyboard a11y */
-.patreon-link:hover,
-.patreon-link:focus-visible {
+.tile-manager-footer .patreon-link:hover,
+.tile-manager-footer .patreon-link:focus-visible {
   background: #7a2518;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
@@ -2236,14 +2238,14 @@ textarea:valid {
 /* DM Guru: parchment cream background with burgundy text + dragon logo.
    Visually distinct from Patreon (which uses solid burgundy) but on-brand
    with the logo's color palette. */
-.dmguru-link {
+.tile-manager-footer .dmguru-link {
   background: var(--dmguru-cream);
   color: var(--dmguru-burgundy);
   border-color: var(--dmguru-taupe);
 }
 
-.dmguru-link:hover,
-.dmguru-link:focus-visible {
+.tile-manager-footer .dmguru-link:hover,
+.tile-manager-footer .dmguru-link:focus-visible {
   background: #ece1c0;
   color: var(--dmguru-rust);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -2254,13 +2256,13 @@ textarea:valid {
 
 /* Logo image inside the DM Guru link — sized to match the Patreon icon
    visually. The SVG is 1200x1200 viewBox, so it scales cleanly to any size. */
-.dmguru-link .dmguru-logo {
+.tile-manager-footer .dmguru-link .dmguru-logo {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
 }
 
-.version-info {
+.tile-manager-footer .version-info {
   flex: 1 1 100%;
   display: flex;
   align-items: center;
@@ -2268,7 +2270,7 @@ textarea:valid {
   gap: 4px;
 }
 
-.version-text {
+.tile-manager-footer .version-text {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   font-family: monospace;
