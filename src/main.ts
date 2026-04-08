@@ -3,9 +3,11 @@
  * Utility tile creation tools for Monk's Active Tiles
  */
 import { showTileManagerDialog } from './dialogs/tile-manager';
+import { PatreonLink, DmGuruLink } from './settings/settings-menus';
 import buildInfo from '../build-info.json';
 import packageInfo from '../package.json';
 
+const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
 
 /**
@@ -227,9 +229,25 @@ Hooks.once('init', async () => {
     requiresReload: true
   });
 
-  // Note: Patreon support link removed from settings menu
-  // registerMenu requires a FormApplication/ApplicationV2 subclass
-  // For support links, see README.md
+  // Settings menu entries for Patreon support and Dungeon Master Guru
+  // cross-promotion. Each opens a small confirmation dialog before launching
+  // the destination URL in a new tab.
+  game.settings.registerMenu(MODULE_ID, 'patreonLink', {
+    name: 'Support on Patreon',
+    label: 'Visit Patreon',
+    hint: 'Support the development of this module on Patreon! Your contributions help fund new features and updates.',
+    icon: 'fab fa-patreon',
+    type: PatreonLink as any,
+    restricted: true
+  });
+  game.settings.registerMenu(MODULE_ID, 'dmGuruLink', {
+    name: 'Dungeon Master Guru',
+    label: 'Visit Dungeon Master Guru',
+    hint: 'SRD rules and DM tools. Free resources for Dungeon Masters at dungeonmaster.guru.',
+    icon: 'fas fa-dragon',
+    type: DmGuruLink as any,
+    restricted: true
+  });
 });
 
 // Check for dependencies

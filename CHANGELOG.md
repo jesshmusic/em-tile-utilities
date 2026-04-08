@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.3] - 2026-04-08
+
+### Added
+
+- Branded `dungeonmaster.guru` cross-promotion link in the Tile Manager footer, using the DM Guru logo. Patreon + DM Guru buttons are now equal-width in a shared footer-links row, with version info below. Shortened Patreon link text. Module chrome now picks up DM Guru brand accent colors on card titles, borders, and hover states (background and text colors unchanged).
+- **Version display now baked at build time** via a `package.json` import. Previously the Tile Manager footer read `game.modules.get(...).version`, which Foundry caches at world startup and doesn't refresh on hot-reload, so the footer could show a stale version after a rebuild.
+
 ## [2.1.2] - 2026-04-07
 
 ### Added

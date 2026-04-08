@@ -413,6 +413,19 @@
   padding-left: 1.5rem;
 }
 
+/* ====================================
+   Dungeon Master Guru brand palette
+   ====================================
+   Defined as scoped CSS variables on .tile-manager-container so we can
+   reuse them throughout the module's chrome (titles, accents, borders)
+   without touching the V2 base background or body text colors. */
+.tile-manager-container {
+  --dmguru-cream: #f9f1dc;
+  --dmguru-taupe: #645e56;
+  --dmguru-burgundy: #5b1d12;
+  --dmguru-rust: #9a2d1e;
+}
+
 /* Tile Manager styles */
 .tile-manager-container {
   display: flex;
@@ -461,8 +474,8 @@
 
 .tile-manager-container .refresh-tiles-btn:hover,
 .tile-manager-container .view-variables-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--color-border-light-highlight);
+  background: rgba(249, 241, 220, 0.12);
+  border-color: var(--dmguru-cream);
 }
 
 .tile-manager-container .refresh-tiles-btn i,
@@ -497,8 +510,8 @@
 }
 
 .tile-manager-container .create-tile-card:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--color-border-light-highlight);
+  background: rgba(249, 241, 220, 0.12);
+  border-color: var(--dmguru-cream);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -534,6 +547,7 @@
   font-weight: 600;
   margin: 0;
   line-height: 1.2;
+  color: var(--dmguru-cream);
 }
 
 .tile-manager-container .card-description {
@@ -2161,42 +2175,58 @@ textarea:valid {
 
 .tile-manager-footer .footer-content {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+/* Both buttons live in a flex row that fills the full width, splitting
+   the available space equally so the two pills always match widths
+   regardless of label length. */
+.tile-manager-footer .footer-links {
+  display: flex;
+  flex: 1 1 100%;
+  gap: 12px;
 }
 
 /* Shared layout/typography for footer pill-style links — future styling
    tweaks (padding, typography, shadow) only need to happen here.
-   Background / hover colors are per-link below. */
-.patreon-link,
-.dmguru-link {
+   Background / colors are per-link below. All selectors are scoped to
+   .tile-manager-footer so they don't leak into any other app that
+   happens to use a .patreon-link or .dmguru-link class. */
+.tile-manager-footer .patreon-link,
+.tile-manager-footer .dmguru-link {
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  color: white;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
   text-decoration: none;
   border-radius: 4px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 13px;
+  text-align: center;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid transparent;
 }
 
-.patreon-link i,
-.dmguru-link i {
-  font-size: 16px;
+.tile-manager-footer .patreon-link i {
+  font-size: 18px;
 }
 
-/* Patreon-specific colors (dark red) */
-.patreon-link {
-  background: #5b1d12;
+/* Patreon: solid burgundy (matches the dragon body color in the DM Guru
+   logo, which is also the brand burgundy) */
+.tile-manager-footer .patreon-link {
+  background: var(--dmguru-burgundy);
+  color: white;
+  border-color: var(--dmguru-burgundy);
 }
 
 /* Both :hover and :focus-visible get the same treatment for keyboard a11y */
-.patreon-link:hover,
-.patreon-link:focus-visible {
+.tile-manager-footer .patreon-link:hover,
+.tile-manager-footer .patreon-link:focus-visible {
   background: #7a2518;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
@@ -2205,28 +2235,42 @@ textarea:valid {
   outline-offset: 2px;
 }
 
-/* DM Guru-specific colors (slate blue) */
-.dmguru-link {
-  background: #2c3e50;
+/* DM Guru: parchment cream background with burgundy text + dragon logo.
+   Visually distinct from Patreon (which uses solid burgundy) but on-brand
+   with the logo's color palette. */
+.tile-manager-footer .dmguru-link {
+  background: var(--dmguru-cream);
+  color: var(--dmguru-burgundy);
+  border-color: var(--dmguru-taupe);
 }
 
-.dmguru-link:hover,
-.dmguru-link:focus-visible {
-  background: #3d556e;
+.tile-manager-footer .dmguru-link:hover,
+.tile-manager-footer .dmguru-link:focus-visible {
+  background: #ece1c0;
+  color: var(--dmguru-rust);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
-  color: white;
-  outline: 2px solid white;
+  outline: 2px solid var(--dmguru-taupe);
   outline-offset: 2px;
 }
 
-.version-info {
+/* Logo image inside the DM Guru link — sized to match the Patreon icon
+   visually. The SVG is 1200x1200 viewBox, so it scales cleanly to any size. */
+.tile-manager-footer .dmguru-link .dmguru-logo {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.tile-manager-footer .version-info {
+  flex: 1 1 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
 }
 
-.version-text {
+.tile-manager-footer .version-text {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   font-family: monospace;
