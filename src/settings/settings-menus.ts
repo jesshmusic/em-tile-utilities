@@ -38,7 +38,7 @@ export class PatreonLink extends ApplicationV2 {
         callback: () => {
           // `noopener,noreferrer` prevents reverse-tabnabbing — the new tab
           // cannot navigate or read the Foundry page via window.opener.
-          window.open('https://patreon.com/jesshmusic', '_blank', 'noopener,noreferrer');
+          window.open('https://www.patreon.com/c/DormanLakely', '_blank', 'noopener,noreferrer');
         }
       }
     });
