@@ -9,6 +9,7 @@ import { showElevationDialog } from './elevation-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 import buildInfo from '../../build-info.json';
+import packageInfo from '../../package.json';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -82,9 +83,15 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     const hasEnhancedRegionBehaviors =
       (game as any).modules.get('enhanced-region-behavior')?.active ?? false;
 
-    // Get version and build info
-    const moduleData = (game as any).modules.get('em-tile-utilities');
-    const version = moduleData?.version || '1.0.0';
+    // Get version and build info from package.json + build-info.json (both
+    // baked into the bundle at build time). This was previously reading
+    // version from `game.modules.get('em-tile-utilities').version`, but
+    // Foundry caches the module manifest at world startup and only refreshes
+    // on full world reload — not on hot-reload of the dist bundle. As a
+    // result the footer would show a stale version after rebuilding while
+    // the build number updated immediately, making them look out of sync.
+    // Reading both from baked-in JSON keeps them in lockstep.
+    const version = packageInfo.version || '1.0.0';
     const buildNumber = buildInfo.buildNumber || 0;
 
     if (!scene) {
