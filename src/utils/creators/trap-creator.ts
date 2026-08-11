@@ -206,7 +206,7 @@ export async function createTrapTile(
             // 4. Full damage to failed saves
             if (config.damageOnFail) {
               actions.push(
-                createHurtHealAction(`-[[${config.damageOnFail}]]`, {
+                createHurtHealAction(`-${config.damageOnFail}`, {
                   entity: { id: 'previous', name: 'Current tokens' },
                   chatmessage: true,
                   rollmode: 'roll'
@@ -220,7 +220,7 @@ export async function createTrapTile(
             // 6. Half damage to successful saves
             if (config.damageOnFail) {
               actions.push(
-                createHurtHealAction(`-[[floor((${config.damageOnFail}) / 2)]]`, {
+                createHurtHealAction(`-floor((${config.damageOnFail}) / 2)`, {
                   entity: { id: 'previous', name: 'Current tokens' },
                   chatmessage: true,
                   rollmode: 'roll'
@@ -246,7 +246,7 @@ export async function createTrapTile(
             // Full damage to failed saves only
             if (config.damageOnFail) {
               actions.push(
-                createHurtHealAction(`-[[${config.damageOnFail}]]`, {
+                createHurtHealAction(`-${config.damageOnFail}`, {
                   entity: { id: 'previous', name: 'Current tokens' },
                   chatmessage: true,
                   rollmode: 'roll'
@@ -258,7 +258,7 @@ export async function createTrapTile(
           // No saving throw - damage all targets
           if (config.damageOnFail) {
             actions.push(
-              createHurtHealAction(`-[[${config.damageOnFail}]]`, {
+              createHurtHealAction(`-${config.damageOnFail}`, {
                 entity: { id: targetEntityId, name: targetEntityName },
                 chatmessage: true,
                 rollmode: 'roll'
@@ -317,7 +317,7 @@ export async function createTrapTile(
         // Heal action (applies healing to targets)
         if (config.healingAmount) {
           actions.push(
-            createHurtHealAction(`[[${config.healingAmount}]]`, {
+            createHurtHealAction(`${config.healingAmount}`, {
               entity: { id: targetEntityId, name: targetEntityName },
               chatmessage: true,
               rollmode: 'roll'

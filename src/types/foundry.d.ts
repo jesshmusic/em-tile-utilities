@@ -30,15 +30,22 @@ declare global {
     [key: string]: any;
   };
 
-  // Foundry v14 removed the flat `loadTemplates`, `renderTemplate`,
-  // `FilePicker`, `AudioHelper`, `SearchFilter` and `ContextMenu` globals.
-  // They are deliberately NOT declared here so that any reintroduced usage
-  // fails to typecheck instead of failing at runtime. Use the namespaced
-  // equivalents on `foundry` below.
+  // Verified against Foundry 14.364:
   //
-  // `Dialog` / `Application` / `FormApplication` still exist as ApplicationV1
-  // deprecation shims (removal targeted for v16) but the module is fully on
-  // ApplicationV2, so they are not declared either.
+  // `AudioHelper` is GONE from the global scope — it is absent from both the
+  // Object.assign(globalThis, …) block and the addBackwardsCompatibilityReferences
+  // table, so `AudioHelper.play(...)` is a hard ReferenceError.
+  //
+  // `loadTemplates`, `renderTemplate`, `getTemplate`, `FilePicker`,
+  // `SearchFilter`, `ContextMenu` and `TextEditor` still resolve, but only via
+  // addBackwardsCompatibilityReferences getters marked "since 13, until 15":
+  // each access logs a deprecation warning and they stop working in v15.
+  // `Dialog` / `Application` / `FormApplication` are ApplicationV1 shims,
+  // deprecated until v16.
+  //
+  // None of them are declared here, deliberately: reintroducing one should
+  // fail typecheck rather than quietly re-adding a deprecation or a v15
+  // time bomb. Use the namespaced equivalents on `foundry` below.
 
   /**
    * Handlebars template engine — still a genuine global in v14.

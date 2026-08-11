@@ -4,7 +4,23 @@
 
 /**
  * Create a hurt/heal action
- * @param amount - Amount to hurt (negative) or heal (positive), can be dice formula
+ *
+ * `amount` must be a PLAIN roll formula (`-3d6`), never Foundry inline-roll
+ * syntax (`-[[3d6]]`). Monk's Active Tiles resolves the value through
+ * `MonksActiveTiles.getValue`, which for a bracketed value routes into
+ * `MonksActiveTiles.inlineRoll` -> `doRoll` -> `ChatMessage#applyMode`. With
+ * midi-qol installed on Foundry v14 that throws
+ * `TypeError: Cannot read properties of undefined (reading 'handler')` inside
+ * `ChatMessageMidi.applyMode`, and hurtheal aborts *after* posting the damage
+ * roll to chat but *before* calling `actor.applyDamage`.
+ *
+ * The failure mode is nasty precisely because it looks like it worked: the GM
+ * sees the save resolve and a damage roll appear in chat, and no error, but the
+ * token never loses hit points. Verified live on Foundry 14.364 / dnd5e 5.3.3 /
+ * MATT 14.01 / midi-qol -- `-3d6` and `-floor((3d6) / 2)` both apply damage;
+ * the `-[[...]]` equivalents both silently do not.
+ *
+ * @param amount - Amount to hurt (negative) or heal (positive); a dice formula
  * @param options - Optional configuration
  * @returns Monk's Active Tiles action object
  */

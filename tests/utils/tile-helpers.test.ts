@@ -651,7 +651,12 @@ describe('tile-helpers', () => {
 
       const hurtHealAction = actions.find((a: any) => a.action === 'hurtheal');
       expect(hurtHealAction).toBeDefined();
-      expect(hurtHealAction.data.value).toBe(`-[[${trapConfig.damageOnFail}]]`);
+      // Plain roll formula, NOT Foundry inline-roll syntax. `-[[3d6]]` routes
+      // MATT's hurtheal through inlineRoll -> doRoll -> ChatMessage#applyMode,
+      // which throws under midi-qol on Foundry v14 -- the damage gets rolled
+      // into chat and then never applied. Verified live on 14.364 / dnd5e 5.3.3.
+      expect(hurtHealAction.data.value).toBe(`-${trapConfig.damageOnFail}`);
+      expect(hurtHealAction.data.value).not.toContain('[[');
       expect(hurtHealAction.data.rollmode).toBe('roll');
     });
 
@@ -822,7 +827,8 @@ describe('tile-helpers', () => {
 
       const hurtHealAction = actions.find((a: any) => a.action === 'hurtheal');
       expect(hurtHealAction).toBeDefined();
-      expect(hurtHealAction.data.value).toBe('[[2d8]]');
+      expect(hurtHealAction.data.value).toBe('2d8');
+      expect(hurtHealAction.data.value).not.toContain('[[');
     });
 
     it('should create teleport action for TELEPORT result type', async () => {

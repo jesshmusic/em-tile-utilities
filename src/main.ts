@@ -81,10 +81,11 @@ Hooks.once('init', async () => {
 
   // Pre-load templates and register them as named Handlebars partials.
   //
-  // Foundry v14 removed the flat `loadTemplates` global; it now lives at
-  // foundry.applications.handlebars.loadTemplates. Calling the old global here
-  // threw a ReferenceError inside the `init` hook, which aborted everything
-  // below it — including every game.settings.register call.
+  // The flat `loadTemplates` global still resolves in v14, but only through
+  // addBackwardsCompatibilityReferences, which installs a deprecation getter
+  // marked "since 13, until 15" — so it logs a warning on every access and
+  // stops working in Foundry v15. The real home is
+  // foundry.applications.handlebars.loadTemplates.
   //
   // The object form maps partial ID -> path. Under the hood it calls
   // getTemplate(path, id), which compiles the file and runs
@@ -273,6 +274,18 @@ function escapeHtml(str: string): string {
 }
 
 /**
+ * Best-effort display name for a tile.
+ *
+ * These tiles are created without a TileDocument#name -- the label the user
+ * typed lives in MATT's own flag. Reading `tile.name` alone rendered the
+ * deletion prompts as `has a return tile: ""`, which tells the user nothing
+ * about what they are about to delete.
+ */
+function getTileDisplayName(tile: any): string {
+  return tile?.name || tile?.flags?.['monks-active-tiles']?.name || 'Unnamed Tile';
+}
+
+/**
  * Helper: Clean up trap actors and tokens when combat trap tiles are deleted
  */
 async function cleanupCombatTrap(tile: any): Promise<void> {
@@ -402,7 +415,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
           // Ask user for confirmation before deleting return teleport
           const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
             window: { title: 'Delete Return Teleport?' },
-            content: `<p>This teleport has a return tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
+            content: `<p>This teleport has a return tile: <strong>"${escapeHtml(getTileDisplayName(entity))}"</strong></p><p>Do you want to delete it as well?</p>`,
             yes: { default: true }
           });
 
@@ -459,7 +472,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
             // Ask user for confirmation before deleting main teleport
             const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
               window: { title: 'Delete Main Teleport?' },
-              content: `<p>This return teleport has a main tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
+              content: `<p>This return teleport has a main tile: <strong>"${escapeHtml(getTileDisplayName(entity))}"</strong></p><p>Do you want to delete it as well?</p>`,
               yes: { default: true }
             });
 
