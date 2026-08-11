@@ -1,13 +1,13 @@
 <div class="form-group">
-  <label>{{localize "EMPUZZLES.ResetTileName"}}</label>
-  <input type="text" name="resetName" value="{{resetName}}" />
+  <label for="resetName">{{localize "EMPUZZLES.ResetTileName"}}</label>
+  <input type="text" id="resetName" name="resetName" value="{{resetName}}" />
 </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.ResetTileImage"}}</label>
+    <label for="resetTileImage">{{localize "EMPUZZLES.ResetTileImage"}}</label>
     <div class="form-fields">
-      <input type="text" name="resetTileImage" value="{{resetTileImage}}" data-dtype="String" />
-      <button type="button" class="file-picker" data-type="imagevideo" data-target="resetTileImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <input type="text" id="resetTileImage" name="resetTileImage" value="{{resetTileImage}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="resetTileImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
         <i class="gi-load"></i>
       </button>
     </div>
@@ -33,8 +33,8 @@
               <label class="section-label">{{localize "EMPUZZLES.WallDoorStates"}}:</label>
               {{#each tile.wallDoorActions as |action|}}
                 <div class="wall-door-field">
-                  <label class="wall-door-label">{{{action.entityName}}}:</label>
-                  <select name="walldoor_{{tile.tileId}}_{{@index}}" class="wall-door-select">
+                  <label class="wall-door-label" for="walldoor_{{tile.tileId}}_{{@index}}">{{{action.entityName}}}:</label>
+                  <select id="walldoor_{{tile.tileId}}_{{@index}}" name="walldoor_{{tile.tileId}}_{{@index}}" class="wall-door-select">
                     <option value="CLOSED" {{#if (eq action.state "CLOSED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorClosed"}}</option>
                     <option value="OPEN" {{#if (eq action.state "OPEN")}}selected{{/if}}>{{localize "EMPUZZLES.DoorOpen"}}</option>
                     <option value="LOCKED" {{#if (eq action.state "LOCKED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorLocked"}}</option>
@@ -49,8 +49,8 @@
             {{#if tile.hasActivateAction}}
             <div class="settings-grid-1">
               <div class="field-group">
-                <label class="field-label">{{localize "EMPUZZLES.Active"}}:</label>
-                <select name="active_{{tile.tileId}}" class="field-select">
+                <label class="field-label" for="active_{{tile.tileId}}">{{localize "EMPUZZLES.Active"}}:</label>
+                <select id="active_{{tile.tileId}}" name="active_{{tile.tileId}}" class="field-select">
                   <option value="true" {{#if tile.active}}selected{{/if}}>{{localize "EMPUZZLES.Active"}}</option>
                   <option value="false" {{#unless tile.active}}selected{{/unless}}>{{localize "EMPUZZLES.Inactive"}}</option>
                 </select>
@@ -61,8 +61,8 @@
             {{#if (or tile.hasShowHideAction (not tile.hasAnyActions))}}
             <div class="settings-grid-1">
               <div class="field-group">
-                <label class="field-label">{{localize "EMPUZZLES.Visibility"}}:</label>
-                <select name="visibility_{{tile.tileId}}" class="field-select">
+                <label class="field-label" for="visibility_{{tile.tileId}}">{{localize "EMPUZZLES.Visibility"}}:</label>
+                <select id="visibility_{{tile.tileId}}" name="visibility_{{tile.tileId}}" class="field-select">
                   <option value="show" {{#unless tile.hidden}}selected{{/unless}}>{{localize "EMPUZZLES.Visible"}}</option>
                   <option value="hide" {{#if tile.hidden}}selected{{/if}}>{{localize "EMPUZZLES.Hidden"}}</option>
                 </select>
@@ -87,19 +87,19 @@
             {{#if (or tile.hasMovementAction (not tile.hasAnyActions))}}
             <div class="settings-grid-3">
               <div class="field-group">
-                <label class="field-label">{{localize "EMPUZZLES.Rotation"}}:</label>
-                <input type="number" name="rotation_{{tile.tileId}}" value="{{tile.rotation}}" step="1" class="field-input" />
+                <label class="field-label" for="rotation_{{tile.tileId}}">{{localize "EMPUZZLES.Rotation"}}:</label>
+                <input type="number" id="rotation_{{tile.tileId}}" name="rotation_{{tile.tileId}}" value="{{tile.rotation}}" step="1" class="field-input" />
               </div>
 
               <div class="field-group">
-                <label class="field-label">{{localize "EMPUZZLES.XPositionStart"}}:</label>
-                <input type="number" name="x_{{tile.tileId}}" value="{{tile.x}}" step="1" class="field-input" />
+                <label class="field-label" for="x_{{tile.tileId}}">{{localize "EMPUZZLES.XPositionStart"}}:</label>
+                <input type="number" id="x_{{tile.tileId}}" name="x_{{tile.tileId}}" value="{{tile.x}}" step="1" class="field-input" />
                 <div class="position-hint">{{localize "EMPUZZLES.End"}}: {{tile.currentX}}</div>
               </div>
 
               <div class="field-group">
-                <label class="field-label">{{localize "EMPUZZLES.YPositionStart"}}:</label>
-                <input type="number" name="y_{{tile.tileId}}" value="{{tile.y}}" step="1" class="field-input" />
+                <label class="field-label" for="y_{{tile.tileId}}">{{localize "EMPUZZLES.YPositionStart"}}:</label>
+                <input type="number" id="y_{{tile.tileId}}" name="y_{{tile.tileId}}" value="{{tile.y}}" step="1" class="field-input" />
                 <div class="position-hint">{{localize "EMPUZZLES.End"}}: {{tile.currentY}}</div>
               </div>
             </div>
@@ -123,8 +123,8 @@
                   </div>
                 {{else}}
                   <div class="variable-field">
-                    <label class="variable-label">{{variable.name}}:</label>
-                    <input type="text" name="var_{{tile.tileId}}_{{variable.name}}" value="{{variable.displayValue}}" class="variable-input" />
+                    <label class="variable-label" for="var_{{tile.tileId}}_{{variable.name}}">{{variable.name}}:</label>
+                    <input type="text" id="var_{{tile.tileId}}_{{variable.name}}" name="var_{{tile.tileId}}_{{variable.name}}" value="{{variable.displayValue}}" class="variable-input" />
                   </div>
                 {{/if}}
               {{/each}}

@@ -1,5 +1,8 @@
 /**
- * Tests for tile-helpers.ts
+ * Tests for src/utils/creators/* — the tile and region creators.
+ *
+ * Named after src/utils/tile-helpers.ts until 2.2.0, a monolith that was split
+ * into helpers/actions/builders/creators back in v1.16.0 and deleted with it.
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
@@ -24,7 +27,7 @@ import type {
 } from '../../src/types/module';
 import { TrapResultType, TrapTargetType } from '../../src/types/module';
 
-describe('tile-helpers', () => {
+describe('creators', () => {
   describe('createSwitchTile', () => {
     let mockScene: any;
     let switchConfig: SwitchConfig;

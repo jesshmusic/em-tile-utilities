@@ -48,21 +48,22 @@ Design dangerous floors, tripwires, and hidden hazards that trigger when tokens 
 
 **Choose your trap type:**
 
-- **Disappearing**: Trap vanishes after triggering (pit traps, collapsing floors)
-- **Switching**: Trap changes appearance when activated (pressure plate depresses, tripwire breaks)
-- **Activating**: Trap triggers other tiles or elements (opens doors, activates mechanisms)
-- **Combat**: Trap makes attack rolls against triggering tokens (dart traps, blade traps)
+- **Image trap**: A trap that does something to the tokens that step on it (pit traps, dart traps, gas vents)
+- **Activating trap**: A trap that sets off other things in the scene (opens doors, activates mechanisms, triggers other tiles)
+
+**Choose what happens to the trap itself:**
+
+The trap can start visible or hidden, and after it fires it can stay as it is, switch to a "triggered" image, hide itself, stay hidden, or reveal itself — with or without switching images. That covers pit traps that vanish, pressure plates that visibly depress, and hidden tripwires that stay hidden.
 
 **Add consequences:**
 
-- **Damage with saves**: Roll dice for damage with optional saving throws (Dexterity, Constitution, etc.)
-- **Attack rolls**: Create traps that attack with weapons or features (requires item drag-and-drop)
-- **Teleportation**: Transport unlucky characters to another location with optional saves
+- **Damage**: Roll dice for damage, with an optional saving throw and half damage on a success
+- **Healing**: The same, but restoring hit points (fountains, restorative glyphs)
+- **Teleportation**: Transport unlucky characters to another location, with an optional save
 - **Status effects**: Apply conditions like poisoned, stunned, or blinded
-- **Chain reactions**: Activate multiple tiles, open/close doors, show/hide objects
-- **DMG trap integration**: Drag trap items from the Dungeon Master's Guide compendium to auto-populate settings
-- **Trigger limits**: Set maximum number of times a trap can trigger (once, multiple times, or unlimited)
-- **Token configuration**: Combat traps can have visible or hidden tokens on the map
+- **Combat**: Spawn an attacker token — visible or hidden, with an image of your choosing — that rolls a real attack against the triggering token (dart traps, blade traps). Combat traps can also be limited to a maximum number of triggers.
+- **Chain reactions**: Activate multiple tiles, open/close/lock doors, show/hide objects
+- **DMG trap integration**: Drag trap items from the Dungeon Master's Guide compendium to auto-populate the save ability, DC and damage
 
 **Organized interface with setup guidance:**
 
@@ -75,6 +76,16 @@ The trap creation dialog features an intuitive accordion interface that organize
 - **Custom Tags**: Organize traps with tags for grouping and identification
 
 Each section shows a **red indicator** when required fields are missing, and a **Setup Tasks** list at the bottom guides you through completion. When all required fields are filled, you'll see a green "All required tasks complete!" message. Only one section can be open at a time to keep the interface clean and focused.
+
+### Regions Instead of Tiles
+
+Traps and teleports can be created as native FoundryVTT **Regions** rather than tiles — pick "Create as Region" in either dialog. Regions cover an area rather than a square of art, and Foundry fires them on token entry natively.
+
+- **Trap regions**: damage, saving throws and status effects over an area (requires Enhanced Region Behaviors)
+- **Teleport regions**: same-scene and cross-scene teleports, with optional return regions and entry sounds
+- **Elevation regions**: automatically raise or lower token elevation when tokens enter or leave — stairs, pits, balconies, flooded rooms (requires Enhanced Region Behaviors)
+
+Regions you create this way appear in the Tile Manager alongside your tiles, and can be selected, edited or deleted from there.
 
 ### Puzzle Reset Tiles
 
@@ -102,10 +113,19 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 
 ## 📋 Requirements
 
-- **FoundryVTT v13** or higher
-- **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** (required)
-- **[Tagger](https://foundryvtt.com/packages/tagger)** (required)
-- **[Monk's Token Bar](https://foundryvtt.com/packages/monks-tokenbar)** (optional, for saving throw features in traps and teleports)
+- **FoundryVTT v14** — this release is v14-only. v13 users should stay on v2.0.1, available from the [releases page](https://github.com/jesshmusic/em-tile-utilities/releases).
+- **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** v14.01+ (required)
+- **[Tagger](https://foundryvtt.com/packages/tagger)** v1.6.0+ (required)
+- **[Monk's Token Bar](https://foundryvtt.com/packages/monks-tokenbar)** v14.01+ (optional — needed for saving throws in traps and teleports)
+- **[Enhanced Region Behaviors](https://foundryvtt.com/packages/enhanced-region-behavior)** v1.5.0+ (optional — needed for **trap regions** and **elevation regions**; all the tile-based tools work without it)
+
+The trap, teleport and combat features assume the **D&D 5e** system (verified against 5.3.3). Switches, lights, resets, teleports and the Tile Manager are system-agnostic.
+
+---
+
+## ⬆️ Upgrading to 2.2.0
+
+**If you have traps or teleports that ask for a saving throw, recreate them.** Until 2.2.0 those tiles requested an ability _check_ rather than a saving throw, so save proficiency never applied. The fix changes what newly created tiles emit, but existing tiles already have the old request stored inside their Monk's Active Tiles configuration, and there is no safe way to migrate them automatically. Delete and rebuild any trap or teleport that uses a save; everything else carries forward untouched.
 
 ---
 
@@ -125,7 +145,7 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 1. **Switch to the Tiles layer** in your scene
 2. Click the **Tile Manager** button (floor hatch icon) in the toolbar
 3. The Tile Manager opens, showing cards for each tile type you can create
-4. **Click any card** (Switch, Light, Trap, Teleport, Reset) to open its creation dialog
+4. **Click any card** (Switch, Light, Trap, Teleport, Reset, Elevation) to open its creation dialog
 5. **Fill in the form** with your preferred images and settings
 6. **Click Create** and then **click on your map** to place the element
 
@@ -190,11 +210,11 @@ Double-click each switch to test it. You should see:
 
 ### Dramatic Encounters
 
-- **Collapsing floor**: Tiles disappear as characters walk across them
-- **Arrow traps**: Combat traps with crossbow attacks that require Dexterity saves
-- **Gas vents**: Poison traps that deal damage and apply the poisoned condition
+- **Collapsing floor**: Traps that hide themselves after firing, as characters walk across them
+- **Arrow traps**: Combat traps that roll a real crossbow attack against whoever steps on them
+- **Gas vents**: Damage traps with a Constitution save that also apply the poisoned condition
 - **Teleport trap**: Save-or-teleport traps that send characters to prison cells or monster lairs
-- **Blade trap**: Switching trap that reveals triggered state after attacking
+- **Blade trap**: A trap that switches to a "sprung" image once it has attacked
 
 ### Session Management
 
@@ -212,10 +232,9 @@ Access module settings from **Game Settings → Module Settings → Dorman Lakel
 **Customize defaults** for faster creation:
 
 - Default switch images (ON/OFF)
+- Default switch sound
 - Default light images (ON/OFF)
 - Default trap images (armed/triggered)
-- Default teleport images
-- Default sound effects
 
 **Experimental Features**: Enable the experimental features flag to access new tiles that are still in testing:
 

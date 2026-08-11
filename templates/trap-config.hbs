@@ -45,7 +45,7 @@
       <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
       <div class="form-fields">
         <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
-        <button type="button" class="file-picker" data-type="audio" data-target="sound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+        <button type="button" class="file-picker" data-type="audio" data-target="sound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
           <i class="gi-load"></i>
         </button>
       </div>
@@ -267,7 +267,7 @@
             <div class="tile-entry" data-tile-id="{{this.id}}">
               <img src="{{this.image}}" class="tile-thumbnail" alt="" />
               <span class="tile-name">{{this.name}}</span>
-              <button type="button" class="tile-remove-button" data-action="removeRegionTile" data-tile-id="{{this.id}}" title="{{localize 'EMPUZZLES.RemoveTile'}}">
+              <button type="button" class="tile-remove-button" data-action="removeRegionTile" data-tile-id="{{this.id}}" title="{{localize 'EMPUZZLES.RemoveTile'}}" aria-label="{{localize 'EMPUZZLES.RemoveTile'}}">
                 <i class="gi-cancel"></i>
               </button>
             </div>
@@ -396,7 +396,7 @@
 
       <div class="form-group">
         <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
-        <multi-select name="additionalEffects">
+        <multi-select id="additionalEffects" name="additionalEffects">
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsDamageHint"}}</p>
@@ -431,7 +431,7 @@
 
       <div class="form-group">
         <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
-        <multi-select name="additionalEffects">
+        <multi-select id="additionalEffects" name="additionalEffects">
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsHealHint"}}</p>
@@ -530,7 +530,7 @@
               <label for="tokenImage">{{localize "EMPUZZLES.TokenImage"}}</label>
               <div class="form-fields">
                 <input type="text" id="tokenImage" name="tokenImage" value="{{tokenImage}}" data-dtype="String" />
-                <button type="button" class="file-picker" data-type="imagevideo" data-target="tokenImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+                <button type="button" class="file-picker" data-type="imagevideo" data-target="tokenImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
                   <i class="gi-load"></i>
                 </button>
               </div>
@@ -558,7 +558,7 @@
 
       <div class="form-group">
         <label for="additionalEffects">{{localize "EMPUZZLES.AdditionalEffects"}}</label>
-        <multi-select name="additionalEffects">
+        <multi-select id="additionalEffects" name="additionalEffects">
           {{selectOptions effectOptions selected=additionalEffects nameAttr="value" labelAttr="label"}}
         </multi-select>
         <p class="hint">{{localize "EMPUZZLES.AdditionalEffectsCombatHint"}}</p>
@@ -629,7 +629,7 @@
                   {{/if}}
                 </div>
               </div>
-              <button type="button" class="tile-remove-button" data-action="removeTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.RemoveTile'}}">
+              <button type="button" class="tile-remove-button" data-action="removeTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.RemoveTile'}}" aria-label="{{localize 'EMPUZZLES.RemoveTile'}}">
                 <i class="gi-cancel"></i>
               </button>
             </div>
@@ -637,7 +637,7 @@
             <div class="tile-action-config">
               <div class="form-group">
                 <label for="action-{{tile.id}}">{{localize "EMPUZZLES.Action"}}</label>
-                <select name="action-{{tile.id}}" data-action-select data-tile-id="{{tile.id}}">
+                <select id="action-{{tile.id}}" name="action-{{tile.id}}" data-action-select data-tile-id="{{tile.id}}">
                   <option value="activate" {{#if (eq tile.actionType "activate")}}selected{{/if}}>{{localize "EMPUZZLES.ActionActivate"}}</option>
                   <option value="showhide" {{#if (eq tile.actionType "showhide")}}selected{{/if}}>{{localize "EMPUZZLES.ActionShowHide"}}</option>
                   <option value="moveto" {{#if (eq tile.actionType "moveto")}}selected{{/if}}>{{localize "EMPUZZLES.ActionMoveTo"}}</option>
@@ -648,7 +648,7 @@
               <div class="activate-options" style="{{#unless (eq tile.actionType "activate")}}display: none;{{/unless}}">
                 <div class="form-group">
                   <label for="activateMode-{{tile.id}}">{{localize "EMPUZZLES.Mode"}}</label>
-                  <select name="activateMode-{{tile.id}}" data-mode-select data-tile-id="{{tile.id}}" data-mode-type="activate">
+                  <select id="activateMode-{{tile.id}}" name="activateMode-{{tile.id}}" data-mode-select data-tile-id="{{tile.id}}" data-mode-type="activate">
                     <option value="activate" {{#if (eq tile.activateMode "activate")}}selected{{/if}}>{{localize "EMPUZZLES.Activate"}}</option>
                     <option value="deactivate" {{#if (eq tile.activateMode "deactivate")}}selected{{/if}}>{{localize "EMPUZZLES.Deactivate"}}</option>
                     <option value="toggle" {{#if (eq tile.activateMode "toggle")}}selected{{/if}}>{{localize "EMPUZZLES.Toggle"}}</option>
@@ -659,7 +659,7 @@
               <div class="showhide-options" style="{{#unless (eq tile.actionType "showhide")}}display: none;{{/unless}}">
                 <div class="form-group">
                   <label for="showHideMode-{{tile.id}}">{{localize "EMPUZZLES.Mode"}}</label>
-                  <select name="showHideMode-{{tile.id}}" data-mode-select data-tile-id="{{tile.id}}" data-mode-type="showhide">
+                  <select id="showHideMode-{{tile.id}}" name="showHideMode-{{tile.id}}" data-mode-select data-tile-id="{{tile.id}}" data-mode-type="showhide">
                     <option value="show" {{#if (eq tile.showHideMode "show")}}selected{{/if}}>{{localize "EMPUZZLES.Show"}}</option>
                     <option value="hide" {{#if (eq tile.showHideMode "hide")}}selected{{/if}}>{{localize "EMPUZZLES.Hide"}}</option>
                     <option value="toggle" {{#if (eq tile.showHideMode "toggle")}}selected{{/if}}>{{localize "EMPUZZLES.Toggle"}}</option>
@@ -707,7 +707,7 @@
               <option value="CLOSED" {{#if (eq wall.state "CLOSED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorClosed"}}</option>
               <option value="LOCKED" {{#if (eq wall.state "LOCKED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorLocked"}}</option>
             </select>
-            <button type="button" class="wall-remove-button" data-action="removeWall" data-wall-index="{{index}}" title="{{localize 'EMPUZZLES.RemoveWall'}}">
+            <button type="button" class="wall-remove-button" data-action="removeWall" data-wall-index="{{index}}" title="{{localize 'EMPUZZLES.RemoveWall'}}" aria-label="{{localize 'EMPUZZLES.RemoveWall'}}">
               <i class="gi-cancel"></i>
             </button>
           </div>

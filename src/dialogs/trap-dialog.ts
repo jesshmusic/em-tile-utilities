@@ -1150,7 +1150,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Check for trap name (always required)
     if (!this.trapName || this.trapName.trim() === '') {
-      tasks.push('Enter a trap name');
+      tasks.push(game.i18n.localize('EMPUZZLES.TodoEnterTrapName'));
     }
 
     // Region traps: only need trap name (other fields have defaults)
@@ -1160,27 +1160,28 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Check for required fields based on trap type (tile mode only)
       if (this.trapType === TrapType.IMAGE) {
         if (!this.resultType) {
-          tasks.push('Select a result type');
+          tasks.push(game.i18n.localize('EMPUZZLES.TodoSelectResultType'));
         }
 
         if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
-          tasks.push('Add a DMG trap item for combat');
+          tasks.push(game.i18n.localize('EMPUZZLES.TodoAddDmgTrapItem'));
         }
 
         if (this.resultType === TrapResultType.TELEPORT && (!this.teleportX || !this.teleportY)) {
-          tasks.push('Select teleport destination');
+          tasks.push(game.i18n.localize('EMPUZZLES.TodoSelectTeleportDestination'));
         }
       }
 
       if (this.trapType === TrapType.ACTIVATING && this.selectedTiles.size === 0) {
-        tasks.push('Add at least one tile to activate');
+        tasks.push(game.i18n.localize('EMPUZZLES.TodoAddTileToActivate'));
       }
     }
 
     // Update the DOM
     if (tasks.length === 0) {
-      todoContainer.innerHTML =
-        '<li class="todo-item complete">All required fields completed!</li>';
+      todoContainer.innerHTML = `<li class="todo-item complete">${game.i18n.localize(
+        'EMPUZZLES.TodoAllFieldsComplete'
+      )}</li>`;
     } else {
       todoContainer.innerHTML = tasks
         .map(task => `<li class="todo-item incomplete">${task}</li>`)

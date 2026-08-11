@@ -6,7 +6,7 @@
 
   <div class="form-group">
     <label for="tileName">{{localize "EMPUZZLES.TileName"}}</label>
-    <input type="text" name="tileName" value="{{tileName}}" />
+    <input type="text" id="tileName" name="tileName" value="{{tileName}}" />
     <p class="hint">{{localize "EMPUZZLES.TileNameHint"}}</p>
   </div>
 
@@ -40,8 +40,8 @@
   <div class="form-group tile-only-option">
     <label for="tileImage">{{localize "EMPUZZLES.TileImage"}}</label>
     <div class="form-fields">
-      <input type="text" name="tileImage" value="{{tileImage}}" />
-      <button type="button" class="file-picker" data-target="tileImage" data-type="imagevideo">
+      <input type="text" id="tileImage" name="tileImage" value="{{tileImage}}" />
+      <button type="button" class="file-picker" data-target="tileImage" data-type="imagevideo" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}">
         <i class="gi-load"></i>
       </button>
     </div>
@@ -73,7 +73,7 @@
 
   <div class="form-group">
     <label for="targetScene">{{localize "EMPUZZLES.TargetScene"}}</label>
-    <select name="targetScene">
+    <select id="targetScene" name="targetScene">
       {{#each scenes as |scene|}}
         <option value="{{scene.id}}" {{#if (eq scene.id ../selectedSceneId)}}selected{{/if}}>
           {{scene.name}}
@@ -168,7 +168,7 @@
     {{#if hasSavingThrow}}
       <div class="form-group">
         <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
-        <select name="savingThrow">
+        <select id="savingThrow" name="savingThrow">
           <option value="save:dex" {{#if (eq savingThrow "save:dex")}}selected{{/if}}>{{localize "EMPUZZLES.DexteritySave"}}</option>
           <option value="save:str" {{#if (eq savingThrow "save:str")}}selected{{/if}}>{{localize "EMPUZZLES.StrengthSave"}}</option>
           <option value="save:con" {{#if (eq savingThrow "save:con")}}selected{{/if}}>{{localize "EMPUZZLES.ConstitutionSave"}}</option>
@@ -180,12 +180,12 @@
 
       <div class="form-group">
         <label for="dc">{{localize "EMPUZZLES.DC"}}</label>
-        <input type="number" name="dc" value="{{dc}}" min="1" max="30" />
+        <input type="number" id="dc" name="dc" value="{{dc}}" min="1" max="30" />
       </div>
 
       <div class="form-group">
         <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
-        <input type="text" name="flavorText" value="{{flavorText}}" />
+        <input type="text" id="flavorText" name="flavorText" value="{{flavorText}}" />
         <p class="hint">{{localize "EMPUZZLES.FlavorTextHint"}}</p>
       </div>
     {{/if}}

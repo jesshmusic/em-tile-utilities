@@ -11,22 +11,50 @@ body:
         **Note:** If you see any console errors (Press F12 in Foundry → Console tab), including them in your description is appreciated but not required.
 
   - type: input
+    id: module-version
+    attributes:
+      label: Module Version
+      description: Which version of Dorman Lakely's Tile Utilities? It is shown at the bottom of the Tile Manager.
+      placeholder: "e.g., 2.2.0"
+    validations:
+      required: true
+
+  - type: input
     id: foundry-version
     attributes:
       label: Foundry VTT Version
-      description: What version of Foundry VTT are you running?
-      placeholder: "e.g., 13.330"
+      description: What version of Foundry VTT are you running? This module requires v14 or later.
+      placeholder: "e.g., 14.364"
     validations:
       required: true
+
+  - type: input
+    id: matt-version
+    attributes:
+      label: Monk's Active Tiles Version
+      description: Required dependency, minimum 14.01.
+      placeholder: "e.g., 14.01"
+    validations:
+      required: false
 
   - type: input
     id: dnd5e-version
     attributes:
       label: D&D 5e System Version
-      description: What version of the D&D 5e system are you using?
-      placeholder: "e.g., 4.0.0"
+      description: What version of the D&D 5e system are you using? (Only relevant for trap, combat and saving throw issues.)
+      placeholder: "e.g., 5.3.3"
     validations:
       required: false
+
+  - type: checkboxes
+    id: other-modules
+    attributes:
+      label: Other modules
+      description: Tick any of these you have active - they interact with this module's trap and save behaviour.
+      options:
+        - label: Monk's Token Bar
+        - label: midi-qol
+        - label: Enhanced Region Behaviors
 
   - type: textarea
     id: description

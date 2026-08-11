@@ -16,6 +16,10 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
     classes: ['variables-viewer', 'em-puzzles'],
     window: {
       icon: 'gi-scroll-unfurled',
+      // The variables table is unbounded -- one row per variable per tile --
+      // so the window has to be growable. Every other dialog in the module
+      // was already resizable; this one was the odd one out.
+      resizable: true,
       title: 'EMPUZZLES.SceneVariables'
     },
     position: DialogPositions.VARIABLES_VIEWER,

@@ -106,7 +106,7 @@
     <div class="search-group">
       <div class="search-input-wrapper">
         <input type="text" class="tile-search-input" id="tile-search" value="{{searchQuery}}" placeholder="{{localize 'EMPUZZLES.SearchPlaceholder'}}" />
-        <button type="button" class="search-clear-btn" title="{{localize 'EMPUZZLES.ClearSearch'}}" style="{{#if searchQuery}}display: block;{{else}}display: none;{{/if}}">
+        <button type="button" class="search-clear-btn" title="{{localize 'EMPUZZLES.ClearSearch'}}" aria-label="{{localize 'EMPUZZLES.ClearSearch'}}" style="{{#if searchQuery}}display: block;{{else}}display: none;{{/if}}">
           <i class="gi-cancel"></i>
         </button>
       </div>
@@ -171,17 +171,17 @@
                       </div>
                       <div class="tile-actions">
                         {{#if tile.isRegion}}
-                          <button type="button" class="tile-action-btn" data-action="selectRegion" data-region-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectRegion'}}">
+                          <button type="button" class="tile-action-btn" data-action="selectRegion" data-region-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectRegion'}}" aria-label="{{localize 'EMPUZZLES.SelectRegion'}}">
                             <i class="gi-convergence-target"></i>
                           </button>
-                          <button type="button" class="tile-action-btn" data-action="editRegion" data-region-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditRegion'}}">
+                          <button type="button" class="tile-action-btn" data-action="editRegion" data-region-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditRegion'}}" aria-label="{{localize 'EMPUZZLES.EditRegion'}}">
                             <i class="gi-pencil"></i>
                           </button>
-                          <button type="button" class="tile-action-btn delete-btn" data-action="deleteRegion" data-region-id="{{tile.id}}" data-region-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteRegion'}}">
+                          <button type="button" class="tile-action-btn delete-btn" data-action="deleteRegion" data-region-id="{{tile.id}}" data-region-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteRegion'}}" aria-label="{{localize 'EMPUZZLES.DeleteRegion'}}">
                             <i class="gi-trash-can"></i>
                           </button>
                         {{else}}
-                          <button type="button" class="tile-action-btn toggle-btn {{#unless tile.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}">
+                          <button type="button" class="tile-action-btn toggle-btn {{#unless tile.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}" aria-label="{{localize 'EMPUZZLES.ToggleVisibility'}}">
                             {{#if tile.hidden}}
                               <i class="gi-sight-disabled"></i>
                             {{else}}
@@ -189,7 +189,7 @@
                             {{/if}}
                           </button>
                           {{#if tile.hasMonksData}}
-                            <button type="button" class="tile-action-btn toggle-btn {{#if tile.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}">
+                            <button type="button" class="tile-action-btn toggle-btn {{#if tile.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}" aria-label="{{localize 'EMPUZZLES.ToggleActive'}}">
                               {{#if tile.active}}
                                 <i class="gi-confirmed"></i>
                               {{else}}
@@ -197,16 +197,16 @@
                               {{/if}}
                             </button>
                           {{/if}}
-                          <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}">
+                          <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}" aria-label="{{localize 'EMPUZZLES.SelectTile'}}">
                             <i class="gi-convergence-target"></i>
                           </button>
-                          <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditTile'}}">
+                          <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{tile.id}}" title="{{localize 'EMPUZZLES.EditTile'}}" aria-label="{{localize 'EMPUZZLES.EditTile'}}">
                             <i class="gi-pencil"></i>
                           </button>
-                          <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}">
+                          <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}" aria-label="{{localize 'EMPUZZLES.ExportTile'}}">
                             <i class="gi-save"></i>
                           </button>
-                          <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}">
+                          <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{tile.id}}" data-tile-name="{{tile.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}" aria-label="{{localize 'EMPUZZLES.DeleteTile'}}">
                             <i class="gi-trash-can"></i>
                           </button>
                         {{/if}}
@@ -304,7 +304,7 @@
                 </div>
               </div>
               <div class="tile-actions">
-                <button type="button" class="tile-action-btn toggle-btn {{#unless item.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}">
+                <button type="button" class="tile-action-btn toggle-btn {{#unless item.hidden}}active{{/unless}}" data-action="toggleVisibility" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.ToggleVisibility'}}" aria-label="{{localize 'EMPUZZLES.ToggleVisibility'}}">
                   {{#if item.hidden}}
                     <i class="gi-sight-disabled"></i>
                   {{else}}
@@ -312,7 +312,7 @@
                   {{/if}}
                 </button>
                 {{#if item.hasMonksData}}
-                  <button type="button" class="tile-action-btn toggle-btn {{#if item.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}">
+                  <button type="button" class="tile-action-btn toggle-btn {{#if item.active}}active{{/if}}" data-action="toggleActive" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.ToggleActive'}}" aria-label="{{localize 'EMPUZZLES.ToggleActive'}}">
                     {{#if item.active}}
                       <i class="gi-confirmed"></i>
                     {{else}}
@@ -320,16 +320,16 @@
                     {{/if}}
                   </button>
                 {{/if}}
-                <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}">
+                <button type="button" class="tile-action-btn" data-action="selectTile" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.SelectTile'}}" aria-label="{{localize 'EMPUZZLES.SelectTile'}}">
                   <i class="gi-convergence-target"></i>
                 </button>
-                <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.EditTile'}}">
+                <button type="button" class="tile-action-btn" data-action="editTile" data-tile-id="{{item.id}}" title="{{localize 'EMPUZZLES.EditTile'}}" aria-label="{{localize 'EMPUZZLES.EditTile'}}">
                   <i class="gi-pencil"></i>
                 </button>
-                <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{item.id}}" data-tile-name="{{item.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}">
+                <button type="button" class="tile-action-btn export-btn" data-action="exportTile" data-tile-id="{{item.id}}" data-tile-name="{{item.name}}" title="{{localize 'EMPUZZLES.ExportTile'}}" aria-label="{{localize 'EMPUZZLES.ExportTile'}}">
                   <i class="gi-save"></i>
                 </button>
-                <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{item.id}}" data-tile-name="{{item.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}">
+                <button type="button" class="tile-action-btn delete-btn" data-action="deleteTile" data-tile-id="{{item.id}}" data-tile-name="{{item.name}}" title="{{localize 'EMPUZZLES.DeleteTile'}}" aria-label="{{localize 'EMPUZZLES.DeleteTile'}}">
                   <i class="gi-trash-can"></i>
                 </button>
               </div>

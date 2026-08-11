@@ -171,6 +171,10 @@
     "TilesToActivate": "Tiles to Activate",
     "ActivatingTrapTilesHint": "Click Add Tile to select tiles from the canvas that will be activated when this trap is triggered",
     "RemoveTile": "Remove Tile",
+    "RemoveBranch": "Remove Branch",
+    "RemoveCondition": "Remove Condition",
+    "RemoveAction": "Remove Action",
+    "RemoveTag": "Remove tag {tag}",
     "SceneVariables": "Scene Variables",
     "SwitchName": "Switch Name",
     "VariableName": "Variable Name",
@@ -532,6 +536,12 @@
     "NotifyCombatTrapCreated": "Combat trap \"{name}\" created!",
     "NotifyPlaceRegionTrap": "Drag on the canvas to place and size the region trap. Press ESC to cancel.",
     "NotifyPlaceTrap": "Drag on the canvas to place and size the trap. Press ESC to cancel.",
-    "NotifyTrapCreated": "Trap \"{name}\" created!"
+    "NotifyTrapCreated": "Trap \"{name}\" created!",
+    "TodoEnterTrapName": "Enter a trap name",
+    "TodoSelectResultType": "Select a result type",
+    "TodoAddDmgTrapItem": "Add a DMG trap item for combat",
+    "TodoSelectTeleportDestination": "Select teleport destination",
+    "TodoAddTileToActivate": "Add at least one tile to activate",
+    "TodoAllFieldsComplete": "All required fields completed!"
   }
 }

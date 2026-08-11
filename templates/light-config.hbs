@@ -1,23 +1,23 @@
 <div class="form-group">
-  <label>{{localize "EMPUZZLES.LightName"}}</label>
-  <input type="text" name="lightName" value="{{lightName}}" />
+  <label for="lightName">{{localize "EMPUZZLES.LightName"}}</label>
+  <input type="text" id="lightName" name="lightName" value="{{lightName}}" />
 </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.OffImage"}}</label>
+    <label for="offImage">{{localize "EMPUZZLES.OffImage"}}</label>
     <div class="form-fields">
-      <input type="text" name="offImage" value="{{offImage}}" data-dtype="String" />
-      <button type="button" class="file-picker" data-type="imagevideo" data-target="offImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <input type="text" id="offImage" name="offImage" value="{{offImage}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="offImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
         <i class="gi-load"></i>
       </button>
     </div>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.OnImage"}}</label>
+    <label for="onImage">{{localize "EMPUZZLES.OnImage"}}</label>
     <div class="form-fields">
-      <input type="text" name="onImage" value="{{onImage}}" data-dtype="String" />
-      <button type="button" class="file-picker" data-type="imagevideo" data-target="onImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <input type="text" id="onImage" name="onImage" value="{{onImage}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="onImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
         <i class="gi-load"></i>
       </button>
     </div>
@@ -33,44 +33,44 @@
 
   <div class="darkness-settings" style="display: {{#if useDarkness}}block{{else}}none{{/if}};">
     <div class="form-group">
-      <label>{{localize "EMPUZZLES.DarknessMinimum"}}</label>
-      <input type="range" name="darknessMin" value="{{darknessMin}}" min="0" max="1" step="0.1" data-update-display="darknessMinValue" />
+      <label for="darknessMin">{{localize "EMPUZZLES.DarknessMinimum"}}</label>
+      <input type="range" id="darknessMin" name="darknessMin" value="{{darknessMin}}" min="0" max="1" step="0.1" data-update-display="darknessMinValue" />
       <span class="range-value" id="darknessMinValue">{{darknessMin}}</span>
       <p class="hint">{{localize "EMPUZZLES.DarknessMinimumHint"}}</p>
     </div>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.DimLight"}}</label>
-    <input type="number" name="dimLight" value="{{dimLight}}" min="0" step="1" />
+    <label for="dimLight">{{localize "EMPUZZLES.DimLight"}}</label>
+    <input type="number" id="dimLight" name="dimLight" value="{{dimLight}}" min="0" step="1" />
     <p class="hint">{{localize "EMPUZZLES.DimLightHint"}}</p>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.BrightLight"}}</label>
-    <input type="number" name="brightLight" value="{{brightLight}}" min="0" step="1" />
+    <label for="brightLight">{{localize "EMPUZZLES.BrightLight"}}</label>
+    <input type="number" id="brightLight" name="brightLight" value="{{brightLight}}" min="0" step="1" />
     <p class="hint">{{localize "EMPUZZLES.BrightLightHint"}}</p>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.LightColor"}}</label>
-    <input type="text" name="lightColor" value="{{lightColor}}" data-dtype="String" class="color" />
+    <label for="lightColor">{{localize "EMPUZZLES.LightColor"}}</label>
+    <input type="text" id="lightColor" name="lightColor" value="{{lightColor}}" data-dtype="String" class="color" />
     <input type="color" value="{{lightColor}}" data-edit="lightColor" />
     <p class="hint">{{localize "EMPUZZLES.LightColorHint"}}</p>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.ColorIntensity"}}</label>
-    <input type="range" name="colorIntensity" value="{{colorIntensity}}" min="0" max="1" step="0.05" data-update-display="colorIntensityValue" />
+    <label for="colorIntensity">{{localize "EMPUZZLES.ColorIntensity"}}</label>
+    <input type="range" id="colorIntensity" name="colorIntensity" value="{{colorIntensity}}" min="0" max="1" step="0.05" data-update-display="colorIntensityValue" />
     <span class="range-value" id="colorIntensityValue">{{colorIntensity}}</span>
     <p class="hint">{{localize "EMPUZZLES.ColorIntensityHint"}}</p>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.LightSound"}}</label>
+    <label for="lightSound">{{localize "EMPUZZLES.LightSound"}}</label>
     <div class="form-fields">
-      <input type="text" name="sound" value="{{sound}}" data-dtype="String" />
-      <button type="button" class="file-picker" data-type="audio" data-target="sound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <input type="text" id="lightSound" name="sound" value="{{sound}}" data-dtype="String" />
+      <button type="button" class="file-picker" data-type="audio" data-target="sound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
         <i class="gi-load"></i>
       </button>
     </div>
@@ -78,14 +78,14 @@
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.SoundRadius"}}</label>
-    <input type="number" name="soundRadius" value="{{soundRadius}}" min="1" step="1" />
+    <label for="soundRadius">{{localize "EMPUZZLES.SoundRadius"}}</label>
+    <input type="number" id="soundRadius" name="soundRadius" value="{{soundRadius}}" min="1" step="1" />
     <p class="hint">{{localize "EMPUZZLES.SoundRadiusHint"}}</p>
   </div>
 
   <div class="form-group">
-    <label>{{localize "EMPUZZLES.SoundVolume"}}</label>
-    <input type="range" name="soundVolume" value="{{soundVolume}}" min="0" max="1" step="0.05" data-update-display="soundVolumeValue" />
+    <label for="soundVolume">{{localize "EMPUZZLES.SoundVolume"}}</label>
+    <input type="range" id="soundVolume" name="soundVolume" value="{{soundVolume}}" min="0" max="1" step="0.05" data-update-display="soundVolumeValue" />
     <span class="range-value" id="soundVolumeValue">{{soundVolume}}</span>
     <p class="hint">{{localize "EMPUZZLES.SoundVolumeHint"}}</p>
   </div>
@@ -100,10 +100,10 @@
 
   <div class="overlay-settings" style="display: {{#if useOverlay}}block{{else}}none{{/if}};">
     <div class="form-group">
-      <label>{{localize "EMPUZZLES.OverlayImage"}}</label>
+      <label for="overlayImage">{{localize "EMPUZZLES.OverlayImage"}}</label>
       <div class="form-fields">
-        <input type="text" name="overlayImage" value="{{overlayImage}}" data-dtype="String" />
-        <button type="button" class="file-picker" data-type="imagevideo" data-target="overlayImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+        <input type="text" id="overlayImage" name="overlayImage" value="{{overlayImage}}" data-dtype="String" />
+        <button type="button" class="file-picker" data-type="imagevideo" data-target="overlayImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
           <i class="gi-load"></i>
         </button>
       </div>

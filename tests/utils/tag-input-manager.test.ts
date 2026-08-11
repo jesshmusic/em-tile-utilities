@@ -192,6 +192,67 @@ describe('TagInputManager', () => {
       expect(tagChips.length).toBe(1);
     });
 
+    /**
+     * The remove control used to be a bare `<i class="gi-cancel">` with an
+     * `onclick`. That is invisible to the keyboard (an <i> is not focusable),
+     * has no role, and has no accessible name, so a screen-reader user could
+     * add tags but never remove one. It is now a real <button>, which gets
+     * focusability and Enter/Space activation from the platform.
+     */
+    describe('remove control accessibility', () => {
+      it('builds the remove control as a real button, not an <i>', () => {
+        tagInputManager.addTagChip('test-tag');
+
+        const tagsContainer = container.querySelector('[data-tags-container]') as HTMLElement;
+        const chip = tagsContainer.querySelector('.tag') as HTMLElement;
+        const remove = chip.querySelector('.tag-remove-btn') as HTMLButtonElement;
+
+        expect(remove).toBeTruthy();
+        expect(remove.tagName).toBe('BUTTON');
+        // Not a submit button — these chips live inside a <form> dialog.
+        expect(remove.type).toBe('button');
+      });
+
+      it('puts the remove control in the tab order', () => {
+        tagInputManager.addTagChip('test-tag');
+
+        const remove = container.querySelector('.tag .tag-remove-btn') as HTMLButtonElement;
+
+        expect(remove.disabled).toBe(false);
+        // A <button> without a negative tabindex is focusable by default.
+        expect(remove.tabIndex).toBe(0);
+      });
+
+      it('gives the remove control an accessible name naming the tag', () => {
+        tagInputManager.addTagChip('secret-door');
+
+        const remove = container.querySelector('.tag .tag-remove-btn') as HTMLButtonElement;
+        const label = remove.getAttribute('aria-label') ?? '';
+
+        expect(label.length).toBeGreaterThan(0);
+        expect(label).toContain('secret-door');
+      });
+
+      it('hides the decorative glyph from assistive technology', () => {
+        tagInputManager.addTagChip('test-tag');
+
+        const icon = container.querySelector('.tag .tag-remove-btn i') as HTMLElement;
+
+        expect(icon.className).toBe('gi-cancel');
+        expect(icon.getAttribute('aria-hidden')).toBe('true');
+      });
+
+      it('removes the tag when the button itself is activated', () => {
+        tagInputManager.addTagChip('removable-tag');
+
+        const remove = container.querySelector('.tag .tag-remove-btn') as HTMLButtonElement;
+        remove.click();
+
+        const tagsContainer = container.querySelector('[data-tags-container]') as HTMLElement;
+        expect(tagsContainer.querySelectorAll('.tag').length).toBe(0);
+      });
+    });
+
     it('should allow removing tags via X button', () => {
       tagInputManager.addTagChip('removable-tag');
 

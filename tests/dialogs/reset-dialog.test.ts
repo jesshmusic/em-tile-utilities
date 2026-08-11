@@ -48,7 +48,10 @@ describe('ResetTileConfigDialog', () => {
       expect(options.window.icon).toBe('gi-clockwise-rotation');
       expect(options.window.title).toBe('EMPUZZLES.CreateResetTile');
       expect(options.position.width).toBe(650);
-      expect(options.position.height).toBe(525);
+      // Content-driven height: the `max-height: 90vh` flex block in
+      // styles/dialogs.css caps it, so the window fits short forms without
+      // dead space and scrolls tall ones.
+      expect(options.position.height).toBe('auto');
     });
 
     it('should have correct parts configuration', () => {

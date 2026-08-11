@@ -1,217 +1,72 @@
-# Dorman Lakely's Tile Utilities - Test Suite
+# Test suite
 
-This directory contains the Jest test suite for Dorman Lakely's Tile Utilities.
-
-## Structure
+Reference for the mocks and helpers in this directory. For what the suite covers, current counts and coverage numbers, see [`../TESTING.md`](../TESTING.md).
 
 ```
 tests/
-├── setup.ts                    # Jest setup and configuration
-├── mocks/
-│   └── foundry.ts             # Mock Foundry VTT globals and utilities
-├── utils/
-│   └── tile-helpers.test.ts   # Tests for tile creation utilities
-└── dialogs/
-    └── tile-manager.test.ts   # Tests for TileManagerDialog
+├── setup.ts                  # Jest setupFilesAfterEnv: calls mockFoundry(), clears mocks between tests
+├── mocks/foundry.ts          # Foundry v14 globals
+├── helpers/template-helper.ts# Compile and render .hbs files off disk
+├── dialogs/                  # 11 suites — one per dialog, plus notify and switch tags
+├── utils/                    # 9 suites — creators, builders, helpers, dnd5e parsing, previews
+├── integration/              # 4 suites — real template rendering
+├── localization.test.ts      # lang/en.json contract
+└── main.test.ts              # hooks, settings, toolbar
 ```
 
-## Running Tests
+## `mocks/foundry.ts`
 
-### Run all tests
+`mockFoundry()` installs the globals the module touches. `tests/setup.ts` already calls it in a `beforeAll`, but suites that import a dialog at module scope call it again at the top of the file, **before** the import — dialog classes read `foundry.applications.api` at class-definition time, so an import that lands first sees an undefined global.
+
+What it provides:
+
+- `foundry.utils.randomID`
+- `foundry.applications.api` — `ApplicationV2` (a minimal stub with `render`/`close`/`_prepareContext`/`_onRender`/`_onClose`), `HandlebarsApplicationMixin`, `DialogV2`
+- `foundry.applications.apps.FilePicker`, `foundry.applications.handlebars.{loadTemplates,renderTemplate,getTemplate}`, `foundry.audio.AudioHelper` — the v14 homes for globals that were removed or deprecated. The old flat globals are **not** mocked, deliberately: reintroducing one should fail a test rather than silently resolve.
+- `game` — modules (Monk's Active Tiles, Monk's Token Bar, Tagger and Enhanced Region Behaviors all report active), settings with the real registered defaults, scenes, and an `i18n` that resolves against the **real `lang/en.json`**. A missing localization key therefore fails a test instead of rendering a raw key name.
+- `canvas`, `ui.notifications`, `Hooks`
+
+Factories:
+
+| Function                       | Returns                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `createMockScene(id?, tiles?)` | A Scene with `tiles`/`lights` collections and jest-mocked `createEmbeddedDocuments`, `setFlag`, etc. |
+| `createMockTile(overrides?)`   | A TileDocument with sensible defaults                                                                |
+| `createMockLight(overrides?)`  | An AmbientLightDocument                                                                              |
+
+Assign the scene to `(global as any).canvas.scene` when the code under test reads the active scene rather than taking one as an argument.
+
+## `helpers/template-helper.ts`
+
+| Function                                    | Purpose                                                              |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `loadTemplate(path)`                        | Read a `.hbs` from disk, resolving `modules/<id>/…` paths            |
+| `compileTemplate(source)`                   | Handlebars compile                                                   |
+| `registerHandlebarsHelpers()`               | The Foundry helpers templates use (`localize`, `eq`, `and`, …)       |
+| `registerHandlebarsPartials()`              | The three shared partials in `templates/partials/`                   |
+| `renderTemplate(path, context)`             | Render a template with an explicit context                           |
+| `renderDialogTemplate(DialogClass, extra?)` | Instantiate the dialog, run `_prepareContext()`, render `PARTS.form` |
+| `htmlContainsSelector(html, selector)`      | Cheap selector presence check                                        |
+| `getSelectOptionValues(html, name)`         | Option values from a `<select>`                                      |
+| `getSelectOptionLabels(html, name)`         | Option labels from a `<select>`                                      |
+
+`renderDialogTemplate` is the one that earns its keep: it goes through the dialog's own context preparation, so a mismatch between what the dialog computes and what the template expects shows up as wrong HTML rather than passing silently.
+
+## Conventions
+
+- Mock before import (see above).
+- Assert on the emitted Monk's Active Tiles action data, not on dialog instance state. A dialog remembering a value proves nothing about whether Monk's Active Tiles can execute it.
+- Keep suites independent; `setup.ts` clears mocks after each test, but scene fixtures are yours to rebuild in `beforeEach`.
+- New localization keys need no test change — `localization.test.ts` picks them up automatically and will fail if a key is referenced but undefined, or defined but unreferenced.
+
+## Debugging
 
 ```bash
-npm test
+node --inspect-brk node_modules/.bin/jest --runInBand   # then open chrome://inspect
+npm test -- --verbose reset-dialog                       # one suite, per-test output
 ```
 
-### Run tests in watch mode (development)
-
-```bash
-npm run test:watch
-```
-
-### Run tests with coverage report
-
-```bash
-npm run test:coverage
-```
-
-### Run tests in CI mode
-
-```bash
-npm run test:ci
-```
-
-## Writing Tests
-
-### Mocking Foundry VTT
-
-The test suite includes comprehensive mocks for Foundry VTT globals:
-
-- `foundry.utils.randomID()`
-- `foundry.applications.api.ApplicationV2`
-- `foundry.applications.api.HandlebarsApplicationMixin`
-- `game` object (modules, settings, i18n, scenes)
-- `canvas` object (scene, stage, grid, tiles)
-- `ui.notifications`
-- `Hooks`
-- `Dialog`
-- `FilePicker`
-
-### Helper Functions
-
-#### `createMockScene(id, tiles[])`
-
-Creates a mock Scene document with a collection of tiles.
-
-```typescript
-const scene = createMockScene('test-scene', [createMockTile({ id: 'tile-1', name: 'Test Tile' })]);
-```
-
-#### `createMockTile(overrides)`
-
-Creates a mock Tile document with default properties.
-
-```typescript
-const tile = createMockTile({
-  name: 'Custom Tile',
-  x: 200,
-  y: 300,
-  hidden: true
-});
-```
-
-#### `createMockLight(overrides)`
-
-Creates a mock AmbientLight document.
-
-```typescript
-const light = createMockLight({
-  config: {
-    dim: 40,
-    bright: 20,
-    color: '#ffa726'
-  }
-});
-```
-
-## Test Coverage
-
-The test suite aims for high coverage of critical functionality:
-
-### Core Utilities (tile-helpers.ts)
-
-- ✅ Switch tile creation with proper Monk's Active Tiles configuration
-- ✅ Light tile creation with both manual and darkness-based triggers
-- ✅ Reset tile creation with variable and tile state management
-- ✅ Proper action generation for all tile types
-- ✅ Correct positioning and sizing
-
-### Dialogs (tile-manager.ts)
-
-- ✅ Tile listing and sorting (name, x, y, elevation, sort)
-- ✅ Monk's Active Tiles data extraction
-- ✅ Video file detection for thumbnails
-- ✅ Search functionality (client-side)
-- ✅ Proper handling of empty scenes
-- ✅ Metadata extraction (action count, variable count)
-
-## Best Practices
-
-### 1. Isolation
-
-Each test should be independent and not rely on the state from other tests.
-
-```typescript
-beforeEach(() => {
-  mockScene = createMockScene();
-  (global as any).canvas.scene = mockScene;
-});
-```
-
-### 2. Clear Test Names
-
-Use descriptive test names that explain what is being tested.
-
-```typescript
-it('should create a switch tile with correct data structure', async () => {
-  // ...
-});
-```
-
-### 3. Arrange-Act-Assert
-
-Structure tests clearly:
-
-```typescript
-it('should sort tiles by name', async () => {
-  // Arrange
-  dialog.sortBy = 'name';
-
-  // Act
-  const context = await dialog._prepareContext({});
-
-  // Assert
-  expect(context.tiles[0].name).toBe('Alpha Tile');
-});
-```
-
-### 4. Test Edge Cases
-
-Don't just test the happy path:
-
-```typescript
-it('should handle scene with no tiles', async () => {
-  mockScene.tiles.clear();
-  const context = await dialog._prepareContext({});
-  expect(context.hasTiles).toBe(false);
-});
-```
-
-### 5. Use Matchers Appropriately
-
-```typescript
-// Specific matchers
-expect(value).toBe(10);
-expect(array).toHaveLength(3);
-expect(object).toHaveProperty('name');
-
-// Partial object matching
-expect(tile).toEqual(
-  expect.objectContaining({
-    x: 200,
-    y: 200
-  })
-);
-```
-
-## CI/CD Integration
-
-Tests run automatically on:
-
-- Push to `main` or `develop` branches
-- Pull requests to `main` or `develop`
-
-The CI workflow:
-
-1. Runs tests on Node.js 18.x and 20.x
-2. Generates coverage reports
-3. Uploads coverage to Codecov (optional)
-4. Checks that the project builds successfully
-
-## Coverage Goals
-
-- **Statements**: > 80%
-- **Branches**: > 75%
-- **Functions**: > 80%
-- **Lines**: > 80%
-
-Run `npm run test:coverage` to see current coverage metrics.
-
-## Debugging Tests
-
-### VSCode
-
-Add this configuration to `.vscode/launch.json`:
+VS Code launch config:
 
 ```json
 {
@@ -220,42 +75,6 @@ Add this configuration to `.vscode/launch.json`:
   "name": "Jest Debug",
   "program": "${workspaceFolder}/node_modules/.bin/jest",
   "args": ["--runInBand", "--no-cache"],
-  "console": "integratedTerminal",
-  "internalConsoleOptions": "neverOpen"
+  "console": "integratedTerminal"
 }
 ```
-
-### Command Line
-
-```bash
-node --inspect-brk node_modules/.bin/jest --runInBand
-```
-
-Then open `chrome://inspect` in Chrome.
-
-## Troubleshooting
-
-### Tests fail with "Cannot find module"
-
-Make sure all dependencies are installed:
-
-```bash
-npm install
-```
-
-### TypeScript errors in tests
-
-Check that `@types/jest` is installed and `jest.config.js` is properly configured.
-
-### Mocks not working
-
-Ensure `tests/setup.ts` is being loaded by Jest (check `setupFilesAfterEnv` in jest.config.js).
-
-## Contributing
-
-When adding new features:
-
-1. Write tests first (TDD approach recommended)
-2. Ensure all tests pass: `npm test`
-3. Check coverage: `npm run test:coverage`
-4. Update this README if adding new test utilities
