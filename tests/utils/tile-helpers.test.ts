@@ -315,13 +315,13 @@ describe('tile-helpers', () => {
       resetConfig = {
         name: 'Reset Tile',
         image: 'path/to/reset.png',
-        varsToReset: {
-          switch_1: false,
-          switch_2: false
-        },
         tilesToReset: [
           {
             tileId: 'tile-1',
+            variables: {
+              switch_1: false,
+              switch_2: false
+            },
             hidden: false,
             fileindex: 0,
             active: true,
@@ -370,6 +370,107 @@ describe('tile-helpers', () => {
       expect(switch1Action.data.value).toBe('false');
     });
 
+    // Regression: Monk's Active Tiles resolves `entity: { id: 'tile' }` to the
+    // tile *running* the action (getEntities,
+    // ../monks-active-tiles/monks-active-tiles.js:563-564). Emitting that from a
+    // reset tile wrote the variables onto the reset tile's own flags and left
+    // the source tile untouched, so nothing actually reset.
+    it('should target the owning tile, not the reset tile, for setvariable', async () => {
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+      const setVarActions = actions.filter((a: any) => a.action === 'setvariable');
+
+      expect(setVarActions.length).toBe(2);
+      setVarActions.forEach((action: any) => {
+        expect(action.data.entity.id).toBe(`Scene.${mockScene.id}.Tile.tile-1`);
+        expect(action.data.entity.id).not.toBe('tile');
+      });
+    });
+
+    it('should scope same-named variables to each owning tile', async () => {
+      resetConfig.tilesToReset.push({
+        ...resetConfig.tilesToReset[0],
+        tileId: 'tile-2',
+        variables: { switch_1: true }
+      });
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+      const switch1Actions = actions.filter(
+        (a: any) => a.action === 'setvariable' && a.data.name === 'switch_1'
+      );
+
+      expect(switch1Actions.length).toBe(2);
+      expect(switch1Actions.map((a: any) => a.data.entity.id).sort()).toEqual([
+        `Scene.${mockScene.id}.Tile.tile-1`,
+        `Scene.${mockScene.id}.Tile.tile-2`
+      ]);
+    });
+
+    it('should quote string reset values so MATT eval yields the bare string', async () => {
+      resetConfig.tilesToReset[0].variables = { switch_1: 'ON' };
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+      const action = actions.find((a: any) => a.action === 'setvariable');
+
+      expect(action.data.value).toBe('"ON"');
+    });
+
+    // Regression: a null reset value used to be emitted as the literal
+    // four-character string `null`. MATT clears a variable when the resolved
+    // value is `_null` (../monks-active-tiles/actions.js:6640-6642).
+    it('should emit the _null sentinel for null/undefined reset values', async () => {
+      resetConfig.tilesToReset[0].variables = { switch_1: null, switch_2: undefined };
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+      const setVarActions = actions.filter((a: any) => a.action === 'setvariable');
+
+      expect(setVarActions.length).toBe(2);
+      setVarActions.forEach((action: any) => {
+        expect(action.data.value).toBe('"_null"');
+      });
+    });
+
+    it('should never emit the literal string "null" as an action value', async () => {
+      resetConfig.tilesToReset[0].variables = {
+        switch_1: null,
+        switch_2: undefined,
+        switch_3: 'OFF'
+      };
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      actions.forEach((action: any) => {
+        Object.values(action.data ?? {}).forEach(value => {
+          expect(value).not.toBe('null');
+        });
+      });
+    });
+
+    it('should emit no setvariable actions when a tile owns no variables', async () => {
+      delete resetConfig.tilesToReset[0].variables;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+
+      expect(actions.filter((a: any) => a.action === 'setvariable').length).toBe(0);
+    });
+
     it('should create activate action when tile has activate action', async () => {
       await createResetTile(mockScene, resetConfig, 400, 400);
 
@@ -395,7 +496,25 @@ describe('tile-helpers', () => {
         (a: any) => a.action === 'tileimage' && a.data.entity.id.includes('tile-1')
       );
       expect(tileImageAction).toBeDefined();
-      expect(tileImageAction.data.select).toBe('0'); // fileindex
+      // fileindex is 0-based; MATT's tileimage.select is 1-BASED for numeric
+      // values (`Math.clamp(parseInt(select), 1, images.length)`), so index 0
+      // and index 1 both used to resolve to the first image and the second was
+      // unreachable. See reset-creator for the citation.
+      expect(tileImageAction.data.select).toBe('1');
+    });
+
+    it('should emit a 1-based tileimage index so the second image is reachable', async () => {
+      resetConfig.tilesToReset[0].fileindex = 1;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const actions = callArgs[1][0].flags['monks-active-tiles'].actions;
+      const tileImageAction = actions.find(
+        (a: any) => a.action === 'tileimage' && a.data.entity.id.includes('tile-1')
+      );
+
+      expect(tileImageAction.data.select).toBe('2');
     });
 
     it('should create chat message action', async () => {
@@ -2138,7 +2257,6 @@ describe('tile-helpers', () => {
       const config: ResetTileConfig = {
         name: 'Reset Tile',
         image: 'icons/svg/regen.svg',
-        varsToReset: {},
         tilesToReset: []
       };
 
@@ -2718,7 +2836,6 @@ describe('tile-helpers', () => {
       const config: ResetTileConfig = {
         name: 'Reset Button',
         image: 'path/to/button.png',
-        varsToReset: {},
         tilesToReset: []
       };
 

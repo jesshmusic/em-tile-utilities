@@ -207,6 +207,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
 
+    // Sync form state before rebuilding the context, so user input made since
+    // the last render (including the per-tile fields) survives a re-render.
+    if (this.element) {
+      this._syncFormToState();
+    }
+
     // Prepare tiles data for template
     const tiles: any[] = [];
     this.selectedTiles.forEach((tileData: SelectedTileData, _tileId: string) => {
@@ -261,11 +267,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       });
     });
 
-    // Sync form state before re-render to preserve user input
-    if (this.element) {
-      this._syncFormToState();
-    }
-
     return {
       ...context,
       resetName: this.resetName,
@@ -311,6 +312,81 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       'input[name="customTags"]'
     ) as HTMLInputElement;
     if (customTagsInput) this.customTags = customTagsInput.value;
+
+    this._syncTilesToState();
+  }
+
+  /**
+   * Look up a form control by its `name` attribute.
+   * Names embed tile ids and user-authored variable names, so the selector is
+   * escaped and the lookup is defensive.
+   */
+  private _field(name: string, suffix: string = ''): any {
+    const escaped = name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    try {
+      return this.element?.querySelector(`[name="${escaped}"]${suffix}`) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Sync the per-tile form controls (image index, visibility, active state,
+   * position, variables, door states) back onto `selectedTiles`.
+   *
+   * Without this, adding or removing a tile re-renders the dialog from the
+   * values captured when each tile was first picked, silently discarding e.g. a
+   * chosen image index and emitting the stale one on submit.
+   */
+  private _syncTilesToState(): void {
+    if (!this.element) return;
+
+    this.selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
+      const visibility = this._field(`visibility_${tileId}`);
+      if (visibility) tileData.hidden = visibility.value === 'hide';
+
+      const active = this._field(`active_${tileId}`);
+      if (active) tileData.active = active.value === 'true';
+
+      const fileindex = this._field(`fileindex_${tileId}`, ':checked');
+      if (fileindex) {
+        const parsed = parseInt(fileindex.value, 10);
+        if (!isNaN(parsed)) tileData.fileindex = parsed;
+      }
+
+      const rotation = this._field(`rotation_${tileId}`);
+      if (rotation) {
+        const parsed = parseFloat(rotation.value);
+        if (!isNaN(parsed)) tileData.rotation = parsed;
+      }
+
+      const xInput = this._field(`x_${tileId}`);
+      if (xInput) {
+        const parsed = parseFloat(xInput.value);
+        if (!isNaN(parsed)) tileData.x = parsed;
+      }
+
+      const yInput = this._field(`y_${tileId}`);
+      if (yInput) {
+        const parsed = parseFloat(yInput.value);
+        if (!isNaN(parsed)) tileData.y = parsed;
+      }
+
+      const history = this._field(`resetTriggerHistory_${tileId}`);
+      if (history) tileData.resetTriggerHistory = !!history.checked;
+
+      Object.keys(tileData.variables).forEach(varName => {
+        const fieldName = `var_${tileId}_${varName}`;
+        // Booleans render as a radio pair, everything else as a text input.
+        const field = this._field(fieldName, ':checked') ?? this._field(fieldName);
+        if (field) tileData.variables[varName] = field.value;
+      });
+
+      tileData.wallDoorActions.forEach((action, index) => {
+        const field = this._field(`walldoor_${tileId}_${index}`);
+        if (field) action.state = field.value;
+      });
+    });
   }
 
   /* -------------------------------------------- */
@@ -560,11 +636,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     }
 
     // Collect all variables and tile states from form
-    const varsToReset: Record<string, any> = {};
     const tilesToReset: any[] = [];
 
     (this as any).selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
-      // Get updated values from form inputs
+      // Get updated values from form inputs. Variables stay grouped under the
+      // tile that owns them: Monk's Active Tiles stores variables per tile, so
+      // the reset actions have to be addressed at that tile.
       const variables: Record<string, any> = {};
       Object.keys(tileData.variables).forEach(varName => {
         let value = data[`var_${tileId}_${varName}`];
@@ -577,23 +654,23 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         variables[varName] = value;
       });
 
-      Object.assign(varsToReset, variables);
-
-      // Collect wall/door states from form
+      // Collect wall/door states from form. The select is named
+      // `walldoor_<tileId>_<index>` (templates/reset-config.hbs), so the tile id
+      // has to be part of the lookup key.
       const wallDoorStates: any[] = [];
       tileData.wallDoorActions.forEach((action, index) => {
         if (action.entityId && action.state) {
           wallDoorStates.push({
             entityId: action.entityId,
             entityName: action.entityName,
-            state: data[`walldoor__${index}`]
+            state: data[`walldoor_${tileId}_${index}`] ?? action.state
           });
         }
       });
-      console.log('Tile Utilities', wallDoorStates);
 
       tilesToReset.push({
         tileId: tileId,
+        variables: variables,
         hidden: data[`visibility_${tileId}`] === 'hide',
         fileindex: parseInt(data[`fileindex_${tileId}`]) || 0,
         active: data[`active_${tileId}`] === 'true',
@@ -661,7 +738,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
             {
               name: data.resetName || 'Reset Tile',
               image: resetTileImage,
-              varsToReset: varsToReset,
               tilesToReset: tilesToReset,
               customTags: data.customTags || ''
             },

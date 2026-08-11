@@ -27,12 +27,19 @@
  *   `setvariable` has no scope control (ctrls are entity/name/value,
  *   ../monks-active-tiles/actions.js:6599-6621); variables always live in the
  *   target tile's `flags.monks-active-tiles.variables`.
+ * @param entity - Which tile owns the variable. Defaults to the tile running
+ *   the action. MATT resolves `{ id: 'tile' }` to the *running* tile
+ *   (`getEntities`, ../monks-active-tiles/monks-active-tiles.js:563-564), so any
+ *   caller that needs to write a variable onto a *different* tile must pass that
+ *   tile's UUID here (`Scene.<sceneId>.Tile.<tileId>`) — otherwise the variable
+ *   silently lands on the wrong tile's flags.
  * @returns Monk's Active Tiles action object
  */
 export function createSetVariableAction(
   name: string,
   value: string | number | boolean,
-  scope: string = 'scene'
+  scope: string = 'scene',
+  entity: { id: string; name?: string } = { id: 'tile', name: 'This Tile' }
 ): any {
   return {
     action: 'setvariable',
@@ -40,7 +47,7 @@ export function createSetVariableAction(
       name,
       value: value.toString(),
       scope,
-      entity: { id: 'tile', name: 'This Tile' }
+      entity: { id: entity.id, name: entity.name ?? entity.id }
     },
     id: foundry.utils.randomID()
   };

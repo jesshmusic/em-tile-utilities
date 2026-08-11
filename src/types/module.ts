@@ -183,7 +183,7 @@ export interface CombatTrapConfig {
 export interface ResetTileConfig {
   name: string;
   image: string;
-  varsToReset: Record<string, any>;
+  /** Variables are carried per tile on `TileResetState.variables`. */
   tilesToReset: TileResetState[];
   customTags?: string;
 }
@@ -220,6 +220,14 @@ export interface WallDoorState {
 
 export interface TileResetState {
   tileId: string;
+  /**
+   * Variables owned by this tile, mapped to the value they should be reset to.
+   * Monk's Active Tiles stores variables in each tile's own
+   * `flags.monks-active-tiles.variables`, so the reset actions have to be
+   * addressed at the owning tile — that is why this lives per tile rather than
+   * in a single flat map on `ResetTileConfig`.
+   */
+  variables?: Record<string, any>;
   hidden: boolean;
   fileindex: number;
   active: boolean;
