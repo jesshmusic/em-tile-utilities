@@ -30,8 +30,39 @@ export function createHurtHealAction(
 
 /**
  * Create an attack action
- * @param actorId - Actor ID to attack with
- * @param options - Optional configuration
+ *
+ * `rollattack` must be `'true'` on dnd5e. Monk's Active Tiles 14.01 special-cases
+ * the system (../monks-active-tiles/actions.js:4717-4721):
+ *
+ *   if (game.system.id == "dnd5e")
+ *       attack = action.data?.rollattack == "true" ? item.use : false;
+ *   else
+ *       attack = ... : (action.data?.rollattack == "false" ? item.use : false);
+ *
+ * The `'false'` ("Use") branch only survives for non-dnd5e systems, so on dnd5e
+ * `'false'` resolves `attack` to `false`, MATT skips the roll entirely and just
+ * sets targets (actions.js:4756-4758). `fastforward` and `rolldamage` are dead
+ * in that state too — both are read only under `rollattack == "true"`
+ * (actions.js:4744-4750, 4766). This was the "Fixed DnD5e Attack" line in the
+ * MATT 14.01 changelog; `'false'` used to work here.
+ *
+ * Two MATT-side caveats we cannot fix from this module, recorded so nobody
+ * re-investigates them:
+ *  - MATT calls `item.use({ rollMode, flavor, skipDialog, fastForward })`
+ *    (actions.js:4746-4751), but dnd5e 5.3.3's signature is
+ *    `use(config, dialog, message)` (dnd5e.mjs:23586). `rollMode`/`flavor`
+ *    belong in `message` and dialog suppression in `dialog`, so `fastforward`
+ *    does not actually skip the activity-use dialog.
+ *  - MATT's follow-up damage roll uses `item.rollDamage`, which no longer
+ *    exists on Item5e in dnd5e 5.x (damage rolling moved onto Activities), so
+ *    `rolldamage` is inert regardless. Kept at its MATT default for clarity.
+ *
+ * @param targetEntityId - Entity the attack targets
+ * @param targetEntityName - Display name for the target entity
+ * @param actorEntityId - UUID of the attacking Actor
+ * @param actorEntityName - Display name for the attacking Actor
+ * @param itemId - Id of the attack Item on that Actor
+ * @param attackName - Display name for the attack Item
  * @returns Monk's Active Tiles action object
  */
 export function createAttackAction(
@@ -53,14 +84,15 @@ export function createAttackAction(
         id: actorEntityId,
         name: actorEntityName
       },
-      itemid: itemId,
       rollmode: 'roll',
-      chatbubble: false,
       attack: {
         id: itemId,
         name: attackName
       },
-      rollattack: 'false', // Use "Use" mode
+      // 'true' = "Roll Attack". See the note above: 'false' ("Use") is a no-op
+      // on dnd5e under MATT 14.01. 'true' is also MATT's own control default
+      // (../monks-active-tiles/actions.js:4632).
+      rollattack: 'true',
       chatcard: true,
       fastforward: true,
       rolldamage: true

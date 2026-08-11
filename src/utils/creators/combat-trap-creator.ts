@@ -217,23 +217,43 @@ export async function createCombatTrapTile(
 
     // If maxTriggers is set, implement trigger limiting
     if (config.maxTriggers > 0) {
-      // Initialize trigger count variable if it doesn't exist (defaults to 0)
+      // Increment the trigger count.
+      //
+      // This used to be two actions emitting `{{default variable.X 0}}` and
+      // `{{add variable.X 1}}`. Neither helper exists: MATT 14.01 evaluates
+      // action values against the global Handlebars instance
+      // (monks-active-tiles.js:364) where the only helpers registered are
+      // Foundry v14's (eq/ne/lt/gt/lte/gte/not/and/or/concat/localize/…),
+      // MATT's `selectGroups` (monks-active-tiles.js:2394) and dnd5e's
+      // `dnd5e-*` set — no `default`, no `add`. Handlebars' `helperMissing`
+      // throws when an unknown helper is called *with arguments*, so both
+      // actions blew up and trigger limiting never worked.
+      //
+      // MATT's native increment does both jobs in one action: `setvariable.fn`
+      // seeds an unset variable to 0 when the value starts with "+"/"-"
+      // (actions.js:6636-6638) and getValue then evaluates `<current> + 1`
+      // (monks-active-tiles.js:390-399).
+      actions.push(createSetVariableAction(triggerCountVar, '+ 1', 'scene'));
+
+      // Check if we've used up the allowance.
+      //
+      // The comparison operator goes in the *value*, not in `type`: MATT's
+      // `checkvariable.data.type` only accepts all/any/none (actions.js:7861)
+      // and the old 'gte' matched none of them, so the filter always fell
+      // through to the fail anchor. `getValue(..., {operation:'compare'})`
+      // passes a leading ">" through untouched and evals `<count> > <max>`
+      // (monks-active-tiles.js:407-414).
+      //
+      // `> maxTriggers` rather than `>=`: the count has already been
+      // incremented for *this* trigger, so on the Nth trigger it equals N and
+      // the trap must still fire. It deactivates on trigger N+1.
       actions.push(
-        createSetVariableAction(
+        createCheckVariableAction(
           triggerCountVar,
-          `{{default variable.${triggerCountVar} 0}}`,
-          'scene'
+          `> ${config.maxTriggers}`,
+          'continue_trap',
+          'all'
         )
-      );
-
-      // Increment the trigger count
-      actions.push(
-        createSetVariableAction(triggerCountVar, `{{add variable.${triggerCountVar} 1}}`, 'scene')
-      );
-
-      // Check if we've reached the trigger limit
-      actions.push(
-        createCheckVariableAction(triggerCountVar, `${config.maxTriggers}`, 'continue_trap', 'gte')
       );
 
       // If limit reached, deactivate the tile and stop

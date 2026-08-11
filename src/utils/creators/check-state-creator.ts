@@ -7,7 +7,8 @@ import {
   createStopAction,
   createActivateAction,
   createShowHideAction,
-  createTriggerAction
+  createTriggerAction,
+  normalizeDoorState
 } from '../actions';
 import { generateUniqueEMTag, showTaggerWithWarning } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
@@ -297,7 +298,10 @@ export async function createCheckStateTile(
                 name: action.wallName || 'Door'
               },
               type: 'nothing',
-              state: action.doorState.toUpperCase(),
+              // MATT 14.01 expects the UPPERCASE CONST.WALL_DOOR_STATES key; the
+              // dialog hands us lowercase. Share one normalizer with
+              // createChangeDoorAction so both paths can't drift.
+              state: normalizeDoorState(action.doorState),
               movement: 'nothing',
               light: 'nothing',
               sight: 'nothing',

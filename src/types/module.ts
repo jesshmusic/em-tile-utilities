@@ -95,7 +95,14 @@ export interface TileAction {
  */
 export interface WallAction {
   wallId: string;
-  state: string; // 'OPEN', 'CLOSED', 'LOCKED'
+  /**
+   * Monk's `changedoor` state. UPPERCASE is the wire format: MATT 14.01 builds
+   * the control from `Object.keys(CONST.WALL_DOOR_STATES)`
+   * (../monks-active-tiles/actions.js:2718-2729). See `DoorState` in
+   * src/utils/actions/door-actions.ts. Sourced from templates/trap-config.hbs
+   * and templates/activating-trap-config.hbs, which already emit uppercase.
+   */
+  state: 'OPEN' | 'CLOSED' | 'LOCKED';
 }
 
 /**
@@ -207,7 +214,8 @@ export interface TeleportTileConfig {
 export interface WallDoorState {
   entityId: string;
   entityName: string;
-  state: string; // "CLOSED", "OPEN", "LOCKED"
+  /** UPPERCASE `CONST.WALL_DOOR_STATES` key — see `WallAction.state` above. */
+  state: 'OPEN' | 'CLOSED' | 'LOCKED';
 }
 
 export interface TileResetState {
@@ -327,6 +335,11 @@ export interface BranchAction {
   // For door change:
   wallId?: string;
   wallName?: string;
+  /**
+   * Lowercase here because templates/check-state-dialog.hbs emits lowercase
+   * option values. `check-state-creator.ts` normalizes to the UPPERCASE form
+   * Monk's Active Tiles 14.01 expects before writing the action.
+   */
   doorState?: 'open' | 'closed' | 'locked';
 }
 

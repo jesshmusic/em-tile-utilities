@@ -2,7 +2,7 @@
  * Tests for trap-dialog.ts (Unified Trap Dialog)
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { mockFoundry, createMockScene } from '../mocks/foundry';
 
 // Mock foundry before importing
@@ -216,6 +216,116 @@ describe('TrapDialog', () => {
     it('should be able to set DMG trap item', () => {
       (dialog as any).dmgTrapItemId = 'Compendium.dnd5e.items.abc123';
       expect((dialog as any).dmgTrapItemId).toBe('Compendium.dnd5e.items.abc123');
+    });
+
+    /**
+     * A realistic dnd5e 5.3.3 save activity: `save.ability` and each damage
+     * part's `types` are Sets (dnd5e.mjs:31236, 27862), `damage.parts` is an
+     * array (dnd5e.mjs:31231), and a spellcasting DC lives on `save.dc.value`
+     * rather than `save.dc.formula` (dnd5e.mjs:31305-31318).
+     */
+    const buildSaveActivity = () => ({
+      _id: 'activity00000001',
+      type: 'save',
+      name: 'Poison Needle',
+      save: {
+        ability: new Set(['con']),
+        dc: { calculation: 'spellcasting', formula: '', value: 16 }
+      },
+      damage: {
+        onSave: 'half',
+        parts: [{ number: 4, denomination: 6, bonus: '', types: new Set(['poison']) }]
+      }
+    });
+
+    describe('_extractActivityData', () => {
+      afterEach(() => {
+        delete (globalThis as any).game.system;
+      });
+
+      it('should extract save, DC and damage from a dnd5e save activity', () => {
+        (globalThis as any).game.system = { id: 'dnd5e' };
+
+        expect((dialog as any)._extractActivityData(buildSaveActivity())).toEqual({
+          ability: 'con',
+          dc: 16,
+          damageFormula: '4d6',
+          damageType: 'poison',
+          halfDamageOnSuccess: true
+        });
+      });
+
+      it('should return null outside dnd5e instead of bogus defaults', () => {
+        (globalThis as any).game.system = { id: 'pf2e' };
+        expect((dialog as any)._extractActivityData(buildSaveActivity())).toBeNull();
+      });
+    });
+
+    describe('_onItemDrop system guard', () => {
+      const dropEvent = () =>
+        ({
+          preventDefault: jest.fn(),
+          currentTarget: { classList: { remove: jest.fn() } },
+          dataTransfer: {
+            getData: jest.fn(() => JSON.stringify({ type: 'Item', uuid: 'Item.abc123' }))
+          }
+        }) as any;
+
+      beforeEach(() => {
+        // The mock ApplicationV2 has no rendered `element`, so short-circuit
+        // the DOM-touching tail of the drop handler.
+        (dialog as any).customStartingImage = 'icons/svg/trap.svg';
+        (dialog as any)._syncFormToState = jest.fn();
+        (dialog as any).render = jest.fn();
+
+        (globalThis as any).fromUuid = jest.fn(async () => ({
+          name: 'Poison Needle Trap',
+          img: 'icons/svg/trap.svg',
+          uuid: 'Item.abc123',
+          system: { activities: new Map([['activity00000001', buildSaveActivity()]]) }
+        }));
+      });
+
+      afterEach(() => {
+        delete (globalThis as any).game.system;
+        delete (globalThis as any).fromUuid;
+      });
+
+      it('should refuse the drop in a non-dnd5e world without reading the item', async () => {
+        (globalThis as any).game.system = { id: 'pf2e' };
+
+        await (dialog as any)._onItemDrop(dropEvent());
+
+        expect((globalThis as any).fromUuid).not.toHaveBeenCalled();
+        expect((dialog as any).dmgTrapItemId).toBeUndefined();
+        expect((global as any).ui.notifications.warn).toHaveBeenCalled();
+      });
+
+      it('should accept the drop and select the first save activity in dnd5e', async () => {
+        (globalThis as any).game.system = { id: 'dnd5e' };
+
+        await (dialog as any)._onItemDrop(dropEvent());
+
+        expect((dialog as any).dmgTrapItemId).toBe('Item.abc123');
+        expect((dialog as any).dmgTrapActivities).toHaveLength(1);
+        expect((dialog as any).dmgTrapActivityId).toBe('activity00000001');
+      });
+
+      it('should reject an item whose activities are not saving throws', async () => {
+        (globalThis as any).game.system = { id: 'dnd5e' };
+        (globalThis as any).fromUuid = jest.fn(async () => ({
+          name: 'Greatclub',
+          uuid: 'Item.def456',
+          system: {
+            activities: new Map([['attack0000000001', { _id: 'attack0000000001', type: 'attack' }]])
+          }
+        }));
+
+        await (dialog as any)._onItemDrop(dropEvent());
+
+        expect((dialog as any).dmgTrapItemId).toBeUndefined();
+        expect((global as any).ui.notifications.warn).toHaveBeenCalled();
+      });
     });
   });
 

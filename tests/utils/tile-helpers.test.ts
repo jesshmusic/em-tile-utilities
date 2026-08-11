@@ -424,7 +424,9 @@ describe('tile-helpers', () => {
         {
           entityId: 'Scene.test-scene.Wall.wall-1',
           entityName: 'Test Wall',
-          state: 'locked'
+          // Uppercase: templates/reset-config.hbs emits uppercase and Monk's
+          // Active Tiles 14.01 requires CONST.WALL_DOOR_STATES keys.
+          state: 'LOCKED'
         }
       ];
 
@@ -436,7 +438,7 @@ describe('tile-helpers', () => {
 
       const doorAction = actions.find((a: any) => a.action === 'changedoor');
       expect(doorAction).toBeDefined();
-      expect(doorAction.data.state).toBe('locked');
+      expect(doorAction.data.state).toBe('LOCKED');
     });
 
     it('should create showhide action when tile has showHideAction', async () => {
@@ -935,9 +937,12 @@ describe('tile-helpers', () => {
 
     it('should handle wall actions', async () => {
       trapConfig.tileActions = [{ tileId: 'tile-1', actionType: 'activate', mode: 'toggle' }];
+      // Uppercase because that is what templates/trap-config.hbs emits and what
+      // Monk's Active Tiles 14.01 requires — see the "MATT 14.01 wire format"
+      // describe block at the end of this file.
       trapConfig.wallActions = [
-        { wallId: 'wall-1', state: 'open' },
-        { wallId: 'wall-2', state: 'locked' }
+        { wallId: 'wall-1', state: 'OPEN' },
+        { wallId: 'wall-2', state: 'LOCKED' }
       ];
 
       await createTrapTile(mockScene, trapConfig, 500, 500);
@@ -948,6 +953,7 @@ describe('tile-helpers', () => {
 
       const doorActions = actions.filter((a: any) => a.action === 'changedoor');
       expect(doorActions.length).toBe(2);
+      expect(doorActions.map((a: any) => a.data.state)).toEqual(['OPEN', 'LOCKED']);
     });
   });
 
@@ -3058,5 +3064,205 @@ describe('createTeleportTile - return teleport destination', () => {
     await createTeleportTile(sourceScene, teleportConfig, 200, 200);
 
     expect(getReturnTeleportAction().data.deletesource).toBe(true);
+  });
+});
+
+/**
+ * Regression tests for the wire format Monk's Active Tiles 14.01 actually accepts.
+ *
+ * Every expectation below is pinned to a specific line of the installed
+ * ../monks-active-tiles sources; if MATT changes these, these tests are the
+ * canary.
+ */
+describe('MATT 14.01 wire format', () => {
+  describe('changedoor state casing', () => {
+    it('emits UPPERCASE CONST.WALL_DOOR_STATES keys', async () => {
+      const { createChangeDoorAction } = await import('../../src/utils/actions');
+
+      // MATT builds the control from Object.keys(CONST.WALL_DOOR_STATES)
+      // (actions.js:2718-2729) and only back-fills lowercase 'open'/'closed'
+      // (actions.js:2818-2822). Lowercase 'locked' would reach Wall#ds as the
+      // raw string "locked" and fail validation.
+      expect(createChangeDoorAction('Scene.s.Wall.w', 'locked').data.state).toBe('LOCKED');
+      expect(createChangeDoorAction('Scene.s.Wall.w', 'open').data.state).toBe('OPEN');
+      expect(createChangeDoorAction('Scene.s.Wall.w', 'closed').data.state).toBe('CLOSED');
+      expect(createChangeDoorAction('Scene.s.Wall.w', 'LOCKED').data.state).toBe('LOCKED');
+    });
+
+    it('leaves the "nothing" and "toggle" sentinels lowercase', async () => {
+      const { createChangeDoorAction } = await import('../../src/utils/actions');
+
+      // These two are MATT's own sentinels, not WALL_DOOR_STATES keys, and are
+      // compared case-sensitively (actions.js:2789, 2794, 2816).
+      expect(createChangeDoorAction('Scene.s.Wall.w').data.state).toBe('nothing');
+      expect(createChangeDoorAction('Scene.s.Wall.w', 'nothing').data.state).toBe('nothing');
+      expect(createChangeDoorAction('Scene.s.Wall.w', 'toggle').data.state).toBe('toggle');
+    });
+
+    it('uppercases door states coming from a check-state branch', async () => {
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      const scene = createMockScene();
+      (global as any).canvas.scene = scene;
+
+      await createCheckStateTile(
+        scene as any,
+        {
+          name: 'Door Check',
+          tileImage: 'icons/svg/door-closed.svg',
+          sources: [],
+          branches: [
+            {
+              name: 'unlock',
+              conditions: [],
+              actions: [
+                {
+                  category: 'door',
+                  wallId: 'wall-1',
+                  wallName: 'Vault Door',
+                  doorState: 'locked'
+                }
+              ]
+            }
+          ]
+        } as any,
+        0,
+        0
+      );
+
+      const tileData = scene.createEmbeddedDocuments.mock.calls[0][1][0];
+      const actions = tileData.flags['monks-active-tiles'].actions;
+      const doorAction = actions.find((a: any) => a.action === 'changedoor');
+
+      expect(doorAction).toBeDefined();
+      expect(doorAction.data.state).toBe('LOCKED');
+    });
+  });
+
+  describe('checkvariable / setvariable', () => {
+    it('never emits a comparison operator as the aggregation type', async () => {
+      const { createCheckVariableAction } = await import('../../src/utils/actions');
+
+      // MATT's checkvariable.data.type is all|any|none (actions.js:7861-7866);
+      // anything else makes every branch of the success test false so the
+      // action always takes the fail anchor (actions.js:7885-7891).
+      expect(createCheckVariableAction('x', '> 3', 'anchor').data.type).toBe('all');
+      expect(createCheckVariableAction('x', '> 3', 'anchor', 'any').data.type).toBe('any');
+    });
+
+    it('keeps the comparison operator in the value', async () => {
+      const { createCheckVariableAction } = await import('../../src/utils/actions');
+
+      // getValue(..., {operation:'compare'}) splices the value straight into
+      // `<current> <value>` when it starts with >, <, == or !=
+      // (monks-active-tiles.js:407-414).
+      expect(createCheckVariableAction('x', '> 3').data.value).toBe('> 3');
+    });
+  });
+
+  describe('combat trap trigger limiting', () => {
+    let mockScene: any;
+
+    beforeEach(() => {
+      mockScene = createMockScene();
+      mockScene.deleteEmbeddedDocuments = jest.fn(async () => []);
+      (global as any).canvas.scene = mockScene;
+
+      (global as any).fromUuid = jest.fn(() =>
+        Promise.resolve({
+          name: 'Longsword',
+          img: 'icons/weapons/sword.png',
+          toObject: () => ({ name: 'Longsword' })
+        })
+      );
+
+      (global as any).game.actors = {
+        documentClass: {
+          create: jest.fn(() =>
+            Promise.resolve({
+              id: 'actor123',
+              delete: jest.fn(async () => {}),
+              createEmbeddedDocuments: jest.fn(() => Promise.resolve([{ id: 'item456' }]))
+            })
+          )
+        }
+      };
+      (global as any).game.folders = { find: jest.fn().mockReturnValue({ id: 'folder789' }) };
+    });
+
+    const build = async (maxTriggers: number) => {
+      const { createCombatTrapTile } = await import('../../src/utils/creators');
+      await createCombatTrapTile(
+        mockScene,
+        {
+          name: 'Combat Trap',
+          startingImage: 'icons/svg/trap.svg',
+          triggeredImage: '',
+          hideTrapOnTrigger: false,
+          sound: '',
+          targetType: TrapTargetType.TRIGGERING,
+          itemId: 'Item.weapon123',
+          tokenVisible: false,
+          maxTriggers
+        } as any,
+        200,
+        200
+      );
+
+      const call = mockScene.createEmbeddedDocuments.mock.calls.find((c: any) => c[0] === 'Tile');
+      return call?.[1][0].flags['monks-active-tiles'].actions as any[];
+    };
+
+    it('uses no Handlebars helper that MATT cannot resolve', async () => {
+      const actions = await build(3);
+
+      // Foundry v14 registers eq/ne/lt/gt/lte/gte/not/and/or/concat/... and MATT
+      // adds only selectGroups (monks-active-tiles.js:2394). `default` and `add`
+      // do not exist, and Handlebars' helperMissing throws when an unknown
+      // helper is called with arguments.
+      const values = actions
+        .filter(a => typeof a?.data?.value === 'string')
+        .map(a => a.data.value as string);
+
+      expect(values.some(v => v.includes('{{default '))).toBe(false);
+      expect(values.some(v => v.includes('{{add '))).toBe(false);
+    });
+
+    it('increments the trigger count with MATT native "+ 1" syntax', async () => {
+      const actions = await build(3);
+      const setVars = actions.filter(a => a.action === 'setvariable');
+
+      // One action, not two: setvariable.fn seeds an unset variable to 0 when
+      // the value starts with "+" (actions.js:6636-6638).
+      expect(setVars).toHaveLength(1);
+      expect(setVars[0].data.name).toBe('Combat_Trap_trigger_count');
+      expect(setVars[0].data.value).toBe('+ 1');
+    });
+
+    it('puts the trigger-limit comparison in the value with a valid type', async () => {
+      const actions = await build(3);
+      const check = actions.find(a => a.action === 'checkvariable');
+
+      expect(check.data.value).toBe('> 3');
+      expect(check.data.type).toBe('all');
+      expect(check.data.fail).toBe('continue_trap');
+    });
+
+    it('emits no trigger-limit plumbing when maxTriggers is 0', async () => {
+      const actions = await build(0);
+
+      expect(actions.filter(a => a.action === 'setvariable')).toHaveLength(0);
+      expect(actions.filter(a => a.action === 'checkvariable')).toHaveLength(0);
+    });
+
+    it('asks dnd5e for a real attack roll', async () => {
+      const actions = await build(0);
+      const attack = actions.find(a => a.action === 'attack');
+
+      // MATT 14.01 only resolves an attack callable for dnd5e when rollattack
+      // is the string "true" (actions.js:4717-4719); "false" silently degrades
+      // to targeting plus a chat card.
+      expect(attack).toBeDefined();
+      expect(attack.data.rollattack).toBe('true');
+    });
   });
 });

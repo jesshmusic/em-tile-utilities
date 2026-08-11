@@ -2,6 +2,7 @@
  * Helper utilities for tile creation and management
  */
 
+export * from './dnd5e-activity';
 export * from './folder-helpers';
 export * from './grid-helpers';
 export * from './module-checks';

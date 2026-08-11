@@ -38,7 +38,21 @@ export async function createSwitchTile(
 
   // Build actions using action builders
   const actions = [
-    // Initialize variable if it doesn't exist (use conditional instead of 'default' helper)
+    // Initialize variable if it doesn't exist.
+    //
+    // Uses the built-in `#if` block rather than a `default` helper: MATT 14.01
+    // compiles action values with the global Handlebars instance
+    // (../monks-active-tiles/monks-active-tiles.js:364), which only carries
+    // Foundry v14's helpers plus MATT's `selectGroups`
+    // (monks-active-tiles.js:2394). There is no `default` helper, and calling a
+    // missing helper with arguments makes Handlebars throw.
+    //
+    // `eq` in the toggle below IS available — Foundry registers it globally
+    // (Resources/app/public/scripts/foundry.mjs, `registerHelper({... eq ...})`).
+    //
+    // The quotes around "OFF"/"ON" are deliberate: getValue runs the compiled
+    // string through `eval` in assign mode (monks-active-tiles.js:401-406), so
+    // an unquoted OFF would be evaluated as an identifier.
     createSetVariableAction(
       config.variableName,
       `{{#if variable.${config.variableName}}}{{variable.${config.variableName}}}{{else}}"OFF"{{/if}}`,

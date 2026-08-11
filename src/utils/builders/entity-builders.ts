@@ -90,27 +90,3 @@ export function createAmbientSoundData(
     walls: true
   };
 }
-
-/**
- * Create an Actor for trap combatants
- * @param name - Actor name
- * @param folderId - Folder ID to place the actor in
- * @returns Actor data object
- */
-export function createTrapActorData(name: string, folderId: string): any {
-  return {
-    name,
-    type: 'npc',
-    folder: folderId,
-    prototypeToken: {
-      name,
-      disposition: -1, // Hostile
-      actorLink: false,
-      vision: true,
-      dimSight: 0,
-      brightSight: 0,
-      dimLight: 0,
-      brightLight: 0
-    }
-  };
-}

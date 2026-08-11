@@ -6,8 +6,12 @@ import {
   hasMonksTokenBar,
   hasEnhancedRegionBehaviors,
   startDragPlacePreview,
-  DragPlacePreviewManager
+  DragPlacePreviewManager,
+  isDnd5eSystem,
+  getItemActivities,
+  extractTrapActivityData
 } from '../utils/helpers';
+import type { TrapActivityData } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -1003,8 +1007,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           );
           if (selectedActivity) {
             const activityData = this._extractActivityData(selectedActivity);
-            halfDamageCheckbox.checked = activityData.halfDamageOnSuccess;
-            halfDamageCheckbox.disabled = true;
+            if (activityData) {
+              halfDamageCheckbox.checked = activityData.halfDamageOnSuccess;
+              halfDamageCheckbox.disabled = true;
+            }
           }
         }
       }
@@ -1436,6 +1442,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
 
+    // DMG trap items are a dnd5e concept - Activities, save DCs and damage
+    // parts do not exist in other systems, so bail out rather than reading
+    // fields that are not there.
+    if (!isDnd5eSystem()) {
+      ui.notifications.warn('Trap items can only be read in a dnd5e world!');
+      return;
+    }
+
     // Get the item from the UUID
     const item = await (globalThis as any).fromUuid(data.uuid);
     if (!item) {
@@ -1443,31 +1457,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
 
-    // Extract activities from the item
-    const activities = (item as any).system?.activities;
-    let activitiesArray: any[] = [];
-    if (activities) {
-      if (activities instanceof Map || activities?.contents) {
-        activitiesArray = Array.from(activities.values?.() || activities.contents || []);
-      } else if (typeof activities === 'object') {
-        const keys = Object.keys(activities);
-        if (keys.length > 0) {
-          activitiesArray = Object.values(activities);
-        } else {
-          for (const key in activities) {
-            if (activities.hasOwnProperty(key)) {
-              activitiesArray.push(activities[key]);
-            }
-          }
-        }
-      }
-    }
-
-    // Filter activities to only save activities
-    activitiesArray = activitiesArray.filter((activity: any) => activity.type === 'save');
+    // Only save activities are usable here: this dialog populates the trap's
+    // *saving throw* section (ability, DC, damage-on-fail), and only a save
+    // activity carries `save.ability` / `save.dc` / `damage.onSave`.
+    const activitiesArray = getItemActivities(item, 'save');
 
     if (activitiesArray.length === 0) {
-      ui.notifications.warn('This item has no activities to use!');
+      ui.notifications.warn('This item has no saving throw activities to use!');
       return;
     }
 
@@ -1533,41 +1529,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Extract save and damage data from a DMG trap activity
+   * Extract save and damage data from a DMG trap activity.
+   *
+   * All of the dnd5e schema knowledge lives in `extractTrapActivityData`; see
+   * `src/utils/helpers/dnd5e-activity.ts` for the cited 5.3.3 field shapes.
+   *
+   * @param activity - The selected dnd5e save activity
+   * @returns Trap-ready save/damage data, or null outside dnd5e
    */
-  protected _extractActivityData(activity: any): {
-    ability: string;
-    dc: number;
-    damageFormula: string;
-    damageType: string;
-    halfDamageOnSuccess: boolean;
-  } {
-    const ability = activity.save?.ability?.[0] || 'dex';
-    const dc = parseInt(activity.save?.dc?.formula || '14');
-
-    // Extract damage formula - check if parts.custom exists directly
-    let damageFormula = '';
-    if (activity.damage?.parts?.custom) {
-      damageFormula = activity.damage.parts.custom;
-    } else if (
-      activity.damage?.parts?.[0]?.custom?.enabled &&
-      activity.damage.parts[0].custom?.formula
-    ) {
-      // Fallback: check if parts is an array with custom formula
-      damageFormula = activity.damage.parts[0].custom.formula;
-    } else if (activity.damage?.parts?.[0]?.number && activity.damage.parts[0]?.denomination) {
-      // Fallback: build from number and denomination
-      damageFormula = `${activity.damage.parts[0].number}d${activity.damage.parts[0].denomination}`;
-    }
-
-    // Check if save allows half damage on success (property is damage.onSave, not save.damage)
-    const halfDamageOnSuccess = activity.damage?.onSave === 'half' && !!damageFormula;
-
-    // Extract damage type
-    const damageType =
-      activity.damage?.parts?.types?.[0] || activity.damage?.parts?.[0]?.types?.[0] || 'untyped';
-
-    return { ability, dc, damageFormula, damageType, halfDamageOnSuccess };
+  protected _extractActivityData(activity: any): TrapActivityData | null {
+    return extractTrapActivityData(activity);
   }
 
   /* -------------------------------------------- */
@@ -2330,7 +2301,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           );
           if (selectedActivity) {
             const activityData = this._extractActivityData(selectedActivity);
-            halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+            if (activityData) {
+              halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+            }
           }
         }
         imageTrapConfig.halfDamageOnSuccess = halfDamageOnSuccess;

@@ -4,8 +4,12 @@ import { createTrapTile } from '../utils/creators';
 import {
   getNextTileNumber,
   startDragPlacePreview,
-  DragPlacePreviewManager
+  DragPlacePreviewManager,
+  isDnd5eSystem,
+  getItemActivities,
+  extractTrapActivityData
 } from '../utils/helpers';
+import type { TrapActivityData } from '../utils/helpers';
 import { TagInputManager } from '../utils/tag-input-manager';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
@@ -611,61 +615,21 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     if (!item) return;
 
-    // Check if item has activities - try multiple access patterns
-    let activities = item.system?.activities;
-
-    // If activities is not an object, try accessing the source data
-    if (!activities || typeof activities !== 'object') {
-      // Try accessing via _source (sometimes compendium items store data here)
-      activities = item._source?.system?.activities || item.toObject?.()?.system?.activities;
+    // DMG trap items are a dnd5e concept - Activities, save DCs and damage
+    // parts do not exist in other systems, so bail out rather than reading
+    // fields that are not there.
+    if (!isDnd5eSystem()) {
+      ui.notifications.warn('Trap items can only be read in a dnd5e world!');
+      return;
     }
 
-    // Foundry might store activities as a Collection - convert to plain object
-    let activitiesArray: any[] = [];
-    if (activities) {
-      // Check if it's a Foundry Collection
-      if (activities instanceof Map || activities?.contents) {
-        activitiesArray = Array.from(activities.values?.() || activities.contents || []);
-      } else if (typeof activities === 'object') {
-        // Plain object - get values
-        const keys = Object.keys(activities);
-        if (keys.length > 0) {
-          activitiesArray = Object.values(activities);
-        } else {
-          // Try getting entries if keys don't work
-          try {
-            activitiesArray = Object.values(activities);
-            // If still empty, try iterating
-            if (activitiesArray.length === 0) {
-              for (const key in activities) {
-                if (activities.hasOwnProperty(key)) {
-                  activitiesArray.push(activities[key]);
-                }
-              }
-            }
-          } catch (e) {
-            console.error('Error extracting activities:', e);
-          }
-        }
-      }
-    }
+    // Only save activities are usable here: this dialog populates the trap's
+    // *saving throw* section (ability, DC, damage-on-fail), and only a save
+    // activity carries `save.ability` / `save.dc` / `damage.onSave`.
+    const activitiesArray = getItemActivities(item, 'save');
 
-    // Debug logging to help diagnose the issue
-    if (!activitiesArray || activitiesArray.length === 0) {
-      console.warn("🧩 Dorman Lakely's Tile Utilities: Item has no activities", {
-        itemName: item.name,
-        itemType: item.type,
-        hasSystem: !!item.system,
-        systemKeys: item.system ? Object.keys(item.system) : [],
-        hasActivities: !!item.system?.activities,
-        activitiesType: typeof item.system?.activities,
-        activitiesConstructor: item.system?.activities?.constructor?.name,
-        activitiesIsMap: item.system?.activities instanceof Map,
-        activitiesKeys: activities ? Object.keys(activities) : [],
-        activitiesOwnKeys: activities ? Object.getOwnPropertyNames(activities) : [],
-        item: item
-      });
-      ui.notifications.warn('This item has no activities to use!');
+    if (activitiesArray.length === 0) {
+      ui.notifications.warn('This item has no saving throw activities to use!');
       return;
     }
 
@@ -746,49 +710,16 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   }
 
   /**
-   * Extract save and damage data from a DMG trap activity
+   * Extract save and damage data from a DMG trap activity.
+   *
+   * All of the dnd5e schema knowledge lives in `extractTrapActivityData`; see
+   * `src/utils/helpers/dnd5e-activity.ts` for the cited 5.3.3 field shapes.
+   *
+   * @param activity - The selected dnd5e save activity
+   * @returns Trap-ready save/damage data, or null outside dnd5e
    */
-  protected _extractActivityData(activity: any): {
-    ability: string;
-    dc: number;
-    damageFormula: string;
-    damageType: string;
-    halfDamageOnSuccess: boolean;
-  } {
-    const ability = activity.save?.ability?.[0] || 'dex';
-    const dc = parseInt(activity.save?.dc?.formula || '14');
-
-    // Extract damage formula - check if parts.custom exists directly
-    let damageFormula = '';
-    if (activity.damage?.parts?.custom) {
-      damageFormula = activity.damage.parts.custom;
-    } else if (
-      activity.damage?.parts?.[0]?.custom?.enabled &&
-      activity.damage.parts[0].custom?.formula
-    ) {
-      // Fallback: check if parts is an array with custom formula
-      damageFormula = activity.damage.parts[0].custom.formula;
-    } else if (activity.damage?.parts?.[0]?.number && activity.damage.parts[0]?.denomination) {
-      // Fallback: build from number and denomination
-      damageFormula = `${activity.damage.parts[0].number}d${activity.damage.parts[0].denomination}`;
-    }
-
-    // Check if save allows half damage on success (property is damage.onSave, not save.damage)
-    const halfDamageOnSuccess = activity.damage?.onSave === 'half' && !!damageFormula;
-
-    // Extract damage type
-    const damageType =
-      activity.damage?.parts?.types?.[0] || activity.damage?.parts?.[0]?.types?.[0] || 'untyped';
-
-    console.log('Extracted Activity Data:', {
-      ability,
-      dc,
-      damageFormula,
-      damageType,
-      halfDamageOnSuccess
-    });
-
-    return { ability, dc, damageFormula, damageType, halfDamageOnSuccess };
+  protected _extractActivityData(activity: any): TrapActivityData | null {
+    return extractTrapActivityData(activity);
   }
 
   /**
@@ -940,7 +871,9 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       );
       if (selectedActivity) {
         const activityData = this._extractActivityData(selectedActivity);
-        halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+        if (activityData) {
+          halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+        }
       }
     }
 

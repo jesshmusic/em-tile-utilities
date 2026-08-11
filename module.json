@@ -18,14 +18,16 @@
         "id": "monks-active-tiles",
         "type": "module",
         "compatibility": {
-          "minimum": "13.0"
+          "minimum": "14.01",
+          "verified": "14.01"
         }
       },
       {
         "id": "tagger",
         "type": "module",
         "compatibility": {
-          "minimum": "1.0.0"
+          "minimum": "1.6.0",
+          "verified": "1.6.0"
         }
       }
     ],
@@ -34,7 +36,16 @@
         "id": "monks-tokenbar",
         "type": "module",
         "compatibility": {
-          "minimum": "13.0"
+          "minimum": "14.01",
+          "verified": "14.01"
+        }
+      },
+      {
+        "id": "enhanced-region-behavior",
+        "type": "module",
+        "compatibility": {
+          "minimum": "1.5.0",
+          "verified": "1.5.0"
         }
       }
     ]
