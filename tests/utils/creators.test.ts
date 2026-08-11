@@ -1327,6 +1327,57 @@ describe('creators', () => {
       (global as any).canvas.scene = mockScene;
     });
 
+    // Variable names are not unique across tiles: every switch defaults its
+    // variable to `switch_1`. Resolving a condition by variable name alone
+    // pointed every check at whichever checked tile came first, so a branch
+    // could never target the second tile.
+    it('should resolve each condition to its own tile when variable names collide', async () => {
+      const config = {
+        name: 'Check State',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [
+          {
+            tileId: 'tile-A',
+            tileName: 'Lever A',
+            variables: [{ variableName: 'switch_1', currentValue: 'ON' }]
+          },
+          {
+            tileId: 'tile-B',
+            tileName: 'Lever B',
+            variables: [{ variableName: 'switch_1', currentValue: 'OFF' }]
+          }
+        ],
+        branches: [
+          {
+            name: 'Both',
+            conditions: [
+              {
+                tileId: 'tile-A',
+                variableName: 'switch_1',
+                operator: 'eq',
+                value: 'ON',
+                logicConnector: 'and'
+              },
+              { tileId: 'tile-B', variableName: 'switch_1', operator: 'eq', value: 'OFF' }
+            ],
+            actions: []
+          }
+        ]
+      };
+
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config as any, 200, 200);
+
+      const actions =
+        mockScene.createEmbeddedDocuments.mock.calls[0][1][0].flags['monks-active-tiles'].actions;
+      const checks = actions.filter((a: any) => a.action === 'checkvariable');
+
+      expect(checks).toHaveLength(2);
+      expect(checks[0].data.entity.id).toContain('tile-A');
+      expect(checks[1].data.entity.id).toContain('tile-B');
+      expect(new Set(checks.map((c: any) => c.data.entity.id)).size).toBe(2);
+    });
+
     it('should create a check state tile with correct size', async () => {
       const config = {
         name: 'Check State',

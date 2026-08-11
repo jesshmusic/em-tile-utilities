@@ -141,7 +141,12 @@
                               <option
                                 value='{{variable.variableName}}'
                                 data-tile-id='{{tile.tileId}}'
-                                {{#if (eq variable.variableName condition.variableName)}}selected{{/if}}
+                                {{#if
+                                  (and
+                                    (eq variable.variableName condition.variableName)
+                                    (eq tile.tileId condition.tileId)
+                                  )
+                                }}selected{{/if}}
                               >{{tile.tileName}}: {{variable.variableName}}</option>
                             {{/each}}
                           {{/each}}

@@ -113,3 +113,72 @@ describe('Reset dialog template rendering', () => {
     expect(emptyIdControls).toEqual([]);
   });
 });
+
+/**
+ * The Check State condition dropdown lists every variable on every selected
+ * tile, and marks one option `selected` to reflect the stored condition.
+ *
+ * It used to match on variableName alone. Switch tiles all default their
+ * variable to `switch_1`, so two switches in one scene produced two options
+ * with identical values, both marked selected — and the browser resolves that
+ * to the last one. The condition's tileId was stored correctly in state and
+ * then visually discarded on the next render, so a Check State branch could
+ * not reliably target the second tile.
+ */
+describe('Check State condition dropdown', () => {
+  const TILE_A = 'aaaaAAAA11112222';
+  const TILE_B = 'bbbbBBBB33334444';
+
+  function render(conditionTileId: string) {
+    return renderTemplate('modules/em-tile-utilities/templates/check-state-dialog.hbs', {
+      tileName: 'Check State Tile',
+      tileImage: 'icons/svg/book.svg',
+      hasSelectedTiles: true,
+      selectedTiles: [
+        {
+          tileId: TILE_A,
+          tileName: 'Lever A',
+          variables: [{ variableName: 'switch_1', currentValue: 'ON' }]
+        },
+        {
+          tileId: TILE_B,
+          tileName: 'Lever B',
+          variables: [{ variableName: 'switch_1', currentValue: 'OFF' }]
+        }
+      ],
+      hasBranches: true,
+      branches: [
+        {
+          name: 'Branch 1',
+          conditions: [
+            {
+              tileId: conditionTileId,
+              tileName: conditionTileId === TILE_A ? 'Lever A' : 'Lever B',
+              variableName: 'switch_1',
+              operator: 'eq',
+              value: 'ON',
+              logicConnector: 'and'
+            }
+          ],
+          actions: []
+        }
+      ],
+      possibleValues: ['ON', 'OFF']
+    });
+  }
+
+  function selectedOption(html: string) {
+    const options = html.match(/<option\b[^>]*>/g) ?? [];
+    return options.filter(o => /\bselected\b/.test(o) && /data-tile-id=/.test(o));
+  }
+
+  it('marks exactly one option selected when two tiles share a variable name', () => {
+    const sel = selectedOption(render(TILE_A));
+    expect(sel).toHaveLength(1);
+  });
+
+  it('selects the option belonging to the condition’s tile', () => {
+    expect(selectedOption(render(TILE_A))[0]).toContain(TILE_A);
+    expect(selectedOption(render(TILE_B))[0]).toContain(TILE_B);
+  });
+});

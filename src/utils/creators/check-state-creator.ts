@@ -169,9 +169,16 @@ export async function createCheckStateTile(
         // Resolve each condition up front so an unusable one can skip the whole branch
         // rather than silently emitting a branch that executes unconditionally.
         const resolved = branch.conditions.map(condition => {
-          const tile = config.tilesToCheck.find(t =>
-            t.variables.some(v => v.variableName === condition.variableName)
-          );
+          // Match on tileId first. Variable names are NOT unique across tiles --
+          // every switch defaults its variable to `switch_1` -- so resolving by
+          // name alone silently pointed every condition at whichever checked tile
+          // happened to be first, making the second tile untargetable.
+          // Fall back to the name for conditions saved before tileId was carried.
+          const tile =
+            config.tilesToCheck.find(t => t.tileId === condition.tileId) ??
+            config.tilesToCheck.find(t =>
+              t.variables.some(v => v.variableName === condition.variableName)
+            );
           const value = buildComparisonValue(condition.operator, String(condition.value ?? ''));
           return { condition, tile, value };
         });
