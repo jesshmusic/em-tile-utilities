@@ -369,13 +369,13 @@ describe('LightConfigDialog', () => {
       } as any;
 
       const mockBrowse = jest.fn();
-      (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((_options: any) => ({
         browse: mockBrowse
       }));
 
       await dialog._onFilePicker(mockEvent);
 
-      expect((global as any).FilePicker).toHaveBeenCalledWith({
+      expect((global as any).foundry.applications.apps.FilePicker).toHaveBeenCalledWith({
         type: 'imagevideo',
         current: 'current/light.png',
         callback: expect.any(Function)
@@ -393,7 +393,7 @@ describe('LightConfigDialog', () => {
       } as any;
 
       let capturedCallback: any;
-      (global as any).FilePicker = jest.fn().mockImplementation((options: any) => {
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((options: any) => {
         capturedCallback = options.callback;
         return { browse: jest.fn() };
       });

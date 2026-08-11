@@ -167,17 +167,18 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
       </div>
     `;
 
-    new (Dialog as any)({
-      title: 'How to Use Scene Variables',
-      content: content,
-      buttons: {
-        close: {
-          icon: '<i class="gi-cancel"></i>',
-          label: 'Close'
-        }
-      },
-      default: 'close'
-    }).render(true);
+    // ApplicationV1 `Dialog` is deprecated (removal targeted for v16). Every
+    // other dialog in the module is already on DialogV2; this was the holdout.
+    const DialogV2 = (foundry.applications.api as any).DialogV2;
+    await DialogV2.prompt({
+      window: { title: game.i18n.localize('EMPUZZLES.VariablesHelpTitle') },
+      content,
+      position: { width: 600 },
+      ok: {
+        icon: 'gi-cancel',
+        label: game.i18n.localize('EMPUZZLES.Close')
+      }
+    });
   }
 }
 

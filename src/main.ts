@@ -9,6 +9,7 @@ import packageInfo from '../package.json';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
+const TEMPLATE_ROOT = `modules/${MODULE_ID}/templates`;
 
 /**
  * Compare an installed dependency's declared Foundry compatibility against
@@ -79,73 +80,23 @@ Hooks.once('init', async () => {
     'color: #ffeb3b; font-weight: normal; font-size: 12px;'
   );
 
-  // Pre-load templates
-  const SAVING_THROW_SECTION_PARTIAL_PATH =
-    'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
-  const VISIBILITY_SECTION_PARTIAL_PATH =
-    'modules/em-tile-utilities/templates/partials/visibility-section.hbs';
-  const CUSTOM_TAGS_SECTION_PARTIAL_PATH =
-    'modules/em-tile-utilities/templates/partials/custom-tags-section.hbs';
-  await loadTemplates([
-    SAVING_THROW_SECTION_PARTIAL_PATH,
-    VISIBILITY_SECTION_PARTIAL_PATH,
-    CUSTOM_TAGS_SECTION_PARTIAL_PATH
-  ]);
-
-  // Register Handlebars partials manually
-  // IMPORTANT: loadTemplates() only preloads template files for caching.
-  // It does NOT register Handlebars partials automatically (verified by integration tests).
-  // We must explicitly register partials with Handlebars.registerPartial() for them to work.
-  try {
-    const response = await fetch(SAVING_THROW_SECTION_PARTIAL_PATH);
-    if (!response.ok) {
-      console.error(
-        `[em-tile-utilities] Failed to load partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
-      );
-    } else {
-      const partialTemplate = await response.text();
-      (Handlebars as any).registerPartial('partials/saving-throw-section', partialTemplate);
-    }
-  } catch (err) {
-    console.error(
-      `[em-tile-utilities] Error fetching partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}.`,
-      err
-    );
-  }
-
-  try {
-    const response = await fetch(VISIBILITY_SECTION_PARTIAL_PATH);
-    if (!response.ok) {
-      console.error(
-        `[em-tile-utilities] Failed to load partial template: ${VISIBILITY_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
-      );
-    } else {
-      const partialTemplate = await response.text();
-      (Handlebars as any).registerPartial('partials/visibility-section', partialTemplate);
-    }
-  } catch (err) {
-    console.error(
-      `[em-tile-utilities] Error fetching partial template: ${VISIBILITY_SECTION_PARTIAL_PATH}.`,
-      err
-    );
-  }
-
-  try {
-    const response = await fetch(CUSTOM_TAGS_SECTION_PARTIAL_PATH);
-    if (!response.ok) {
-      console.error(
-        `[em-tile-utilities] Failed to load partial template: ${CUSTOM_TAGS_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
-      );
-    } else {
-      const partialTemplate = await response.text();
-      (Handlebars as any).registerPartial('partials/custom-tags-section', partialTemplate);
-    }
-  } catch (err) {
-    console.error(
-      `[em-tile-utilities] Error fetching partial template: ${CUSTOM_TAGS_SECTION_PARTIAL_PATH}.`,
-      err
-    );
-  }
+  // Pre-load templates and register them as named Handlebars partials.
+  //
+  // Foundry v14 removed the flat `loadTemplates` global; it now lives at
+  // foundry.applications.handlebars.loadTemplates. Calling the old global here
+  // threw a ReferenceError inside the `init` hook, which aborted everything
+  // below it — including every game.settings.register call.
+  //
+  // The object form maps partial ID -> path. Under the hood it calls
+  // getTemplate(path, id), which compiles the file and runs
+  // Handlebars.registerPartial(id, compiled). That replaces the three manual
+  // fetch() + registerPartial() blocks this used to carry, and it drops their
+  // route-relative fetch, which broke on servers using a Foundry route prefix.
+  await foundry.applications.handlebars.loadTemplates({
+    'partials/saving-throw-section': `${TEMPLATE_ROOT}/partials/saving-throw-section.hbs`,
+    'partials/visibility-section': `${TEMPLATE_ROOT}/partials/visibility-section.hbs`,
+    'partials/custom-tags-section': `${TEMPLATE_ROOT}/partials/custom-tags-section.hbs`
+  });
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {

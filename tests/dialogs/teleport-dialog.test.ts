@@ -151,7 +151,7 @@ describe('TeleportDialog', () => {
         })
       } as any;
 
-      (global as any).FilePicker = jest.fn().mockImplementation(() => ({
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation(() => ({
         browse: jest.fn(async () => {})
       }));
     });
@@ -165,7 +165,7 @@ describe('TeleportDialog', () => {
     it('should create FilePicker with correct configuration', async () => {
       await dialog._onFilePicker(mockEvent);
 
-      expect((global as any).FilePicker).toHaveBeenCalledWith({
+      expect((global as any).foundry.applications.apps.FilePicker).toHaveBeenCalledWith({
         type: 'audio',
         current: 'old/path.ogg',
         callback: expect.any(Function)
@@ -174,7 +174,7 @@ describe('TeleportDialog', () => {
 
     it('should update input value via callback', async () => {
       let callback: any;
-      (global as any).FilePicker = jest.fn().mockImplementation((config: any) => {
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((config: any) => {
         callback = config.callback;
         return { browse: jest.fn() };
       });
@@ -191,7 +191,7 @@ describe('TeleportDialog', () => {
 
       await dialog._onFilePicker(mockEvent);
 
-      expect((global as any).FilePicker).not.toHaveBeenCalled();
+      expect((global as any).foundry.applications.apps.FilePicker).not.toHaveBeenCalled();
     });
 
     it('should return early if input not found', async () => {
@@ -199,7 +199,7 @@ describe('TeleportDialog', () => {
 
       await dialog._onFilePicker(mockEvent);
 
-      expect((global as any).FilePicker).not.toHaveBeenCalled();
+      expect((global as any).foundry.applications.apps.FilePicker).not.toHaveBeenCalled();
     });
   });
 

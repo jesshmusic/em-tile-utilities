@@ -5,22 +5,25 @@ declare global {
   const ui: UI;
   const foundry: Foundry;
   const Hooks: HooksManager;
-  const Dialog: typeof DialogClass;
-  const FormDataExtended: typeof FormDataExtendedClass;
-  const FilePicker: typeof FilePickerClass;
   const PIXI: typeof PIXINamespace;
 
-  /**
-   * Load and register Handlebars templates (including partials)
-   */
-  function loadTemplates(paths: string[]): Promise<void>;
+  // Foundry v14 removed the flat `loadTemplates`, `renderTemplate`,
+  // `FilePicker`, `AudioHelper`, `SearchFilter` and `ContextMenu` globals.
+  // They are deliberately NOT declared here so that any reintroduced usage
+  // fails to typecheck instead of failing at runtime. Use the namespaced
+  // equivalents on `foundry` below.
+  //
+  // `Dialog` / `Application` / `FormApplication` still exist as ApplicationV1
+  // deprecation shims (removal targeted for v16) but the module is fully on
+  // ApplicationV2, so they are not declared either.
 
   /**
-   * Handlebars template engine
+   * Handlebars template engine — still a genuine global in v14.
    */
   const Handlebars: {
     registerPartial(name: string, template: string): void;
     compile(template: string): (context: any) => string;
+    partials: Record<string, unknown>;
   };
 
   interface Game {
@@ -50,10 +53,27 @@ declare global {
   interface Foundry {
     utils: {
       randomID(): string;
+      [key: string]: any;
     };
     applications: {
       api: any;
+      /** v14 home of loadTemplates/renderTemplate/getTemplate */
+      handlebars: {
+        /**
+         * Pass an array of paths to preload, or a Record of partial ID -> path
+         * to preload *and* register each as a named Handlebars partial.
+         */
+        loadTemplates(paths: string[] | Record<string, string>): Promise<unknown[]>;
+        renderTemplate(path: string, data: object): Promise<string>;
+        getTemplate(path: string, id?: string): Promise<(context: any) => string>;
+      };
+      /** v14 home of FilePicker */
+      apps: any;
+      [key: string]: any;
     };
+    /** v14 home of AudioHelper */
+    audio: any;
+    [key: string]: any;
   }
 
   interface HooksManager {
@@ -103,42 +123,6 @@ declare global {
     flags: {
       [key: string]: any;
     };
-  }
-
-  class DialogClass {
-    constructor(data: DialogData, options?: any);
-    render(force: boolean): void;
-  }
-
-  interface DialogData {
-    title: string;
-    content: string;
-    buttons?: Record<string, DialogButton>;
-    default?: string;
-    render?: (html: JQuery) => void;
-    close?: () => void;
-  }
-
-  interface DialogButton {
-    icon?: string;
-    label: string;
-    callback?: (html: JQuery) => void | Promise<void>;
-  }
-
-  class FormDataExtendedClass {
-    constructor(form: HTMLFormElement);
-    object: Record<string, any>;
-  }
-
-  class FilePickerClass {
-    constructor(options: FilePickerOptions);
-    browse(): Promise<void>;
-  }
-
-  interface FilePickerOptions {
-    type: string;
-    current?: string;
-    callback: (path: string) => void;
   }
 
   // PIXI types

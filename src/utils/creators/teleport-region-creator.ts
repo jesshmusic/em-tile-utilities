@@ -55,7 +55,7 @@ function generateTeleportMacroScript(config: TeleportTileConfig, sourceSceneId: 
   if (config.sound && config.sound.trim() !== '') {
     parts.push(`// Play teleport sound`);
     parts.push(
-      `await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 1, loop: false });`
+      `await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 1, loop: false });`
     );
     parts.push(``);
   }
@@ -236,10 +236,10 @@ export async function createTeleportRegion(
     const sourceBehaviors: any[] = [];
 
     // Add Sound behavior FIRST if sound is set
-    // Uses Execute Script with AudioHelper.play() for reliable sound playback
+    // Uses Execute Script with foundry.audio.AudioHelper.play() for reliable sound playback
     if (config.sound && config.sound.trim() !== '') {
       const soundScript = `// Play teleport sound
-await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
+await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
       sourceBehaviors.push(
         createExecuteMacroRegionBehavior({
           name: `${config.name} - Sound`,
@@ -279,10 +279,10 @@ await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, lo
       const destBehaviors: any[] = [];
 
       // Add Sound behavior FIRST to destination if sound is set
-      // Uses Execute Script with AudioHelper.play() for reliable sound playback
+      // Uses Execute Script with foundry.audio.AudioHelper.play() for reliable sound playback
       if (config.sound && config.sound.trim() !== '') {
         const returnSoundScript = `// Play return teleport sound
-await AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
+await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
         destBehaviors.push(
           createExecuteMacroRegionBehavior({
             name: `Return: ${config.name} - Sound`,

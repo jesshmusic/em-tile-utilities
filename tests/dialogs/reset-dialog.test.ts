@@ -633,7 +633,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       } as any;
 
       const mockBrowse = jest.fn();
-      (global as any).FilePicker = jest.fn().mockImplementation(() => ({
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation(() => ({
         browse: mockBrowse
       }));
 
@@ -653,7 +653,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       } as any;
 
       let capturedCallback: any;
-      (global as any).FilePicker = jest.fn().mockImplementation((options: any) => {
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((options: any) => {
         capturedCallback = options.callback;
         return { browse: jest.fn() };
       });

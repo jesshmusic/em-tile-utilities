@@ -177,28 +177,39 @@ describe('Main Module', () => {
         await initCallback();
       }
 
-      // Verify loadTemplates was called
-      expect((global as any).loadTemplates).toHaveBeenCalled();
+      // Foundry v14 removed the flat `loadTemplates` global; it now lives at
+      // foundry.applications.handlebars.loadTemplates.
+      const loadTemplates = (global as any).foundry.applications.handlebars.loadTemplates;
+      expect(loadTemplates).toHaveBeenCalled();
 
-      // Verify it was called with the saving-throw-section partial
-      const loadCalls = ((global as any).loadTemplates as any).mock.calls;
+      // It must be called with the Record<partialId, path> form, which both
+      // preloads the template and registers it as a named partial. The old
+      // array form preloads only, which is why this used to need three manual
+      // fetch() + Handlebars.registerPartial() blocks.
+      const loadCalls = (loadTemplates as any).mock.calls;
       expect(loadCalls.length).toBeGreaterThan(0);
 
-      const partialPaths = loadCalls[0][0];
-      expect(partialPaths).toContain(
+      const partialMap = loadCalls[0][0];
+      expect(Array.isArray(partialMap)).toBe(false);
+      expect(partialMap['partials/saving-throw-section']).toBe(
         'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
       );
+      expect(partialMap['partials/visibility-section']).toBe(
+        'modules/em-tile-utilities/templates/partials/visibility-section.hbs'
+      );
+      expect(partialMap['partials/custom-tags-section']).toBe(
+        'modules/em-tile-utilities/templates/partials/custom-tags-section.hbs'
+      );
 
-      // CRITICAL: Verify the partial was registered with Handlebars
+      // CRITICAL: the partials must actually end up registered with Handlebars.
       expect((global as any).Handlebars.registerPartial).toHaveBeenCalledWith(
         'partials/saving-throw-section',
-        expect.any(String)
+        expect.anything()
       );
 
-      // Verify fetch was called to load the partial content
-      expect((global as any).fetch).toHaveBeenCalledWith(
-        'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
-      );
+      // The route-relative fetch() the old implementation used is gone; it
+      // broke on servers running under a Foundry route prefix.
+      expect((global as any).fetch).not.toHaveBeenCalled();
     });
   });
 

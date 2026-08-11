@@ -42,8 +42,37 @@ export function mockFoundry() {
           };
         },
         DialogV2: {
-          confirm: jest.fn(async () => true)
+          confirm: jest.fn(async () => true),
+          prompt: jest.fn(async () => true)
         }
+      },
+      // Foundry v14 moved FilePicker off the global scope to here.
+      apps: {
+        FilePicker: jest.fn().mockImplementation((_options: any) => ({
+          browse: jest.fn()
+        }))
+      },
+      // Foundry v14 moved loadTemplates/renderTemplate off the global scope
+      // to here. The Record<string, string> form of loadTemplates preloads
+      // each template AND registers it as a named Handlebars partial.
+      handlebars: {
+        loadTemplates: jest.fn(async (paths: string[] | Record<string, string>) => {
+          const entries = Array.isArray(paths)
+            ? paths.map(p => [p, p] as const)
+            : Object.entries(paths);
+          for (const [id] of entries) {
+            (global as any).Handlebars?.registerPartial?.(id, `<!-- ${id} -->`);
+          }
+          return entries.map(() => () => '');
+        }),
+        renderTemplate: jest.fn(async () => ''),
+        getTemplate: jest.fn(async () => () => '')
+      }
+    },
+    // Foundry v14 moved AudioHelper off the global scope to here.
+    audio: {
+      AudioHelper: {
+        play: jest.fn(async () => ({}))
       }
     }
   };
@@ -156,15 +185,10 @@ export function mockFoundry() {
     callAll: jest.fn()
   };
 
-  // Mock Dialog
-  (global as any).Dialog = {
-    confirm: jest.fn(async () => true)
-  };
-
-  // Mock FilePicker
-  (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
-    browse: jest.fn()
-  }));
+  // NOTE: the flat `Dialog`, `FilePicker`, `loadTemplates`, `renderTemplate`
+  // and `AudioHelper` globals were REMOVED in Foundry v14 and are deliberately
+  // not mocked. Their v14 homes are on the `foundry` namespace above. Adding
+  // them back here would let v13-era code pass tests and then fail in Foundry.
 
   // Mock Tagger (3rd party module API)
   (globalThis as any).Tagger = {
@@ -173,11 +197,6 @@ export function mockFoundry() {
     hasTags: jest.fn(() => false),
     getByTag: jest.fn(() => [])
   };
-
-  // Mock loadTemplates (Foundry template loader)
-  (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {
-    return Promise.resolve();
-  });
 
   // Mock document if not in jsdom environment
   if (typeof document === 'undefined') {
