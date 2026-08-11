@@ -7,8 +7,6 @@ mockFoundry();
 
 import {
   createRectangleShape,
-  createPolygonShape,
-  createEllipseShape,
   createBaseRegionData
 } from '../../src/utils/builders/base-region-builder';
 
@@ -17,12 +15,9 @@ import {
   createExecuteMacroRegionBehavior,
   createTeleportTokenRegionBehavior,
   createPauseGameRegionBehavior,
-  createScrollingTextRegionBehavior,
-  createAdjustElevationRegionBehavior,
   createEnhancedTrapRegionBehavior,
   createEnhancedSoundRegionBehavior,
-  createEnhancedElevationRegionBehavior,
-  createEnhancedTriggerActionRegionBehavior
+  createEnhancedElevationRegionBehavior
 } from '../../src/utils/builders/region-behavior-builder';
 
 describe('Base Region Builder', () => {
@@ -78,72 +73,6 @@ describe('Base Region Builder', () => {
 
       expect(shape.x).toBe(-50);
       expect(shape.y).toBe(-100);
-    });
-  });
-
-  describe('createPolygonShape', () => {
-    it('should create a polygon shape with points', () => {
-      const points = [0, 0, 100, 0, 100, 100, 0, 100];
-      const shape = createPolygonShape({ points });
-
-      expect(shape.type).toBe('polygon');
-      expect(shape.points).toEqual(points);
-      expect(shape.hole).toBe(false);
-    });
-
-    it('should handle empty points array', () => {
-      const shape = createPolygonShape({ points: [] });
-
-      expect(shape.points).toEqual([]);
-    });
-
-    it('should handle complex polygon', () => {
-      const points = [0, 0, 50, 25, 100, 0, 75, 50, 100, 100, 50, 75, 0, 100, 25, 50];
-      const shape = createPolygonShape({ points });
-
-      expect(shape.points).toHaveLength(16);
-    });
-  });
-
-  describe('createEllipseShape', () => {
-    it('should create an ellipse shape with required properties', () => {
-      const shape = createEllipseShape({
-        x: 150,
-        y: 200,
-        radiusX: 50,
-        radiusY: 30
-      });
-
-      expect(shape.type).toBe('ellipse');
-      expect(shape.x).toBe(150);
-      expect(shape.y).toBe(200);
-      expect(shape.radiusX).toBe(50);
-      expect(shape.radiusY).toBe(30);
-      expect(shape.rotation).toBe(0);
-      expect(shape.hole).toBe(false);
-    });
-
-    it('should apply custom rotation', () => {
-      const shape = createEllipseShape({
-        x: 0,
-        y: 0,
-        radiusX: 100,
-        radiusY: 50,
-        rotation: 90
-      });
-
-      expect(shape.rotation).toBe(90);
-    });
-
-    it('should create a circle when radii are equal', () => {
-      const shape = createEllipseShape({
-        x: 100,
-        y: 100,
-        radiusX: 50,
-        radiusY: 50
-      });
-
-      expect(shape.radiusX).toBe(shape.radiusY);
     });
   });
 
@@ -229,7 +158,6 @@ describe('Region Behavior Builder', () => {
       expect(RegionEvents.TOKEN_MOVE_IN).toBe('tokenMoveIn');
       expect(RegionEvents.TOKEN_MOVE_OUT).toBe('tokenMoveOut');
       expect(RegionEvents.TOKEN_MOVE_WITHIN).toBe('tokenMoveWithin');
-      expect(RegionEvents.TOKEN_PRE_MOVE).toBe('tokenPreMove');
       expect(RegionEvents.TOKEN_TURN_START).toBe('tokenTurnStart');
       expect(RegionEvents.TOKEN_TURN_END).toBe('tokenTurnEnd');
       expect(RegionEvents.TOKEN_ROUND_START).toBe('tokenRoundStart');
@@ -354,98 +282,6 @@ describe('Region Behavior Builder', () => {
 
       expect(behavior.name).toBe('Pause Game');
       expect(behavior.events).toEqual([RegionEvents.TOKEN_ENTER]);
-    });
-  });
-
-  describe('createScrollingTextRegionBehavior', () => {
-    it('should create scrolling text behavior with defaults', () => {
-      const behavior = createScrollingTextRegionBehavior({
-        text: 'Welcome to the dungeon!'
-      });
-
-      expect(behavior.type).toBe('displayScrollingText');
-      expect(behavior.name).toBe('Scrolling Text');
-      expect(behavior.system.text).toBe('Welcome to the dungeon!');
-      expect(behavior.disabled).toBe(false);
-      expect(behavior.events).toEqual([RegionEvents.TOKEN_ENTER]);
-    });
-
-    it('should apply custom name', () => {
-      const behavior = createScrollingTextRegionBehavior({
-        name: 'Warning Message',
-        text: 'Danger ahead!'
-      });
-
-      expect(behavior.name).toBe('Warning Message');
-    });
-
-    it('should apply custom events', () => {
-      const behavior = createScrollingTextRegionBehavior({
-        text: 'Leaving safe zone',
-        events: [RegionEvents.TOKEN_EXIT]
-      });
-
-      expect(behavior.events).toEqual([RegionEvents.TOKEN_EXIT]);
-    });
-  });
-
-  describe('createAdjustElevationRegionBehavior', () => {
-    it('should create adjust elevation behavior with defaults', () => {
-      const behavior = createAdjustElevationRegionBehavior({
-        elevation: 10
-      });
-
-      expect(behavior.type).toBe('adjustElevation');
-      expect(behavior.name).toBe('Adjust Elevation');
-      expect(behavior.system.elevation).toBe(10);
-      expect(behavior.system.mode).toBe('set');
-      expect(behavior.disabled).toBe(false);
-      expect(behavior.events).toEqual([RegionEvents.TOKEN_ENTER]);
-    });
-
-    it('should apply custom name', () => {
-      const behavior = createAdjustElevationRegionBehavior({
-        name: 'Climb Stairs',
-        elevation: 5
-      });
-
-      expect(behavior.name).toBe('Climb Stairs');
-    });
-
-    it('should use add mode for relative elevation', () => {
-      const behavior = createAdjustElevationRegionBehavior({
-        elevation: 10,
-        mode: 'add'
-      });
-
-      expect(behavior.system.mode).toBe('add');
-    });
-
-    it('should use set mode for absolute elevation', () => {
-      const behavior = createAdjustElevationRegionBehavior({
-        elevation: 20,
-        mode: 'set'
-      });
-
-      expect(behavior.system.mode).toBe('set');
-    });
-
-    it('should handle negative elevation', () => {
-      const behavior = createAdjustElevationRegionBehavior({
-        elevation: -5,
-        mode: 'add'
-      });
-
-      expect(behavior.system.elevation).toBe(-5);
-    });
-
-    it('should apply custom events', () => {
-      const behavior = createAdjustElevationRegionBehavior({
-        elevation: 0,
-        events: [RegionEvents.TOKEN_EXIT]
-      });
-
-      expect(behavior.events).toEqual([RegionEvents.TOKEN_EXIT]);
     });
   });
 
@@ -675,38 +511,6 @@ describe('Region Behavior Builder', () => {
         RegionEvents.TOKEN_MOVE_IN,
         RegionEvents.TOKEN_MOVE_WITHIN
       ]);
-    });
-  });
-
-  describe('createEnhancedTriggerActionRegionBehavior', () => {
-    it('should create enhanced trigger action behavior with defaults', () => {
-      const behavior = createEnhancedTriggerActionRegionBehavior({
-        itemId: 'Item.abc123'
-      });
-
-      expect(behavior.type).toBe('enhanced-region-behavior.TriggerAction');
-      expect(behavior.name).toBe('Trigger Action');
-      expect(behavior.system.itemId).toBe('Item.abc123');
-      expect(behavior.system.events).toEqual([RegionEvents.TOKEN_ENTER]);
-      expect(behavior.disabled).toBe(false);
-    });
-
-    it('should apply custom name', () => {
-      const behavior = createEnhancedTriggerActionRegionBehavior({
-        name: 'Cast Fireball',
-        itemId: 'Item.fireball123'
-      });
-
-      expect(behavior.name).toBe('Cast Fireball');
-    });
-
-    it('should apply custom events', () => {
-      const behavior = createEnhancedTriggerActionRegionBehavior({
-        itemId: 'Item.xyz',
-        events: [RegionEvents.TOKEN_TURN_START]
-      });
-
-      expect(behavior.system.events).toEqual([RegionEvents.TOKEN_TURN_START]);
     });
   });
 });

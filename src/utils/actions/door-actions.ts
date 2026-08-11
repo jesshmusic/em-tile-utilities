@@ -18,8 +18,8 @@
  *    the raw string "locked", which fails schema validation.
  *
  * So UPPERCASE is the correct wire format. The dialogs already emit uppercase
- * (templates/trap-config.hbs, templates/reset-config.hbs,
- * templates/activating-trap-config.hbs); only this signature disagreed.
+ * (templates/trap-config.hbs, templates/reset-config.hbs); only this
+ * signature disagreed.
  */
 export type DoorState = 'OPEN' | 'CLOSED' | 'LOCKED' | 'nothing' | 'toggle';
 

@@ -62,15 +62,6 @@ export enum TrapTargetType {
 }
 
 /**
- * Configuration for teleport result
- */
-export interface TeleportConfig {
-  x: number;
-  y: number;
-  scene?: string; // Optional: scene ID for cross-scene teleport
-}
-
-/**
  * Configuration for active effect result (using Monk's Active Tiles structure)
  */
 export interface ActiveEffectConfig {
@@ -100,7 +91,7 @@ export interface WallAction {
    * the control from `Object.keys(CONST.WALL_DOOR_STATES)`
    * (../monks-active-tiles/actions.js:2718-2729). See `DoorState` in
    * src/utils/actions/door-actions.ts. Sourced from templates/trap-config.hbs
-   * and templates/activating-trap-config.hbs, which already emit uppercase.
+   * and templates/reset-config.hbs, which already emit uppercase.
    */
   state: 'OPEN' | 'CLOSED' | 'LOCKED';
 }
@@ -137,13 +128,9 @@ export interface TrapConfig {
   // For teleport result type
   teleportX?: number; // Teleport destination X
   teleportY?: number; // Teleport destination Y
-  teleportConfig?: TeleportConfig; // Optional: teleport destination (legacy)
   // For active effect result type
-  effectId?: string; // Effect ID to apply
-  addEffect?: boolean; // True = add, False = remove
-  activeEffectConfig?: ActiveEffectConfig; // Optional: active effect to apply (legacy)
+  activeEffectConfig?: ActiveEffectConfig; // Effect to apply; built by trap-dialog, consumed by trap-creator
   // For activating trap type
-  tilesToActivate?: string[]; // Optional: IDs of tiles to activate (deprecated, use tileActions)
   tileActions?: TileAction[]; // Optional: tile actions with configurations
   wallActions?: WallAction[]; // Optional: wall/door actions
   // For DMG trap items

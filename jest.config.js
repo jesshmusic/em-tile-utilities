@@ -35,30 +35,27 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/types/**/*',
-    '!src/main.ts', // Entry point with hooks - integration test territory
-    // Abstract UI base class, currently 0% covered and with no dedicated suite.
-    // This is the one remaining honest gap in the numbers below; drop this line
-    // once base-trap-dialog.ts gets a suite of its own.
-    '!src/dialogs/base-trap-dialog.ts'
+    '!src/main.ts' // Entry point with hooks - integration test territory
     // NOTE: trap-dialog.ts and check-state-dialog.ts used to be excluded here
     // as "hard to unit test". Both now have dedicated suites
     // (tests/dialogs/trap-dialog.test.ts, tests/dialogs/check-state-dialog.test.ts)
-    // so they are measured. combat-trap-dialog.ts and activating-trap-dialog.ts
-    // were also listed - neither file has existed for some time.
+    // so they are measured. base-trap-dialog.ts was excluded as an uncovered
+    // orphan; it has since been deleted, along with combat-trap-dialog.ts and
+    // activating-trap-dialog.ts before it.
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   // Ratchet, not an aspiration: these sit a couple of points under the actual
-  // numbers as of v2.2.0 (61.57 stmts / 52.12 branch / 61.73 funcs / 62.54
+  // numbers as of v2.2.0 (62.92 stmts / 53.93 branch / 62.88 funcs / 63.98
   // lines) so ordinary churn does not redden CI but a real regression does.
   // Raise them as coverage improves - the goals in tests/README.md are
   // 80/75/80/80.
   coverageThreshold: {
     global: {
-      statements: 60,
-      branches: 50,
-      functions: 60,
-      lines: 61
+      statements: 61,
+      branches: 52,
+      functions: 61,
+      lines: 62
     }
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
