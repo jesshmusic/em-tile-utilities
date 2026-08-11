@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test:
@@ -13,14 +13,17 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        # Node 18 went EOL 2025-04 and Node 20 on 2026-04-30. Vite 7 requires
+        # ^20.19.0 || >=22.12.0, so 22.x (LTS) and 24.x (current) are the
+        # supported pair.
+        node-version: [22.x, 24.x]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -32,30 +35,155 @@ jobs:
         run: npm run test:ci
 
       - name: Upload coverage to Codecov
-        if: matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v4
+        if: matrix.node-version == '22.x'
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage/lcov.info
+          # v5 renamed the v4 `file:` input to `files:`.
+          files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
-  lint:
-    name: Lint & Type Check
+  quality:
+    name: Lint, Format & Type Check
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20.x'
+          node-version: '22.x'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
+      # `npm run build` is just `vite build` (esbuild transpile) and does NOT
+      # type check. This step is the only thing that does.
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Build
         run: npm run build
+
+  version-bump:
+    name: Version Bump Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+
+      # Compares against origin/<base branch>, NOT `git describe --tags`:
+      # describe returns the nearest *reachable* tag, which is not necessarily
+      # the highest version. Comparison is a real semver greater-than, so a
+      # downgrade (2.2.0 -> 2.1.0) fails instead of sneaking past a string
+      # inequality check.
+      - name: Require a semver version bump
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const { execFileSync } = require('child_process');
+
+          const baseRef = process.env.BASE_REF;
+
+          function parse(v, where) {
+            const m = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/.exec(
+              String(v)
+            );
+            if (!m) {
+              console.log(`::error::${where} has a version that is not valid semver: "${v}"`);
+              process.exit(1);
+            }
+            return {
+              major: +m[1],
+              minor: +m[2],
+              patch: +m[3],
+              pre: m[4] ? m[4].split('.') : null
+            };
+          }
+
+          // Returns 1 if a > b, -1 if a < b, 0 if equal (semver precedence).
+          function cmp(a, b) {
+            for (const k of ['major', 'minor', 'patch']) {
+              if (a[k] !== b[k]) return a[k] < b[k] ? -1 : 1;
+            }
+            if (!a.pre && !b.pre) return 0;
+            if (!a.pre) return 1;
+            if (!b.pre) return -1;
+            for (let i = 0; i < Math.max(a.pre.length, b.pre.length); i++) {
+              const x = a.pre[i];
+              const y = b.pre[i];
+              if (x === undefined) return -1;
+              if (y === undefined) return 1;
+              const xn = /^\d+$/.test(x);
+              const yn = /^\d+$/.test(y);
+              if (xn && yn) {
+                if (+x !== +y) return +x < +y ? -1 : 1;
+              } else if (xn !== yn) {
+                return xn ? -1 : 1;
+              } else if (x !== y) {
+                return x < y ? -1 : 1;
+              }
+            }
+            return 0;
+          }
+
+          const headPkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const headMod = JSON.parse(fs.readFileSync('module.json', 'utf8'));
+          const basePkg = JSON.parse(
+            execFileSync('git', ['show', `origin/${baseRef}:package.json`], { encoding: 'utf8' })
+          );
+
+          console.log(`Base (origin/${baseRef}) package.json version: ${basePkg.version}`);
+          console.log(`Head package.json version:                    ${headPkg.version}`);
+          console.log(`Head module.json version:                     ${headMod.version}`);
+
+          let failed = false;
+
+          if (headPkg.version !== headMod.version) {
+            console.log(
+              `::error::package.json (${headPkg.version}) and module.json (${headMod.version}) ` +
+                `are out of sync. Bump with 'npm run release:patch|minor|major', which updates both.`
+            );
+            failed = true;
+          }
+
+          const base = parse(basePkg.version, `origin/${baseRef} package.json`);
+          const head = parse(headPkg.version, 'package.json');
+          const order = cmp(head, base);
+
+          if (order <= 0) {
+            const how = order === 0 ? 'is unchanged from' : 'is LOWER than';
+            console.log(
+              `::error::Version ${headPkg.version} ${how} the base branch (${basePkg.version}). ` +
+                `Every PR must bump the version - run 'npm run release:patch|minor|major' locally, ` +
+                `then commit package.json, module.json and CHANGELOG.md.`
+            );
+            failed = true;
+          }
+
+          if (failed) process.exit(1);
+          console.log(`OK: ${basePkg.version} -> ${headPkg.version}`);
+          NODE

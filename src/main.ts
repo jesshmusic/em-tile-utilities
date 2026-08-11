@@ -6,8 +6,6 @@ import { showTileManagerDialog } from './dialogs/tile-manager';
 import { PatreonLink, DmGuruLink } from './settings/settings-menus';
 import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
 import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
-import buildInfo from '../build-info.json';
-import packageInfo from '../package.json';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
@@ -72,9 +70,9 @@ Hooks.once('init', async () => {
   // Module initialization banner
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %cv" +
-      packageInfo.version +
+      __MODULE_VERSION__ +
       ' %c(build ' +
-      buildInfo.buildNumber +
+      __BUILD_NUMBER__ +
       ')',
     'color: #d32f2f; font-weight: bold; font-size: 16px;',
     'color: #ff9800; font-weight: bold; font-size: 14px;',
