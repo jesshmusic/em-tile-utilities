@@ -102,6 +102,31 @@ describe('TrapDialog', () => {
       expect(context.savingThrowOptions.length).toBe(6);
     });
 
+    // Monk's Token Bar splits a roll request on ':' and looks the prefix up in
+    // its per-system _requestoptions. For dnd5e those are `misc` (death),
+    // `ability` (ability CHECK), `save` (saving throw) and `skill`. Every
+    // option here is labelled "... Save", so it must be namespaced `save:` --
+    // `ability:` silently rolls a raw check with no save proficiency.
+    // Verified against monks-tokenbar 14.01, systems/dnd5e-rolls.js.
+    it('should namespace every saving throw option as a save, not an ability check', async () => {
+      const context = await dialog._prepareContext({});
+
+      const values = context.savingThrowOptions.map((opt: any) => opt.value);
+      expect(values).toEqual([
+        'save:str',
+        'save:dex',
+        'save:con',
+        'save:int',
+        'save:wis',
+        'save:cha'
+      ]);
+      expect(values.some((v: string) => v.startsWith('ability:'))).toBe(false);
+    });
+
+    it('should default the saving throw to a dexterity save', async () => {
+      expect((dialog as any).savingThrow).toBe('save:dex');
+    });
+
     it('should include current state', async () => {
       const context = await dialog._prepareContext({});
 
@@ -221,6 +246,52 @@ describe('TrapDialog', () => {
     it('should initialize with no custom token position', () => {
       expect((dialog as any).tokenX).toBeUndefined();
       expect((dialog as any).tokenY).toBeUndefined();
+    });
+  });
+
+  describe('_onCancel', () => {
+    it('should request a close', () => {
+      dialog.close = jest.fn() as any;
+      (dialog as any)._onCancel();
+      expect(dialog.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('_onClose', () => {
+    /** Walk up the prototype chain to the ApplicationV2 base that owns _onClose */
+    const superPrototype = (instance: any): any => {
+      let proto = Object.getPrototypeOf(Object.getPrototypeOf(instance));
+      while (proto && !Object.prototype.hasOwnProperty.call(proto, '_onClose')) {
+        proto = Object.getPrototypeOf(proto);
+      }
+      return proto;
+    };
+
+    it('should call super._onClose with the lifecycle options', () => {
+      const superSpy = jest.spyOn(superPrototype(dialog), '_onClose');
+
+      (dialog as any)._onClose({ closeKey: true });
+
+      expect(superSpy).toHaveBeenCalledWith({ closeKey: true });
+      superSpy.mockRestore();
+    });
+
+    it('should not re-enter close()', () => {
+      dialog.close = jest.fn() as any;
+
+      (dialog as any)._onClose({});
+
+      expect(dialog.close).not.toHaveBeenCalled();
+    });
+
+    it('should clean up drag preview manager if it exists', () => {
+      const mockStop = jest.fn();
+      (dialog as any).dragPreviewManager = { stop: mockStop };
+
+      (dialog as any)._onClose({});
+
+      expect(mockStop).toHaveBeenCalled();
+      expect((dialog as any).dragPreviewManager).toBeUndefined();
     });
   });
 });

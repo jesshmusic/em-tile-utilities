@@ -44,7 +44,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       handler: ElevationDialog.#onSubmit
     },
     actions: {
-      close: ElevationDialog.prototype._onClose,
+      close: ElevationDialog.prototype._onCancel,
       addTag: ElevationDialog.#onAddTag,
       confirmTags: ElevationDialog.#onConfirmTags
     }
@@ -143,17 +143,24 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up drag preview manager if it exists
     if (this.dragPreviewManager) {
       this.dragPreviewManager.stop();
       this.dragPreviewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();

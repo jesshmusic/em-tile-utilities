@@ -70,19 +70,15 @@ export async function createLightTile(
 
   try {
     // Create the light source (centered on the tile)
-    const lightData = createAmbientLightData(
-      position.x + gridSize / 2,
-      position.y + gridSize / 2,
-      {
-        color: config.lightColor || null,
-        dimLight: config.dimLight,
-        brightLight: config.brightLight,
-        colorIntensity: config.colorIntensity || 0.5,
-        useDarkness: config.useDarkness,
-        darknessMin: config.darknessMin,
-        hidden: !config.useDarkness
-      }
-    );
+    const lightData = createAmbientLightData(position.x + gridSize / 2, position.y + gridSize / 2, {
+      color: config.lightColor || null,
+      dimLight: config.dimLight,
+      brightLight: config.brightLight,
+      colorIntensity: config.colorIntensity || 0.5,
+      useDarkness: config.useDarkness,
+      darknessMin: config.darknessMin,
+      hidden: !config.useDarkness
+    });
 
     const [light] = await scene.createEmbeddedDocuments('AmbientLight', [lightData]);
     if (!light) {
@@ -208,9 +204,7 @@ export async function createLightTile(
     // and the caller is told via a thrown error rather than getting an
     // incorrect success notification.
     if (!mainTile) {
-      throw new Error(
-        'Failed to create main light Tile (validation failure — check console).'
-      );
+      throw new Error('Failed to create main light Tile (validation failure — check console).');
     }
     mainTileId = (mainTile as any).id;
 

@@ -68,7 +68,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   // Saving Throw (shared across result types)
   protected hasSavingThrow: boolean = false;
-  protected savingThrow: string = 'ability:dex';
+  protected savingThrow: string = 'save:dex';
   protected dc: number = 14;
 
   // Damage Result Type
@@ -177,7 +177,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     },
     actions: {
       // Dialog actions
-      close: TrapDialog.prototype._onClose,
+      close: TrapDialog.prototype._onCancel,
       // DMG trap actions
       removeDmgTrapItem: TrapDialog.prototype._onRemoveDmgTrapItem,
       // Activating trap actions
@@ -276,12 +276,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Prepare saving throw options
     const savingThrowOptions = [
-      { value: 'ability:str', label: 'EMPUZZLES.StrengthSave' },
-      { value: 'ability:dex', label: 'EMPUZZLES.DexteritySave' },
-      { value: 'ability:con', label: 'EMPUZZLES.ConstitutionSave' },
-      { value: 'ability:int', label: 'EMPUZZLES.IntelligenceSave' },
-      { value: 'ability:wis', label: 'EMPUZZLES.WisdomSave' },
-      { value: 'ability:cha', label: 'EMPUZZLES.CharismaSave' }
+      { value: 'save:str', label: 'EMPUZZLES.StrengthSave' },
+      { value: 'save:dex', label: 'EMPUZZLES.DexteritySave' },
+      { value: 'save:con', label: 'EMPUZZLES.ConstitutionSave' },
+      { value: 'save:int', label: 'EMPUZZLES.IntelligenceSave' },
+      { value: 'save:wis', label: 'EMPUZZLES.WisdomSave' },
+      { value: 'save:cha', label: 'EMPUZZLES.CharismaSave' }
     ];
 
     // Prepare effect options (active effects from game system)
@@ -419,8 +419,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Use DMG trap data if available, otherwise use class properties
     const useDamageOnFail = activityData?.damageFormula || this.damageOnFail;
     const useHasSavingThrow = activityData?.dc !== undefined || this.hasSavingThrow;
+    // `save:` -- activityData.ability comes from a dnd5e save activity, so this
+    // must request a saving throw. `ability:` is Monk's Token Bar's namespace
+    // for a raw ability CHECK, which silently drops save proficiency.
     const useSavingThrow = activityData?.ability
-      ? `ability:${activityData.ability}`
+      ? `save:${activityData.ability}`
       : this.savingThrow;
     const useDC = activityData?.dc !== undefined ? activityData.dc : this.dc;
     const useHalfDamageOnSuccess =
@@ -1635,7 +1638,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct here, unlike the tile-placement call sites. This
+      // point is handed to a Monk's Active Tiles action (teleport / movetoken),
+      // and MATT treats the location as a CENTRE: it subtracts half the token
+      // size to derive the token's top-left. See monks-active-tiles/actions.js
+      // (`midX`/`midY`, ~line 437 and ~line 814) in MATT 14.01.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       this.tokenX = snapped.x;
       this.tokenY = snapped.y;
@@ -1814,7 +1824,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct here, unlike the tile-placement call sites. This
+      // point is handed to a Monk's Active Tiles action (teleport / movetoken),
+      // and MATT treats the location as a CENTRE: it subtracts half the token
+      // size to derive the token's top-left. See monks-active-tiles/actions.js
+      // (`midX`/`midY`, ~line 437 and ~line 814) in MATT 14.01.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       // Update tile data with position
       const tileData = this.selectedTiles.get(tileId);
@@ -1920,7 +1937,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct here, unlike the tile-placement call sites. This
+      // point is handed to a Monk's Active Tiles action (teleport / movetoken),
+      // and MATT treats the location as a CENTRE: it subtracts half the token
+      // size to derive the token's top-left. See monks-active-tiles/actions.js
+      // (`midX`/`midY`, ~line 437 and ~line 814) in MATT 14.01.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       this.teleportX = snapped.x;
       this.teleportY = snapped.y;
@@ -1940,17 +1964,24 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up drag preview manager if it exists
     if (this.dragPreviewManager) {
       this.dragPreviewManager.stop();
       this.dragPreviewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -2671,7 +2702,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (hasSavingThrow) {
       config.savingThrow =
         (form.querySelector('select[name="savingThrow"]') as HTMLSelectElement)?.value ||
-        'ability:dex';
+        'save:dex';
       config.dc = parseInt(
         (form.querySelector('input[name="dc"]') as HTMLInputElement)?.value || '14'
       );

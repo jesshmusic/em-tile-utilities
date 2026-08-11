@@ -174,10 +174,12 @@ describe('TeleportDialog', () => {
 
     it('should update input value via callback', async () => {
       let callback: any;
-      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((config: any) => {
-        callback = config.callback;
-        return { browse: jest.fn() };
-      });
+      (global as any).foundry.applications.apps.FilePicker = jest
+        .fn()
+        .mockImplementation((config: any) => {
+          callback = config.callback;
+          return { browse: jest.fn() };
+        });
 
       await dialog._onFilePicker(mockEvent);
       callback('new/path.ogg');
@@ -274,7 +276,7 @@ describe('TeleportDialog', () => {
             'input[name="hidden"]': { checked: true },
             'select[name="targetScene"]': { value: 'scene-123' },
             'input[name="hasSavingThrow"]': { checked: true },
-            'select[name="savingThrow"]': { value: 'str' },
+            'select[name="savingThrow"]': { value: 'save:str' },
             'input[name="dc"]': { value: '18' },
             'textarea[name="flavorText"]': { value: 'Portal opens!' },
             'input[name="pauseGameOnTrigger"]': { checked: true },
@@ -294,7 +296,7 @@ describe('TeleportDialog', () => {
       expect((dialog as any).hidden).toBe(true);
       expect((dialog as any).selectedSceneId).toBe('scene-123');
       expect((dialog as any).hasSavingThrow).toBe(true);
-      expect((dialog as any).savingThrow).toBe('str');
+      expect((dialog as any).savingThrow).toBe('save:str');
       expect((dialog as any).dc).toBe(18);
       expect((dialog as any).flavorText).toBe('Portal opens!');
       expect((dialog as any).pauseGameOnTrigger).toBe(true);
@@ -520,19 +522,46 @@ describe('TeleportDialog', () => {
     });
   });
 
-  describe('_onClose', () => {
-    it('should close the dialog', () => {
+  describe('_onCancel', () => {
+    it('should request a close', () => {
       dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onCancel();
       expect(dialog.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('_onClose', () => {
+    /** Walk up the prototype chain to the ApplicationV2 base that owns _onClose */
+    const superPrototype = (instance: any): any => {
+      let proto = Object.getPrototypeOf(Object.getPrototypeOf(instance));
+      while (proto && !Object.prototype.hasOwnProperty.call(proto, '_onClose')) {
+        proto = Object.getPrototypeOf(proto);
+      }
+      return proto;
+    };
+
+    it('should call super._onClose with the lifecycle options', () => {
+      const superSpy = jest.spyOn(superPrototype(dialog), '_onClose');
+
+      (dialog as any)._onClose({ closeKey: true });
+
+      expect(superSpy).toHaveBeenCalledWith({ closeKey: true });
+      superSpy.mockRestore();
+    });
+
+    it('should not re-enter close()', () => {
+      dialog.close = jest.fn();
+
+      (dialog as any)._onClose({});
+
+      expect(dialog.close).not.toHaveBeenCalled();
     });
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
-      dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       expect(mockTileManager.maximize).toHaveBeenCalled();
     });
@@ -540,9 +569,7 @@ describe('TeleportDialog', () => {
     it('should not throw if tile manager does not exist', () => {
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
-      dialog.close = jest.fn();
-
-      expect(() => (dialog as any)._onClose()).not.toThrow();
+      expect(() => (dialog as any)._onClose({})).not.toThrow();
     });
 
     it('should clean up drag preview manager if it exists', () => {
@@ -553,8 +580,7 @@ describe('TeleportDialog', () => {
       // Set up drag preview manager
       (dialog as any).dragPreviewManager = mockPreviewManager;
 
-      dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       // Verify cleanup
       expect(mockPreviewManager.stop).toHaveBeenCalled();
@@ -563,9 +589,8 @@ describe('TeleportDialog', () => {
 
     it('should not throw if drag preview manager does not exist', () => {
       (dialog as any).dragPreviewManager = undefined;
-      dialog.close = jest.fn();
 
-      expect(() => (dialog as any)._onClose()).not.toThrow();
+      expect(() => (dialog as any)._onClose({})).not.toThrow();
     });
 
     it('should clean up destDragPreviewManager if it exists', () => {
@@ -576,8 +601,7 @@ describe('TeleportDialog', () => {
       // Set up destination drag preview manager
       (dialog as any).destDragPreviewManager = mockDestPreviewManager;
 
-      dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       // Verify cleanup
       expect(mockDestPreviewManager.stop).toHaveBeenCalled();
@@ -591,8 +615,7 @@ describe('TeleportDialog', () => {
       (dialog as any).dragPreviewManager = mockDragPreviewManager;
       (dialog as any).destDragPreviewManager = mockDestPreviewManager;
 
-      dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       expect(mockDragPreviewManager.stop).toHaveBeenCalled();
       expect(mockDestPreviewManager.stop).toHaveBeenCalled();
@@ -611,7 +634,7 @@ describe('TeleportDialog', () => {
             'input[name="hidden"]': { checked: false },
             'select[name="targetScene"]': { value: 'synced-scene' },
             'input[name="hasSavingThrow"]': { checked: false },
-            'select[name="savingThrow"]': { value: 'dex' },
+            'select[name="savingThrow"]': { value: 'save:dex' },
             'input[name="dc"]': { value: '15' },
             'input[name="flavorText"]': { value: '' },
             'input[name="pauseGameOnTrigger"]': { checked: false },

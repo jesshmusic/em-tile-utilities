@@ -8,13 +8,21 @@
 }
 
 /* Dialog Scrolling - Applied to all tile creation dialogs */
-.trap-config.window-app,
-.switch-config.window-app,
-.light-config.window-app,
-.reset-config.window-app,
-.teleport-config.window-app,
-.check-state-dialog.window-app,
-.elevation-config.window-app {
+/*
+ * NOTE: this used to be scoped to `.window-app`, which is the ApplicationV1
+ * root class. ApplicationV2 unshifts `application` onto its class list
+ * instead (see ApplicationV2#_initializeApplicationOptions), so this rule had
+ * been matching nothing since the V2 migration -- taking the `max-height:
+ * 90vh` viewport guard with it. That is why the fixed 750/800px heights in
+ * src/types/dialog-positions.ts could overflow the screen.
+ */
+.trap-config.application,
+.switch-config.application,
+.light-config.application,
+.reset-config.application,
+.teleport-config.application,
+.check-state-dialog.application,
+.elevation-config.application {
   display: flex;
   flex-direction: column;
   max-height: 90vh; /* Prevent dialogs from exceeding viewport */

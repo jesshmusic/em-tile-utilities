@@ -245,4 +245,40 @@ describe('CheckStateDialog', () => {
       expect(dialog).toBeDefined();
     });
   });
+
+  describe('_onCancel', () => {
+    it('should request a close', () => {
+      dialog.close = jest.fn() as any;
+      (dialog as any)._onCancel();
+      expect(dialog.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('_onClose', () => {
+    /** Walk up the prototype chain to the ApplicationV2 base that owns _onClose */
+    const superPrototype = (instance: any): any => {
+      let proto = Object.getPrototypeOf(Object.getPrototypeOf(instance));
+      while (proto && !Object.prototype.hasOwnProperty.call(proto, '_onClose')) {
+        proto = Object.getPrototypeOf(proto);
+      }
+      return proto;
+    };
+
+    it('should call super._onClose with the lifecycle options', () => {
+      const superSpy = jest.spyOn(superPrototype(dialog), '_onClose');
+
+      (dialog as any)._onClose({ closeKey: true });
+
+      expect(superSpy).toHaveBeenCalledWith({ closeKey: true });
+      superSpy.mockRestore();
+    });
+
+    it('should not re-enter close()', () => {
+      dialog.close = jest.fn() as any;
+
+      (dialog as any)._onClose({});
+
+      expect(dialog.close).not.toHaveBeenCalled();
+    });
+  });
 });

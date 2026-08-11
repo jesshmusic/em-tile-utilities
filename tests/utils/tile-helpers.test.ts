@@ -533,7 +533,7 @@ describe('tile-helpers', () => {
         targetType: TrapTargetType.TRIGGERING,
         hasSavingThrow: true,
         minRequired: 1,
-        savingThrow: 'ability:dex',
+        savingThrow: 'save:dex',
         dc: 14,
         damageOnFail: '2d6',
         flavorText: 'You triggered a trap!'
@@ -693,14 +693,7 @@ describe('tile-helpers', () => {
     });
 
     it('should handle different saving throw types', async () => {
-      const savingThrows = [
-        'ability:str',
-        'ability:dex',
-        'ability:con',
-        'ability:int',
-        'ability:wis',
-        'ability:cha'
-      ];
+      const savingThrows = ['save:str', 'save:dex', 'save:con', 'save:int', 'save:wis', 'save:cha'];
 
       for (const savingThrow of savingThrows) {
         mockScene.createEmbeddedDocuments.mockClear();
@@ -1350,8 +1343,8 @@ describe('tile-helpers', () => {
       const tileData = callArgs[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      // Should have end anchor
-      const endAnchor = actions.find((a: any) => a.action === 'anchor' && a.data.tag === 'end');
+      // Should have end anchor (namespaced so a user-named branch can never collide)
+      const endAnchor = actions.find((a: any) => a.action === 'anchor' && a.data.tag === 'em_end');
       expect(endAnchor).toBeDefined();
 
       // Should have "no branch matched" message
@@ -1442,15 +1435,292 @@ describe('tile-helpers', () => {
         (a: any) => a.action === 'checkvariable' && a.data.name === 'switch1'
       );
       expect(firstCheck).toBeDefined();
-      expect(firstCheck.data.fail).toBe('second_branch');
+      expect(firstCheck.data.fail).toBe('second_branch_b1');
+    });
+
+    // --- Bug 1: every comparison operator must be emitted, not just `eq` ---
+
+    const singleConditionConfig = (operator: string, value: string) => ({
+      name: 'Operator Test',
+      image: 'icons/svg/statue.svg',
+      tilesToCheck: [
+        {
+          tileId: 'tile-1',
+          tileName: 'Counter Tile',
+          variables: [{ variableName: 'count', currentValue: '3' }]
+        }
+      ],
+      branches: [
+        {
+          name: 'Gated Branch',
+          conditions: [{ variableName: 'count', operator, value, logicConnector: 'and' }],
+          actions: [
+            {
+              category: 'tile' as const,
+              targetTileId: 'target-1',
+              targetTileName: 'Target',
+              activateMode: 'activate'
+            }
+          ]
+        }
+      ]
+    });
+
+    const buildActions = async (config: any) => {
+      const { createCheckStateTile } = await import('../../src/utils/creators');
+      await createCheckStateTile(mockScene, config, 200, 200);
+      const tileData = mockScene.createEmbeddedDocuments.mock.calls[0][1][0];
+      return tileData.flags['monks-active-tiles'].actions;
+    };
+
+    it('should emit a gating checkvariable for the gt operator', async () => {
+      const actions = await buildActions(singleConditionConfig('gt', '5'));
+
+      const check = actions.find((a: any) => a.action === 'checkvariable');
+      expect(check).toBeDefined();
+      // MATT evals `<storedValue> <value>`; numeric operands stay bare so "10" > 5
+      // coerces numerically instead of comparing lexicographically.
+      expect(check.data.value).toBe('> 5');
+      expect(check.data.name).toBe('count');
+      // The branch must actually be gated: failing the check jumps past the body.
+      expect(check.data.fail).toBe('em_end');
+
+      // The branch body must come after the check, so it cannot run unconditionally.
+      const checkIndex = actions.indexOf(check);
+      const activateIndex = actions.findIndex((a: any) => a.action === 'activate');
+      expect(activateIndex).toBeGreaterThan(checkIndex);
+    });
+
+    it.each([
+      ['eq', 'on', '== "on"'],
+      ['ne', 'on', '!= "on"'],
+      ['gt', '5', '> 5'],
+      ['lt', '5', '< 5'],
+      ['gte', '5', '>= 5'],
+      ['lte', '5', '<= 5']
+    ])('should emit a checkvariable for the %s operator', async (operator, value, expected) => {
+      const actions = await buildActions(singleConditionConfig(operator, value));
+
+      const checks = actions.filter((a: any) => a.action === 'checkvariable');
+      expect(checks).toHaveLength(1);
+      expect(checks[0].data.value).toBe(expected);
+      expect(checks[0].data.type).toBe('all'); // MATT entity aggregation, not comparison
+    });
+
+    it('should quote non-numeric operands for relational operators', async () => {
+      const actions = await buildActions(singleConditionConfig('gt', 'banana'));
+
+      const check = actions.find((a: any) => a.action === 'checkvariable');
+      expect(check.data.value).toBe('> "banana"');
+    });
+
+    it('should escape quotes in condition values', async () => {
+      const actions = await buildActions(singleConditionConfig('eq', 'say "hi"'));
+
+      const check = actions.find((a: any) => a.action === 'checkvariable');
+      expect(check.data.value).toBe('== "say \\"hi\\""');
+    });
+
+    it('should warn and skip the branch when an operator cannot be expressed', async () => {
+      const actions = await buildActions(singleConditionConfig('bogus', '5'));
+
+      expect((global as any).ui.notifications.warn).toHaveBeenCalledWith(
+        expect.stringContaining('unsupported operator')
+      );
+      // No checkvariable, and crucially no unconditional branch body either.
+      expect(actions.find((a: any) => a.action === 'checkvariable')).toBeUndefined();
+      expect(actions.find((a: any) => a.action === 'activate')).toBeUndefined();
+      expect(
+        actions.find((a: any) => a.action === 'goto' && a.data.tag === 'em_end')
+      ).toBeDefined();
+    });
+
+    it('should warn and skip the branch when the variable has no source tile', async () => {
+      const config = singleConditionConfig('eq', 'on');
+      config.tilesToCheck = [];
+      const actions = await buildActions(config);
+
+      expect((global as any).ui.notifications.warn).toHaveBeenCalledWith(
+        expect.stringContaining('no checked tile provides variable')
+      );
+      expect(actions.find((a: any) => a.action === 'activate')).toBeUndefined();
+    });
+
+    // --- Bug 1: logicConnector must be honoured for multi-condition branches ---
+
+    const twoConditionConfig = (connector: string) => ({
+      name: 'Connector Test',
+      image: 'icons/svg/statue.svg',
+      tilesToCheck: [
+        {
+          tileId: 'tile-1',
+          tileName: 'Switches',
+          variables: [
+            { variableName: 'a', currentValue: 'on' },
+            { variableName: 'b', currentValue: 'off' }
+          ]
+        }
+      ],
+      branches: [
+        {
+          name: 'Both Or Either',
+          conditions: [
+            { variableName: 'a', operator: 'eq', value: 'on', logicConnector: connector },
+            { variableName: 'b', operator: 'eq', value: 'on', logicConnector: 'and' }
+          ],
+          actions: []
+        }
+      ]
+    });
+
+    it('should chain AND conditions so any failure abandons the branch', async () => {
+      const actions = await buildActions(twoConditionConfig('and'));
+
+      const checks = actions.filter((a: any) => a.action === 'checkvariable');
+      expect(checks).toHaveLength(2);
+      // Both checks fail straight past the branch - a single failure is fatal.
+      expect(checks[0].data.fail).toBe('em_end');
+      expect(checks[1].data.fail).toBe('em_end');
+      // Pure AND needs no jumps at all.
+      expect(actions.find((a: any) => a.action === 'goto')).toBeUndefined();
+    });
+
+    it('should emit OR conditions as separate groups that jump to a shared body', async () => {
+      const actions = await buildActions(twoConditionConfig('or'));
+
+      const checks = actions.filter((a: any) => a.action === 'checkvariable');
+      expect(checks).toHaveLength(2);
+
+      // First condition failing must NOT abandon the branch - it tries the second group.
+      expect(checks[0].data.fail).toBe('both_or_either_b0_g1');
+      // Only the last group failing abandons the branch.
+      expect(checks[1].data.fail).toBe('em_end');
+
+      // First condition passing must skip over the second group into the body.
+      const goto = actions.find((a: any) => a.action === 'goto');
+      expect(goto).toBeDefined();
+      expect(goto.data.tag).toBe('both_or_either_b0_body');
+
+      // The jump targets must exist as anchors.
+      const tags = actions.filter((a: any) => a.action === 'anchor').map((a: any) => a.data.tag);
+      expect(tags).toContain('both_or_either_b0_g1');
+      expect(tags).toContain('both_or_either_b0_body');
+    });
+
+    it('should produce different action shapes for AND vs OR', async () => {
+      const andActions = await buildActions(twoConditionConfig('and'));
+      mockScene.createEmbeddedDocuments.mockClear();
+      const orActions = await buildActions(twoConditionConfig('or'));
+
+      const shape = (a: any[]) => a.map(x => x.action).join(',');
+      expect(shape(andActions)).not.toBe(shape(orActions));
+      expect(orActions.length).toBeGreaterThan(andActions.length);
+    });
+
+    it('should group mixed connectors as OR-of-ANDs', async () => {
+      // a AND b OR c  =>  (a AND b) OR (c)
+      const config = {
+        name: 'Mixed Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [
+          {
+            tileId: 'tile-1',
+            tileName: 'Switches',
+            variables: [
+              { variableName: 'a', currentValue: 'on' },
+              { variableName: 'b', currentValue: 'on' },
+              { variableName: 'c', currentValue: 'on' }
+            ]
+          }
+        ],
+        branches: [
+          {
+            name: 'Mixed',
+            conditions: [
+              { variableName: 'a', operator: 'eq', value: 'on', logicConnector: 'and' },
+              { variableName: 'b', operator: 'eq', value: 'on', logicConnector: 'or' },
+              { variableName: 'c', operator: 'eq', value: 'on', logicConnector: 'and' }
+            ],
+            actions: []
+          }
+        ]
+      };
+
+      const actions = await buildActions(config);
+      const checks = actions.filter((a: any) => a.action === 'checkvariable');
+
+      // a and b are one AND-group, both failing into the second group.
+      expect(checks[0].data.fail).toBe('mixed_b0_g1');
+      expect(checks[1].data.fail).toBe('mixed_b0_g1');
+      // c is the last group, failing out of the branch.
+      expect(checks[2].data.fail).toBe('em_end');
+    });
+
+    // --- Bug 2: branch anchor tags must be unique ---
+
+    it('should give distinct anchors to branches differing only by case or punctuation', async () => {
+      const config = {
+        name: 'Collision Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [],
+        branches: [
+          { name: 'Branch A', conditions: [], actions: [] },
+          { name: 'branch-a', conditions: [], actions: [] },
+          { name: 'BRANCH_A', conditions: [], actions: [] }
+        ]
+      };
+
+      const actions = await buildActions(config);
+      const tags = actions.filter((a: any) => a.action === 'anchor').map((a: any) => a.data.tag);
+
+      expect(tags).toEqual(['branch_a_b0', 'branch_a_b1', 'branch_a_b2', 'em_end']);
+      expect(new Set(tags).size).toBe(tags.length);
+    });
+
+    it('should not let a branch named "end" collide with the terminal anchor', async () => {
+      const config = {
+        name: 'End Collision Test',
+        image: 'icons/svg/statue.svg',
+        tilesToCheck: [
+          {
+            tileId: 'tile-1',
+            tileName: 'Switch',
+            variables: [{ variableName: 'x', currentValue: 'on' }]
+          }
+        ],
+        branches: [
+          {
+            name: 'end',
+            conditions: [{ variableName: 'x', operator: 'eq', value: 'on', logicConnector: 'and' }],
+            actions: []
+          },
+          { name: 'em_end', conditions: [], actions: [] }
+        ]
+      };
+
+      const actions = await buildActions(config);
+      const tags = actions.filter((a: any) => a.action === 'anchor').map((a: any) => a.data.tag);
+
+      expect(new Set(tags).size).toBe(tags.length);
+      expect(tags).toContain('em_end');
+      expect(tags).toContain('end_b0');
+      expect(tags).toContain('em_end_b1');
+
+      // The first branch's check must fall through to the SECOND branch, not the
+      // terminal anchor, which the old naming scheme got wrong.
+      const check = actions.find((a: any) => a.action === 'checkvariable');
+      expect(check.data.fail).toBe('em_end_b1');
     });
   });
 
   describe('createCombatTrapTile', () => {
     let mockScene: any;
+    let mockActorDelete: any;
 
     beforeEach(() => {
       mockScene = createMockScene();
+      // createMockScene doesn't provide this; the rollback path needs it.
+      mockScene.deleteEmbeddedDocuments = jest.fn(async () => []);
       (global as any).canvas.scene = mockScene;
 
       // Mock fromUuid for item loading
@@ -1463,11 +1733,13 @@ describe('tile-helpers', () => {
       );
 
       // Mock game.actors
+      mockActorDelete = jest.fn(async () => {});
       (global as any).game.actors = {
         documentClass: {
           create: jest.fn(() =>
             Promise.resolve({
               id: 'actor123',
+              delete: mockActorDelete,
               createEmbeddedDocuments: jest.fn(() => Promise.resolve([{ id: 'item456' }]))
             })
           )
@@ -1539,6 +1811,216 @@ describe('tile-helpers', () => {
 
       // Verify trigger limit logic is included
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
+    });
+
+    /**
+     * Regression tests for the v2.2.0 combat-trap maintenance pass.
+     */
+    const baseConfig = (overrides: any = {}) => ({
+      name: 'Combat Trap',
+      startingImage: 'icons/svg/trap.svg',
+      triggeredImage: '',
+      hideTrapOnTrigger: false,
+      sound: '',
+      targetType: TrapTargetType.TRIGGERING,
+      itemId: 'Item.weapon123',
+      tokenVisible: false,
+      maxTriggers: 0,
+      ...overrides
+    });
+
+    /** Pull the tile data out of the 'Tile' createEmbeddedDocuments call. */
+    const getTileData = () => {
+      const call = mockScene.createEmbeddedDocuments.mock.calls.find((c: any) => c[0] === 'Tile');
+      return call?.[1][0];
+    };
+
+    describe('trap token visibility (respects tokenVisible)', () => {
+      it('should NOT emit a showhide "show" for the trap token when tokenVisible is false', async () => {
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        await createCombatTrapTile(mockScene, baseConfig({ tokenVisible: false }), 200, 200);
+
+        const actions = getTileData().flags['monks-active-tiles'].actions;
+        const tokenShow = actions.find(
+          (a: any) =>
+            a.action === 'showhide' && a.data.collection === 'tokens' && a.data.hidden === 'show'
+        );
+
+        // Showing the token here would permanently reveal a hidden trap actor
+        // on the very first trigger.
+        expect(tokenShow).toBeUndefined();
+      });
+
+      it('should emit a showhide "show" for the trap token when tokenVisible is true', async () => {
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        await createCombatTrapTile(mockScene, baseConfig({ tokenVisible: true }), 200, 200);
+
+        const actions = getTileData().flags['monks-active-tiles'].actions;
+        const tokenShow = actions.find(
+          (a: any) =>
+            a.action === 'showhide' && a.data.collection === 'tokens' && a.data.hidden === 'show'
+        );
+
+        expect(tokenShow).toBeDefined();
+        expect(tokenShow.data.entity.id).toContain('.Token.');
+      });
+    });
+
+    describe('trap actor id flag namespace', () => {
+      it('should store the actor id under the em-tile-utilities flag scope', async () => {
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        const tileData = getTileData();
+        expect(tileData.flags['em-tile-utilities']['em-trap-actor-id']).toBe('actor123');
+      });
+
+      it('should no longer pollute the monks-active-tiles flag with the actor id', async () => {
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        const tileData = getTileData();
+        expect(tileData.flags['monks-active-tiles']['em-trap-actor-id']).toBeUndefined();
+      });
+
+      it('getCombatTrapActorId should read the new location', async () => {
+        const { getCombatTrapActorId } = await import(
+          '../../src/utils/creators/combat-trap-creator'
+        );
+        const tile = { flags: { 'em-tile-utilities': { 'em-trap-actor-id': 'new-actor' } } };
+        expect(getCombatTrapActorId(tile)).toBe('new-actor');
+      });
+
+      it('getCombatTrapActorId should fall back to the legacy monks-active-tiles location', async () => {
+        const { getCombatTrapActorId } = await import(
+          '../../src/utils/creators/combat-trap-creator'
+        );
+        const tile = { flags: { 'monks-active-tiles': { 'em-trap-actor-id': 'legacy-actor' } } };
+        expect(getCombatTrapActorId(tile)).toBe('legacy-actor');
+      });
+
+      it('getCombatTrapActorId should prefer the new location when both are present', async () => {
+        const { getCombatTrapActorId } = await import(
+          '../../src/utils/creators/combat-trap-creator'
+        );
+        const tile = {
+          flags: {
+            'em-tile-utilities': { 'em-trap-actor-id': 'new-actor' },
+            'monks-active-tiles': { 'em-trap-actor-id': 'legacy-actor' }
+          }
+        };
+        expect(getCombatTrapActorId(tile)).toBe('new-actor');
+      });
+
+      it('getCombatTrapActorId should return undefined for non combat-trap tiles', async () => {
+        const { getCombatTrapActorId } = await import(
+          '../../src/utils/creators/combat-trap-creator'
+        );
+        expect(getCombatTrapActorId({ flags: { 'monks-active-tiles': {} } })).toBeUndefined();
+        expect(getCombatTrapActorId({})).toBeUndefined();
+        expect(getCombatTrapActorId(undefined)).toBeUndefined();
+      });
+    });
+
+    describe('token id scene flag', () => {
+      it('should await setFlag before creating the tile', async () => {
+        let flagWritten = false;
+        let tileCreatedBeforeFlag = false;
+
+        mockScene.setFlag = jest.fn(async () => {
+          await new Promise(resolve => setTimeout(resolve, 10));
+          flagWritten = true;
+        });
+
+        const realCreate = mockScene.createEmbeddedDocuments;
+        mockScene.createEmbeddedDocuments = jest.fn(async (type: string, data: any[]) => {
+          if (type === 'Tile' && !flagWritten) tileCreatedBeforeFlag = true;
+          return realCreate(type, data);
+        });
+
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        expect(flagWritten).toBe(true);
+        expect(tileCreatedBeforeFlag).toBe(false);
+      });
+    });
+
+    describe('rollback on partial failure', () => {
+      it('should delete the actor when token creation fails', async () => {
+        mockScene.createEmbeddedDocuments = jest.fn(async (type: string) => {
+          if (type === 'Token') throw new Error('token boom');
+          return [];
+        });
+
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        const result = await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        expect(result).toBeNull();
+        expect(mockActorDelete).toHaveBeenCalled();
+        expect((global as any).ui.notifications.error).toHaveBeenCalled();
+      });
+
+      it('should delete the actor and token when tile creation fails', async () => {
+        const realCreate = mockScene.createEmbeddedDocuments;
+        mockScene.createEmbeddedDocuments = jest.fn(async (type: string, data: any[]) => {
+          if (type === 'Tile') throw new Error('tile boom');
+          return realCreate(type, data);
+        });
+
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        const result = await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        expect(result).toBeNull();
+        expect(mockActorDelete).toHaveBeenCalled();
+        expect(mockScene.deleteEmbeddedDocuments).toHaveBeenCalledWith('Token', [
+          expect.any(String)
+        ]);
+        expect(mockScene.unsetFlag).toHaveBeenCalledWith(
+          'em-tile-utilities',
+          'trap-token-actor123'
+        );
+      });
+
+      it('should roll back the tile, token and actor when tagging fails', async () => {
+        (globalThis as any).Tagger.setTags = jest.fn(async () => {
+          throw new Error('tagger boom');
+        });
+
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        const result = await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        expect(result).toBeNull();
+        expect(mockScene.deleteEmbeddedDocuments).toHaveBeenCalledWith('Tile', [
+          expect.any(String)
+        ]);
+        expect(mockScene.deleteEmbeddedDocuments).toHaveBeenCalledWith('Token', [
+          expect.any(String)
+        ]);
+        expect(mockActorDelete).toHaveBeenCalled();
+
+        // Restore for other tests in this file.
+        (globalThis as any).Tagger.setTags = jest.fn(async () => {});
+      });
+
+      it('should not leave orphans when the actor itself fails to create', async () => {
+        (global as any).game.actors.documentClass.create = jest.fn(async () => null);
+
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        const result = await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        expect(result).toBeNull();
+        expect(mockScene.createEmbeddedDocuments).not.toHaveBeenCalled();
+        expect(mockScene.deleteEmbeddedDocuments).not.toHaveBeenCalled();
+      });
+
+      it('should return the created tile on success', async () => {
+        const { createCombatTrapTile } = await import('../../src/utils/creators');
+        const result = await createCombatTrapTile(mockScene, baseConfig(), 200, 200);
+
+        expect(result).not.toBeNull();
+        expect(mockScene.deleteEmbeddedDocuments).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -2391,5 +2873,190 @@ describe('tile-helpers', () => {
       // Verify fileindex starts at 0 (first file)
       expect(monksData.fileindex).toBe(0);
     });
+  });
+});
+
+/**
+ * Regression tests for the v2.2.0 trap/teleport maintenance pass.
+ */
+describe('createTrapTile - moveto tile actions', () => {
+  let mockScene: any;
+
+  const baseTrapConfig = (tileActions: any[]): any => ({
+    name: 'Activating Trap',
+    resultType: TrapResultType.DAMAGE,
+    targetType: TrapTargetType.TRIGGERING,
+    startingImage: 'icons/svg/trap.svg',
+    triggeredImage: '',
+    hidden: false,
+    hasSavingThrow: false,
+    savingThrow: '',
+    dc: 0,
+    flavorText: '',
+    damageOnFail: '',
+    tileActions
+  });
+
+  beforeEach(() => {
+    mockScene = createMockScene();
+    (global as any).canvas.scene = mockScene;
+    (global as any).ui.notifications.warn = jest.fn();
+  });
+
+  const getActions = () =>
+    mockScene.createEmbeddedDocuments.mock.calls[0][1][0].flags['monks-active-tiles'].actions;
+
+  it('should emit a movetoken action when coordinates are provided', async () => {
+    await createTrapTile(
+      mockScene,
+      baseTrapConfig([{ tileId: 'target-tile', actionType: 'moveto', x: 300, y: 400 }]),
+      100,
+      100
+    );
+
+    const move = getActions().find((a: any) => a.action === 'movetoken');
+    expect(move).toBeDefined();
+    expect(move.data.x).toBe('300');
+    expect(move.data.y).toBe('400');
+    expect(move.data.location).toEqual(
+      expect.objectContaining({ x: 300, y: 400, name: '[x:300 y:400]' })
+    );
+  });
+
+  it('should not throw and should skip the action when coordinates are missing', async () => {
+    // TileAction.x/y are optional; a moveto with no destination used to throw
+    // on `tileAction.x.toString()`.
+    await expect(
+      createTrapTile(
+        mockScene,
+        baseTrapConfig([{ tileId: 'target-tile', actionType: 'moveto' }]),
+        100,
+        100
+      )
+    ).resolves.toBeUndefined();
+
+    expect(getActions().find((a: any) => a.action === 'movetoken')).toBeUndefined();
+    expect((global as any).ui.notifications.warn).toHaveBeenCalledWith(
+      expect.stringContaining('target-tile')
+    );
+  });
+
+  it('should skip the action when only one coordinate is missing', async () => {
+    await createTrapTile(
+      mockScene,
+      baseTrapConfig([{ tileId: 'target-tile', actionType: 'moveto', x: 300 }]),
+      100,
+      100
+    );
+
+    expect(getActions().find((a: any) => a.action === 'movetoken')).toBeUndefined();
+    expect((global as any).ui.notifications.warn).toHaveBeenCalled();
+  });
+
+  it('should keep valid moveto actions when a sibling action is misconfigured', async () => {
+    await createTrapTile(
+      mockScene,
+      baseTrapConfig([
+        { tileId: 'bad-tile', actionType: 'moveto' },
+        { tileId: 'good-tile', actionType: 'moveto', x: 500, y: 600 }
+      ]),
+      100,
+      100
+    );
+
+    const moves = getActions().filter((a: any) => a.action === 'movetoken');
+    expect(moves.length).toBe(1);
+    expect(moves[0].data.entity.id).toContain('good-tile');
+  });
+});
+
+describe('createTeleportTile - return teleport destination', () => {
+  let sourceScene: any;
+  let destScene: any;
+  let teleportConfig: any;
+
+  beforeEach(() => {
+    sourceScene = createMockScene('source-scene');
+    destScene = createMockScene('dest-scene');
+    (global as any).canvas.scene = sourceScene;
+
+    const sceneMap = new Map();
+    sceneMap.set('dest-scene', destScene);
+    sceneMap.set('source-scene', sourceScene);
+    (global as any).game.scenes = sceneMap;
+
+    teleportConfig = {
+      name: 'Teleport 1',
+      tileImage: 'icons/svg/up.svg',
+      hidden: false,
+      teleportX: 500,
+      teleportY: 600,
+      teleportSceneId: 'dest-scene',
+      deleteSourceToken: true,
+      createReturnTeleport: true,
+      hasSavingThrow: false,
+      savingThrow: '',
+      dc: 0,
+      flavorText: '',
+      customTags: '',
+      sound: ''
+    };
+  });
+
+  const getReturnTeleportAction = () => {
+    const call = destScene.createEmbeddedDocuments.mock.calls[0];
+    const actions = call[1][0].flags['monks-active-tiles'].actions;
+    return actions.find((a: any) => a.action === 'teleport');
+  };
+
+  it('should not send the returning token onto the outbound pad', async () => {
+    const { createTeleportTile } = await import('../../src/utils/creators');
+    // Source tile: 2x2 grid squares at (200, 200) with grid size 100.
+    await createTeleportTile(sourceScene, teleportConfig, 200, 200, 200, 200);
+
+    const returnTeleport = getReturnTeleportAction();
+    expect(returnTeleport).toBeDefined();
+
+    const { x, y } = returnTeleport.data.location;
+
+    // The old bug returned the token to the source tile's top-left corner.
+    expect({ x, y }).not.toEqual({ x: 200, y: 200 });
+
+    // The destination point must fall outside the source tile's footprint
+    // (200,200)-(400,400) so the token doesn't land on a live teleporter.
+    const insideSourceTile = x >= 200 && x < 400 && y >= 200 && y < 400;
+    expect(insideSourceTile).toBe(false);
+  });
+
+  it('should land horizontally centred on the pad, one square past its bottom edge', async () => {
+    const { createTeleportTile } = await import('../../src/utils/creators');
+    await createTeleportTile(sourceScene, teleportConfig, 200, 200, 200, 200);
+
+    const { x, y } = getReturnTeleportAction().data.location;
+    expect(x).toBe(300); // 200 + 200/2
+    expect(y).toBe(400); // 200 + 200
+  });
+
+  it('should target the source scene', async () => {
+    const { createTeleportTile } = await import('../../src/utils/creators');
+    await createTeleportTile(sourceScene, teleportConfig, 200, 200);
+
+    expect(getReturnTeleportAction().data.location.sceneId).toBe('source-scene');
+  });
+
+  it('should place the return tile at the outbound destination', async () => {
+    const { createTeleportTile } = await import('../../src/utils/creators');
+    await createTeleportTile(sourceScene, teleportConfig, 200, 200);
+
+    const returnTileData = destScene.createEmbeddedDocuments.mock.calls[0][1][0];
+    expect(returnTileData.x).toBe(500);
+    expect(returnTileData.y).toBe(600);
+  });
+
+  it('should reuse the deleteSourceToken setting on the return leg', async () => {
+    const { createTeleportTile } = await import('../../src/utils/creators');
+    await createTeleportTile(sourceScene, teleportConfig, 200, 200);
+
+    expect(getReturnTeleportAction().data.deletesource).toBe(true);
   });
 });

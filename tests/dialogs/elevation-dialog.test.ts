@@ -256,30 +256,58 @@ describe('ElevationDialog', () => {
     });
   });
 
+  describe('_onCancel', () => {
+    it('should request a close', () => {
+      const closeSpy = jest.spyOn(dialog, 'close').mockImplementation(() => Promise.resolve());
+
+      (dialog as any)._onCancel();
+
+      expect(closeSpy).toHaveBeenCalled();
+    });
+  });
+
   describe('_onClose', () => {
+    /** Walk up the prototype chain to the ApplicationV2 base that owns _onClose */
+    const superPrototype = (instance: any): any => {
+      let proto = Object.getPrototypeOf(Object.getPrototypeOf(instance));
+      while (proto && !Object.prototype.hasOwnProperty.call(proto, '_onClose')) {
+        proto = Object.getPrototypeOf(proto);
+      }
+      return proto;
+    };
+
+    it('should call super._onClose with the lifecycle options', () => {
+      const superSpy = jest.spyOn(superPrototype(dialog), '_onClose');
+
+      (dialog as any)._onClose({ closeKey: true });
+
+      expect(superSpy).toHaveBeenCalledWith({ closeKey: true });
+      superSpy.mockRestore();
+    });
+
+    it('should not re-enter close()', () => {
+      const closeSpy = jest.spyOn(dialog, 'close').mockImplementation(() => Promise.resolve());
+
+      (dialog as any)._onClose({});
+
+      expect(closeSpy).not.toHaveBeenCalled();
+    });
+
     it('should clean up drag preview manager if it exists', () => {
       const mockStop = jest.fn();
       (dialog as any).dragPreviewManager = { stop: mockStop };
 
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       expect(mockStop).toHaveBeenCalled();
       expect((dialog as any).dragPreviewManager).toBeUndefined();
-    });
-
-    it('should close the dialog', () => {
-      const closeSpy = jest.spyOn(dialog, 'close').mockImplementation(() => Promise.resolve());
-
-      (dialog as any)._onClose();
-
-      expect(closeSpy).toHaveBeenCalled();
     });
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager as any);
 
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       expect(mockTileManager.maximize).toHaveBeenCalled();
     });
@@ -288,7 +316,7 @@ describe('ElevationDialog', () => {
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
       // Should not throw
-      expect(() => (dialog as any)._onClose()).not.toThrow();
+      expect(() => (dialog as any)._onClose({})).not.toThrow();
     });
   });
 

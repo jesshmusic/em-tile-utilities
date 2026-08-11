@@ -36,7 +36,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       handler: CheckStateDialog.#onSubmit
     },
     actions: {
-      close: CheckStateDialog.prototype._onClose,
+      close: CheckStateDialog.prototype._onCancel,
       addTile: CheckStateDialog.#onAddTile,
       removeTile: CheckStateDialog.#onRemoveTile,
       addBranch: CheckStateDialog.#onAddBranch,
@@ -161,11 +161,18 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
-    // Close the dialog
+  protected _onCancel(): void {
     this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -541,7 +548,12 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       const handler = async (clickEvent: any) => {
         try {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+          // createCheckStateTile treats x/y as the tile's TOP-LEFT corner, so
+          // snap to a grid vertex. This used to pass `mode: 1` (CENTER), which
+          // placed the tile half a grid square off from the click.
+          const snapped = (canvas as any).grid.getSnappedPoint(position, {
+            mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.TOP_LEFT_VERTEX ?? 0x10
+          });
 
           await createCheckStateTile(canvas.scene, config, snapped.x, snapped.y);
 

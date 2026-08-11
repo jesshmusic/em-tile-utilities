@@ -862,7 +862,12 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         const handler = async (clickEvent: any) => {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+          // A Tile's x/y is its TOP-LEFT corner, so snap to a grid vertex.
+          // This used to pass `mode: 1` (CENTER), which landed imported tiles
+          // half a grid square off from where the user clicked.
+          const snapped = (canvas as any).grid.getSnappedPoint(position, {
+            mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.TOP_LEFT_VERTEX ?? 0x10
+          });
 
           // Create the tile at the clicked position
           const newTileData = {

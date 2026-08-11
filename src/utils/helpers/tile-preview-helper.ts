@@ -5,6 +5,15 @@
 import { getGridSize } from './grid-helpers';
 
 /**
+ * `canvas.grid.getSnappedPoint({ mode })` takes a bit field, not an enum:
+ * CENTER is 0x1, EDGE_MIDPOINT is 0x2 and TOP_LEFT_VERTEX is 0x10. Read the
+ * value off CONST rather than hardcoding a literal. Falls back to the v14
+ * numeric value so the helper still behaves in unit tests, where CONST is
+ * not part of the Foundry mock.
+ */
+const GRID_SNAP_VERTEX = (globalThis as any).CONST?.GRID_SNAPPING_MODES?.VERTEX ?? 0xf0;
+
+/**
  * Configuration for tile preview
  */
 export interface TilePreviewConfig {
@@ -394,9 +403,13 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
-    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
+    // Snap each dragged endpoint to the nearest grid vertex, so a region
+    // rectangle always lands on grid corners. (This used to pass a bare
+    // `mode: 2` under a comment claiming TOP_LEFT_VERTEX; 2 is actually
+    // EDGE_MIDPOINT, so regions could start and end on half-square
+    // offsets. GRID_SNAPPING_MODES is a bit field, not an enum.)
     const snapped = this.config.snapToGrid
-      ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
+      ? (canvas as any).grid.getSnappedPoint(position, { mode: GRID_SNAP_VERTEX })
       : position;
 
     this.startPos = { x: snapped.x, y: snapped.y };
@@ -454,9 +467,13 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
-    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
+    // Snap each dragged endpoint to the nearest grid vertex, so a region
+    // rectangle always lands on grid corners. (This used to pass a bare
+    // `mode: 2` under a comment claiming TOP_LEFT_VERTEX; 2 is actually
+    // EDGE_MIDPOINT, so regions could start and end on half-square
+    // offsets. GRID_SNAPPING_MODES is a bit field, not an enum.)
     const snapped = this.config.snapToGrid
-      ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
+      ? (canvas as any).grid.getSnappedPoint(position, { mode: GRID_SNAP_VERTEX })
       : position;
 
     // Calculate dimensions
@@ -485,9 +502,13 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
-    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
+    // Snap each dragged endpoint to the nearest grid vertex, so a region
+    // rectangle always lands on grid corners. (This used to pass a bare
+    // `mode: 2` under a comment claiming TOP_LEFT_VERTEX; 2 is actually
+    // EDGE_MIDPOINT, so regions could start and end on half-square
+    // offsets. GRID_SNAPPING_MODES is a bit field, not an enum.)
     const snapped = this.config.snapToGrid
-      ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
+      ? (canvas as any).grid.getSnappedPoint(position, { mode: GRID_SNAP_VERTEX })
       : position;
 
     // Calculate final dimensions

@@ -4,6 +4,8 @@
  */
 import { showTileManagerDialog } from './dialogs/tile-manager';
 import { PatreonLink, DmGuruLink } from './settings/settings-menus';
+import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
+import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
 import buildInfo from '../build-info.json';
 import packageInfo from '../package.json';
 
@@ -32,8 +34,7 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
   }
 
   const coreMajor =
-    (game as any).release?.generation ??
-    parseInt(String((game as any).version ?? '0'), 10);
+    (game as any).release?.generation ?? parseInt(String((game as any).version ?? '0'), 10);
   if (!coreMajor || Number.isNaN(coreMajor)) return;
 
   const parseMajor = (v: unknown): number | null => {
@@ -277,7 +278,10 @@ function escapeHtml(str: string): string {
  * Helper: Clean up trap actors and tokens when combat trap tiles are deleted
  */
 async function cleanupCombatTrap(tile: any): Promise<void> {
-  const actorId = tile.flags?.['monks-active-tiles']?.['em-trap-actor-id'];
+  // Reads flags['em-tile-utilities'], falling back to the legacy location
+  // inside MATT's own flag namespace so combat traps built before 2.2.0 still
+  // clean up.
+  const actorId = getCombatTrapActorId(tile);
 
   if (actorId) {
     const scene = tile.parent;
@@ -372,7 +376,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
 
   // Case 1: Main teleport being deleted → delete return teleports
   // Use filter instead of find to handle edge case of multiple teleport tags
-  const mainTeleportTags = tags.filter((t: string) => t.startsWith('EM-Teleport-'));
+  const mainTeleportTags = tags.filter(isTeleportTag);
 
   for (const teleportTag of mainTeleportTags) {
     // Find all tiles with the same tag across all scenes
@@ -390,9 +394,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
       if (pendingDeletionConfirmations.has(entity.id)) continue;
 
       const entityTags = Tagger.getTags(entity);
-      const isReturnTeleport = entityTags?.some((tag: string) =>
-        tag.startsWith('EM-Return-Teleport-')
-      );
+      const isReturnTeleport = entityTags?.some(isReturnTeleportTag);
 
       if (isReturnTeleport) {
         // Mark this entity as pending confirmation
@@ -426,11 +428,11 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
 
   // Case 2: Return teleport being deleted → delete main teleport
   for (const returnTag of tags) {
-    if (!returnTag.startsWith('EM-Return-Teleport-')) continue;
+    if (!isReturnTeleportTag(returnTag)) continue;
 
     // The return teleport is tagged with BOTH its return tag AND the main teleport's tag
     // Use filter instead of find to handle edge case of multiple main teleport tags
-    const mainTeleportTags = tags.filter((t: string) => t.startsWith('EM-Teleport-'));
+    const mainTeleportTags = tags.filter(isTeleportTag);
 
     for (const mainTeleportTag of mainTeleportTags) {
       // Find all tiles with the main teleport tag
@@ -448,9 +450,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
         if (pendingDeletionConfirmations.has(entity.id)) continue;
 
         const entityTags = Tagger.getTags(entity);
-        const hasReturnTag = entityTags?.some((tag: string) =>
-          tag.startsWith('EM-Return-Teleport-')
-        );
+        const hasReturnTag = entityTags?.some(isReturnTeleportTag);
         const isMainTeleport = !hasReturnTag;
 
         if (isMainTeleport) {

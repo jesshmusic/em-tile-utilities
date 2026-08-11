@@ -246,9 +246,11 @@ describe('SwitchConfigDialog', () => {
       } as any;
 
       const mockBrowse = jest.fn();
-      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((_options: any) => ({
-        browse: mockBrowse
-      }));
+      (global as any).foundry.applications.apps.FilePicker = jest
+        .fn()
+        .mockImplementation((_options: any) => ({
+          browse: mockBrowse
+        }));
 
       await dialog._onFilePicker(mockEvent);
 
@@ -270,10 +272,12 @@ describe('SwitchConfigDialog', () => {
       } as any;
 
       let capturedCallback: any;
-      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation((options: any) => {
-        capturedCallback = options.callback;
-        return { browse: jest.fn() };
-      });
+      (global as any).foundry.applications.apps.FilePicker = jest
+        .fn()
+        .mockImplementation((options: any) => {
+          capturedCallback = options.callback;
+          return { browse: jest.fn() };
+        });
 
       await dialog._onFilePicker(mockEvent);
 
@@ -478,19 +482,56 @@ describe('SwitchConfigDialog', () => {
     });
   });
 
-  describe('_onClose', () => {
-    it('should close the dialog', () => {
+  describe('_onCancel', () => {
+    it('should request a close', () => {
       dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onCancel();
       expect(dialog.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('_onClose', () => {
+    /** Walk up the prototype chain to the ApplicationV2 base that owns _onClose */
+    const superPrototype = (instance: any): any => {
+      let proto = Object.getPrototypeOf(Object.getPrototypeOf(instance));
+      while (proto && !Object.prototype.hasOwnProperty.call(proto, '_onClose')) {
+        proto = Object.getPrototypeOf(proto);
+      }
+      return proto;
+    };
+
+    it('should call super._onClose with the lifecycle options', () => {
+      const superSpy = jest.spyOn(superPrototype(dialog), '_onClose');
+
+      (dialog as any)._onClose({ closeKey: true });
+
+      expect(superSpy).toHaveBeenCalledWith({ closeKey: true });
+      superSpy.mockRestore();
+    });
+
+    it('should not re-enter close()', () => {
+      dialog.close = jest.fn();
+
+      (dialog as any)._onClose({});
+
+      expect(dialog.close).not.toHaveBeenCalled();
+    });
+
+    it('should stop and clear the preview manager', () => {
+      const mockPreviewManager = { stop: jest.fn() };
+      (dialog as any).previewManager = mockPreviewManager;
+
+      (dialog as any)._onClose({});
+
+      expect(mockPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).previewManager).toBeUndefined();
     });
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
-      dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       expect(mockTileManager.maximize).toHaveBeenCalled();
     });
@@ -498,9 +539,7 @@ describe('SwitchConfigDialog', () => {
     it('should not throw if tile manager does not exist', () => {
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
-      dialog.close = jest.fn();
-
-      expect(() => (dialog as any)._onClose()).not.toThrow();
+      expect(() => (dialog as any)._onClose({})).not.toThrow();
     });
   });
 });

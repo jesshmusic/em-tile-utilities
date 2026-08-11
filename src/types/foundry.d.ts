@@ -7,6 +7,29 @@ declare global {
   const Hooks: HooksManager;
   const PIXI: typeof PIXINamespace;
 
+  const CONST: {
+    /**
+     * Bit flags for canvas.grid.getSnappedPoint({ mode }).
+     * These are NOT sequential — using literal numbers here is how the
+     * module previously ended up snapping to edge midpoints while a comment
+     * claimed it was snapping to corners.
+     */
+    GRID_SNAPPING_MODES: {
+      CENTER: number;
+      EDGE_MIDPOINT: number;
+      TOP_LEFT_VERTEX: number;
+      TOP_RIGHT_VERTEX: number;
+      BOTTOM_LEFT_VERTEX: number;
+      BOTTOM_RIGHT_VERTEX: number;
+      VERTEX: number;
+      TOP_LEFT_CORNER: number;
+      CORNER: number;
+      SIDE_MIDPOINT: number;
+      [key: string]: number;
+    };
+    [key: string]: any;
+  };
+
   // Foundry v14 removed the flat `loadTemplates`, `renderTemplate`,
   // `FilePicker`, `AudioHelper`, `SearchFilter` and `ContextMenu` globals.
   // They are deliberately NOT declared here so that any reintroduced usage

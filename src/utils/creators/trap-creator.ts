@@ -71,6 +71,20 @@ export async function createTrapTile(
           )
         );
       } else if (tileAction.actionType === 'moveto') {
+        // x/y are optional on TileAction, so a moveto configured without a
+        // destination gets here with them undefined. Emitting the action
+        // anyway produced an unusable "move to nowhere" that threw on
+        // .toString(); skip it and tell the GM which tile is misconfigured
+        // rather than failing the whole trap.
+        const { x: moveX, y: moveY } = tileAction;
+        if (moveX === undefined || moveY === undefined) {
+          ui.notifications.warn(
+            `Dorman Lakely's Tile Utilities | Skipping "move tile" action for tile ` +
+              `${tileAction.tileId}: no destination coordinates were set.`
+          );
+          return;
+        }
+
         // Move tile to position - use raw action for position field
         actions.push({
           action: 'movetoken',
@@ -80,13 +94,13 @@ export async function createTrapTile(
               name: `Tile: ${tileAction.tileId}`
             },
             duration: 0,
-            x: tileAction.x.toString(),
-            y: tileAction.y.toString(),
+            x: moveX.toString(),
+            y: moveY.toString(),
             location: {
               id: '',
-              x: tileAction.x,
-              y: tileAction.y,
-              name: `[x:${tileAction.x} y:${tileAction.y}]`
+              x: moveX,
+              y: moveY,
+              name: `[x:${moveX} y:${moveY}]`
             },
             position: 'random',
             snap: true,

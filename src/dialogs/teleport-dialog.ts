@@ -27,7 +27,11 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected hidden: boolean = false;
   protected selectedSceneId: string = '';
   protected hasSavingThrow: boolean = false;
-  protected savingThrow: string = 'dex';
+  // Monk's Token Bar namespaces roll requests as `save:`, `ability:`, `skill:`
+  // or `misc:`. A bare key like 'dex' never matched an option in the template
+  // AND resolves to an ability CHECK inside MonksTokenBar.findBestRequest,
+  // which scans the option groups in order and hits `ability` before `save`.
+  protected savingThrow: string = 'save:dex';
   protected dc: number = 15;
   protected flavorText: string = '';
   protected pauseGameOnTrigger: boolean = false;
@@ -76,7 +80,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       selectPosition: TeleportDialog.#onSelectPosition,
       addTag: TeleportDialog.#onAddTag,
       confirmTags: TeleportDialog.#onConfirmTags,
-      close: TeleportDialog.prototype._onClose
+      close: TeleportDialog.prototype._onCancel
     }
   };
 
@@ -460,9 +464,19 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up drag preview managers if they exist
     if (this.dragPreviewManager) {
       this.dragPreviewManager.stop();
@@ -472,9 +486,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       this.destDragPreviewManager.stop();
       this.destDragPreviewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -674,7 +685,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       deleteSourceToken: data.deleteSourceToken || false,
       createReturnTeleport: data.createReturnTeleport || false,
       hasSavingThrow: data.hasSavingThrow || false,
-      savingThrow: data.savingThrow || 'dex',
+      savingThrow: data.savingThrow || 'save:dex',
       dc: parseInt(data.dc) || 15,
       flavorText: data.flavorText || '',
       customTags: data.customTags || ''

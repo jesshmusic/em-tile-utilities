@@ -138,10 +138,27 @@ export async function createTeleportTile(
 
       // Return teleport does NOT require a saving throw (you already passed it to get here)
 
-      // Add return teleport action (back to source scene and position)
+      // Add return teleport action (back to the source scene, beside the pad).
+      //
+      // Sending the token to position.x/position.y drops it on the outbound
+      // tile's own top-left corner — i.e. standing on the live teleporter it
+      // just came from, and in the corner rather than the middle of a
+      // multi-square pad. Monk's suppresses the 'enter' trigger while a token
+      // is already inside a tile, so it doesn't loop instantly, but the first
+      // step off and back on re-fires the outbound teleport. Aim one square
+      // past the pad's bottom edge, horizontally centred on it, so the token
+      // arrives next to the teleporter instead. Monk's floors this point onto
+      // the grid (remotesnap), which keeps the arrival square clear of the
+      // tile footprint even for freely-placed, non-grid-aligned pads.
+      const returnDestX = position.x + tileWidth / 2;
+      const returnDestY = position.y + tileHeight;
+
       returnActions.push(
-        createTeleportAction(position.x, position.y, scene.id, {
-          deletesource: config.deleteSourceToken // Use same delete token setting as main teleport
+        createTeleportAction(returnDestX, returnDestY, scene.id, {
+          // The dialog offers a single "Delete Source Token" checkbox for the
+          // pair, and its meaning ("delete the token at the source location")
+          // applies to each leg in turn, so the return leg reuses it.
+          deletesource: config.deleteSourceToken
         })
       );
 

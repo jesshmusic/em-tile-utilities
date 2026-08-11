@@ -26,7 +26,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   protected targetType: string = TrapTargetType.TRIGGERING;
   protected hasSavingThrow: boolean = false;
   protected minRequired: string = '';
-  protected savingThrow: string = 'ability:dex';
+  protected savingThrow: string = 'save:dex';
   protected dc: string = '10';
   protected damageOnFail: string = '1d6';
   protected halfDamageOnSuccess: boolean = false;
@@ -111,7 +111,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       handler: BaseTrapDialog.prototype._onSubmit
     },
     actions: {
-      close: BaseTrapDialog.prototype._onClose,
+      close: BaseTrapDialog.prototype._onCancel,
       addTag: BaseTrapDialog.prototype._handleAddTag,
       confirmTags: BaseTrapDialog.prototype._handleConfirmTags
     }
@@ -328,12 +328,12 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       teleportX: this.teleportX,
       teleportY: this.teleportY,
       savingThrowOptions: [
-        { value: 'ability:str', label: 'EMPUZZLES.StrengthSave' },
-        { value: 'ability:dex', label: 'EMPUZZLES.DexteritySave' },
-        { value: 'ability:con', label: 'EMPUZZLES.ConstitutionSave' },
-        { value: 'ability:int', label: 'EMPUZZLES.IntelligenceSave' },
-        { value: 'ability:wis', label: 'EMPUZZLES.WisdomSave' },
-        { value: 'ability:cha', label: 'EMPUZZLES.CharismaSave' }
+        { value: 'save:str', label: 'EMPUZZLES.StrengthSave' },
+        { value: 'save:dex', label: 'EMPUZZLES.DexteritySave' },
+        { value: 'save:con', label: 'EMPUZZLES.ConstitutionSave' },
+        { value: 'save:int', label: 'EMPUZZLES.IntelligenceSave' },
+        { value: 'save:wis', label: 'EMPUZZLES.WisdomSave' },
+        { value: 'save:cha', label: 'EMPUZZLES.CharismaSave' }
       ],
       buttons: [
         {
@@ -354,7 +354,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       // Pre-populate fields from DMG trap activity
       defaultDC: activityData ? activityData.dc : undefined,
       defaultDamageOnFail: activityData ? activityData.damageFormula : undefined,
-      defaultSavingThrow: activityData ? `ability:${activityData.ability}` : undefined,
+      defaultSavingThrow: activityData ? `save:${activityData.ability}` : undefined,
       defaultHalfDamageOnSuccess: activityData ? activityData.halfDamageOnSuccess : undefined
     };
 
@@ -846,11 +846,18 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  public _onClose(): void {
-    // Close the dialog
+  public _onCancel(): void {
     this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  public _onClose(options: any): void {
+    super._onClose(options);
 
     // Restore Tile Manager if it was minimized
     const tileManager = (ui as any).windows?.[
@@ -948,7 +955,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       targetType: targetType as TrapTargetType,
       hasSavingThrow: hasSavingThrow,
       minRequired: minRequired ? parseInt(minRequired) : null,
-      savingThrow: savingThrow || 'ability:dex',
+      savingThrow: savingThrow || 'save:dex',
       dc: dc ? parseInt(dc) : 10,
       damageOnFail: damageOnFail || '1d6',
       halfDamageOnSuccess: halfDamageOnSuccess,

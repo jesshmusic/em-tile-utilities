@@ -41,7 +41,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       handler: SwitchConfigDialog.prototype._onSubmit
     },
     actions: {
-      close: SwitchConfigDialog.prototype._onClose,
+      close: SwitchConfigDialog.prototype._onCancel,
       addTag: SwitchConfigDialog.prototype._onAddTag,
       confirmTags: SwitchConfigDialog.prototype._onConfirmTags
     }
@@ -145,17 +145,25 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. This only *requests* a close — all cleanup lives
+   * in the `_onClose` lifecycle hook below, which ApplicationV2 invokes from
+   * inside `close()` for every close path (button, window ✕, ESC, programmatic).
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up preview if active
     if (this.previewManager) {
       this.previewManager.stop();
       this.previewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();

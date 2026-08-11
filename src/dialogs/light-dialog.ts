@@ -50,7 +50,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       handler: LightConfigDialog.#onSubmit
     },
     actions: {
-      close: LightConfigDialog.prototype._onClose,
+      close: LightConfigDialog.prototype._onCancel,
       addTag: LightConfigDialog.#onAddTag,
       confirmTags: LightConfigDialog.#onConfirmTags
     }
@@ -201,17 +201,24 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up preview if active
     if (this.previewManager) {
       this.previewManager.stop();
       this.previewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
