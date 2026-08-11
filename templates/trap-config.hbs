@@ -388,6 +388,19 @@
         <p class="hint">{{localize "EMPUZZLES.DamageOnFailHint"}}</p>
       </div>
 
+      {{! Damage Type (tile-only - regions carry their own regionDamageType) }}
+      <div class="form-group tile-only-option">
+        <label for="damageType">{{localize "EMPUZZLES.DamageType"}}</label>
+        <select id="damageType" name="damageType">
+          {{#each damageTypeOptions as |option|}}
+            <option value="{{option.value}}" {{#if (eq option.value ../damageType)}}selected{{/if}}>
+              {{option.label}}
+            </option>
+          {{/each}}
+        </select>
+        <p class="hint">{{localize "EMPUZZLES.TileDamageTypeHint"}}</p>
+      </div>
+
       <div class="form-group">
         <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
         <textarea id="flavorText" name="flavorText" rows="3" placeholder="{{localize 'EMPUZZLES.FlavorTextPlaceholder'}}"></textarea>

@@ -7,6 +7,7 @@ import { notifyError, notifyWarn } from './dialogs/notify';
 import { PatreonLink, DmGuruLink } from './settings/settings-menus';
 import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
 import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
+import { registerEmTileActions } from './utils/actions/apply-damage-tile-action';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
@@ -78,6 +79,19 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
     );
   }
 }
+
+// Register this module's custom Monk's Active Tiles actions.
+//
+// This runs at SCRIPT-EVALUATION time, deliberately not inside the `init`
+// handler below. Monk's Active Tiles fires its `setupTileActions` hook from
+// inside its own `init` handler (../monks-active-tiles/monks-active-tiles.js:2368),
+// and because MATT is a declared dependency Foundry loads and registers its
+// `init` handler first — so by the time our `init` runs, `setupTileActions`
+// has already fired. The listener has to be attached before any hook does.
+//
+// registerEmTileActions swallows its own failures; nothing it does can abort
+// the settings registration in the `init` handler below.
+registerEmTileActions();
 
 // Module initialization
 Hooks.once('init', async () => {

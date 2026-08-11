@@ -13,6 +13,20 @@ export function hasMonksTokenBar(): boolean {
 }
 
 /**
+ * Check if midi-qol is installed and active.
+ *
+ * Mirrors the detection Enhanced Region Behaviors uses for its own traps
+ * (../enhanced-region-behavior/dist/enhanced-region-behavior.mjs:109) so tile
+ * traps and region traps agree about whether midi owns damage application.
+ *
+ * @returns true if midi-qol is available, false otherwise
+ */
+export function hasMidiQol(): boolean {
+  const g = (globalThis as any).game || game;
+  return !!g?.modules?.get('midi-qol')?.active;
+}
+
+/**
  * Check if Enhanced Region Behaviors module is installed and active
  * @returns true if Enhanced Region Behaviors is available, false otherwise
  */

@@ -13,6 +13,16 @@
       "ResetSequence": {
         "Name": "Switch: Reset Sequence",
         "Help": "Reset the switch puzzle to the beginning"
+      },
+      "Group": "Dorman Lakely's Tile Utilities",
+      "ApplyDamage": {
+        "Name": "Apply Damage",
+        "Formula": "Damage Formula",
+        "FormulaHelp": "Plain dice formula, e.g. 2d6 or floor((2d6) / 2). Do not use inline-roll brackets.",
+        "DamageType": "Damage Type",
+        "Automate": "Apply Automatically",
+        "AutomateHelp": "Roll and post the damage but leave hit points alone when unchecked. When checked, damage is applied through midi-qol if it is installed, honouring your Auto Apply Damage setting; otherwise it goes straight to the actor.",
+        "RollFlavor": "Trap damage against {name}"
       }
     }
   },
@@ -368,6 +378,7 @@
     "DamageOnSave": "Damage on Save",
     "DamageOnSaveHint": "Damage formula on successful save (leave empty for no damage on save)",
     "DamageType": "Damage Type",
+    "TileDamageTypeHint": "Damage type applied to the token. Resistance, vulnerability and immunity are respected, and midi-qol handles the roll when it is installed.",
     "SaveFailedMessage": "Save Failed Message",
     "SaveFailedMessageHint": "Message displayed when the saving throw fails",
     "SaveSuccessMessage": "Save Success Message",

@@ -9,7 +9,9 @@ import {
   DragPlacePreviewManager,
   isDnd5eSystem,
   getItemActivities,
-  extractTrapActivityData
+  extractTrapActivityData,
+  getDamageTypeOptions,
+  DEFAULT_DAMAGE_TYPE
 } from '../utils/helpers';
 import type { TrapActivityData } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
@@ -80,6 +82,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected damageOnFail: string = '';
   protected halfDamageOnSuccess: boolean = false;
   protected flavorText: string = '';
+  /**
+   * Damage type for TILE traps. Region traps carry their own
+   * (`regionDamageType`); this is the tile-side equivalent, consumed by the
+   * custom `em-tile-utilities.applydamage` action the trap creator emits.
+   */
+  protected damageType: string = DEFAULT_DAMAGE_TYPE;
 
   // Heal Result Type
   protected healingAmount: string = '2d4+2';
@@ -350,32 +358,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Damage types come from the system so this list cannot silently drift from
-    // dnd5e's. CONFIG.DND5E.damageTypes is keyed by damage type id; each entry
-    // carries a `label` in 5.x. Non-dnd5e worlds fall back to the SRD list this
-    // template used to hardcode.
-    const DEFAULT_DAMAGE_TYPES: Array<{ value: string; label: string }> = [
-      { value: 'piercing', label: 'EMPUZZLES.DamageTypePiercing' },
-      { value: 'slashing', label: 'EMPUZZLES.DamageTypeSlashing' },
-      { value: 'bludgeoning', label: 'EMPUZZLES.DamageTypeBludgeoning' },
-      { value: 'fire', label: 'EMPUZZLES.DamageTypeFire' },
-      { value: 'cold', label: 'EMPUZZLES.DamageTypeCold' },
-      { value: 'lightning', label: 'EMPUZZLES.DamageTypeLightning' },
-      { value: 'thunder', label: 'EMPUZZLES.DamageTypeThunder' },
-      { value: 'acid', label: 'EMPUZZLES.DamageTypeAcid' },
-      { value: 'poison', label: 'EMPUZZLES.DamageTypePoison' },
-      { value: 'necrotic', label: 'EMPUZZLES.DamageTypeNecrotic' },
-      { value: 'radiant', label: 'EMPUZZLES.DamageTypeRadiant' },
-      { value: 'psychic', label: 'EMPUZZLES.DamageTypePsychic' },
-      { value: 'force', label: 'EMPUZZLES.DamageTypeForce' }
-    ];
-
-    const systemDamageTypes = (globalThis as any).CONFIG?.DND5E?.damageTypes;
-    const damageTypeOptions = systemDamageTypes
-      ? Object.entries(systemDamageTypes).map(([value, cfg]: [string, any]) => ({
-          value,
-          label: cfg?.label ?? cfg?.name ?? value
-        }))
-      : DEFAULT_DAMAGE_TYPES.map(t => ({ value: t.value, label: game.i18n.localize(t.label) }));
+    // dnd5e's. Shared with the custom `em-tile-utilities.applydamage` Monk's
+    // Active Tiles action — see src/utils/helpers/damage-types.ts.
+    const damageTypeOptions = getDamageTypeOptions();
 
     // Prepare DMG trap item data if active
     let dmgTrapData: any = null;
@@ -495,6 +480,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Damage Result Type - use class properties
       defaultDamageOnFail: useDamageOnFail,
       defaultHalfDamageOnSuccess: useHalfDamageOnSuccess,
+      damageType: this.damageType,
       flavorText: this.flavorText,
 
       // Heal Result Type - use class properties
@@ -549,7 +535,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       regionEventTokenMoveIn: false,
       regionEventTokenTurnStart: false,
       regionEventTokenTurnEnd: false,
-      regionAutomateDamage: false,
+      // Default ON, matching both Enhanced Region Behaviors' own schema
+      // (automateDamage is a BooleanField with initial: true) and this module's
+      // creator layer (`config.automateDamage ?? true`). Rendering it unchecked
+      // meant a region trap rolled the save and then did nothing to the token
+      // unless the GM noticed the box.
+      regionAutomateDamage: true,
       regionSaveAbility: 'dex',
       regionSaveDC: 15,
       regionSkillAcr: false,
@@ -682,6 +673,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       '[name="halfDamageOnSuccess"]'
     ) as HTMLInputElement;
     if (halfDamageCheckbox) this.halfDamageOnSuccess = halfDamageCheckbox.checked;
+
+    const damageTypeSelect = this.element.querySelector(
+      'select[name="damageType"]'
+    ) as HTMLSelectElement;
+    if (damageTypeSelect?.value) this.damageType = damageTypeSelect.value;
 
     const flavorTextArea = this.element.querySelector('[name="flavorText"]') as HTMLTextAreaElement;
     if (flavorTextArea) this.flavorText = flavorTextArea.value;
@@ -2319,6 +2315,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           (form.querySelector('input[name="damageOnFail"]') as HTMLInputElement)?.value || '';
         imageTrapConfig.flavorText =
           (form.querySelector('textarea[name="flavorText"]') as HTMLTextAreaElement)?.value || '';
+
+        // Damage type drives the custom `em-tile-utilities.applydamage` action,
+        // which is what makes tile-trap damage honour resistance/immunity and
+        // the GM's midi-qol automation. Regions already had this field.
+        imageTrapConfig.damageType =
+          (form.querySelector('select[name="damageType"]') as HTMLSelectElement)?.value ||
+          DEFAULT_DAMAGE_TYPE;
 
         // Extract half damage checkbox
         const halfDamageCheckbox = form.querySelector(

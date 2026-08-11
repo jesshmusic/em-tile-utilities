@@ -664,6 +664,112 @@ describe('creators', () => {
       };
     });
 
+    // NOTE: the mock `game` has no `system`, so every test OUTSIDE this block
+    // exercises the non-dnd5e fallback, where the creator keeps emitting Monk's
+    // own `hurtheal`. That is deliberate — it is the behaviour pf2e/pf1 worlds
+    // still get, and it is what tiles created before v2.2.0 carry.
+    describe('damage actions on dnd5e', () => {
+      const actionsFor = async (config: TrapConfig) => {
+        await createTrapTile(mockScene, config, 500, 500);
+        const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+        return callArgs[1][0].flags['monks-active-tiles'].actions;
+      };
+
+      beforeEach(() => {
+        (globalThis as any).game.system = { id: 'dnd5e' };
+      });
+
+      afterEach(() => {
+        delete (globalThis as any).game.system;
+      });
+
+      it('emits the custom applydamage action instead of hurtheal', async () => {
+        trapConfig.hasSavingThrow = false;
+        trapConfig.damageType = 'fire';
+
+        const actions = await actionsFor(trapConfig);
+
+        expect(actions.find((a: any) => a.action === 'hurtheal')).toBeUndefined();
+        const damage = actions.find((a: any) => a.action === 'em-tile-utilities.applydamage');
+        expect(damage).toBeDefined();
+        expect(damage.data.damage).toBe('2d6');
+        expect(damage.data.damagetype).toBe('fire');
+        expect(damage.data.automate).toBe(true);
+        expect(damage.data.entity.id).toBe('token');
+      });
+
+      it('emits a POSITIVE formula — the sign convention differs from hurtheal', async () => {
+        trapConfig.hasSavingThrow = false;
+
+        const actions = await actionsFor(trapConfig);
+        const damage = actions.find((a: any) => a.action === 'em-tile-utilities.applydamage');
+
+        expect(damage.data.damage).toBe('2d6');
+        expect(damage.data.damage.startsWith('-')).toBe(false);
+        // Still a plain formula, never Foundry inline-roll syntax.
+        expect(damage.data.damage).not.toContain('[[');
+      });
+
+      it('defaults the damage type when the config carries none', async () => {
+        trapConfig.hasSavingThrow = false;
+        delete trapConfig.damageType;
+
+        const actions = await actionsFor(trapConfig);
+        const damage = actions.find((a: any) => a.action === 'em-tile-utilities.applydamage');
+
+        expect(damage.data.damagetype).toBe('piercing');
+      });
+
+      it('carries the damage type into both branches of a half-damage save', async () => {
+        trapConfig.hasSavingThrow = true;
+        trapConfig.halfDamageOnSuccess = true;
+        trapConfig.damageType = 'cold';
+
+        const actions = await actionsFor(trapConfig);
+        const damages = actions.filter((a: any) => a.action === 'em-tile-utilities.applydamage');
+
+        expect(damages).toHaveLength(2);
+        expect(damages.map((d: any) => d.data.damage)).toEqual(['2d6', 'floor((2d6) / 2)']);
+        damages.forEach((d: any) => {
+          expect(d.data.damagetype).toBe('cold');
+          expect(d.data.entity.id).toBe('previous');
+        });
+      });
+
+      it('targets the tokens that failed a standard saving throw', async () => {
+        trapConfig.hasSavingThrow = true;
+        trapConfig.halfDamageOnSuccess = false;
+
+        const actions = await actionsFor(trapConfig);
+        const damage = actions.find((a: any) => a.action === 'em-tile-utilities.applydamage');
+
+        expect(damage.data.entity).toEqual({ id: 'previous', name: 'Current tokens' });
+      });
+
+      it('honours the trap target type when there is no saving throw', async () => {
+        trapConfig.hasSavingThrow = false;
+        trapConfig.targetType = TrapTargetType.PLAYER_TOKENS;
+
+        const actions = await actionsFor(trapConfig);
+        const damage = actions.find((a: any) => a.action === 'em-tile-utilities.applydamage');
+
+        expect(damage.data.entity.id).toBe('players');
+      });
+
+      it('heals with the healing damage type and a positive formula', async () => {
+        trapConfig.resultType = TrapResultType.HEAL;
+        trapConfig.healingAmount = '2d8';
+        trapConfig.hasSavingThrow = false;
+
+        const actions = await actionsFor(trapConfig);
+        const heal = actions.find((a: any) => a.action === 'em-tile-utilities.applydamage');
+
+        expect(heal.data.damage).toBe('2d8');
+        expect(heal.data.damagetype).toBe('healing');
+        expect(actions.find((a: any) => a.action === 'hurtheal')).toBeUndefined();
+      });
+    });
+
     it('should create a trap tile with correct data structure', async () => {
       await createTrapTile(mockScene, trapConfig, 500, 500);
 
@@ -764,7 +870,9 @@ describe('creators', () => {
       expect(savingThrowAction.data.dc).toBe(trapConfig.dc.toString());
     });
 
-    it('should include hurt/heal action for damage', async () => {
+    // Non-dnd5e fallback: `game.system` is unset in the mock. On dnd5e this is
+    // `em-tile-utilities.applydamage` instead — see the block above.
+    it('should include hurt/heal action for damage on non-dnd5e systems', async () => {
       await createTrapTile(mockScene, trapConfig, 500, 500);
 
       const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];

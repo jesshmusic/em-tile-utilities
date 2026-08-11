@@ -18,7 +18,18 @@ const onceCalls = ((global as any).Hooks.once as any).mock?.calls || [];
 const onCalls = ((global as any).Hooks.on as any).mock?.calls || [];
 
 const initCallback = onceCalls.find((call: any[]) => call[0] === 'init')?.[1];
-const readyCallback = onceCalls.find((call: any[]) => call[0] === 'ready')?.[1];
+
+// main.ts registers MORE THAN ONE `ready` handler: the dependency-check one
+// below, plus the safety-net retry in registerEmTileActions() that re-attempts
+// custom Monk's Active Tiles action registration if the `setupTileActions` hook
+// never fired. Picking `[0]` would silently test whichever happened to be
+// registered first, so run them all — the assertions here are on side effects
+// (notifications), and the action registration produces none without a
+// MonksActiveTiles global.
+const readyCallbacks = onceCalls
+  .filter((call: any[]) => call[0] === 'ready')
+  .map((call: any[]) => call[1]);
+const readyCallback = () => readyCallbacks.forEach((cb: any) => cb());
 const toolbarCallback = onCalls.find((call: any[]) => call[0] === 'getSceneControlButtons')?.[1];
 const preDeleteTileCallback = onCalls.find((call: any[]) => call[0] === 'preDeleteTile')?.[1];
 
@@ -218,8 +229,8 @@ describe('Main Module', () => {
 
   describe('ready hook', () => {
     it('should register ready hook', () => {
-      expect(readyCallback).toBeDefined();
-      expect(typeof readyCallback).toBe('function');
+      expect(readyCallbacks.length).toBeGreaterThan(0);
+      readyCallbacks.forEach((cb: any) => expect(typeof cb).toBe('function'));
     });
 
     it("should check for Monk's Active Tiles module", () => {

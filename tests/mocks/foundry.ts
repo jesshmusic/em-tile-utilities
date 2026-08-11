@@ -201,6 +201,39 @@ export function mockFoundry() {
     }
   };
 
+  // Mock Roll.
+  //
+  // Real Foundry evaluates dice; that is not what the code under test cares
+  // about, so this resolves a deterministic total: the sum of every integer in
+  // the formula ("2d6" -> 8, "0" -> 0). `total` is only readable after
+  // `evaluate()`, mirroring Foundry's own "unevaluated roll" contract closely
+  // enough that forgetting to await shows up as NaN rather than passing.
+  (global as any).Roll = class MockRoll {
+    formula: string;
+    data: Record<string, unknown>;
+    options: Record<string, unknown>;
+    total: number | undefined = undefined;
+    evaluate = jest.fn(async () => {
+      const numbers: string[] = String(this.formula).match(/\d+/g) ?? [];
+      let sum = 0;
+      for (const n of numbers) sum += parseInt(n, 10);
+      this.total = sum;
+      return this;
+    });
+    toMessage = jest.fn(async () => ({ id: 'mock-message' }));
+
+    constructor(formula: string, data: Record<string, unknown> = {}, options: any = {}) {
+      this.formula = formula;
+      this.data = data;
+      this.options = options;
+    }
+  };
+
+  // Mock ChatMessage (only the speaker helper is used by src/).
+  (global as any).ChatMessage = {
+    getSpeaker: jest.fn((data: any) => ({ token: data?.token?.id, actor: data?.actor?.id }))
+  };
+
   // Mock Hooks
   (global as any).Hooks = {
     once: jest.fn(),
