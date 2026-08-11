@@ -45,7 +45,7 @@
       <label for="sound">{{localize "EMPUZZLES.Sound"}}</label>
       <div class="form-fields">
         <input type="text" id="sound" name="sound" value="{{defaultSound}}" data-dtype="String" />
-        <button type="button" class="file-picker" data-type="audio" data-target="sound" title="Browse Files" tabindex="-1">
+        <button type="button" class="file-picker" data-type="audio" data-target="sound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
           <i class="gi-load"></i>
         </button>
       </div>
@@ -201,19 +201,11 @@
     <div class="form-group">
       <label for="regionDamageType">{{localize "EMPUZZLES.DamageType"}} <span class="required">*</span></label>
       <select id="regionDamageType" name="regionDamageType">
-        <option value="piercing" {{#if (eq regionDamageType "piercing")}}selected{{/if}}>Piercing</option>
-        <option value="slashing" {{#if (eq regionDamageType "slashing")}}selected{{/if}}>Slashing</option>
-        <option value="bludgeoning" {{#if (eq regionDamageType "bludgeoning")}}selected{{/if}}>Bludgeoning</option>
-        <option value="fire" {{#if (eq regionDamageType "fire")}}selected{{/if}}>Fire</option>
-        <option value="cold" {{#if (eq regionDamageType "cold")}}selected{{/if}}>Cold</option>
-        <option value="lightning" {{#if (eq regionDamageType "lightning")}}selected{{/if}}>Lightning</option>
-        <option value="thunder" {{#if (eq regionDamageType "thunder")}}selected{{/if}}>Thunder</option>
-        <option value="acid" {{#if (eq regionDamageType "acid")}}selected{{/if}}>Acid</option>
-        <option value="poison" {{#if (eq regionDamageType "poison")}}selected{{/if}}>Poison</option>
-        <option value="necrotic" {{#if (eq regionDamageType "necrotic")}}selected{{/if}}>Necrotic</option>
-        <option value="radiant" {{#if (eq regionDamageType "radiant")}}selected{{/if}}>Radiant</option>
-        <option value="psychic" {{#if (eq regionDamageType "psychic")}}selected{{/if}}>Psychic</option>
-        <option value="force" {{#if (eq regionDamageType "force")}}selected{{/if}}>Force</option>
+        {{#each damageTypeOptions as |option|}}
+          <option value="{{option.value}}" {{#if (eq option.value ../regionDamageType)}}selected{{/if}}>
+            {{option.label}}
+          </option>
+        {{/each}}
       </select>
     </div>
 
@@ -538,7 +530,7 @@
               <label for="tokenImage">{{localize "EMPUZZLES.TokenImage"}}</label>
               <div class="form-fields">
                 <input type="text" id="tokenImage" name="tokenImage" value="{{tokenImage}}" data-dtype="String" />
-                <button type="button" class="file-picker" data-type="imagevideo" data-target="tokenImage" title="Browse Files" tabindex="-1">
+                <button type="button" class="file-picker" data-type="imagevideo" data-target="tokenImage" title="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
                   <i class="gi-load"></i>
                 </button>
               </div>

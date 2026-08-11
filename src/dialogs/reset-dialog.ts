@@ -4,6 +4,7 @@ import { startTilePreview, TilePreviewManager, getGridSize } from '../utils/help
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -519,13 +520,13 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
    * Handle adding a tile
    */
   static async #onAddTile(this: ResetTileConfigDialog, _event: PointerEvent): Promise<void> {
-    ui.notifications.info('Click on a tile to add it to the reset list...');
+    notifyInfo('EMPUZZLES.NotifyClickTileForResetList');
 
     const handler = async (clickEvent: any) => {
       const tile = clickEvent.interactionData?.object?.document;
 
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         return;
       }
 
@@ -580,7 +581,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       // Capture form values before re-rendering
       this.captureFormValues();
       await this.render();
-      ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
+      notifyInfo('EMPUZZLES.NotifyAdded', {
+        name: tile.name || game.i18n.localize('EMPUZZLES.Tile')
+      });
 
       // Remove the handler after selection
       (canvas as any).stage.off('click', handler);
@@ -624,14 +627,14 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('Tile Utilities Error: No active scene!');
+      notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
       return;
     }
 
     const data = formData.object;
 
     if ((this as any).selectedTiles.size === 0) {
-      ui.notifications.warn('No tiles selected!');
+      notifyWarn('EMPUZZLES.NotifyNoTilesSelected');
       return;
     }
 
@@ -711,9 +714,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     );
 
     if (!hasValidExtension) {
-      ui.notifications.error(
-        `Tile Utilities Error: Invalid image file: ${resetTileImage}. Please use a valid image file.`
-      );
+      notifyError('EMPUZZLES.NotifyInvalidImageFile', { path: resetTileImage });
       return;
     }
 
@@ -721,7 +722,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the reset tile. Press ESC to cancel.');
+    notifyInfo('EMPUZZLES.NotifyPlaceResetTile');
 
     // Start tile preview with ghost image (reset tile is 2x2 grid squares)
     const gridSize = getGridSize();
@@ -745,7 +746,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
             y
           );
 
-          ui.notifications.info('Reset tile created!');
+          notifyInfo('EMPUZZLES.NotifyResetTileCreated');
 
           // Clear preview reference before closing to avoid race condition with _onClose
           this.previewManager = undefined;

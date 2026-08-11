@@ -894,6 +894,26 @@ describe('tile-helpers', () => {
       expect(hurtHealAction.data.entity.id).toBe('players');
     });
 
+    // Before resolveTargetEntity was extracted, the additionalEffects block used
+    // a terser copy of the target-type switch that had no PLAYER_TOKENS case and
+    // fell through to 'within' -- so a trap set to affect player tokens applied
+    // its status effects to everyone standing on the tile instead.
+    it('should target player tokens for additional effects, not tokens within the tile', async () => {
+      trapConfig.targetType = TrapTargetType.PLAYER_TOKENS;
+      trapConfig.hasSavingThrow = false;
+      trapConfig.additionalEffects = ['poisoned'];
+
+      await createTrapTile(mockScene, trapConfig, 500, 500);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const actions = callArgs[1][0].flags['monks-active-tiles'].actions;
+
+      const effectAction = actions.find((a: any) => a.action === 'activeeffect');
+      expect(effectAction).toBeDefined();
+      expect(effectAction.data.entity.id).toBe('players');
+      expect(effectAction.data.entity.id).not.toBe('within');
+    });
+
     it('should handle WITHIN_TILE target type', async () => {
       trapConfig.targetType = TrapTargetType.WITHIN_TILE;
       trapConfig.hasSavingThrow = false;
@@ -1901,6 +1921,34 @@ describe('tile-helpers', () => {
 
       // Should create both tile and token
       expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
+    });
+
+    // Combat traps were the one creator that silently dropped customTags: the
+    // dialog spreads it onto CombatTrapConfig and the field exists on the type,
+    // but the creator tagged the tile without it, so a GM's tags vanished.
+    it('should apply custom tags to the combat trap tile', async () => {
+      const config = {
+        name: 'Combat Trap',
+        startingImage: 'icons/svg/trap.svg',
+        triggeredImage: '',
+        hideTrapOnTrigger: false,
+        sound: '',
+        targetType: TrapTargetType.TRIGGERING,
+        itemId: 'Item.weapon123',
+        tokenVisible: false,
+        maxTriggers: 0,
+        customTags: 'Dungeon1, Ambush'
+      };
+
+      const Tagger = (globalThis as any).Tagger;
+      Tagger.setTags.mockClear();
+
+      const { createCombatTrapTile } = await import('../../src/utils/creators');
+      await createCombatTrapTile(mockScene, config, 200, 200);
+
+      const tags = Tagger.setTags.mock.calls.at(-1)?.[1] ?? [];
+      expect(tags).toContain('Dungeon1');
+      expect(tags).toContain('Ambush');
     });
 
     it("should create trap actor in Dorman Lakely's Tile Utilities folder", async () => {

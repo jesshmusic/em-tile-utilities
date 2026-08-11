@@ -160,3 +160,54 @@ export function parseCustomTags(customTags: string | undefined): string[] {
     .map(t => t.trim())
     .filter(t => t.length > 0);
 }
+
+/**
+ * Options for {@link applyEMTags}.
+ */
+export interface ApplyEMTagsOptions {
+  /**
+   * Literal tags placed between the primary tag and the user's custom tags.
+   * Regions add 'EM_Region', trap regions also add 'EM_Trap', and the second
+   * half of a teleport pair carries the outbound tag alongside its own.
+   */
+  extraTags?: string[];
+  /** Raw comma-separated custom tag string from the creator's config. */
+  customTags?: string;
+  /**
+   * Whether to announce the applied tag to the GM. Defaults to true. Companion
+   * documents (return teleports, destination regions) pass false because the
+   * notification has already been shown for the document they belong to.
+   */
+  showWarning?: boolean;
+}
+
+/**
+ * Apply this module's tags to a freshly-created document, if Tagger is active.
+ *
+ * The resulting tag list is always ordered: primary tag, extra literal tags,
+ * then the user's custom tags.
+ *
+ * @param doc - The document to tag (tile, region, light, sound...)
+ * @param primaryTag - The generated EM tag that identifies this document
+ * @param options - Extra tags, custom tags and notification control
+ */
+export async function applyEMTags(
+  doc: any,
+  primaryTag: string,
+  options: ApplyEMTagsOptions = {}
+): Promise<void> {
+  if (!(game as any).modules.get('tagger')?.active) return;
+
+  const Tagger = (globalThis as any).Tagger;
+  const allTags = [
+    primaryTag,
+    ...(options.extraTags ?? []),
+    ...parseCustomTags(options.customTags)
+  ];
+
+  await Tagger.setTags(doc, allTags);
+
+  if (options.showWarning !== false) {
+    await showTaggerWithWarning(doc, primaryTag);
+  }
+}

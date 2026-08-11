@@ -3,6 +3,7 @@ import { getNextTileNumber, startTilePreview, TilePreviewManager } from '../util
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -234,7 +235,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   protected _onAddTag(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -248,7 +249,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -270,7 +271,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('Tile Utilities Error: No active scene!');
+      notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
       return;
     }
 
@@ -280,7 +281,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     const previewImage = data.offImage || data.onImage;
 
     if (!previewImage) {
-      ui.notifications.error('Tile Utilities Error: No image selected for the switch tile!');
+      notifyError('EMPUZZLES.NotifyErrorNoSwitchImage');
       return;
     }
 
@@ -288,7 +289,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the switch tile. Press ESC to cancel.');
+    notifyInfo('EMPUZZLES.NotifyPlaceSwitchTile');
 
     // Start tile preview with ghost image
     try {
@@ -311,7 +312,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
             y
           );
 
-          ui.notifications.info('Switch tile created!');
+          notifyInfo('EMPUZZLES.NotifySwitchTileCreated');
 
           // Clear preview reference before closing to avoid race condition with _onClose
           this.previewManager = undefined;

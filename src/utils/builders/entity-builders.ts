@@ -2,6 +2,39 @@
  * Entity creation builders for Foundry VTT entities
  */
 
+import { TrapTargetType } from '../../types/module';
+
+/** A Monk's Active Tiles entity reference: a sentinel id plus its display name. */
+export interface MonksEntity {
+  id: string;
+  name: string;
+}
+
+/**
+ * Map a trap's configured target type onto the Monk's Active Tiles entity
+ * sentinel that selects those tokens.
+ *
+ * MATT recognises 'token' (the token that tripped the trigger), 'within' (every
+ * token currently inside the tile) and 'players' (all player-owned tokens). The
+ * fourth sentinel, 'previous', is not a target *type* — it means "whatever the
+ * preceding action produced" and is chosen at the call site when a saving throw
+ * has already narrowed the set.
+ *
+ * @param targetType - The configured target type (undefined falls back to the triggering token)
+ * @returns The entity reference to hand to a MATT action
+ */
+export function resolveTargetEntity(targetType?: TrapTargetType): MonksEntity {
+  switch (targetType) {
+    case TrapTargetType.PLAYER_TOKENS:
+      return { id: 'players', name: 'Player Tokens' };
+    case TrapTargetType.WITHIN_TILE:
+      return { id: 'within', name: 'Tokens within Tile' };
+    case TrapTargetType.TRIGGERING:
+    default:
+      return { id: 'token', name: 'Triggering Token' };
+  }
+}
+
 /**
  * Create an AmbientLight entity
  * @param x - X coordinate (usually centered on tile)

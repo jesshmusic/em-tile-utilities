@@ -5,6 +5,7 @@ import { createMonksConfig } from '../builders/monks-config-builder';
 import { createTileImageAction, createActivateAction, createShowHideAction } from '../actions';
 import { generateUniqueLightTag, parseCustomTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
+import { createRollbackTracker } from '../helpers/rollback-helpers';
 
 /**
  * Creates a light tile with optional sound and overlay.
@@ -34,39 +35,14 @@ export async function createLightTile(
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
 
-  // Track ids of every embedded document we successfully create so we can
-  // roll them back if a later step throws.
+  // Ids of the entities the actions below need to reference. The tracker holds
+  // the same ids for cleanup; these locals exist because the action builders
+  // need them by name.
   let lightId: string | null = null;
   let soundId: string | null = null;
   let overlayTileId: string | null = null;
-  let mainTileId: string | null = null;
 
-  const rollback = async () => {
-    // Best-effort cleanup. We delete in reverse order of creation. Each
-    // delete is independently try/caught so a failure mid-rollback doesn't
-    // mask the original error.
-    const tryDelete = async (
-      collection: 'Tile' | 'AmbientLight' | 'AmbientSound',
-      id: string | null
-    ) => {
-      if (!id) return;
-      try {
-        // The repo's local Scene type doesn't expose deleteEmbeddedDocuments;
-        // cast through any (consistent with the rest of this codebase) since
-        // the method exists on every Foundry Document at runtime.
-        await (scene as any).deleteEmbeddedDocuments(collection, [id]);
-      } catch (e) {
-        console.warn(
-          `🧩 Tile Utilities: Failed to roll back ${collection} ${id} during createLightTile cleanup`,
-          e
-        );
-      }
-    };
-    await tryDelete('Tile', mainTileId);
-    await tryDelete('Tile', overlayTileId);
-    await tryDelete('AmbientSound', soundId);
-    await tryDelete('AmbientLight', lightId);
-  };
+  const tracker = createRollbackTracker(scene);
 
   try {
     // Create the light source (centered on the tile)
@@ -85,6 +61,7 @@ export async function createLightTile(
       throw new Error('Failed to create AmbientLight (validation failure — check console).');
     }
     lightId = (light as any).id;
+    tracker.trackEmbedded('AmbientLight', lightId as string);
 
     // Generate a unique tag for this light group (for Tagger integration)
     const lightGroupTag = generateUniqueLightTag(config.name);
@@ -107,6 +84,7 @@ export async function createLightTile(
         throw new Error('Failed to create AmbientSound (validation failure — check console).');
       }
       soundId = (sound as any).id;
+      tracker.trackEmbedded('AmbientSound', soundId as string);
     }
 
     // Create overlay tile if enabled
@@ -135,6 +113,7 @@ export async function createLightTile(
         throw new Error('Failed to create overlay Tile (validation failure — check console).');
       }
       overlayTileId = (overlayTile as any).id;
+      tracker.trackEmbedded('Tile', overlayTileId as string);
     }
 
     // Determine trigger type based on darkness setting
@@ -206,7 +185,7 @@ export async function createLightTile(
     if (!mainTile) {
       throw new Error('Failed to create main light Tile (validation failure — check console).');
     }
-    mainTileId = (mainTile as any).id;
+    tracker.trackEmbedded('Tile', (mainTile as any).id);
 
     // Tag all entities with the same identifier using Tagger
     // This allows us to find and delete related entities when the main tile is deleted
@@ -250,7 +229,7 @@ export async function createLightTile(
     // entities in the scene. Then surface a clear notification AND re-throw
     // so callers (e.g. light-dialog.ts) can avoid showing a misleading
     // success message.
-    await rollback();
+    await tracker.rollback();
     const message =
       err instanceof Error
         ? `Tile Utilities: Failed to create light tile — ${err.message}`

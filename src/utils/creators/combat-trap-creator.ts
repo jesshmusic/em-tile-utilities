@@ -1,7 +1,7 @@
 import type { CombatTrapConfig } from '../../types/module';
-import { TrapTargetType } from '../../types/module';
 import { createBaseTileData } from '../builders/base-tile-builder';
 import { createMonksConfig } from '../builders/monks-config-builder';
+import { resolveTargetEntity } from '../builders/entity-builders';
 import {
   createSetVariableAction,
   createCheckVariableAction,
@@ -14,9 +14,10 @@ import {
   createAnchorAction,
   createAttackAction
 } from '../actions';
-import { generateUniqueTrapTag, showTaggerWithWarning } from '../helpers/tag-helpers';
+import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { getOrCreateTrapActorsFolder } from '../helpers/folder-helpers';
+import { createRollbackTracker } from '../helpers/rollback-helpers';
 
 /** Our own flag scope — safe from any schema clean another module runs over its flags. */
 const MODULE_FLAG_SCOPE = 'em-tile-utilities';
@@ -95,44 +96,10 @@ export async function createCombatTrapTile(
 
   // Track everything we successfully create so a later failure can undo it.
   // The embedded Item doesn't need its own entry — deleting the Actor takes it.
-  let actorDoc: any = null;
   let actorId = '';
   let trapTokenId = '';
-  let tileId = '';
 
-  const rollback = async () => {
-    // Best-effort cleanup, in reverse order of creation. Each delete is
-    // independently try/caught so a failure mid-rollback doesn't mask the
-    // original error.
-    if (tileId) {
-      try {
-        await (scene as any).deleteEmbeddedDocuments('Tile', [tileId]);
-      } catch (e) {
-        console.warn(`🧩 Tile Utilities: Failed to roll back trap Tile ${tileId}`, e);
-      }
-    }
-    if (trapTokenId) {
-      try {
-        await (scene as any).deleteEmbeddedDocuments('Token', [trapTokenId]);
-      } catch (e) {
-        console.warn(`🧩 Tile Utilities: Failed to roll back trap Token ${trapTokenId}`, e);
-      }
-    }
-    if (actorId) {
-      try {
-        await (scene as any).unsetFlag(MODULE_FLAG_SCOPE, `trap-token-${actorId}`);
-      } catch (e) {
-        console.warn(`🧩 Tile Utilities: Failed to clear trap token flag for actor ${actorId}`, e);
-      }
-    }
-    if (actorDoc) {
-      try {
-        await actorDoc.delete();
-      } catch (e) {
-        console.warn(`🧩 Tile Utilities: Failed to roll back trap Actor ${actorId}`, e);
-      }
-    }
-  };
+  const tracker = createRollbackTracker(scene);
 
   try {
     // Determine token image
@@ -166,8 +133,14 @@ export async function createCombatTrapTile(
     if (!actor) {
       throw new Error('Failed to create the trap Actor (validation failure — check console).');
     }
-    actorDoc = actor;
     actorId = actor.id;
+    tracker.track(`trap Actor ${actorId}`, () => actor.delete());
+    // Registered before the flag is actually written further down: the write is
+    // keyed on actorId, and clearing a flag that was never set is a no-op, so
+    // this covers the case where token creation fails in between.
+    tracker.track(`trap token flag for actor ${actorId}`, () =>
+      (scene as any).unsetFlag(MODULE_FLAG_SCOPE, `trap-token-${actorId}`)
+    );
 
     // Add the item to the actor
     const [addedItem] = await actor.createEmbeddedDocuments('Item', [(item as any).toObject()]);
@@ -205,6 +178,7 @@ export async function createCombatTrapTile(
       throw new Error('Failed to create the trap Token (validation failure — check console).');
     }
     trapTokenId = (token as any).id;
+    tracker.trackEmbedded('Token', trapTokenId, `trap Token ${trapTokenId}`);
 
     // Store token ID for cleanup
     await (scene as any).setFlag(MODULE_FLAG_SCOPE, `trap-token-${actorId}`, trapTokenId);
@@ -299,9 +273,7 @@ export async function createCombatTrapTile(
     }
 
     // Action 4: Run the attack using standard Monk's attack action
-    const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
-    const targetEntityName =
-      config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+    const { id: targetEntityId, name: targetEntityName } = resolveTargetEntity(config.targetType);
 
     actions.push(
       createAttackAction(
@@ -362,21 +334,18 @@ export async function createCombatTrapTile(
         'Failed to create the combat trap Tile (validation failure — check console).'
       );
     }
-    tileId = (tile as any).id;
+    tracker.trackEmbedded('Tile', (tile as any).id, `trap Tile ${(tile as any).id}`);
 
-    // Tag the combat trap tile using Tagger if available
-    if ((game as any).modules.get('tagger')?.active) {
-      const Tagger = (globalThis as any).Tagger;
-      const trapTag = generateUniqueTrapTag(config.name, 'combat');
-      await Tagger.setTags(tile, [trapTag]);
-      await showTaggerWithWarning(tile, trapTag);
-    }
+    // Tag the combat trap tile using Tagger if available.
+    await applyEMTags(tile, generateUniqueTrapTag(config.name, 'combat'), {
+      customTags: config.customTags
+    });
 
     return tile;
   } catch (err) {
     // Undo the actor / item / token / tile we already created so a partial
     // failure doesn't leave orphans behind in the world.
-    await rollback();
+    await tracker.rollback();
     const message =
       err instanceof Error
         ? `Tile Utilities: Failed to create combat trap — ${err.message}`

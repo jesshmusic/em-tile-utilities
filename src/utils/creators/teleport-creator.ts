@@ -7,11 +7,7 @@ import {
   createTeleportAction,
   createRequestRollAction
 } from '../actions';
-import {
-  generateUniqueEMTag,
-  parseCustomTags,
-  showTaggerWithWarning
-} from '../helpers/tag-helpers';
+import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 
@@ -105,15 +101,7 @@ export async function createTeleportTile(
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
 
   // Tag the tile if Tagger module is active
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-
-    // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [tag, ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(tile, allTags);
-    await showTaggerWithWarning(tile, tag);
-  }
+  await applyEMTags(tile, tag, { customTags: config.customTags });
 
   // Create return teleport tile if requested
   if (config.createReturnTeleport) {
@@ -126,7 +114,9 @@ export async function createTeleportTile(
         return;
       }
 
-      const returnTag = generateUniqueEMTag('Return Teleport');
+      // Uniqueness is checked against the destination scene, which is where the
+      // return tile is about to be created.
+      const returnTag = generateUniqueEMTag('Return Teleport', destinationScene);
 
       // Build return actions (teleport back to source)
       const returnActions: any[] = [];
@@ -194,14 +184,11 @@ export async function createTeleportTile(
 
       // Tag the return tile if Tagger module is active
       // Use BOTH the main teleport's tag AND the return tag, plus any custom tags
-      if ((game as any).modules.get('tagger')?.active) {
-        const Tagger = (globalThis as any).Tagger;
-
-        // Build tag array: main tag + return tag + custom tags
-        const returnTileTags = [tag, returnTag, ...parseCustomTags(config.customTags)];
-
-        await Tagger.setTags(returnTile, returnTileTags);
-      }
+      await applyEMTags(returnTile, tag, {
+        extraTags: [returnTag],
+        customTags: config.customTags,
+        showWarning: false
+      });
 
       ui.notifications.info(
         `Dorman Lakely's Tile Utilities | Return teleport tile created at destination.`

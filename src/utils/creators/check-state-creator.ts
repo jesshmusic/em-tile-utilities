@@ -10,7 +10,7 @@ import {
   createTriggerAction,
   normalizeDoorState
 } from '../actions';
-import { generateUniqueEMTag, showTaggerWithWarning } from '../helpers/tag-helpers';
+import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 
 /**
@@ -357,11 +357,7 @@ export async function createCheckStateTile(
 
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
 
-  // Tag the check state tile using Tagger if available
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-    const checkStateTag = generateUniqueEMTag(config.name);
-    await Tagger.setTags(tile, [checkStateTag]);
-    await showTaggerWithWarning(tile, checkStateTag);
-  }
+  // Tag the check state tile using Tagger if available.
+  // CheckStateConfig has no customTags field, so only the generated tag is set.
+  await applyEMTags(tile, generateUniqueEMTag(config.name));
 }

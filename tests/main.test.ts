@@ -40,7 +40,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultOnImage',
         expect.objectContaining({
-          name: 'Default ON Image',
+          name: 'EMPUZZLES.SettingDefaultOnImage',
           scope: 'world',
           config: true,
           type: String,
@@ -61,7 +61,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultOffImage',
         expect.objectContaining({
-          name: 'Default OFF Image',
+          name: 'EMPUZZLES.SettingDefaultOffImage',
           default: 'icons/svg/d20.svg',
           filePicker: 'imagevideo'
         })
@@ -79,7 +79,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultSound',
         expect.objectContaining({
-          name: 'Default Sound',
+          name: 'EMPUZZLES.SettingDefaultSound',
           default: 'sounds/doors/industrial/unlock.ogg',
           filePicker: 'audio'
         })
@@ -97,7 +97,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultLightOnImage',
         expect.objectContaining({
-          name: 'Default Light ON Image',
+          name: 'EMPUZZLES.SettingDefaultLightOnImage',
           default: 'icons/svg/light.svg',
           filePicker: 'imagevideo'
         })
@@ -115,7 +115,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultLightOffImage',
         expect.objectContaining({
-          name: 'Default Light OFF Image',
+          name: 'EMPUZZLES.SettingDefaultLightOffImage',
           default: 'icons/svg/light-off.svg',
           filePicker: 'imagevideo'
         })
@@ -133,7 +133,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultTrapImage',
         expect.objectContaining({
-          name: 'Default Trap Image',
+          name: 'EMPUZZLES.SettingDefaultTrapImage',
           default: 'icons/environment/traps/trap-jaw-tan.webp',
           filePicker: 'imagevideo'
         })
@@ -151,7 +151,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultTrapTriggeredImage',
         expect.objectContaining({
-          name: 'Default Trap Triggered Image',
+          name: 'EMPUZZLES.SettingDefaultTrapTriggeredImage',
           default: 'modules/em-tile-utilities/icons/broken-trap.svg',
           filePicker: 'imagevideo'
         })

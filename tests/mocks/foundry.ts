@@ -3,6 +3,30 @@
  */
 
 import { jest } from '@jest/globals';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// The i18n mock resolves against the REAL lang/en.json rather than echoing the
+// key back. Two reasons: assertions can be written against the English a GM
+// actually sees, and a key that is referenced but never defined shows up as a
+// failing test instead of a dialog rendering a raw key name.
+const LANG_FILE = join(__dirname, '..', '..', 'lang', 'en.json');
+const TRANSLATIONS = JSON.parse(readFileSync(LANG_FILE, 'utf8'));
+
+function localizeKey(key: string): string {
+  const value = String(key)
+    .split('.')
+    .reduce((node: any, part: string) => (node == null ? undefined : node[part]), TRANSLATIONS);
+  // Foundry returns the key unchanged when there is no translation for it.
+  return typeof value === 'string' ? value : key;
+}
+
+// Mirrors foundry.helpers.Localization#format: a single global pass replacing
+// every {placeholder} token, so a placeholder repeated in one string is
+// substituted at each occurrence.
+function formatKey(key: string, data: Record<string, unknown> = {}): string {
+  return localizeKey(key).replace(/{[^}]+}/g, token => String(data[token.slice(1, -1)]));
+}
 
 export function mockFoundry() {
   // Mock foundry.utils
@@ -108,7 +132,8 @@ export function mockFoundry() {
       set: jest.fn()
     },
     i18n: {
-      localize: jest.fn((key: string) => key)
+      localize: jest.fn((key: string) => localizeKey(key)),
+      format: jest.fn((key: string, data: Record<string, unknown> = {}) => formatKey(key, data))
     },
     scenes: new Map()
   };

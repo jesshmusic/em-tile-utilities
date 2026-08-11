@@ -15,6 +15,7 @@ import type { TrapActivityData } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -348,6 +349,34 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
+    // Damage types come from the system so this list cannot silently drift from
+    // dnd5e's. CONFIG.DND5E.damageTypes is keyed by damage type id; each entry
+    // carries a `label` in 5.x. Non-dnd5e worlds fall back to the SRD list this
+    // template used to hardcode.
+    const DEFAULT_DAMAGE_TYPES: Array<{ value: string; label: string }> = [
+      { value: 'piercing', label: 'EMPUZZLES.DamageTypePiercing' },
+      { value: 'slashing', label: 'EMPUZZLES.DamageTypeSlashing' },
+      { value: 'bludgeoning', label: 'EMPUZZLES.DamageTypeBludgeoning' },
+      { value: 'fire', label: 'EMPUZZLES.DamageTypeFire' },
+      { value: 'cold', label: 'EMPUZZLES.DamageTypeCold' },
+      { value: 'lightning', label: 'EMPUZZLES.DamageTypeLightning' },
+      { value: 'thunder', label: 'EMPUZZLES.DamageTypeThunder' },
+      { value: 'acid', label: 'EMPUZZLES.DamageTypeAcid' },
+      { value: 'poison', label: 'EMPUZZLES.DamageTypePoison' },
+      { value: 'necrotic', label: 'EMPUZZLES.DamageTypeNecrotic' },
+      { value: 'radiant', label: 'EMPUZZLES.DamageTypeRadiant' },
+      { value: 'psychic', label: 'EMPUZZLES.DamageTypePsychic' },
+      { value: 'force', label: 'EMPUZZLES.DamageTypeForce' }
+    ];
+
+    const systemDamageTypes = (globalThis as any).CONFIG?.DND5E?.damageTypes;
+    const damageTypeOptions = systemDamageTypes
+      ? Object.entries(systemDamageTypes).map(([value, cfg]: [string, any]) => ({
+          value,
+          label: cfg?.label ?? cfg?.name ?? value
+        }))
+      : DEFAULT_DAMAGE_TYPES.map(t => ({ value: t.value, label: game.i18n.localize(t.label) }));
+
     // Prepare DMG trap item data if active
     let dmgTrapData: any = null;
     let activityData: any = null;
@@ -489,6 +518,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
       effectOptions: effectOptions,
+      damageTypeOptions: damageTypeOptions,
 
       // DMG trap state
       hasDmgTrap: !!this.dmgTrapItemId,
@@ -1446,14 +1476,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // parts do not exist in other systems, so bail out rather than reading
     // fields that are not there.
     if (!isDnd5eSystem()) {
-      ui.notifications.warn('Trap items can only be read in a dnd5e world!');
+      notifyWarn('EMPUZZLES.NotifyTrapItemsDnd5eOnly');
       return;
     }
 
     // Get the item from the UUID
     const item = await (globalThis as any).fromUuid(data.uuid);
     if (!item) {
-      ui.notifications.error('Failed to load item!');
+      notifyError('EMPUZZLES.NotifyItemLoadFailed');
       return;
     }
 
@@ -1463,7 +1493,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const activitiesArray = getItemActivities(item, 'save');
 
     if (activitiesArray.length === 0) {
-      ui.notifications.warn('This item has no saving throw activities to use!');
+      notifyWarn('EMPUZZLES.NotifyItemNoSaveActivities');
       return;
     }
 
@@ -1566,14 +1596,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Get the item from the UUID
     const item = await (globalThis as any).fromUuid(data.uuid);
     if (!item) {
-      ui.notifications.error('Failed to load item!');
+      notifyError('EMPUZZLES.NotifyItemLoadFailed');
       return;
     }
 
     // Validate it's an appropriate attack item (weapon or feature)
     const itemType = (item as any).type;
     if (itemType !== 'weapon' && itemType !== 'feat') {
-      ui.notifications.warn('Please drop a weapon or feature item with attack actions!');
+      notifyWarn('EMPUZZLES.NotifyDropWeaponOrFeature');
       return;
     }
 
@@ -1605,7 +1635,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected async _onSelectTokenPosition(event: Event, _target: HTMLElement): Promise<void> {
     event.preventDefault();
 
-    ui.notifications.info('Click on the canvas to select token position...');
+    notifyInfo('EMPUZZLES.NotifySelectTokenPosition');
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
@@ -1639,7 +1669,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle adding a tile to the activation list
    */
   async _onAddTile(_event: Event, _target: HTMLElement): Promise<void> {
-    ui.notifications.info('Click on a tile to add it to the activation list...');
+    notifyInfo('EMPUZZLES.NotifyClickTileForActivationList');
 
     // Sync form state to class properties before re-rendering
     this._syncFormToState();
@@ -1649,14 +1679,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const hoverObjects = (canvas as any).tiles.hover ? [(canvas as any).tiles.hover] : [];
 
       if (hoverObjects.length === 0) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         return;
       }
 
       const tile = hoverObjects[0].document;
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         return;
       }
@@ -1725,13 +1755,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Minimize this dialog
     await this.minimize();
-    ui.notifications.info('Click on a tile to add it to the trigger list...');
+    notifyInfo('EMPUZZLES.NotifyClickTileForTriggerList');
 
     const handler = async (clickEvent: any) => {
       const tile = clickEvent.interactionData?.object?.document;
 
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         this.maximize();
         return;
@@ -1750,7 +1780,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Re-render to show updated list
       await this.render(true);
       this.maximize();
-      ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
+      notifyInfo('EMPUZZLES.NotifyAdded', {
+        name: tile.name || game.i18n.localize('EMPUZZLES.Tile')
+      });
     };
 
     (canvas as any).stage.on('click', handler);
@@ -1788,7 +1820,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const tileId = target.dataset.tileId;
     if (!tileId) return;
 
-    ui.notifications.info('Click on the canvas to select move position...');
+    notifyInfo('EMPUZZLES.NotifySelectMovePosition');
 
     // Sync form state to class properties before re-rendering
     this._syncFormToState();
@@ -1837,7 +1869,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (canvas as any).walls.activate();
     }
 
-    ui.notifications.info('Select a wall or door, then it will be added to the list.');
+    notifyInfo('EMPUZZLES.NotifySelectWallOrDoor');
 
     // Store that we're waiting for wall selection
     (this as any)._waitingForWall = true;
@@ -1851,7 +1883,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
       // Check if already added
       if (this.selectedWalls.some(w => w.wallId === wall.id)) {
-        ui.notifications.warn('This wall/door is already in the list!');
+        notifyWarn('EMPUZZLES.NotifyWallAlreadyInList');
         this.maximize();
         return;
       }
@@ -1904,7 +1936,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected async _onSelectTeleportPosition(event: Event, _target: HTMLElement): Promise<void> {
     event.preventDefault();
 
-    ui.notifications.info('Click on the canvas to select teleport destination...');
+    notifyInfo('EMPUZZLES.NotifySelectTeleportDestination');
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
@@ -1971,7 +2003,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected _onAddTag(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -1983,7 +2015,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -2005,7 +2037,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Validate form
     const validation = this._validateForm(form);
     if (!validation.valid) {
-      ui.notifications.error(validation.message || 'Form validation failed!');
+      notifyError(validation.message || 'EMPUZZLES.NotifyFormValidationFailed');
       return;
     }
 
@@ -2019,12 +2051,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Validate form based on trap type and result type
+   *
+   * @returns `message`, when present, is a localization KEY (not display
+   * text) — callers must resolve it via `notifyError`/`game.i18n` before
+   * showing it to the user.
    */
   protected _validateForm(form: HTMLFormElement): { valid: boolean; message?: string } {
     // Common validation
     const trapName = (form.querySelector('input[name="trapName"]') as HTMLInputElement)?.value;
     if (!trapName) {
-      return { valid: false, message: 'Trap name is required!' };
+      return { valid: false, message: 'EMPUZZLES.NotifyTrapNameRequired' };
     }
 
     // Region traps: only need trap name (region-specific fields have defaults)
@@ -2035,7 +2071,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Activating trap validation
     if (this.trapType === TrapType.ACTIVATING) {
       if (this.selectedTiles.size === 0) {
-        return { valid: false, message: 'You must select at least one tile to activate!' };
+        return { valid: false, message: 'EMPUZZLES.NotifySelectTileToActivate' };
       }
       return { valid: true };
     }
@@ -2044,7 +2080,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (this.trapType === TrapType.IMAGE) {
       // Check result type is selected
       if (!this.resultType) {
-        return { valid: false, message: 'Please select a result type!' };
+        return { valid: false, message: 'EMPUZZLES.NotifySelectResultType' };
       }
 
       // Check triggered image when switching behavior is selected
@@ -2056,7 +2092,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           form.querySelector('input[name="triggeredImage"]') as HTMLInputElement
         )?.value;
         if (!triggeredImage) {
-          return { valid: false, message: 'Triggered image is required when switching images!' };
+          return { valid: false, message: 'EMPUZZLES.NotifyTriggeredImageRequired' };
         }
       }
 
@@ -2065,14 +2101,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const damageOnFail = (form.querySelector('input[name="damageOnFail"]') as HTMLInputElement)
           ?.value;
         if (!damageOnFail) {
-          return { valid: false, message: 'Damage formula is required!' };
+          return { valid: false, message: 'EMPUZZLES.NotifyDamageFormulaRequired' };
         }
       }
 
       if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
         return {
           valid: false,
-          message: 'Please drop a weapon or feature item for combat attacks!'
+          message: 'EMPUZZLES.NotifyDropCombatAttackItem'
         };
       }
     }
@@ -2150,9 +2186,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.minimize();
 
     // Set up drag-to-place handlers for activating trap
-    ui.notifications.info(
-      'Drag on the canvas to place and size the activating trap. Press ESC to cancel.'
-    );
+    notifyInfo('EMPUZZLES.NotifyPlaceActivatingTrap');
 
     // Start drag-to-place preview with ghost image
     this.dragPreviewManager = await startDragPlacePreview({
@@ -2168,7 +2202,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
           } else {
             await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
-            ui.notifications.info(`Activating trap "${trapConfig.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyActivatingTrapCreated', { name: trapConfig.name });
           }
         }
 
@@ -2235,9 +2269,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       this.minimize();
 
       // Set up drag-to-place handlers for combat trap
-      ui.notifications.info(
-        'Drag on the canvas to place and size the combat trap. Press ESC to cancel.'
-      );
+      notifyInfo('EMPUZZLES.NotifyPlaceCombatTrap');
 
       // Use ghost preview if there's an image, otherwise fall back to rectangle
       const previewImage = combatConfig.startingImage || 'icons/svg/hazard.svg';
@@ -2253,7 +2285,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             // Combat traps only support tile creation (not regions)
             // Region creation for combat would require significant additional work
             await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
-            ui.notifications.info(`Combat trap "${combatConfig.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyCombatTrapCreated', { name: combatConfig.name });
           }
 
           this.close();
@@ -2353,12 +2385,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Switch to appropriate canvas layer based on creation type
     if (isRegion) {
       (canvas as any).regions?.activate();
-      ui.notifications.info(
-        'Drag on the canvas to place and size the region trap. Press ESC to cancel.'
-      );
+      notifyInfo('EMPUZZLES.NotifyPlaceRegionTrap');
     } else {
       (canvas as any).tiles?.activate();
-      ui.notifications.info('Drag on the canvas to place and size the trap. Press ESC to cancel.');
+      notifyInfo('EMPUZZLES.NotifyPlaceTrap');
     }
 
     // Configure preview based on creation type
@@ -2374,7 +2404,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
           } else {
             await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
-            ui.notifications.info(`Trap "${trapConfig.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyTrapCreated', { name: trapConfig.name });
           }
         }
 

@@ -8,6 +8,7 @@ import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
 import type { ElevationRegionConfig } from '../utils/creators';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -176,7 +177,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #onAddTag(this: ElevationDialog): void {
     if (!this.tagInputManager) {
-      ui.notifications.error('Tag manager not initialized.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitialized');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -189,7 +190,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #onConfirmTags(this: ElevationDialog): void {
     if (!this.tagInputManager) {
-      ui.notifications.error('Tag manager not initialized.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitialized');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -209,7 +210,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('No active scene!');
+      notifyError('EMPUZZLES.NotifyNoActiveScene');
       return;
     }
 
@@ -217,7 +218,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Validate region name
     if (!data.regionName || data.regionName.trim() === '') {
-      ui.notifications.warn('Please provide a name for the elevation region.');
+      notifyWarn('EMPUZZLES.NotifyElevationNameRequired');
       return;
     }
 
@@ -234,9 +235,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Switch to regions layer
     (canvas as any).regions?.activate();
-    ui.notifications.info(
-      'Drag on the canvas to place and size the elevation region. Press ESC to cancel.'
-    );
+    notifyInfo('EMPUZZLES.NotifyPlaceElevationRegion');
 
     // Start drag-to-place preview with colored rectangle
     this.dragPreviewManager = await startDragPlacePreview({
@@ -247,7 +246,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       onPlace: async (x: number, y: number, width: number, height: number) => {
         try {
           await createElevationRegion(scene, config, x, y, width, height);
-          ui.notifications.info(`Elevation region "${config.name}" created!`);
+          notifyInfo('EMPUZZLES.NotifyElevationRegionCreated', { name: config.name });
 
           // Close this dialog and clear preview reference
           this.close();
@@ -260,9 +259,7 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           }
         } catch (error) {
           console.error("Dorman Lakely's Tile Utilities | Error creating elevation region:", error);
-          ui.notifications.error(
-            `Dorman Lakely's Tile Utilities | Failed to create elevation region: ${error}`
-          );
+          notifyError('EMPUZZLES.NotifyElevationRegionFailed', { error: String(error) });
 
           // Still try to close the dialog even if creation failed
           this.close();

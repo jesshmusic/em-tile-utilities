@@ -12,11 +12,7 @@ import {
   createChatMessageAction,
   createChangeDoorAction
 } from '../actions';
-import {
-  generateUniqueEMTag,
-  parseCustomTags,
-  showTaggerWithWarning
-} from '../helpers/tag-helpers';
+import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 
 /**
@@ -215,14 +211,5 @@ export async function createResetTile(
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
 
   // Tag the reset tile using Tagger if available
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-    const resetTag = generateUniqueEMTag(config.name);
-
-    // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [resetTag, ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(tile, allTags);
-    await showTaggerWithWarning(tile, resetTag);
-  }
+  await applyEMTags(tile, generateUniqueEMTag(config.name), { customTags: config.customTags });
 }

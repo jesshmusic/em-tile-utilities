@@ -8,6 +8,7 @@ import { showCheckStateDialog } from './check-state-dialog';
 import { showElevationDialog } from './elevation-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -611,7 +612,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   ): Promise<void> {
     event.preventDefault();
     this.render();
-    ui.notifications.info('Tile list refreshed!');
+    notifyInfo('EMPUZZLES.NotifyTileListRefreshed');
   }
 
   /* -------------------------------------------- */
@@ -631,7 +632,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const tile = canvas.scene?.tiles.get(tileId);
     if (!tile) {
-      ui.notifications.warn('Tile not found!');
+      notifyWarn('EMPUZZLES.NotifyTileNotFound');
       return;
     }
 
@@ -656,13 +657,15 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const tile = canvas.scene?.tiles.get(tileId);
     if (!tile) {
-      ui.notifications.warn('Tile not found!');
+      notifyWarn('EMPUZZLES.NotifyTileNotFound');
       return;
     }
 
     // Select the tile (without panning)
     (tile as any).object.control({ releaseOthers: true });
-    ui.notifications.info(`Selected: ${tile.name || 'Tile'}`);
+    notifyInfo('EMPUZZLES.NotifySelected', {
+      name: tile.name || game.i18n.localize('EMPUZZLES.Tile')
+    });
   }
 
   /* -------------------------------------------- */
@@ -683,7 +686,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const tile = canvas.scene?.tiles.get(tileId);
     if (!tile) {
-      ui.notifications.warn('Tile not found!');
+      notifyWarn('EMPUZZLES.NotifyTileNotFound');
       return;
     }
 
@@ -693,7 +696,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       window: {
         title: game.i18n.localize('EMPUZZLES.DeleteTileConfirmTitle')
       },
-      content: `<p>${game.i18n.localize('EMPUZZLES.DeleteTileConfirmMessage').replace('{name}', tileName)}</p>`,
+      content: `<p>${game.i18n.format('EMPUZZLES.DeleteTileConfirmMessage', { name: tileName })}</p>`,
       rejectClose: false,
       modal: true
     });
@@ -702,7 +705,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Delete the tile
     await (tile as any).delete();
-    ui.notifications.info(`Deleted: ${tileName}`);
+    notifyInfo('EMPUZZLES.NotifyDeleted', { name: tileName });
   }
 
   /* -------------------------------------------- */
@@ -722,15 +725,17 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const tile = canvas.scene?.tiles.get(tileId);
     if (!tile) {
-      ui.notifications.warn('Tile not found!');
+      notifyWarn('EMPUZZLES.NotifyTileNotFound');
       return;
     }
 
     // Toggle hidden state
     await (tile as any).update({ hidden: !(tile as any).hidden });
 
-    const state = (tile as any).hidden ? 'hidden' : 'visible';
-    ui.notifications.info(`Tile is now ${state}`);
+    const state = game.i18n.localize(
+      (tile as any).hidden ? 'EMPUZZLES.NotifyStateHidden' : 'EMPUZZLES.NotifyStateVisible'
+    );
+    notifyInfo('EMPUZZLES.NotifyTileStateChanged', { state });
   }
 
   /* -------------------------------------------- */
@@ -750,13 +755,13 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const tile = canvas.scene?.tiles.get(tileId);
     if (!tile) {
-      ui.notifications.warn('Tile not found!');
+      notifyWarn('EMPUZZLES.NotifyTileNotFound');
       return;
     }
 
     const monksData = (tile as any).flags['monks-active-tiles'];
     if (!monksData) {
-      ui.notifications.warn("This tile is not a Monk's Active Tile!");
+      notifyWarn('EMPUZZLES.NotifyNotMonksActiveTile');
       return;
     }
 
@@ -766,8 +771,10 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       'flags.monks-active-tiles.active': newActiveState
     });
 
-    const state = newActiveState ? 'active' : 'inactive';
-    ui.notifications.info(`Tile is now ${state}`);
+    const state = game.i18n.localize(
+      newActiveState ? 'EMPUZZLES.NotifyStateActive' : 'EMPUZZLES.NotifyStateInactive'
+    );
+    notifyInfo('EMPUZZLES.NotifyTileStateChanged', { state });
   }
 
   /* -------------------------------------------- */
@@ -788,7 +795,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const tile = canvas.scene?.tiles.get(tileId);
     if (!tile) {
-      ui.notifications.warn('Tile not found!');
+      notifyWarn('EMPUZZLES.NotifyTileNotFound');
       return;
     }
 
@@ -819,7 +826,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     // Use Foundry's saveDataToFile utility
     (foundry.utils as any).saveDataToFile(json, 'application/json', filename);
 
-    ui.notifications.info(`Exported: ${tileName}`);
+    notifyInfo('EMPUZZLES.NotifyExported', { name: tileName });
   }
 
   /* -------------------------------------------- */
@@ -849,14 +856,12 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Validate that it has required fields
         if (!tileData.texture || !tileData.width || !tileData.height) {
-          ui.notifications.error(
-            'Tile Utilities Error: Invalid tile JSON: missing required fields'
-          );
+          notifyError('EMPUZZLES.NotifyInvalidTileJson');
           return;
         }
 
         // Show notification and set up canvas click handler
-        ui.notifications.info('Click on the canvas to place the imported tile...');
+        notifyInfo('EMPUZZLES.NotifyPlaceImportedTile');
 
         const handler = async (clickEvent: any) => {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
@@ -876,14 +881,14 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
           await canvas.scene?.createEmbeddedDocuments('Tile', [newTileData]);
 
-          ui.notifications.info('Tile imported successfully!');
+          notifyInfo('EMPUZZLES.NotifyTileImported');
           (canvas as any).stage.off('click', handler);
         };
 
         (canvas as any).stage.on('click', handler);
       } catch (error) {
         console.error('Tile Utilities Error: Error importing tile:', error);
-        ui.notifications.error('Tile Utilities Error: Failed to import tile: Invalid JSON file');
+        notifyError('EMPUZZLES.NotifyTileImportFailed');
       }
     };
 
@@ -933,7 +938,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const region = (canvas.scene as any)?.regions?.get(regionId);
     if (!region) {
-      ui.notifications.warn('Region not found!');
+      notifyWarn('EMPUZZLES.NotifyRegionNotFound');
       return;
     }
 
@@ -958,13 +963,15 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const region = (canvas.scene as any)?.regions?.get(regionId);
     if (!region) {
-      ui.notifications.warn('Region not found!');
+      notifyWarn('EMPUZZLES.NotifyRegionNotFound');
       return;
     }
 
     // Select the region
     (region as any).object?.control({ releaseOthers: true });
-    ui.notifications.info(`Selected: ${region.name || 'Region'}`);
+    notifyInfo('EMPUZZLES.NotifySelected', {
+      name: region.name || game.i18n.localize('EMPUZZLES.Region')
+    });
   }
 
   /* -------------------------------------------- */
@@ -985,7 +992,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const region = (canvas.scene as any)?.regions?.get(regionId);
     if (!region) {
-      ui.notifications.warn('Region not found!');
+      notifyWarn('EMPUZZLES.NotifyRegionNotFound');
       return;
     }
 
@@ -995,7 +1002,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       window: {
         title: game.i18n.localize('EMPUZZLES.DeleteRegionConfirmTitle')
       },
-      content: `<p>${game.i18n.localize('EMPUZZLES.DeleteRegionConfirmMessage').replace('{name}', regionName)}</p>`,
+      content: `<p>${game.i18n.format('EMPUZZLES.DeleteRegionConfirmMessage', { name: regionName })}</p>`,
       rejectClose: false,
       modal: true
     });
@@ -1004,7 +1011,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Delete the region
     await (region as any).delete();
-    ui.notifications.info(`Deleted: ${regionName}`);
+    notifyInfo('EMPUZZLES.NotifyDeleted', { name: regionName });
   }
 }
 

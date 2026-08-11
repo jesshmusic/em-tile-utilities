@@ -2,6 +2,7 @@ import type { Branch, ConditionOperator, LogicConnector } from '../types/module'
 import { BranchActionCategory } from '../types/module';
 import { getActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -460,7 +461,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // Check if already selected
     if (this.selectedTiles.some(t => t.tileId === tileId)) {
-      ui.notifications.warn('This tile is already selected!');
+      notifyWarn('EMPUZZLES.NotifyTileAlreadySelected');
       return;
     }
 
@@ -522,7 +523,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // Validation
     if (instance.selectedTiles.length === 0) {
-      ui.notifications.error('Tile Utilities Error: Please select at least one tile to monitor!');
+      notifyError('EMPUZZLES.NotifySelectTileToMonitor');
       return;
     }
 
@@ -543,7 +544,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       // Minimize the dialog so user can see the canvas
       instance.minimize();
 
-      ui.notifications.info('Click on the canvas to place the Check State tile...');
+      notifyInfo('EMPUZZLES.NotifyPlaceCheckStateTile');
 
       const handler = async (clickEvent: any) => {
         try {
@@ -557,7 +558,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
           await createCheckStateTile(canvas.scene, config, snapped.x, snapped.y);
 
-          ui.notifications.info('Check State tile created!');
+          notifyInfo('EMPUZZLES.NotifyCheckStateTileCreated');
           (canvas as any).stage.off('click', handler);
 
           // Close the dialog
@@ -570,9 +571,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
           }
         } catch (error) {
           console.error('Tile Utilities Error: Error placing Check State tile:', error);
-          ui.notifications.error(
-            'Tile Utilities Error: Failed to create Check State tile: ' + error.message
-          );
+          notifyError('EMPUZZLES.NotifyCheckStateCreateFailed', { error: error.message });
           (canvas as any).stage.off('click', handler);
         }
       };
@@ -580,9 +579,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       (canvas as any).stage.on('click', handler);
     } catch (error) {
       console.error('Tile Utilities Error: Error in Check State form submit:', error);
-      ui.notifications.error(
-        'Tile Utilities Error: Failed to initialize Check State tile creation: ' + error.message
-      );
+      notifyError('EMPUZZLES.NotifyCheckStateInitFailed', { error: error.message });
     }
   }
 
@@ -647,7 +644,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // Default to first selected tile's first variable
     if (this.selectedTiles.length === 0 || this.selectedTiles[0].variables.length === 0) {
-      ui.notifications.warn('Please select tiles with variables first!');
+      notifyWarn('EMPUZZLES.NotifySelectTilesWithVariables');
       return;
     }
 
@@ -793,20 +790,20 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const action = branch.actions[actionIndex];
     if (!action) return;
 
-    ui.notifications.info('Click on a tile on the canvas...');
+    notifyInfo('EMPUZZLES.NotifyClickTileOnCanvas');
 
     const handler = (clickEvent: any) => {
       const tile = clickEvent.interactionData?.object?.document;
 
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         return;
       }
 
       const monksData = (tile as any).flags['monks-active-tiles'];
       if (!monksData || !monksData.active) {
-        ui.notifications.warn("Selected tile is not an active Monk's Active Tile!");
+        notifyWarn('EMPUZZLES.NotifyNotActiveMonksTile');
         (canvas as any).stage.off('click', handler);
         return;
       }
@@ -843,7 +840,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
     const action = branch.actions[actionIndex];
     if (!action) return;
 
-    ui.notifications.info('Click on a wall or door on the canvas...');
+    notifyInfo('EMPUZZLES.NotifyClickWallOnCanvas');
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).walls);
@@ -878,7 +875,7 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
           : 'closed';
         this.render();
       } else {
-        ui.notifications.warn('No wall or door found at that location!');
+        notifyWarn('EMPUZZLES.NotifyNoWallFound');
       }
 
       (canvas as any).stage.off('click', handler);

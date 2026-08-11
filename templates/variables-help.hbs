@@ -1,0 +1,39 @@
+{{!--
+  Help content for the Scene Variables viewer, rendered into a DialogV2 prompt.
+
+  This lives in a template rather than a string literal in variables-viewer.ts
+  so the markup stays markup and lang/en.json holds only prose. The list items
+  that carry inline <strong>/<a> markup are emitted with triple-stache so the
+  translator gets a whole sentence instead of a label/body split.
+
+  `\{{variable.switchName}}` is escaped: it is a Monk's Active Tiles expression
+  shown to the user as example code, not a Handlebars lookup.
+--}}
+<div style='padding: 1rem;'>
+  <h2 style='margin-top: 0;'>{{localize 'EMPUZZLES.VariablesHelpWhatTitle'}}</h2>
+  <p>{{localize 'EMPUZZLES.VariablesHelpWhatBody'}}</p>
+
+  <h3>{{localize 'EMPUZZLES.VariablesHelpSwitchesTitle'}}</h3>
+  <p>{{localize 'EMPUZZLES.VariablesHelpSwitchesBody'}}</p>
+
+  <h3>{{localize 'EMPUZZLES.VariablesHelpReferenceTitle'}}</h3>
+  <p>{{localize 'EMPUZZLES.VariablesHelpReferenceBody'}}</p>
+  <ul>
+    <li><code>\{{variable.switchName}}</code> {{localize 'EMPUZZLES.VariablesHelpReferenceGet'}}</li>
+    <li><code>\{{not variable.switchName}}</code> {{localize 'EMPUZZLES.VariablesHelpReferenceNot'}}</li>
+  </ul>
+
+  <h3>{{localize 'EMPUZZLES.VariablesHelpCheckStateTitle'}}</h3>
+  <p>{{localize 'EMPUZZLES.VariablesHelpCheckStateBody'}}</p>
+
+  <h3>{{localize 'EMPUZZLES.VariablesHelpPatternsTitle'}}</h3>
+  <ul>
+    <li>{{{localize 'EMPUZZLES.VariablesHelpPatternDoors'}}}</li>
+    <li>{{{localize 'EMPUZZLES.VariablesHelpPatternProgress'}}}</li>
+    <li>{{{localize 'EMPUZZLES.VariablesHelpPatternQuest'}}}</li>
+    <li>{{{localize 'EMPUZZLES.VariablesHelpPatternEffects'}}}</li>
+  </ul>
+
+  <h3>{{localize 'EMPUZZLES.VariablesHelpLearnMoreTitle'}}</h3>
+  <p>{{{localize 'EMPUZZLES.VariablesHelpLearnMoreBody'}}}</p>
+</div>

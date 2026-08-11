@@ -11,6 +11,7 @@ import { CreationType, RegionBehaviorMode } from '../types/module';
 import type { TeleportTileConfig } from '../types/module';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -507,14 +508,14 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const selectedSceneId = sceneSelect?.value;
 
     if (!selectedSceneId) {
-      ui.notifications.warn('Please select a target scene first.');
+      notifyWarn('EMPUZZLES.NotifySelectTargetScene');
       return;
     }
 
     // Switch to the selected scene if different
     const targetScene = (game as any).scenes.get(selectedSceneId);
     if (!targetScene) {
-      ui.notifications.error('Target scene not found.');
+      notifyError('EMPUZZLES.NotifyTargetSceneNotFound');
       return;
     }
 
@@ -523,7 +524,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // If we're not viewing the target scene, switch to it
     if (canvas.scene?.id !== selectedSceneId) {
-      ui.notifications.info(`Switching to scene "${targetScene.name}" to select destination...`);
+      notifyInfo('EMPUZZLES.NotifySwitchingScene', { name: targetScene.name });
       await targetScene.view();
       // Wait for canvas to be ready after scene change
       await TeleportDialog.#waitForCanvasReady();
@@ -539,9 +540,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Minimize this dialog so user can see the canvas
     this.minimize();
 
-    ui.notifications.info(
-      'Click and drag on the canvas to define the teleport destination area...'
-    );
+    notifyInfo('EMPUZZLES.NotifyDragTeleportDestination');
 
     // Get tile image for preview
     const tileImageInput = this.element.querySelector(
@@ -565,9 +564,13 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         this.teleportHeight = height;
         this.teleportSceneId = selectedSceneId;
 
-        ui.notifications.info(
-          `Destination set: ${width}x${height} at (${x}, ${y}) in "${targetScene.name}"`
-        );
+        notifyInfo('EMPUZZLES.NotifyTeleportDestinationSet', {
+          width,
+          height,
+          x,
+          y,
+          scene: targetScene.name
+        });
 
         // Clean up
         this.destDragPreviewManager = undefined;
@@ -611,7 +614,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   static #onAddTag(this: TeleportDialog): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -625,7 +628,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   static #onConfirmTags(this: TeleportDialog): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -645,7 +648,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('No active scene!');
+      notifyError('EMPUZZLES.NotifyNoActiveScene');
       return;
     }
 
@@ -653,19 +656,19 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Validate teleport destination
     if (this.teleportX === undefined || this.teleportY === undefined || !this.teleportSceneId) {
-      ui.notifications.warn('Please select a teleport destination first.');
+      notifyWarn('EMPUZZLES.NotifySelectTeleportDestinationFirst');
       return;
     }
 
     // Validate tile name
     if (!data.tileName || data.tileName.trim() === '') {
-      ui.notifications.warn('Please provide a name for the teleport tile.');
+      notifyWarn('EMPUZZLES.NotifyTeleportNameRequired');
       return;
     }
 
     // Validate starting image
     if (!data.tileImage || data.tileImage.trim() === '') {
-      ui.notifications.warn('Please select an image for the teleport tile.');
+      notifyWarn('EMPUZZLES.NotifyTeleportImageRequired');
       return;
     }
 
@@ -697,14 +700,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Switch to appropriate canvas layer based on creation type
     if (isRegion) {
       (canvas as any).regions?.activate();
-      ui.notifications.info(
-        'Drag on the canvas to place and size the teleport region. Press ESC to cancel.'
-      );
+      notifyInfo('EMPUZZLES.NotifyPlaceTeleportRegion');
     } else {
       (canvas as any).tiles?.activate();
-      ui.notifications.info(
-        'Drag on the canvas to place and size the teleport tile. Press ESC to cancel.'
-      );
+      notifyInfo('EMPUZZLES.NotifyPlaceTeleportTile');
     }
 
     // Start drag-to-place preview with ghost image
@@ -730,10 +729,10 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
               width,
               height
             );
-            ui.notifications.info(`Teleport region "${config.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyTeleportRegionCreated', { name: config.name });
           } else {
             await createTeleportTile(scene, config, x, y, width, height);
-            ui.notifications.info(`Teleport tile "${config.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyTeleportTileCreated', { name: config.name });
           }
 
           // Close this dialog and clear preview reference
@@ -747,9 +746,7 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           }
         } catch (error) {
           console.error("Dorman Lakely's Tile Utilities | Error creating teleport:", error);
-          ui.notifications.error(
-            `Dorman Lakely's Tile Utilities | Failed to create teleport: ${error}`
-          );
+          notifyError('EMPUZZLES.NotifyTeleportFailed', { error: String(error) });
 
           // Still try to close the dialog even if creation failed
           this.close();

@@ -3,6 +3,7 @@ import { startTilePreview, TilePreviewManager } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -392,7 +393,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('Tile Utilities Error: No active scene!');
+      notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
       return;
     }
 
@@ -402,7 +403,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     const previewImage = data.offImage || data.onImage;
 
     if (!previewImage) {
-      ui.notifications.error('Tile Utilities Error: No image selected for the light tile!');
+      notifyError('EMPUZZLES.NotifyErrorNoLightImage');
       return;
     }
 
@@ -410,7 +411,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the light tile. Press ESC to cancel.');
+    notifyInfo('EMPUZZLES.NotifyPlaceLightTile');
 
     // Start tile preview with ghost image
     try {
@@ -446,7 +447,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
               y
             );
 
-            ui.notifications.info('Light tile created!');
+            notifyInfo('EMPUZZLES.NotifyLightTileCreated');
           } catch (err) {
             // createLightTile already showed an error notification and
             // rolled back any partial state. Log for diagnostics, then

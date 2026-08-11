@@ -159,13 +159,13 @@
                         <div class="tile-details">
                           <strong class="tile-name">
                             {{tile.name}}
-                            {{#if tile.isRegion}}<i class="fa-regular fa-game-board item-type-icon" title="{{localize 'EMPUZZLES.Region'}}"></i>{{else}}<i class="fa-solid fa-cubes item-type-icon" title="Tile"></i>{{/if}}
+                            {{#if tile.isRegion}}<i class="fa-regular fa-game-board item-type-icon" title="{{localize 'EMPUZZLES.Region'}}"></i>{{else}}<i class="fa-solid fa-cubes item-type-icon" title="{{localize 'EMPUZZLES.Tile'}}"></i>{{/if}}
                           </strong>
                           <div class="tile-meta">
                             <span class="tile-position">{{localize "EMPUZZLES.Position"}}: ({{tile.x}}, {{tile.y}})</span>
                             <span class="tile-size">{{localize "EMPUZZLES.Size"}}: {{tile.width}}x{{tile.height}}</span>
-                            <span class="tile-elevation">Elevation: {{tile.elevation}}</span>
-                            {{#unless tile.isRegion}}<span class="tile-sort">Sort: {{tile.sort}}</span>{{/unless}}
+                            <span class="tile-elevation">{{localize "EMPUZZLES.Elevation"}}: {{tile.elevation}}</span>
+                            {{#unless tile.isRegion}}<span class="tile-sort">{{localize "EMPUZZLES.Sort"}}: {{tile.sort}}</span>{{/unless}}
                           </div>
                         </div>
                       </div>

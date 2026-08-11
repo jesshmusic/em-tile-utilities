@@ -1,4 +1,5 @@
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -39,7 +40,8 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
   /** @inheritDoc */
   get title(): string {
     const scene = canvas.scene;
-    return `${game.i18n.localize('EMPUZZLES.SceneVariables')}: ${scene?.name || 'Unknown'}`;
+    const sceneName = scene?.name || game.i18n.localize('EMPUZZLES.Unknown');
+    return `${game.i18n.localize('EMPUZZLES.SceneVariables')}: ${sceneName}`;
   }
 
   /* -------------------------------------------- */
@@ -78,7 +80,10 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
     tiles.forEach((tile: any) => {
       const tileVars = tile.flags['monks-active-tiles'].variables;
       if (tileVars && Object.keys(tileVars).length > 0) {
-        const tileName = tile.name || tile.flags['monks-active-tiles']?.name || 'Unnamed Tile';
+        const tileName =
+          tile.name ||
+          tile.flags['monks-active-tiles']?.name ||
+          game.i18n.localize('EMPUZZLES.UnnamedTile');
 
         // Sort variables alphabetically within each tile
         const sortedVarNames = Object.keys(tileVars).sort();
@@ -136,36 +141,16 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
   }
 
   static async #onShowHelp(): Promise<void> {
-    const content = `
-      <div style="padding: 1rem;">
-        <h2 style="margin-top: 0;">What are Scene Variables?</h2>
-        <p>Scene variables are values that are stored within a scene and persist between sessions. They're created and managed by Monk's Active Tiles.</p>
-
-        <h3>How Switches Create Variables</h3>
-        <p>When you create a switch tile, it automatically creates a scene variable with an ON/OFF state. This variable can be referenced by name in other tiles' actions.</p>
-
-        <h3>How to Reference Variables</h3>
-        <p>Use Handlebars syntax to reference variables in action fields:</p>
-        <ul>
-          <li><code>{{variable.switchName}}</code> - Gets the value of a variable</li>
-          <li><code>{{not variable.switchName}}</code> - Inverts a boolean value</li>
-        </ul>
-
-        <h3>Check State Tiles</h3>
-        <p>Check state tiles monitor variables and execute different actions based on their values. They can be used to create complex conditional logic for puzzles.</p>
-
-        <h3>Common Patterns</h3>
-        <ul>
-          <li><strong>Door States:</strong> Track if a door is open or closed</li>
-          <li><strong>Puzzle Progress:</strong> Track which switches have been activated</li>
-          <li><strong>Quest Flags:</strong> Mark objectives as complete</li>
-          <li><strong>Conditional Effects:</strong> Apply different effects based on game state</li>
-        </ul>
-
-        <h3>Learn More</h3>
-        <p>For more information about Monk's Active Tiles and variables, see the <a href="https://github.com/ironmonk88/monks-active-tiles" target="_blank">Monk's Active Tiles documentation</a>.</p>
-      </div>
-    `;
+    // The help body is a template, not a string literal in here: it is ~30
+    // lines of markup around a dozen paragraphs of prose, and a single
+    // lang/en.json key holding all of that HTML would be unreadable and
+    // unmaintainable for a translator. Keeping the markup in a .hbs and the
+    // prose in per-heading keys also matches how every other view in this
+    // module is built.
+    const content = await foundry.applications.handlebars.renderTemplate(
+      'modules/em-tile-utilities/templates/variables-help.hbs',
+      {}
+    );
 
     // ApplicationV1 `Dialog` is deprecated (removal targeted for v16). Every
     // other dialog in the module is already on DialogV2; this was the holdout.
@@ -188,7 +173,7 @@ export class SceneVariablesViewer extends HandlebarsApplicationMixin(Application
 export function showSceneVariablesDialog(): void {
   const scene = canvas.scene;
   if (!scene) {
-    ui.notifications.error('Tile Utilities Error: No active scene!');
+    notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
     return;
   }
 

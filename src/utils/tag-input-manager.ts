@@ -2,6 +2,8 @@
  * Reusable utility for managing Tagger-style tag input UI
  * Handles tag chip creation, removal, and hidden input synchronization
  */
+
+import { notifyInfo } from '../dialogs/notify';
 export class TagInputManager {
   private rootElement: HTMLElement;
 
@@ -154,7 +156,7 @@ export class TagInputManager {
     const tags = this.getCurrentTags();
     if (tags) {
       const tagCount = tags.split(',').filter(t => t.trim()).length;
-      ui.notifications.info(`${tagCount} tag(s) ready to be applied.`);
+      notifyInfo('EMPUZZLES.NotifyTagsReady', { count: tagCount });
     }
   }
 }

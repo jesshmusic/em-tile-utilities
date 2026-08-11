@@ -7,11 +7,7 @@ import {
   createPauseGameRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
-import {
-  generateUniqueEMTag,
-  parseCustomTags,
-  showTaggerWithWarning
-} from '../helpers/tag-helpers';
+import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 
@@ -200,10 +196,10 @@ export async function createTeleportRegion(
     const destRegionUUID = `Scene.${destScene.id}.Region.${destRegion.id}`;
 
     // Tag destination region
-    if ((game as any).modules.get('tagger')?.active) {
-      const Tagger = (globalThis as any).Tagger;
-      await Tagger.setTags(destRegion, [`${tag}_Dest`, 'EM_Region']);
-    }
+    await applyEMTags(destRegion, `${tag}_Dest`, {
+      extraTags: ['EM_Region'],
+      showWarning: false
+    });
 
     // Create the source region shape
     const sourceShape = createRectangleShape({
@@ -225,12 +221,10 @@ export async function createTeleportRegion(
     const sourceRegionUUID = `Scene.${scene.id}.Region.${sourceRegion.id}`;
 
     // Tag source region
-    if ((game as any).modules.get('tagger')?.active) {
-      const Tagger = (globalThis as any).Tagger;
-      const allTags = [tag, 'EM_Region', ...parseCustomTags(config.customTags)];
-      await Tagger.setTags(sourceRegion, allTags);
-      await showTaggerWithWarning(sourceRegion, tag);
-    }
+    await applyEMTags(sourceRegion, tag, {
+      extraTags: ['EM_Region'],
+      customTags: config.customTags
+    });
 
     // Now create behaviors for the SOURCE region
     const sourceBehaviors: any[] = [];
@@ -353,15 +347,10 @@ await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', v
   const [region] = await scene.createEmbeddedDocuments('Region', [regionData]);
 
   // Tag the region if Tagger module is active
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-
-    // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [tag, 'EM_Region', ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(region, allTags);
-    await showTaggerWithWarning(region, tag);
-  }
+  await applyEMTags(region, tag, {
+    extraTags: ['EM_Region'],
+    customTags: config.customTags
+  });
 
   // Create return teleport region if requested (only for Monk's mode)
   if (config.createReturnTeleport && config.behaviorMode === RegionBehaviorMode.MONKS_MACRO) {
@@ -374,7 +363,9 @@ await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', v
         return;
       }
 
-      const returnTag = generateUniqueEMTag('Return Teleport');
+      // Uniqueness is checked against the destination scene, which is where the
+      // return region is about to be created.
+      const returnTag = generateUniqueEMTag('Return Teleport', destinationScene);
 
       // Build return teleport config (back to source)
       const returnConfig: TeleportTileConfig = {
@@ -423,16 +414,11 @@ await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', v
       ]);
 
       // Tag the return region
-      if ((game as any).modules.get('tagger')?.active) {
-        const Tagger = (globalThis as any).Tagger;
-        const returnRegionTags = [
-          tag,
-          returnTag,
-          'EM_Region',
-          ...parseCustomTags(config.customTags)
-        ];
-        await Tagger.setTags(returnRegion, returnRegionTags);
-      }
+      await applyEMTags(returnRegion, tag, {
+        extraTags: [returnTag, 'EM_Region'],
+        customTags: config.customTags,
+        showWarning: false
+      });
 
       ui.notifications.info(
         `Dorman Lakely's Tile Utilities | Return teleport region created at destination.`

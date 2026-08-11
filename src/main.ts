@@ -3,6 +3,7 @@
  * Utility tile creation tools for Monk's Active Tiles
  */
 import { showTileManagerDialog } from './dialogs/tile-manager';
+import { notifyError, notifyWarn } from './dialogs/notify';
 import { PatreonLink, DmGuruLink } from './settings/settings-menus';
 import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
 import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
@@ -47,9 +48,15 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
 
   // Hard cap below current Foundry major → permanent warning
   if (depMax != null && depMax < coreMajor) {
-    ui.notifications?.warn(
-      `${MODULE_TITLE}: ${displayName} v${mod.version} declares Foundry v${compat.maximum} as its maximum, ` +
-        `but you are running Foundry v${(game as any).version}. Expect bugs until ${displayName} ships an update.`,
+    notifyWarn(
+      'EMPUZZLES.NotifyDepMaximumBehind',
+      {
+        module: MODULE_TITLE,
+        dependency: displayName,
+        dependencyVersion: mod.version,
+        maximum: compat.maximum,
+        coreVersion: (game as any).version
+      },
       { permanent: true }
     );
     return;
@@ -57,9 +64,16 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
 
   // No hard cap but verified is behind → transient warning
   if (depVerified != null && depVerified < coreMajor) {
-    ui.notifications?.warn(
-      `${MODULE_TITLE}: ${displayName} v${mod.version} is only verified for Foundry v${compat.verified}. ` +
-        `You're running v${(game as any).version} — some features may not work until ${displayName} ships a v${coreMajor}-verified release.`,
+    notifyWarn(
+      'EMPUZZLES.NotifyDepVerifiedBehind',
+      {
+        module: MODULE_TITLE,
+        dependency: displayName,
+        dependencyVersion: mod.version,
+        verified: compat.verified,
+        coreVersion: (game as any).version,
+        coreMajor
+      },
       { permanent: false }
     );
   }
@@ -100,8 +114,8 @@ Hooks.once('init', async () => {
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {
-    name: 'Default ON Image',
-    hint: 'Default image path for the ON state of switches',
+    name: 'EMPUZZLES.SettingDefaultOnImage',
+    hint: 'EMPUZZLES.SettingDefaultOnImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -110,8 +124,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultOffImage', {
-    name: 'Default OFF Image',
-    hint: 'Default image path for the OFF state of switches',
+    name: 'EMPUZZLES.SettingDefaultOffImage',
+    hint: 'EMPUZZLES.SettingDefaultOffImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -120,8 +134,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultSound', {
-    name: 'Default Sound',
-    hint: 'Default sound for switch activation',
+    name: 'EMPUZZLES.SettingDefaultSound',
+    hint: 'EMPUZZLES.SettingDefaultSoundHint',
     scope: 'world',
     config: true,
     type: String,
@@ -130,8 +144,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultLightOnImage', {
-    name: 'Default Light ON Image',
-    hint: 'Default image path for the ON state of light tiles',
+    name: 'EMPUZZLES.SettingDefaultLightOnImage',
+    hint: 'EMPUZZLES.SettingDefaultLightOnImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -140,8 +154,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultLightOffImage', {
-    name: 'Default Light OFF Image',
-    hint: 'Default image path for the OFF state of light tiles',
+    name: 'EMPUZZLES.SettingDefaultLightOffImage',
+    hint: 'EMPUZZLES.SettingDefaultLightOffImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -150,8 +164,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultTrapImage', {
-    name: 'Default Trap Image',
-    hint: 'Default image path for trap tiles (starting state)',
+    name: 'EMPUZZLES.SettingDefaultTrapImage',
+    hint: 'EMPUZZLES.SettingDefaultTrapImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -160,8 +174,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultTrapTriggeredImage', {
-    name: 'Default Trap Triggered Image',
-    hint: 'Default image path for triggered trap tiles',
+    name: 'EMPUZZLES.SettingDefaultTrapTriggeredImage',
+    hint: 'EMPUZZLES.SettingDefaultTrapTriggeredImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -171,8 +185,8 @@ Hooks.once('init', async () => {
 
   // Register experimental features toggle
   game.settings.register('em-tile-utilities', 'experimentalFeatures', {
-    name: 'Experimental Features',
-    hint: 'Enable experimental features such as the Check State tile. These features may be incomplete or subject to change.',
+    name: 'EMPUZZLES.SettingExperimentalFeatures',
+    hint: 'EMPUZZLES.SettingExperimentalFeaturesHint',
     scope: 'world',
     config: true,
     type: Boolean,
@@ -184,17 +198,17 @@ Hooks.once('init', async () => {
   // cross-promotion. Each opens a small confirmation dialog before launching
   // the destination URL in a new tab.
   game.settings.registerMenu(MODULE_ID, 'patreonLink', {
-    name: 'Support on Patreon',
-    label: 'Visit Patreon',
-    hint: 'Support the development of this module on Patreon! Your contributions help fund new features and updates.',
+    name: 'EMPUZZLES.SupportOnPatreon',
+    label: 'EMPUZZLES.SettingPatreonLabel',
+    hint: 'EMPUZZLES.SettingPatreonHint',
     icon: 'fab fa-patreon',
     type: PatreonLink as any,
     restricted: true
   });
   game.settings.registerMenu(MODULE_ID, 'dmGuruLink', {
-    name: 'Dungeon Master Guru',
-    label: 'Visit Dungeon Master Guru',
-    hint: 'SRD rules and DM tools. Free resources for Dungeon Masters at dungeonmaster.guru.',
+    name: 'EMPUZZLES.DungeonMasterGuru',
+    label: 'EMPUZZLES.SettingDmGuruLabel',
+    hint: 'EMPUZZLES.SettingDmGuruHint',
     icon: 'fas fa-dragon',
     type: DmGuruLink as any,
     restricted: true
@@ -204,22 +218,16 @@ Hooks.once('init', async () => {
 // Check for dependencies
 Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
-    ui.notifications.error(
-      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Monk's Active Tiles to be installed and active."
-    );
+    notifyError('EMPUZZLES.NotifyRequiresMonksActiveTiles');
     return;
   }
 
   if (!game.modules.get('monks-tokenbar')?.active) {
-    ui.notifications.warn(
-      "Tile Utilities: Monk's Token Bar is not active. Saving throw features will be unavailable for traps and teleports."
-    );
+    notifyWarn('EMPUZZLES.NotifyMonksTokenBarInactive');
   }
 
   if (!game.modules.get('tagger')?.active) {
-    ui.notifications.error(
-      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Tagger to be installed and active."
-    );
+    notifyError('EMPUZZLES.NotifyRequiresTagger');
     return;
   }
 
@@ -282,7 +290,24 @@ function escapeHtml(str: string): string {
  * about what they are about to delete.
  */
 function getTileDisplayName(tile: any): string {
-  return tile?.name || tile?.flags?.['monks-active-tiles']?.name || 'Unnamed Tile';
+  return (
+    tile?.name ||
+    tile?.flags?.['monks-active-tiles']?.name ||
+    game.i18n.localize('EMPUZZLES.UnnamedTile')
+  );
+}
+
+/**
+ * Body markup for the "this tile has a partner tile, delete that too?" prompts.
+ * The name is HTML-escaped before it reaches `game.i18n.format`, which performs
+ * plain `{placeholder}` substitution and does no escaping of its own.
+ */
+function buildRelatedTileDeletionContent(messageKey: string, entity: any): string {
+  const message = game.i18n.format(messageKey, {
+    name: escapeHtml(getTileDisplayName(entity))
+  });
+  const prompt = game.i18n.localize('EMPUZZLES.DeleteRelatedTilePrompt');
+  return `<p>${message}</p><p>${prompt}</p>`;
 }
 
 /**
@@ -414,8 +439,11 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
         try {
           // Ask user for confirmation before deleting return teleport
           const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
-            window: { title: 'Delete Return Teleport?' },
-            content: `<p>This teleport has a return tile: <strong>"${escapeHtml(getTileDisplayName(entity))}"</strong></p><p>Do you want to delete it as well?</p>`,
+            window: { title: game.i18n.localize('EMPUZZLES.DeleteReturnTeleportConfirmTitle') },
+            content: buildRelatedTileDeletionContent(
+              'EMPUZZLES.DeleteReturnTeleportConfirmMessage',
+              entity
+            ),
             yes: { default: true }
           });
 
@@ -471,8 +499,11 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
           try {
             // Ask user for confirmation before deleting main teleport
             const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
-              window: { title: 'Delete Main Teleport?' },
-              content: `<p>This return teleport has a main tile: <strong>"${escapeHtml(getTileDisplayName(entity))}"</strong></p><p>Do you want to delete it as well?</p>`,
+              window: { title: game.i18n.localize('EMPUZZLES.DeleteMainTeleportConfirmTitle') },
+              content: buildRelatedTileDeletionContent(
+                'EMPUZZLES.DeleteMainTeleportConfirmMessage',
+                entity
+              ),
               yes: { default: true }
             });
 

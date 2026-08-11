@@ -12,13 +12,7 @@ import {
   createAnchorAction
 } from '../actions';
 import { createBaseTileData, createMonksConfig } from '../builders';
-import {
-  getGridSize,
-  getDefaultPosition,
-  generateUniqueEMTag,
-  parseCustomTags,
-  showTaggerWithWarning
-} from '../helpers';
+import { getGridSize, getDefaultPosition, generateUniqueEMTag, applyEMTags } from '../helpers';
 
 /**
  * Create a switch tile with ON/OFF states
@@ -109,12 +103,5 @@ export async function createSwitchTile(
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
 
   // Tag the switch tile using Tagger if available
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-    const switchTag = generateUniqueEMTag(config.name);
-    const allTags = [switchTag, ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(tile, allTags);
-    await showTaggerWithWarning(tile, switchTag);
-  }
+  await applyEMTags(tile, generateUniqueEMTag(config.name), { customTags: config.customTags });
 }

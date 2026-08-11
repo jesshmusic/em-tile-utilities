@@ -62,6 +62,8 @@ declare global {
     scenes?: Collection<Scene>;
     i18n: {
       localize(key: string): string;
+      /** Localize `key`, substituting `{placeholder}` tokens from `data`. */
+      format(key: string, data: Record<string, string | number>): string;
     };
   }
 
