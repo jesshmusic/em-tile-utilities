@@ -6,13 +6,13 @@ Technical notes for working on Dorman Lakely's Tile Utilities. **README.md is th
 
 A **FoundryVTT v14** module (v14-only — `module.json` declares `compatibility.minimum: "14"`) that provides point-and-click dialogs for building interactive tiles and regions on top of Monk's Active Tiles. TypeScript, ApplicationV2, bundled by Vite into a single IIFE.
 
-| Dependency                | Role                                   | Floor |
-| ------------------------- | -------------------------------------- | ----- |
-| FoundryVTT                | required                               | 14    |
-| Monk's Active Tiles       | required                               | 14.01 |
-| Tagger                    | required                               | 1.6.0 |
-| Monk's Token Bar          | suggested — saving throws              | 14.01 |
-| Enhanced Region Behaviors | suggested — trap and elevation regions | 1.5.0 |
+| Dependency                | Role                                           | Floor |
+| ------------------------- | ---------------------------------------------- | ----- |
+| FoundryVTT                | required                                       | 14    |
+| Monk's Active Tiles       | required                                       | 14.01 |
+| Tagger                    | required                                       | 1.6.0 |
+| Monk's Token Bar          | suggested — saving throws                      | 14.01 |
+| Enhanced Region Behaviors | optional — only for regions built before 2.3.0 | 1.5.0 |
 
 There is deliberately **no `relationships.systems` entry**. Foundry's `_testSupportedSystems` marks a package unavailable when none of its declared systems is installed, so declaring dnd5e would lock the module out entirely for non-dnd5e worlds — including the switch, light, reset, teleport and check-state tools, which are system-agnostic. dnd5e-specific code sits behind `isDnd5eSystem()` instead.
 
@@ -53,9 +53,11 @@ src/
 ├── settings/settings-menus.ts   # Patreon / DM Guru settings-menu entries
 ├── types/{module.ts,foundry.d.ts,dialog-positions.ts}
 └── utils/
-    ├── helpers/     # naming, tag, grid, folder, module-checks, rollback, tile-preview, dnd5e-activity
+    ├── helpers/     # naming, tag, grid, folder, module-checks, rollback, tile-preview,
+    │                #   dnd5e-activity, damage-application, localize
     ├── actions/     # 21 Monk's Active Tiles action builders across 7 modules
     ├── builders/    # base-tile, base-region, monks-config, entity, region-behavior
+    ├── region-behaviors/  # 5 RegionBehavior subtypes this module registers
     └── creators/    # 9 tile creators + 8 region creators
 ```
 
@@ -69,7 +71,6 @@ Shared creator utilities (use these rather than re-inlining):
 
 - `applyEMTags()` (`helpers/tag-helpers.ts`) — the Tagger epilogue: active-module guard, `globalThis.Tagger` lookup, custom-tag parsing, optional warning. Regions add `EM_Region`, trap regions add `EM_Trap`, teleport destinations take a `_Dest` suffix.
 - `resolveTargetEntity()` (`builders/entity-builders.ts`) — the trap target-type switch. Do not hand-roll it; the copy that was missing the `PLAYER_TOKENS` case shipped a bug for months.
-- `requireEnhancedRegionBehaviors()` (`helpers/module-checks.ts`) — ERB guard with a user-facing error.
 - `createRollbackTracker()` (`helpers/rollback-helpers.ts`) — records created documents so a later failure can unwind them. Note the deliberate asymmetry: `createLightTile` throws (the dialog guards the call), `createCombatTrapTile` returns null (it does not).
 
 ## Build system
@@ -192,8 +193,107 @@ Entity references:
 - **`values` vs `list`.** `getListFieldData` (apps/action-config.js:601) keys an object list by its own property names, but keys an _array_ by `g.id ?? g`. A `{ value, label }` array renders as `[object Object]`; hand MATT a `Record<id, label>` instead. `ctrl.list` may be a function, which MATT calls lazily at render time — that is how the damage type list reads a `CONFIG.DND5E` that does not exist yet during `init`.
 - **`name` is a key, `help` is not.** Action and ctrl names go through `i18n()` / `{{localize name}}`; `help` is rendered raw (`{{{help}}}`) and read as a plain property, so localize it in a getter rather than eagerly at registration.
 - **Sign convention.** `hurtheal` wants damage negative and flips it internally (`val = val * -1`). `applydamage` takes both damage and healing as positive formulas and distinguishes them by damage type — `healing` is a real dnd5e type whose sign `Actor5e#calculateDamage` inverts.
-- **Application chain**, mirroring Enhanced Region Behaviors exactly: midi-qol → `MidiQOL.applyTokenDamage(detail, total, targets, item, saves, { forceApply })` with `forceApply` read from the GM's own `autoApplyDamage` setting rather than overridden; no midi → `actor.applyDamage([{ value, type, properties: new Set() }])`; non-dnd5e → the bare-number form. `properties` must be a real `Set` — dnd5e calls `Set#intersection` on it for physical damage types.
+- **Application chain**, shared with the region traps via
+  `src/utils/helpers/damage-application.ts` and mirroring Enhanced Region
+  Behaviors exactly: midi-qol → `MidiQOL.applyTokenDamage(detail, total, targets, item, saves, { forceApply })` with `forceApply` read from the GM's own `autoApplyDamage` setting rather than overridden; no midi → `actor.applyDamage([{ value, type, properties: new Set() }])`; non-dnd5e → the bare-number form. `properties` must be a real `Set` — dnd5e calls `Set#intersection` on it for physical damage types.
 - **Old tiles keep working.** Existing tiles carry `hurtheal`, MATT's own action is untouched, and nothing rewrites saved tiles. The change affects newly created tiles only.
+
+## Region behavior subtypes this module owns
+
+`src/utils/region-behaviors/` registers five `RegionBehaviorType` subtypes into
+`CONFIG.RegionBehavior.dataModels` during `init`, declared in `module.json`'s
+`documentTypes.RegionBehavior`. That is Foundry's own extension point and the
+shape Enhanced Region Behaviors uses
+(`../enhanced-region-behavior/dist/enhanced-region-behavior.mjs:987-1017`).
+
+| Subtype                            | Replaces                                 |
+| ---------------------------------- | ---------------------------------------- |
+| `em-tile-utilities.Trap`           | `enhanced-region-behavior.Trap`          |
+| `em-tile-utilities.Elevation`      | `enhanced-region-behavior.Elevation`     |
+| `em-tile-utilities.SoundEffect`    | `enhanced-region-behavior.SoundEffect`   |
+| `em-tile-utilities.MovementFilter` | a generated `executeScript` gate         |
+| `em-tile-utilities.TriggerTile`    | a generated `executeScript` tile trigger |
+
+- **`documentTypes` is read by the SERVER, not the client.** A subtype missing
+  from the manifest is rejected with _"…is not a valid type for the
+  RegionBehavior Document class"_ no matter what `CONFIG` says — and the server
+  only re-reads package manifests when it boots or when you return to Setup.
+  Verified live on 14.364: with `CONFIG.RegionBehavior.dataModels` correctly
+  populated, creation still failed until the manifest was re-read. Upgrading to
+  2.3.0 therefore needs one trip through Setup, which is what Foundry already
+  asks for after any module update.
+- **Field names match ERB's exactly** where they overlap, so an existing ERB
+  behavior's `_source` is a valid source for ours. Two deliberate differences:
+  `properties` (damage bypass ids) is new, and `saveDC` is a `StringField` so a
+  GM can write `10 + 1d4` — ERB stored a number and rolled `String(this.saveDC)`
+  anyway.
+- **Handlers are free functions, not methods.** `handleTrapRegionEvent(trap,
+event)` takes the data model as its first argument and the class is a
+  three-line wrapper. That is what makes them unit-testable without
+  instantiating a `DataModel`; assert on what reaches `applyDamage`.
+- **`choices` callbacks must return `undefined`, never `{}`,** when the running
+  system has nothing to offer. A `StringField` whose choices resolve to an empty
+  object rejects every value, which would make trap regions uncreatable outside
+  dnd5e.
+- **`event.user.isSelf` gates every handler except the sound.** Region events go
+  to every connected client; without the guard a four-player table rolls and
+  applies the trap four times. The sound is the exception because
+  `AudioHelper.play(…, true)` already broadcasts.
+- **Localization lives under `EM_PUZZLE_TRAP_TILES.Regions`, not `EMPUZZLES`.**
+  Data model localization is inherently nested (`<prefix>.FIELDS.<field>.label`)
+  and `tests/localization.test.ts` requires every `EMPUZZLES` key to be a flat,
+  referenced string. Type labels go at `TYPES.RegionBehavior.<subtype id>`,
+  which is a path Foundry resolves and we do not get to choose.
+- **`localizeDataModel` runs on `i18nInit`**, called on the `Localization` class
+  rather than destructured — it is a static that reads `this`.
+
+### Existing worlds are not migrated, deliberately
+
+Regions built before 2.3.0 keep their `enhanced-region-behavior.*` behaviors and
+are still run by ERB. Nothing rewrites saved documents. A migration would have
+to walk every scene rewriting embedded documents this module did not create,
+could not be undone, and would strand the same worlds the other way round if the
+GM later disabled this module. `src/utils/region-behaviors/index.ts` carries the
+full argument. Verified live: an ERB-typed trap region fires, rolls and damages
+exactly as before, and the new `MovementFilter` forwards to it through
+`system._handleRegionEvent` — the same call ERB makes for its own chaining.
+
+### Custom MATT action: `em-tile-utilities.useactivity`
+
+`src/utils/actions/use-activity-tile-action.ts`. Monk's own `attack` action is
+broken on dnd5e 5.x in two independent ways, both re-confirmed live on 5.3.3:
+
+- MATT calls `item.use({ rollMode, flavor, skipDialog, fastForward })`
+  (../monks-active-tiles/actions.js:4746-4751) against a `(config, dialog,
+message)` signature, so everything lands in `config`. `fastforward` does not
+  skip the dialog and the flavor never reaches the card.
+- MATT then reads `item?.rollDamage` (actions.js:4767).
+  `Item5e.prototype.rollDamage` is `undefined` — damage rolling moved onto
+  Activities — so `rolldamage` is inert whatever the GM ticks.
+
+This action calls `Activity#use(usage, dialog, message)` with the arguments in
+their real slots, and addresses **activities** rather than items, which is what
+makes **check** activities (spot the trap, disarm the trap) expressible at all.
+
+- **Activities are addressed as `<itemId>:<activityId>`.** Activity ids are only
+  unique within their item. MATT's grouped list builds an option value as
+  `` `${group.id}:${key}` `` (apps/action-config.js:617), so grouping by item
+  gives the composite id for free; `parseActivityRef` reads it back.
+- **`ctrl.list` is called as `ctrl.list.call(app, app, action, data)`** and may
+  return a Promise (action-config.js:1253-1256), so the activity list can depend
+  on the actor already chosen in the same sheet.
+- **`fastforward` defaults to TRUE here**, unlike MATT's attack action. A tile
+  that fires on its own must not stop to ask the GM to configure the roll.
+- **Targets are restored afterwards.** MATT's attack action releases the GM's
+  targets and never puts them back.
+- **Never import `EM_ACTION_NAMESPACE` from `apply-damage-tile-action.ts`.**
+  That file owns `registerEmTileActions()` and imports every other action
+  module; importing back makes them circular, and in the IIFE bundle Rollup hits
+  the `const` in its temporal dead zone and throws a `ReferenceError` **above**
+  every `init` hook, killing the entire module — no settings, no tools, no
+  dialogs. Typecheck, lint and the unit suite all pass regardless, because Jest
+  loads each module independently. Declare a local const per module, as all
+  three siblings do; `tests/integration/action-module-cycles.test.ts` enforces it.
 
 ## dnd5e integration
 

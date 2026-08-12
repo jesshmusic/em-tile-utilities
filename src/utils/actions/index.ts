@@ -14,4 +14,5 @@ export * from './flow-control-actions';
 export * from './monks-tokenbar-actions';
 export * from './puzzle-actions';
 export * from './tile-actions';
+export * from './use-activity-tile-action';
 export * from './variable-actions';

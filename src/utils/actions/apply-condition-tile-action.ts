@@ -37,6 +37,7 @@ import {
   type ConditionDurationUnit
 } from '../helpers/dnd5e-conditions';
 import { isDnd5eSystem } from '../helpers/dnd5e-activity';
+import { localize } from '../helpers/localize';
 
 /**
  * Namespace for actions this module registers. Must be the module id.
@@ -74,12 +75,6 @@ export interface ApplyConditionActionData {
   durationunit: ConditionDurationUnit;
   /** Amount of `durationunit`. Ignored when the unit is `untilRemoved`. */
   durationvalue: number;
-}
-
-function localize(key: string, data?: Record<string, unknown>): string {
-  const i18n = (globalThis as any).game?.i18n;
-  if (!i18n) return key;
-  return data ? (i18n.format?.(key, data) ?? key) : (i18n.localize?.(key) ?? key);
 }
 
 /** The live `MonksActiveTiles` class, if the module has installed it. */

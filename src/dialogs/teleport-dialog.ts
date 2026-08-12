@@ -2,7 +2,6 @@ import { createTeleportTile, createTeleportRegion } from '../utils/creators';
 import {
   getNextTileNumber,
   hasMonksTokenBar,
-  hasEnhancedRegionBehaviors,
   startDragPlacePreview,
   DragPlacePreviewManager
 } from '../utils/helpers';
@@ -193,7 +192,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       createReturnTeleport: this.createReturnTeleport,
       customTags: this.customTags,
       hasMonksTokenBar: hasMonksTokenBar(),
-      hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors(),
       creationType: this.creationType,
       regionAllowChoice: this.regionAllowChoice,
       returnAllowChoice: this.returnAllowChoice,

@@ -43,6 +43,112 @@
         "UnitHours": "Hours",
         "DurationValue": "Duration Amount",
         "DurationValueHelp": "How many rounds, turns, minutes or hours the condition lasts. Ignored when the duration is \"Until removed\". Rounds and turns only tick during combat; minutes and hours tick with world time."
+      },
+      "UseActivity": {
+        "Name": "Use Activity",
+        "Activity": "Activity",
+        "ActivityHelp": "Any activity on any of the actor's items — attack, save, damage, heal, or a <b>check</b> for spotting or disarming the trap.",
+        "FastForwardHelp": "Roll straight away instead of opening the activity dialog."
+      }
+    },
+    "Regions": {
+      "Trap": {
+        "FIELDS": {
+          "saveDC": {
+            "label": "DC",
+            "hint": "The DC to beat. A plain number, or a formula such as 10 + 1d4."
+          },
+          "saveAbility": {
+            "label": "Saving Throw",
+            "hint": "Ability saving throws the creature may attempt. Offering more than one lets the player choose."
+          },
+          "skillChecks": {
+            "label": "Skill Checks",
+            "hint": "Used instead of a saving throw when no ability is chosen. Offering more than one lets the player choose."
+          },
+          "damage": {
+            "label": "Damage",
+            "hint": "Damage rolled when the save fails."
+          },
+          "savedDamage": {
+            "label": "Damage if Saved",
+            "hint": "Damage rolled when the save succeeds. Leave blank for no damage on a successful save."
+          },
+          "damageType": {
+            "label": "Damage Type",
+            "hint": "The type of damage dealt, so resistance and immunity apply."
+          },
+          "properties": {
+            "label": "Bypasses",
+            "hint": "Damage bypass properties such as magical or silvered, so the trap cuts through matching resistance."
+          },
+          "automateDamage": {
+            "label": "Apply Damage",
+            "hint": "Apply the rolled damage to the creature. Untick to roll it publicly and adjudicate by hand."
+          },
+          "saveFailedMessage": {
+            "label": "Failed Message",
+            "hint": "Chat message posted when the save fails. {name}, {damage} and {type} are substituted."
+          },
+          "saveSucceededMessage": {
+            "label": "Success Message",
+            "hint": "Chat message posted when the save succeeds. {name}, {damage} and {type} are substituted."
+          },
+          "triggerBehaviorOnSave": {
+            "label": "Trigger on Save",
+            "hint": "Other region behaviors to run when the save succeeds."
+          },
+          "triggerBehaviorOnFail": {
+            "label": "Trigger on Fail",
+            "hint": "Other region behaviors to run when the save fails."
+          }
+        },
+        "DialogTitle": "Trap",
+        "ChooseAbility": "Choose which ability to make the save with.",
+        "ChooseSkill": "Choose which skill to make the check with.",
+        "DamageRoll": "Trap Damage",
+        "DefaultFailedMessage": "{name} triggered a trap and took {damage} {type} damage!",
+        "DefaultSucceededMessage": "{name} avoided the worst of a trap."
+      },
+      "Elevation": {
+        "FIELDS": {
+          "elevation": {
+            "label": "Elevation",
+            "hint": "The elevation tokens are moved to."
+          }
+        }
+      },
+      "SoundEffect": {
+        "FIELDS": {
+          "soundPath": {
+            "label": "Sound File",
+            "hint": "The audio file to play for everyone at the table."
+          },
+          "volume": {
+            "label": "Volume",
+            "hint": "Playback volume, from 0 to 1."
+          }
+        }
+      },
+      "MovementFilter": {
+        "FIELDS": {
+          "movementActions": {
+            "label": "Movement Actions",
+            "hint": "Only these ways of moving trigger the behaviors this filter guards. A flying creature can cross a pressure plate untouched."
+          },
+          "gateKey": {
+            "label": "Filter Key",
+            "hint": "Links this filter to the behaviors it guards. Set automatically; change it only if you know what you are doing."
+          }
+        }
+      },
+      "TriggerTile": {
+        "FIELDS": {
+          "tileIds": {
+            "label": "Tiles",
+            "hint": "Ids of the tiles on this scene to trigger."
+          }
+        }
       }
     }
   },
@@ -534,8 +640,6 @@
     "SaveSuccessMessageHint": "Message displayed when the saving throw succeeds",
     "Region": "Region",
     "Regions": "Regions",
-    "EnhancedRegionModuleTitle": "Want More Region Features?",
-    "EnhancedRegionModuleDescription": "Install Enhanced Region Behaviors to unlock native region-based traps and teleports, elevation regions, and more. Available on the FoundryVTT package manager.",
     "SelectRegion": "Select Region",
     "EditRegion": "Edit Region",
     "DeleteRegion": "Delete Region",
@@ -743,7 +847,6 @@
     "NotifyReturnTeleportTileCreated": "Return teleport tile created at the destination.",
     "NotifyReturnTeleportFailed": "Failed to create the return teleport tile: {error}",
     "NotifyTileTagged": "Tile tagged with \"{tag}\". Do not remove tags this module generated.",
-    "NotifyEnhancedRegionBehaviorsRequired": "The Enhanced Region Behaviors module is required for {plural}. Install and enable it from the Foundry module browser — without it, {plural} cannot {limitation}.",
     "NotifyPreviewImageFailed": "Could not load the preview image: {path}",
     "NotifyLightTileFailed": "Failed to create the light tile: {reason}",
     "NotifyCombatTrapFailed": "Failed to create the combat trap: {reason}",
@@ -815,6 +918,16 @@
     "NotifyPlaceGasCloudRegion": "Drag on the canvas to place and size the gas cloud. Press ESC to cancel.",
     "NotifyGasCloudCreated": "Gas cloud \"{name}\" created!",
     "NotifyAuraCreated": "Aura \"{name}\" attached to the token!",
-    "NotifyGasCloudFailed": "Dorman Lakely's Tile Utilities | Failed to create gas cloud: {error}"
+    "NotifyGasCloudFailed": "Dorman Lakely's Tile Utilities | Failed to create gas cloud: {error}",
+    "NotifyRegionBehaviorsNeedRestart": "This version added new region behaviours, and Foundry only registers them when the server reloads the module list. Return to Setup and relaunch your world, then try again — otherwise the region would be created with none of its behaviours."
+  },
+  "TYPES": {
+    "RegionBehavior": {
+      "em-tile-utilities.Trap": "Trap",
+      "em-tile-utilities.Elevation": "Set Elevation",
+      "em-tile-utilities.SoundEffect": "Play Sound",
+      "em-tile-utilities.MovementFilter": "Movement Filter",
+      "em-tile-utilities.TriggerTile": "Trigger Tiles"
+    }
   }
 }

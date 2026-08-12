@@ -3,10 +3,11 @@ import { createBaseRegionData, createRectangleShape } from '../builders/base-reg
 import {
   createTeleportTokenRegionBehavior,
   createPauseGameRegionBehavior,
-  createEnhancedSoundRegionBehavior,
+  createEmSoundRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
+import { requireEmRegionBehaviors } from '../helpers/module-checks';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { notifyError, notifyInfo, notifyWarn } from '../../dialogs/notify';
 
@@ -43,6 +44,11 @@ export async function createTeleportRegion(
   width?: number,
   height?: number
 ): Promise<void> {
+  // The server may not have picked up our RegionBehavior subtypes yet; it
+  // rejects them by returning an empty array rather than throwing, which
+  // would leave a region that looks created and does nothing.
+  if (!requireEmRegionBehaviors()) return;
+
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
   const regionWidth = width ?? gridSize;
@@ -122,7 +128,7 @@ export async function createTeleportRegion(
   // Sound first, so it starts before the token is moved away.
   if (config.sound && config.sound.trim() !== '') {
     sourceBehaviors.push(
-      createEnhancedSoundRegionBehavior({
+      createEmSoundRegionBehavior({
         name: `${config.name} - Sound`,
         soundPath: config.sound,
         volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,
@@ -162,7 +168,7 @@ export async function createTeleportRegion(
 
     if (config.sound && config.sound.trim() !== '') {
       destBehaviors.push(
-        createEnhancedSoundRegionBehavior({
+        createEmSoundRegionBehavior({
           name: `Return: ${config.name} - Sound`,
           soundPath: config.sound,
           volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,

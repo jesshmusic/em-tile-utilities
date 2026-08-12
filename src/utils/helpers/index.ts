@@ -2,8 +2,10 @@
  * Helper utilities for tile creation and management
  */
 
+export * from './damage-application';
 export * from './damage-properties';
 export * from './damage-types';
+export * from './localize';
 export * from './status-effects';
 export * from './dnd5e-activity';
 export * from './dnd5e-conditions';

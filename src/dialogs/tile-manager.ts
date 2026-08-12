@@ -93,10 +93,6 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       'experimentalFeatures'
     ) as boolean;
 
-    // Check if Enhanced Region Behaviors is installed
-    const hasEnhancedRegionBehaviors =
-      (game as any).modules.get('enhanced-region-behavior')?.active ?? false;
-
     // Version and build number are baked in at build time by Vite's `define`
     // (see vite.config.ts). This was previously reading version from
     // `game.modules.get('em-tile-utilities').version`, but Foundry caches the
@@ -117,7 +113,6 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         searchQuery: this.searchQuery,
         experimentalFeatures: experimentalFeatures,
         isDnd5e: isDnd5eSystem(),
-        hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
         version: version,
         buildNumber: buildNumber
       };
@@ -286,7 +281,6 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       searchQuery: this.searchQuery,
       experimentalFeatures: experimentalFeatures,
       isDnd5e: isDnd5eSystem(),
-      hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
       version: version,
       buildNumber: buildNumber
     };
