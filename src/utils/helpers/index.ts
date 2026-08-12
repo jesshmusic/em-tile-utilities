@@ -3,6 +3,7 @@
  */
 
 export * from './damage-types';
+export * from './status-effects';
 export * from './dnd5e-activity';
 export * from './folder-helpers';
 export * from './grid-helpers';

@@ -11,7 +11,8 @@ import {
   getItemActivities,
   extractTrapActivityData,
   getDamageTypeOptions,
-  DEFAULT_DAMAGE_TYPE
+  DEFAULT_DAMAGE_TYPE,
+  getStatusEffectOptions
 } from '../utils/helpers';
 import type { TrapActivityData } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
@@ -297,65 +298,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       { value: 'save:cha', label: 'EMPUZZLES.CharismaSave' }
     ];
 
-    // Prepare effect options (active effects from game system)
-    // Order by most common to least common for trap usage
-    // Only include core D&D 5e conditions and relevant trap effects (exclude MonksLittleDetails tracking effects)
-    const effectPriority = [
-      'poisoned',
-      'restrained',
-      'prone',
-      'blinded',
-      'frightened',
-      'stunned',
-      'paralyzed',
-      'incapacitated',
-      'grappled',
-      'deafened',
-      'charmed',
-      'slowed',
-      'exhaustion',
-      'burning',
-      'bleeding',
-      'unconscious',
-      'petrified',
-      'cursed',
-      'diseased',
-      'silenced',
-      'invisible',
-      'hasted',
-      'dead'
-    ];
-
-    const effectOptions: any[] = [];
-    const globalConfig = (globalThis as any).CONFIG;
-    if (globalConfig?.statusEffects) {
-      // Create a map of effects by ID (lowercase for case-insensitive matching)
-      const effectsMap = new Map<string, any>();
-      globalConfig.statusEffects.forEach((effect: any) => {
-        const id = (effect.id || effect.name || '').toLowerCase();
-        const label = effect.label || effect.name || '';
-
-        // Skip MonksLittleDetails effects (check both ID and label)
-        if (label.includes('MonksLittleDetails') || id.includes('monkslittledetails')) {
-          return;
-        }
-
-        // Only include effects in our priority list
-        if (effectPriority.includes(id)) {
-          effectsMap.set(id, {
-            value: effect.id || effect.name,
-            label: effect.label || effect.name
-          });
-        }
-      });
-
-      // Add effects in priority order
-      effectPriority.forEach(priorityId => {
-        if (effectsMap.has(priorityId)) {
-          effectOptions.push(effectsMap.get(priorityId));
-        }
-      });
-    }
+    // Status effects come from the system so this list cannot silently drift
+    // from dnd5e's — see src/utils/helpers/status-effects.ts, which orders the
+    // trap-relevant ones first and then appends everything else the system
+    // defines rather than filtering to a hardcoded allow-list.
+    const effectOptions = getStatusEffectOptions();
 
     // Damage types come from the system so this list cannot silently drift from
     // dnd5e's. Shared with the custom `em-tile-utilities.applydamage` Monk's

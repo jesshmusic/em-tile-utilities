@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2026-08-12
+
+### Fixed
+
+- **The trap effect list was missing twelve real D&D 5e conditions, and offered two that do not exist.** The list of status effects a trap can apply was a hardcoded allow-list, checked against the system's effects — so anything not written into that array was silently dropped from the dropdown. Against dnd5e 5.3.3 that meant **Dehydration, Falling, Inaudible, Malnutrition, Suffocation, Surprised** and **Transformed** could not be selected at all, along with the three cover levels (Half, Three-Quarters, Total). Meanwhile it offered "Slowed" and "Hasted", which are not D&D 5e conditions — they come from other modules, so those two entries never matched anything and never appeared. The list is now sourced from the system itself and the curated array only controls **ordering**: the effects a trap most often applies still sit at the top, and everything else the system defines appears below them. A condition added by a future D&D 5e release, or registered by another module, now shows up on its own.
+
 ## [2.2.0] - 2026-08-11
 
 A correctness release. Three features that appeared to work in the UI never actually did anything at the table — saving throws, trap damage under midi-qol, and the Reset tile — and this release fixes all three, along with the dnd5e 5.3.3 and Monk's Active Tiles 14.01 integration points that had silently drifted out of date.
