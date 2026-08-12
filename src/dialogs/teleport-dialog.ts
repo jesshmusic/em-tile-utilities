@@ -7,7 +7,7 @@ import {
   DragPlacePreviewManager
 } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
-import { CreationType, RegionBehaviorMode } from '../types/module';
+import { CreationType } from '../types/module';
 import type { TeleportTileConfig } from '../types/module';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -720,7 +720,6 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
               scene,
               {
                 ...config,
-                behaviorMode: RegionBehaviorMode.NATIVE,
                 allowChoice: this.regionAllowChoice,
                 returnAllowChoice: this.returnAllowChoice
               },

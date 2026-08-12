@@ -150,6 +150,29 @@ export async function createLightTile(
           })
         );
       }
+    } else {
+      // Darkness mode: Foundry's own darkness band on the AmbientLight turns the
+      // light on and off, so none of the toggle actions above are needed. The tile
+      // ART still has to follow, though -- otherwise the GM picks an ON Image that
+      // is never shown and the brazier stays unlit-looking after dusk.
+      //
+      // MATT re-fires a `darkness` trigger on EVERY darkness change, in both
+      // directions (monks-active-tiles.js, the updateScene hook), so this cannot
+      // be a blind 'next'. Instead pick the image by comparing the current
+      // darkness against the same threshold the light band uses.
+      //
+      // `darkness` is a top-level key on every action's args
+      // (`darkness: canvas.darknessLevel` in TileDocument#trigger), getValue puts
+      // it into the Handlebars context, and tileimage runs `select` through
+      // getValue -- so this expression resolves. `gte` is one of the helpers
+      // Foundry v14 registers globally.
+      //
+      // Indices are 1-BASED: MATT does Math.clamp(parseInt(select), 1, len).
+      // files is [offImage, onImage], so 1 = off, 2 = on.
+      const threshold = config.darknessMin ?? 0.5;
+      actions.push(
+        createTileImageAction('tile', `{{#if (gte darkness ${threshold})}}2{{else}}1{{/if}}`)
+      );
     }
 
     // Create main tile

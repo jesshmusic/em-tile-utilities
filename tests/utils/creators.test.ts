@@ -294,7 +294,12 @@ describe('creators', () => {
       expect(activateAction).toBeDefined();
     });
 
-    it('should not include toggle actions for darkness-based lights', async () => {
+    // This used to assert `actions.length === 0`, which encoded the bug as the
+    // contract: with no actions at all the tile art never followed the light,
+    // so the ON Image the dialog collects was silently unused. The real
+    // contract is that darkness lights carry the image swap and nothing else --
+    // the AmbientLight's own band does the illumination.
+    it('should carry only the image swap for darkness-based lights', async () => {
       lightConfig.useDarkness = true;
 
       await createLightTile(mockScene, lightConfig, 300, 300);
@@ -303,7 +308,9 @@ describe('creators', () => {
       const tileData = tileCall[1][0];
       const actions = tileData.flags['monks-active-tiles'].actions;
 
-      expect(actions.length).toBe(0);
+      expect(actions).toHaveLength(1);
+      expect(actions[0].action).toBe('tileimage');
+      expect(actions.some((a: any) => ['activate', 'showhide'].includes(a.action))).toBe(false);
     });
   });
 

@@ -6,14 +6,6 @@ export enum CreationType {
   REGION = 'region'
 }
 
-/**
- * Enum for region behavior mode
- */
-export enum RegionBehaviorMode {
-  MONKS_MACRO = 'monks-macro',
-  NATIVE = 'native'
-}
-
 export interface SwitchConfig {
   name: string;
   variableName: string;
