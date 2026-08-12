@@ -140,6 +140,7 @@ declare global {
       sceneHeight: number;
     };
     createEmbeddedDocuments(type: string, data: any[]): Promise<any>;
+    updateEmbeddedDocuments(type: string, updates: any[]): Promise<any>;
   }
 
   interface Tile {

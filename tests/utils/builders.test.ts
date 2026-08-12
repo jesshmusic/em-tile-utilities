@@ -15,9 +15,9 @@ import {
   createExecuteMacroRegionBehavior,
   createTeleportTokenRegionBehavior,
   createPauseGameRegionBehavior,
-  createEnhancedTrapRegionBehavior,
-  createEnhancedSoundRegionBehavior,
-  createEnhancedElevationRegionBehavior
+  createEmTrapRegionBehavior,
+  createEmSoundRegionBehavior,
+  createEmElevationRegionBehavior
 } from '../../src/utils/builders/region-behavior-builder';
 
 describe('Base Region Builder', () => {
@@ -89,7 +89,10 @@ describe('Base Region Builder', () => {
       expect(region.color).toBe('#4080ff');
       expect(region.behaviors).toEqual([]);
       expect(region.elevation).toEqual({ bottom: null, top: null });
-      expect(region.visibility).toBe(0);
+      // LAYER_UNLOCKED (4), matching Foundry's own schema default. This used
+      // to be LAYER (0), which made a region built by this module behave
+      // differently from one a GM drew by hand.
+      expect(region.visibility).toBe(4);
       expect(region.locked).toBe(false);
     });
 
@@ -285,29 +288,56 @@ describe('Region Behavior Builder', () => {
     });
   });
 
-  describe('createEnhancedTrapRegionBehavior', () => {
-    it('should create enhanced trap behavior with defaults', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+  describe('createEmTrapRegionBehavior', () => {
+    it('should create trap behavior with defaults', () => {
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '2d6'
       });
 
-      expect(behavior.type).toBe('enhanced-region-behavior.Trap');
+      expect(behavior.type).toBe('em-tile-utilities.Trap');
       expect(behavior.name).toBe('Trap');
-      expect(behavior.system.saveDC).toBe(15);
+      // A string, not a number: the schema field is a StringField so a GM can
+      // write a formula DC such as `10 + 1d4`.
+      expect(behavior.system.saveDC).toBe('15');
       expect(behavior.system.saveAbility).toEqual(['dex']);
       expect(behavior.system.damage).toBe('2d6');
       expect(behavior.system.automateDamage).toBe(true);
       expect(behavior.system.damageType).toBe('piercing');
       expect(behavior.system.savedDamage).toBe('');
       expect(behavior.system.skillChecks).toEqual([]);
+      expect(behavior.system.properties).toEqual([]);
       expect(behavior.system.events).toEqual([RegionEvents.TOKEN_ENTER]);
       expect(behavior.disabled).toBe(false);
     });
 
+    it('carries damage bypass properties, which the ERB behavior could not', () => {
+      const behavior = createEmTrapRegionBehavior({
+        saveAbility: 'dex',
+        saveDC: 15,
+        damage: '2d6',
+        properties: ['mgc', 'sil']
+      });
+
+      // An ARRAY, never a Set: region behavior system data is persisted as JSON
+      // and a Set serializes to `{}`. The handler rebuilds the Set at trigger
+      // time, exactly as the applydamage tile action does.
+      expect(behavior.system.properties).toEqual(['mgc', 'sil']);
+    });
+
+    it('accepts a formula DC verbatim', () => {
+      const behavior = createEmTrapRegionBehavior({
+        saveAbility: 'dex',
+        saveDC: '10 + 1d4',
+        damage: '2d6'
+      });
+
+      expect(behavior.system.saveDC).toBe('10 + 1d4');
+    });
+
     it('should handle ability with colon prefix', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'save:str',
         saveDC: 12,
         damage: '1d8'
@@ -317,7 +347,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should handle array of abilities', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: ['dex', 'con'],
         saveDC: 14,
         damage: '3d6'
@@ -327,7 +357,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should handle array of abilities with colon prefix', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: ['save:dex', 'save:wis'],
         saveDC: 16,
         damage: '2d8'
@@ -337,7 +367,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom damage type', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '4d6',
@@ -348,7 +378,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply saved damage', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '4d6',
@@ -359,7 +389,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply skill checks', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '2d6',
@@ -370,7 +400,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should disable automateDamage', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'con',
         saveDC: 18,
         damage: '5d6',
@@ -381,7 +411,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom messages', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '2d6',
@@ -394,7 +424,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply trigger behaviors', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '2d6',
@@ -407,7 +437,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom events', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         saveAbility: 'dex',
         saveDC: 15,
         damage: '2d6',
@@ -418,7 +448,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom name', () => {
-      const behavior = createEnhancedTrapRegionBehavior({
+      const behavior = createEmTrapRegionBehavior({
         name: 'Spike Trap',
         saveAbility: 'dex',
         saveDC: 15,
@@ -429,13 +459,13 @@ describe('Region Behavior Builder', () => {
     });
   });
 
-  describe('createEnhancedSoundRegionBehavior', () => {
-    it('should create enhanced sound behavior with defaults', () => {
-      const behavior = createEnhancedSoundRegionBehavior({
+  describe('createEmSoundRegionBehavior', () => {
+    it('should create sound behavior with defaults', () => {
+      const behavior = createEmSoundRegionBehavior({
         soundPath: 'sounds/trap.ogg'
       });
 
-      expect(behavior.type).toBe('enhanced-region-behavior.SoundEffect');
+      expect(behavior.type).toBe('em-tile-utilities.SoundEffect');
       expect(behavior.name).toBe('Sound Effect');
       expect(behavior.system.soundPath).toBe('sounds/trap.ogg');
       expect(behavior.system.volume).toBe(0.8);
@@ -444,7 +474,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom name', () => {
-      const behavior = createEnhancedSoundRegionBehavior({
+      const behavior = createEmSoundRegionBehavior({
         name: 'Trap Sound',
         soundPath: 'sounds/click.wav'
       });
@@ -453,7 +483,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom volume', () => {
-      const behavior = createEnhancedSoundRegionBehavior({
+      const behavior = createEmSoundRegionBehavior({
         soundPath: 'sounds/alert.ogg',
         volume: 0.5
       });
@@ -462,7 +492,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom events', () => {
-      const behavior = createEnhancedSoundRegionBehavior({
+      const behavior = createEmSoundRegionBehavior({
         soundPath: 'sounds/exit.ogg',
         events: [RegionEvents.TOKEN_EXIT]
       });
@@ -471,13 +501,13 @@ describe('Region Behavior Builder', () => {
     });
   });
 
-  describe('createEnhancedElevationRegionBehavior', () => {
-    it('should create enhanced elevation behavior with defaults', () => {
-      const behavior = createEnhancedElevationRegionBehavior({
+  describe('createEmElevationRegionBehavior', () => {
+    it('should create elevation behavior with defaults', () => {
+      const behavior = createEmElevationRegionBehavior({
         elevation: 20
       });
 
-      expect(behavior.type).toBe('enhanced-region-behavior.Elevation');
+      expect(behavior.type).toBe('em-tile-utilities.Elevation');
       expect(behavior.name).toBe('Set Elevation');
       expect(behavior.system.elevation).toBe(20);
       expect(behavior.system.events).toEqual([RegionEvents.TOKEN_ENTER]);
@@ -485,7 +515,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom name', () => {
-      const behavior = createEnhancedElevationRegionBehavior({
+      const behavior = createEmElevationRegionBehavior({
         name: 'Stairs Up',
         elevation: 10
       });
@@ -494,7 +524,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should handle negative elevation', () => {
-      const behavior = createEnhancedElevationRegionBehavior({
+      const behavior = createEmElevationRegionBehavior({
         elevation: -15
       });
 
@@ -502,7 +532,7 @@ describe('Region Behavior Builder', () => {
     });
 
     it('should apply custom events', () => {
-      const behavior = createEnhancedElevationRegionBehavior({
+      const behavior = createEmElevationRegionBehavior({
         elevation: 0,
         events: [RegionEvents.TOKEN_MOVE_IN, RegionEvents.TOKEN_MOVE_WITHIN]
       });

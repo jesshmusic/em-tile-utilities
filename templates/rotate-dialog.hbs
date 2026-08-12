@@ -1,0 +1,138 @@
+{{! Rotating Room Region Configuration }}
+<fieldset class="basic-info-section">
+  <legend>
+    {{localize "EMPUZZLES.BasicInfo"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="regionName">{{localize "EMPUZZLES.RegionName"}}</label>
+    <input type="text" id="regionName" name="regionName" value="{{regionName}}" />
+    <p class="hint">{{localize "EMPUZZLES.RegionNameHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Rotation Settings }}
+<fieldset class="rotate-settings-section">
+  <legend>
+    {{localize "EMPUZZLES.RotateSettings"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="angles">{{localize "EMPUZZLES.RotateAngles"}}</label>
+    <input type="text" id="angles" name="angles" value="{{anglesText}}" placeholder="0, 90" />
+    <p class="hint">{{localize "EMPUZZLES.RotateAnglesHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="rotationTime">{{localize "EMPUZZLES.RotateTime"}}</label>
+    <input type="number" id="rotationTime" name="rotationTime" value="{{rotationTime}}" min="0" step="100" />
+    <p class="hint">{{localize "EMPUZZLES.RotateTimeHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="speedMode">{{localize "EMPUZZLES.RotateSpeedMode"}}</label>
+    <select id="speedMode" name="speedMode">
+      {{#each speedModeOptions as |option|}}
+        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="directionMode">{{localize "EMPUZZLES.RotateDirectionMode"}}</label>
+    <select id="directionMode" name="directionMode">
+      {{#each directionModeOptions as |option|}}
+        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.RotateDirectionModeHint"}}</p>
+  </div>
+</fieldset>
+
+{{! What comes along }}
+<fieldset class="rotate-contents-section">
+  <legend>
+    {{localize "EMPUZZLES.RotateContents"}}
+  </legend>
+
+  <p class="hint">{{localize "EMPUZZLES.RotateContentsHint"}}</p>
+
+  <div class="form-group">
+    <label class="checkbox">
+      <input type="checkbox" name="includeWalls" {{#if includeWalls}}checked{{/if}} />
+      {{localize "EMPUZZLES.RotateIncludeWalls"}} ({{selectionCounts.walls}})
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="includeTiles" {{#if includeTiles}}checked{{/if}} />
+      {{localize "EMPUZZLES.RotateIncludeTiles"}} ({{selectionCounts.tiles}})
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="includeLights" {{#if includeLights}}checked{{/if}} />
+      {{localize "EMPUZZLES.RotateIncludeLights"}} ({{selectionCounts.lights}})
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="includeSounds" {{#if includeSounds}}checked{{/if}} />
+      {{localize "EMPUZZLES.RotateIncludeSounds"}} ({{selectionCounts.sounds}})
+    </label>
+  </div>
+
+  <div class="form-group">
+    <button type="button" data-action="refreshSelection">
+      <i class="gi-clockwise-rotation" aria-hidden="true"></i>
+      {{localize "EMPUZZLES.RotateRefreshSelection"}}
+    </button>
+    <p class="hint">{{localize "EMPUZZLES.RotateRefreshSelectionHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label class="checkbox">
+      <input type="checkbox" name="linkWalls" {{#if linkWalls}}checked{{/if}} />
+      {{localize "EMPUZZLES.RotateLinkWalls"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.RotateLinkWallsHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Switch tile }}
+<fieldset class="rotate-switch-section">
+  <legend>
+    {{localize "EMPUZZLES.RotateSwitch"}}
+  </legend>
+
+  <div class="form-group">
+    <label class="checkbox">
+      <input type="checkbox" name="createSwitch" {{#if createSwitch}}checked{{/if}} />
+      {{localize "EMPUZZLES.RotateCreateSwitch"}}
+    </label>
+    <p class="hint">{{localize "EMPUZZLES.RotateCreateSwitchHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="switchImage">{{localize "EMPUZZLES.RotateSwitchImage"}}</label>
+    <input type="text" id="switchImage" name="switchImage" value="{{switchImage}}" />
+    <button type="button" data-file-picker="switchImage" data-file-picker-type="imagevideo" data-tooltip="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}">
+      <i class="gi-load" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="form-group">
+    <label for="switchSound">{{localize "EMPUZZLES.RotateSwitchSound"}}</label>
+    <input type="text" id="switchSound" name="switchSound" value="{{switchSound}}" />
+    <button type="button" data-file-picker="switchSound" data-file-picker-type="audio" data-tooltip="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}">
+      <i class="gi-load" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="form-group">
+    <label for="switchMode">{{localize "EMPUZZLES.RotateSwitchMode"}}</label>
+    <select id="switchMode" name="switchMode">
+      {{#each switchModeOptions as |option|}}
+        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.RotateSwitchModeHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Custom Tags Section }}
+{{> partials/custom-tags-section customTags=customTags}}

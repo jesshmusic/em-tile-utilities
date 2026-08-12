@@ -84,6 +84,13 @@ Traps and teleports can be created as native FoundryVTT **Regions** rather than 
 - **Trap regions**: damage, saving throws and status effects over an area (requires Enhanced Region Behaviors)
 - **Teleport regions**: same-scene and cross-scene teleports, with optional return regions and entry sounds
 - **Elevation regions**: automatically raise or lower token elevation when tokens enter or leave — stairs, pits, balconies, flooded rooms (requires Enhanced Region Behaviors)
+- **Difficult terrain**: set what each way of moving costs — mud that slows walkers but not fliers, a current that only fights swimmers
+- **Magical darkness**: a _darkness_ spell, a shaft of daylight, a permanently gloomy crypt
+- **Surfaces**: illusory floors, solid ceilings and glass catwalks — disable the region and everyone standing on it falls through
+- **Gas clouds and auras**: apply conditions to anything inside, either as a cloud on the map or an aura that follows a token
+- **Rotating rooms**: turning bridges and revolving corridors, with the switch tile built and wired for you (D&D 5e only)
+
+Difficult terrain, magical darkness, surfaces and gas clouds are built on Foundry v14's own region behaviors, so they need nothing beyond Foundry itself.
 
 Regions you create this way appear in the Tile Manager alongside your tiles, and can be selected, edited or deleted from there.
 
@@ -113,45 +120,25 @@ Save hours of manual work resetting puzzle rooms between game sessions. Place a 
 
 ## 📋 Requirements
 
-- **FoundryVTT v14** — this release is v14-only. v13 users should stay on v2.0.1, available from the [releases page](https://github.com/jesshmusic/em-tile-utilities/releases).
+- **FoundryVTT v14** — this release is v14-only. **v13 users are not abandoned**: the `v13-maintenance` branch carries the bug fixes that apply to v13, most recently **2.0.2**. Foundry's package browser serves the right one for your version automatically.
 - **[Monk's Active Tiles](https://foundryvtt.com/packages/monks-active-tiles)** v14.01+ (required)
 - **[Tagger](https://foundryvtt.com/packages/tagger)** v1.6.0+ (required)
 - **[Monk's Token Bar](https://foundryvtt.com/packages/monks-tokenbar)** v14.01+ (optional — needed for saving throws in traps and teleports)
-- **[Enhanced Region Behaviors](https://foundryvtt.com/packages/enhanced-region-behavior)** v1.5.0+ (optional — needed for **trap regions** and **elevation regions**; all the tile-based tools work without it)
+- **[Enhanced Region Behaviors](https://foundryvtt.com/packages/enhanced-region-behavior)** v1.5.0+ (optional — no longer needed for anything you build now, but **keep it if you have trap or elevation regions from before 3.0.0**, which still run through it)
 
 The trap, teleport and combat features assume the **D&D 5e** system (verified against 5.3.3). Switches, lights, resets, teleports and the Tile Manager are system-agnostic.
 
 ---
 
-## ⬆️ Upgrading to 2.2.0
+## ⬆️ Upgrading to 3.0.0
 
-**If you have traps or teleports that ask for a saving throw, recreate them.** Until 2.2.0 those tiles requested an ability _check_ rather than a saving throw, so save proficiency never applied. The fix changes what newly created tiles emit, but existing tiles already have the old request stored inside their Monk's Active Tiles configuration, and there is no safe way to migrate them automatically. Delete and rebuild any trap or teleport that uses a save; everything else carries forward untouched.
+**Return to Setup once after updating, then relaunch your world.** This release adds region behaviours of its own, and Foundry only registers those when the server reloads its module list — a browser refresh will not do it. Until you do, the region tools refuse to build anything and say why, rather than quietly creating regions with none of their behaviour attached.
 
----
+**Keep Enhanced Region Behaviors installed if you already have trap or elevation regions.** They still rely on it. Regions you create from now on do not, and nothing rewrites the ones you have.
 
-## 🚀 Quick Start
+**Nothing else you have built changes.** Every tile and region keeps working exactly as it did, and every new option in this release defaults to the behaviour you had before.
 
-### Installation
-
-1. Open Foundry VTT
-2. Go to **Add-on Modules** → **Install Module**
-3. Search for "**Dorman Lakely's Tile Utilities**"
-4. Click **Install**
-5. Enable **Monk's Active Tiles**, **Tagger**, and **Dorman Lakely's Tile Utilities** in your world
-6. _(Optional)_ Enable **Monk's Token Bar** if you want to use saving throw features in traps and teleports
-
-### First Use
-
-1. **Switch to the Tiles layer** in your scene
-2. Click the **Tile Manager** button (floor hatch icon) in the toolbar
-3. The Tile Manager opens, showing cards for each tile type you can create
-4. **Click any card** (Switch, Light, Trap, Teleport, Reset, Elevation) to open its creation dialog
-5. **Fill in the form** with your preferred images and settings
-6. **Click Create** and then **click on your map** to place the element
-
-That's it! Your interactive element is ready to use. The Tile Manager stays open so you can create multiple elements quickly.
-
----
+## **If you have traps or teleports that ask for a saving throw and you have not already rebuilt them, do that now.** Until 2.2.0 those tiles requested an ability _check_ rather than a saving throw, so save proficiency never applied. The fix changes what newly created tiles emit, but existing tiles already have the old request stored inside their Monk's Active Tiles configuration, and there is no safe way to migrate them automatically. Delete and rebuild any trap or teleport that uses a save.
 
 ## 📖 Creating Your First Puzzle
 

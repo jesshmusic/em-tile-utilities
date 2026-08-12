@@ -15,6 +15,15 @@ export { createTeleportTile } from './teleport-creator';
 export { createCombatTrapTile } from './combat-trap-creator';
 export { createCheckStateTile } from './check-state-creator';
 export { createTrapTile } from './trap-creator';
+export { createLockTile, buildLockActions } from './lock-creator';
+export type { LockConfig } from './lock-creator';
+export {
+  createCombinationTile,
+  buildCombinationActions,
+  buildAnswerComparison,
+  buildPromptContent
+} from './combination-creator';
+export type { CombinationConfig } from './combination-creator';
 
 // Export region creators
 export { createTrapRegion } from './trap-region-creator';
@@ -23,3 +32,13 @@ export { createTeleportRegion } from './teleport-region-creator';
 export type { TeleportRegionConfig } from './teleport-region-creator';
 export { createElevationRegion } from './elevation-region-creator';
 export type { ElevationRegionConfig } from './elevation-region-creator';
+export { createDifficultTerrainRegion } from './difficult-terrain-region-creator';
+export type { DifficultTerrainRegionConfig } from './difficult-terrain-region-creator';
+export { createDarknessRegion } from './darkness-region-creator';
+export type { DarknessRegionConfig } from './darkness-region-creator';
+export { createSurfaceRegion } from './surface-region-creator';
+export type { SurfaceRegionConfig } from './surface-region-creator';
+export { createRotateRegion } from './rotate-region-creator';
+export type { RotateRegionConfig } from './rotate-region-creator';
+export { createGasCloudRegion } from './gas-cloud-region-creator';
+export type { GasCloudRegionConfig } from './gas-cloud-region-creator';

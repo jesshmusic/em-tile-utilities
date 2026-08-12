@@ -1,3 +1,5 @@
+import type { ConditionDurationUnit } from '../utils/helpers/dnd5e-conditions';
+
 /**
  * Enum for creation type (Tile vs Region)
  */
@@ -60,6 +62,22 @@ export interface ActiveEffectConfig {
   effectid: string; // ID of the effect from CONFIG.statusEffects (e.g., "burning", "poisoned")
   addeffect: 'add' | 'remove' | 'toggle' | 'clear'; // How to apply the effect
   altereffect?: string; // For PF2e effects with values (e.g., "+ 1")
+  /**
+   * Exhaustion level, 1..`CONFIG.DND5E.conditionTypes.exhaustion.levels`.
+   * Only meaningful when `effectid` is `exhaustion`. Level 1 keeps the trap on
+   * Monk's own `activeeffect` action; anything higher needs
+   * `em-tile-utilities.applycondition`, because toggling the status effect can
+   * only ever produce level 1.
+   */
+  exhaustionLevel?: number;
+  /**
+   * Duration unit. `untilRemoved` (the default, and the value omitting this
+   * field implies) leaves the effect with no duration — the pre-existing
+   * behaviour.
+   */
+  durationUnit?: ConditionDurationUnit;
+  /** Amount of `durationUnit`. Ignored when the unit is `untilRemoved`. */
+  durationValue?: number;
 }
 
 /**
@@ -112,6 +130,14 @@ export interface TrapConfig {
   // For damage result type
   damageOnFail: string;
   damageType?: string; // Damage type (e.g., 'piercing', 'fire', 'cold')
+  /**
+   * Damage BYPASS properties (`mgc`, `sil`, `ada`, …), sourced from
+   * `CONFIG.DND5E.itemProperties` entries flagged `isPhysical`. dnd5e
+   * intersects these with a target's `dr`/`di`/`dv` bypasses, so this is what
+   * lets a magical trap punch through "resistant to nonmagical weapons".
+   * Stored as an array; rebuilt into a `Set` at application time.
+   */
+  damageProperties?: string[];
   halfDamageOnSuccess?: boolean; // Whether successful saves take half damage
   flavorText: string;
   // For heal result type
@@ -187,6 +213,7 @@ export interface TeleportTileConfig {
   flavorText: string;
   customTags?: string;
   sound?: string;
+  soundVolume?: number; // 0–1, defaults to 0.8. Region teleports only.
   pauseGameOnTrigger?: boolean; // Whether to pause the game when teleport triggers
 }
 

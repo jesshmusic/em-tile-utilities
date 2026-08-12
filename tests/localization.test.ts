@@ -22,17 +22,13 @@ const TRANSLATIONS = JSON.parse(readFileSync(LANG_FILE, 'utf8'));
  * Files whose user-facing notifications have been migrated onto the
  * `notifyInfo` / `notifyWarn` / `notifyError` helpers in src/dialogs/notify.ts.
  *
- * This is an allow-list rather than "all of src/" on purpose: the tile
- * creators under src/utils/{creators,helpers,builders,actions} still call
- * `ui.notifications` with English literals. Add their directories here as
- * they are migrated — that is the point of the list.
+ * This started as a narrow allow-list because the creators and helpers under
+ * src/utils still called `ui.notifications` with English literals. That
+ * migration is now finished, so this is simply `src/` — every file in the
+ * module is covered, and a new raw literal anywhere fails the suite rather
+ * than quietly landing in a directory nobody had added to the list yet.
  */
-const LOCALIZED_SOURCE_ROOTS = [
-  join('src', 'main.ts'),
-  join('src', 'dialogs'),
-  join('src', 'settings'),
-  join('src', 'utils', 'tag-input-manager.ts')
-];
+const LOCALIZED_SOURCE_ROOTS = ['src'];
 
 /** The one file that is allowed to touch `ui.notifications` directly. */
 const NOTIFY_HELPER = join('src', 'dialogs', 'notify.ts');
@@ -46,6 +42,19 @@ function walk(absPath: string, extensions: string[]): string[] {
 
 function collect(roots: string[], extensions: string[]): string[] {
   return roots.flatMap(root => walk(join(REPO_ROOT, root), extensions)).sort();
+}
+
+/**
+ * Split source into lines with comments removed, so a guard can look for code
+ * without matching prose. Deliberately simple: it strips `//` to end-of-line
+ * and whole `/* … *\/` blocks, and does not try to understand strings — good
+ * enough to tell a call from a comment, which is all these guards need.
+ */
+function stripComments(text: string): string[] {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''));
 }
 
 function read(absPath: string): { rel: string; text: string } {
@@ -83,9 +92,15 @@ describe('ui.notifications guards', () => {
   });
 
   it('routes every notification through src/dialogs/notify.ts', () => {
+    // Match a *call*, not a mention. `ui.notifications` appearing in prose —
+    // including a comment saying a file deliberately does not call it — is not
+    // a violation, and flagging it made this guard cry wolf the first time a
+    // new helper documented its own restraint.
+    const notificationCall = /\bui\s*\.\s*notifications\s*\??\s*\.\s*\w+\s*\(/;
+
     const direct = localizedSources
       .filter(({ rel }) => rel !== NOTIFY_HELPER.split(sep).join('/'))
-      .filter(({ text }) => /\bui\.notifications\b/.test(text))
+      .filter(({ text }) => stripComments(text).some(line => notificationCall.test(line)))
       .map(({ rel }) => rel);
 
     expect(direct).toEqual([]);

@@ -10,6 +10,7 @@ mockFoundry();
 
 import { SwitchConfigDialog, showSwitchDialog } from '../../src/dialogs/switch-dialog';
 import * as tileManagerState from '../../src/dialogs/tile-manager-state';
+import { DialogPositions } from '../../src/types/dialog-positions';
 
 describe('SwitchConfigDialog', () => {
   let dialog: SwitchConfigDialog;
@@ -29,7 +30,10 @@ describe('SwitchConfigDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-lever');
       expect(options.window.title).toBe('EMPUZZLES.CreateSwitch');
-      expect(options.position.width).toBe(650);
+      // Asserted against the shared config rather than a literal: the default
+      // width is tuned centrally in src/types/dialog-positions.ts, and pinning
+      // the number here just meant four tests to update when it moved.
+      expect(options.position.width).toBe(DialogPositions.SWITCH.width);
     });
 
     it('should have correct parts configuration', () => {

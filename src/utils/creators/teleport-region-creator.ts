@@ -1,27 +1,23 @@
 import type { TeleportTileConfig } from '../../types/module';
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
-  createExecuteMacroRegionBehavior,
   createTeleportTokenRegionBehavior,
   createPauseGameRegionBehavior,
+  createEmSoundRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
+import { requireEmRegionBehaviors } from '../helpers/module-checks';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
+import { notifyError, notifyInfo, notifyWarn } from '../../dialogs/notify';
 
 /**
- * Escape a string for safe embedding in JavaScript code
- * Handles quotes, backslashes, and newlines
+ * Volume for the teleport sound when the dialog does not specify one.
+ *
+ * Matches the value the old generated-script implementation hardcoded, so a
+ * teleport built before this change and one built after sound the same.
  */
-function escapeJsString(str: string): string {
-  return str
-    .replace(/\\/g, '\\\\') // Escape backslashes first
-    .replace(/'/g, "\\'") // Escape single quotes
-    .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/\n/g, '\\n') // Escape newlines
-    .replace(/\r/g, '\\r') // Escape carriage returns
-    .replace(/\t/g, '\\t'); // Escape tabs
-}
+const DEFAULT_TELEPORT_SOUND_VOLUME = 0.8;
 
 /**
  * Extended teleport config with region-specific options
@@ -48,6 +44,11 @@ export async function createTeleportRegion(
   width?: number,
   height?: number
 ): Promise<void> {
+  // The server may not have picked up our RegionBehavior subtypes yet; it
+  // rejects them by returning an empty array rather than throwing, which
+  // would leave a region that looks created and does nothing.
+  if (!requireEmRegionBehaviors()) return;
+
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
   const regionWidth = width ?? gridSize;
@@ -65,7 +66,7 @@ export async function createTeleportRegion(
     config.teleportSceneId === scene.id ? scene : (game as any).scenes.get(config.teleportSceneId);
 
   if (!destScene) {
-    ui.notifications.error('Destination scene not found for teleport region.');
+    notifyError('EMPUZZLES.NotifyTeleportDestSceneMissing');
     return;
   }
 
@@ -124,15 +125,13 @@ export async function createTeleportRegion(
   // Now create behaviors for the SOURCE region
   const sourceBehaviors: any[] = [];
 
-  // Add Sound behavior FIRST if sound is set
-  // Uses Execute Script with foundry.audio.AudioHelper.play() for reliable sound playback
+  // Sound first, so it starts before the token is moved away.
   if (config.sound && config.sound.trim() !== '') {
-    const soundScript = `// Play teleport sound
-await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
     sourceBehaviors.push(
-      createExecuteMacroRegionBehavior({
+      createEmSoundRegionBehavior({
         name: `${config.name} - Sound`,
-        macroScript: soundScript,
+        soundPath: config.sound,
+        volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,
         events: [RegionEvents.TOKEN_ENTER]
       })
     );
@@ -167,15 +166,12 @@ await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', v
   if (config.createReturnTeleport) {
     const destBehaviors: any[] = [];
 
-    // Add Sound behavior FIRST to destination if sound is set
-    // Uses Execute Script with foundry.audio.AudioHelper.play() for reliable sound playback
     if (config.sound && config.sound.trim() !== '') {
-      const returnSoundScript = `// Play return teleport sound
-await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
       destBehaviors.push(
-        createExecuteMacroRegionBehavior({
+        createEmSoundRegionBehavior({
           name: `Return: ${config.name} - Sound`,
-          macroScript: returnSoundScript,
+          soundPath: config.sound,
+          volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,
           events: [RegionEvents.TOKEN_ENTER]
         })
       );
@@ -196,15 +192,11 @@ await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', v
       await destRegion.createEmbeddedDocuments('RegionBehavior', destBehaviors);
     }
 
-    ui.notifications.info(
-      `Dorman Lakely's Tile Utilities | Return teleport region created at destination.`
-    );
+    notifyInfo('EMPUZZLES.NotifyReturnTeleportRegionCreated');
   }
 
   // Note: the core teleport behavior doesn't support saving throws or delete source token
   if (config.hasSavingThrow) {
-    ui.notifications.warn(
-      "Native region teleport doesn't support saving throws. Use a teleport tile for full features."
-    );
+    notifyWarn('EMPUZZLES.NotifyRegionTeleportNoSavingThrow');
   }
 }

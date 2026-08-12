@@ -1,0 +1,104 @@
+<div class="form-group">
+  <label for="em-combo-name">{{localize "EMPUZZLES.CombinationName"}}</label>
+  <input type="text" id="em-combo-name" name="combinationName" value="{{combinationName}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-combo-image">{{localize "EMPUZZLES.TileImage"}}</label>
+  <div class="form-fields">
+    <input type="text" id="em-combo-image" name="image" value="{{image}}" data-dtype="String" />
+    <button type="button" class="file-picker" data-type="imagevideo" data-target="image" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <i class="gi-load"></i>
+    </button>
+  </div>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-prompt">{{localize "EMPUZZLES.CombinationPrompt"}}</label>
+  <textarea id="em-combo-prompt" name="prompt" rows="3">{{prompt}}</textarea>
+  <p class="hint">{{localize "EMPUZZLES.CombinationPromptHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-answer-label">{{localize "EMPUZZLES.CombinationAnswerLabel"}}</label>
+  <input type="text" id="em-combo-answer-label" name="answerLabel" value="{{answerLabel}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-combo-answer">{{localize "EMPUZZLES.CombinationAnswer"}}</label>
+  <input type="text" id="em-combo-answer" name="answer" value="{{answer}}" />
+  <p class="hint">{{localize "EMPUZZLES.CombinationAnswerHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-case">{{localize "EMPUZZLES.CombinationCaseSensitive"}}</label>
+  <input type="checkbox" id="em-combo-case" name="caseSensitive" {{#if caseSensitive}}checked{{/if}} />
+  <p class="hint">{{localize "EMPUZZLES.CombinationCaseSensitiveHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-attempts">{{localize "EMPUZZLES.CombinationMaxAttempts"}}</label>
+  <input type="number" id="em-combo-attempts" name="maxAttempts" value="{{maxAttempts}}" min="0" step="1" />
+  <p class="hint">{{localize "EMPUZZLES.CombinationMaxAttemptsHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-lockout-message">{{localize "EMPUZZLES.CombinationLockoutMessage"}}</label>
+  <input type="text" id="em-combo-lockout-message" name="lockoutMessage" value="{{lockoutMessage}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-combo-trigger">{{localize "EMPUZZLES.CombinationTriggerOn"}}</label>
+  <select id="em-combo-trigger" name="triggerOn">
+    <option value="dblclick" {{#if (eq triggerOn "dblclick")}}selected{{/if}}>{{localize "EMPUZZLES.CombinationTriggerDoubleClick"}}</option>
+    <option value="click" {{#if (eq triggerOn "click")}}selected{{/if}}>{{localize "EMPUZZLES.CombinationTriggerClick"}}</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-success-message">{{localize "EMPUZZLES.CombinationSuccessMessage"}}</label>
+  <input type="text" id="em-combo-success-message" name="successMessage" value="{{successMessage}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-combo-failure-message">{{localize "EMPUZZLES.CombinationFailureMessage"}}</label>
+  <input type="text" id="em-combo-failure-message" name="failureMessage" value="{{failureMessage}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-combo-success-sound">{{localize "EMPUZZLES.CombinationSuccessSound"}}</label>
+  <div class="form-fields">
+    <input type="text" id="em-combo-success-sound" name="successSound" value="{{successSound}}" data-dtype="String" />
+    <button type="button" class="file-picker" data-type="audio" data-target="successSound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <i class="gi-load"></i>
+    </button>
+  </div>
+</div>
+
+<div class="form-group">
+  <label for="em-combo-failure-sound">{{localize "EMPUZZLES.CombinationFailureSound"}}</label>
+  <div class="form-fields">
+    <input type="text" id="em-combo-failure-sound" name="failureSound" value="{{failureSound}}" data-dtype="String" />
+    <button type="button" class="file-picker" data-type="audio" data-target="failureSound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <i class="gi-load"></i>
+    </button>
+  </div>
+</div>
+
+<div class="form-group">
+  <label>{{localize "EMPUZZLES.CombinationUnlockDoor"}}</label>
+  <div class="form-fields">
+    <span class="em-combo-door-label">
+      {{#if wallId}}{{wallName}}{{else}}{{localize "EMPUZZLES.CombinationNoDoor"}}{{/if}}
+    </span>
+    <button type="button" data-action="selectDoor" title="{{localize 'EMPUZZLES.SelectWall'}}" aria-label="{{localize 'EMPUZZLES.SelectWall'}}">
+      <i class="gi-entry-door"></i> {{localize "EMPUZZLES.SelectWall"}}
+    </button>
+    <button type="button" data-action="clearDoor" title="{{localize 'EMPUZZLES.CombinationClearDoor'}}" aria-label="{{localize 'EMPUZZLES.CombinationClearDoor'}}">
+      <i class="gi-cancel"></i>
+    </button>
+  </div>
+  <p class="hint">{{localize "EMPUZZLES.CombinationUnlockDoorHint"}}</p>
+</div>
+
+{{> partials/custom-tags-section customTags=customTags}}

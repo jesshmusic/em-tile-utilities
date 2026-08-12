@@ -8,6 +8,9 @@ import { PatreonLink, DmGuruLink } from './settings/settings-menus';
 import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
 import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
 import { registerEmTileActions } from './utils/actions/apply-damage-tile-action';
+import { registerRotateAreaTileAction } from './utils/actions/rotate-area-tile-action';
+import { registerEmRegionBehaviors, localizeEmRegionBehaviors } from './utils/region-behaviors';
+import { registerTileEnricher } from './utils/tile-enricher';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
@@ -93,8 +96,30 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
 // the settings registration in the `init` handler below.
 registerEmTileActions();
 
+// The rotating-room action, for the same reason and with the same timing. It
+// registers its own `setupTileActions` listener rather than joining the call
+// above so the two feature areas stay in separate files; MATT is happy to take
+// more than one listener, and `registerRotateAreaAction` is idempotent and
+// gated on dnd5e (the behavior it drives exists nowhere else).
+registerRotateAreaTileAction();
+
+// This module's own RegionBehavior subtypes — trap, elevation, sound, movement
+// filter and trigger-tile. They must land in CONFIG.RegionBehavior.dataModels
+// during `init`, before any Scene is loaded and its Regions are instantiated,
+// so this runs in the `init` handler below rather than at script-evaluation
+// time like the Monk's Active Tiles actions above (those have to beat MATT's
+// own `init`; these only have to beat the first canvas draw).
+//
+// The field labels are localized on `i18nInit`, which is the earliest hook at
+// which `game.i18n` is loaded.
+Hooks.once('i18nInit', () => {
+  localizeEmRegionBehaviors();
+});
+
 // Module initialization
 Hooks.once('init', async () => {
+  registerEmRegionBehaviors();
+
   // Module initialization banner
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %cv" +
@@ -125,6 +150,11 @@ Hooks.once('init', async () => {
     'partials/visibility-section': `${TEMPLATE_ROOT}/partials/visibility-section.hbs`,
     'partials/custom-tags-section': `${TEMPLATE_ROOT}/partials/custom-tags-section.hbs`
   });
+
+  // `@EMTile[…]` / `@EMRegion[…]` journal links. Registered here rather than in
+  // `ready` because CONFIG.TextEditor.enrichers is read when text is enriched,
+  // and a journal can be open before `ready` fires.
+  registerTileEnricher();
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {
@@ -274,7 +304,21 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     button: true,
     // Foundry v14 SceneControlTool fires `onChange` for button-style tools.
     onChange: () => showTileManagerDialog(),
-    order: 1000
+    order: 1000,
+    // Free onboarding: Foundry renders this on hover when the user has
+    // toolclips enabled. Items take `heading` and `paragraph` directly rather
+    // than going through `SceneControls#buildToolclipItems`, which only knows
+    // core's own shared keys (create/move/rotate/hud/edit/delete) — see
+    // client/canvas/layers/tiles.mjs:104 for the core usage this mirrors.
+    toolclip: {
+      heading: 'EMPUZZLES.TileManager',
+      items: [
+        { paragraph: 'EMPUZZLES.ToolclipIntro' },
+        { heading: 'EMPUZZLES.ToolclipTilesHeading', paragraph: 'EMPUZZLES.ToolclipTiles' },
+        { heading: 'EMPUZZLES.ToolclipRegionsHeading', paragraph: 'EMPUZZLES.ToolclipRegions' },
+        { heading: 'EMPUZZLES.ToolclipManageHeading', paragraph: 'EMPUZZLES.ToolclipManage' }
+      ]
+    }
   };
 });
 

@@ -30,8 +30,15 @@
  */
 
 import { getDamageTypeMap, DEFAULT_DAMAGE_TYPE } from '../helpers/damage-types';
-import { isDnd5eSystem } from '../helpers/dnd5e-activity';
-import { hasMidiQol } from '../helpers/module-checks';
+import {
+  getDamagePropertyIds,
+  normalizeDamageProperties,
+  toDamagePropertySet
+} from '../helpers/damage-properties';
+import { applyRolledDamage, rollDamageTotal } from '../helpers/damage-application';
+import { localize } from '../helpers/localize';
+import { registerApplyConditionAction } from './apply-condition-tile-action';
+import { registerUseActivityAction } from './use-activity-tile-action';
 
 /** Namespace for actions this module registers. Must be the module id. */
 export const EM_ACTION_NAMESPACE = 'em-tile-utilities';
@@ -56,6 +63,16 @@ export interface ApplyDamageActionData {
   damage: string;
   /** Damage type id, e.g. `fire`. `healing` heals. */
   damagetype: string;
+  /**
+   * Damage BYPASS properties (`mgc`, `sil`, `ada`, …) as an ARRAY, not a `Set`.
+   *
+   * Monk's Active Tiles keeps action data as plain JSON in the tile flags, so a
+   * `Set` written here would serialize to `{}` and come back empty. The array
+   * is the persisted form; `applyDamageActionFn` rebuilds the `Set` that dnd5e
+   * and midi-qol actually intersect against. See
+   * src/utils/helpers/damage-properties.ts for both halves of the round trip.
+   */
+  properties: string[];
   /** When false the roll is posted but no hit points change. */
   automate: boolean;
   chatmessage: boolean;
@@ -76,7 +93,9 @@ export interface ApplyDamageActionData {
  *
  * @param damage - Roll formula for the damage (or healing) amount
  * @param damageType - Damage type id from `CONFIG.DND5E.damageTypes`
- * @param options - Optional configuration
+ * @param options - Optional configuration. `properties` are damage bypass ids
+ *   (`mgc`, `sil`, `ada`, …) and are stored as a plain array so they survive
+ *   Monk's JSON flag storage.
  * @returns Monk's Active Tiles action object
  */
 export function createApplyDamageAction(
@@ -84,6 +103,7 @@ export function createApplyDamageAction(
   damageType: string,
   options?: {
     entity?: { id: string; name?: string };
+    properties?: string[] | Set<string> | string;
     automate?: boolean;
     chatmessage?: boolean;
     rollmode?: string;
@@ -95,6 +115,10 @@ export function createApplyDamageAction(
       entity: options?.entity ?? { id: 'previous', name: 'Current tokens' },
       damage,
       damagetype: damageType || DEFAULT_DAMAGE_TYPE,
+      // Always an array, even when empty: a stable key shape means MATT's
+      // `mergeObject` on re-save cannot leave a stale value behind, and the
+      // consuming `fn` never has to distinguish "absent" from "none".
+      properties: normalizeDamageProperties(options?.properties),
       automate: options?.automate ?? true,
       chatmessage: options?.chatmessage ?? true,
       rollmode: options?.rollmode ?? 'roll'
@@ -106,136 +130,6 @@ export function createApplyDamageAction(
 /** The live `MonksActiveTiles` class, if the module has installed it. */
 function getMonksActiveTiles(): any {
   return (globalThis as any).MonksActiveTiles ?? (globalThis as any).game?.MonksActiveTiles;
-}
-
-/**
- * The midi-qol API, or undefined. midi puts the same object on the global and
- * on `game.modules.get("midi-qol").api` (../midi-qol/midi-qol.js:38318).
- */
-function getMidiQol(): any {
-  if (!hasMidiQol()) return undefined;
-  const api =
-    (globalThis as any).MidiQOL ??
-    (globalThis as any).game?.modules?.get?.('midi-qol')?.api ??
-    undefined;
-  return typeof api?.applyTokenDamage === 'function' ? api : undefined;
-}
-
-function localize(key: string, data?: Record<string, unknown>): string {
-  const i18n = (globalThis as any).game?.i18n;
-  if (!i18n) return key;
-  return data ? (i18n.format?.(key, data) ?? key) : (i18n.localize?.(key) ?? key);
-}
-
-/**
- * Roll a damage formula and (optionally) post it to chat.
- *
- * Uses `CONFIG.Dice.DamageRoll` when the system provides it, with the same
- * `{ type, appearance: { colorset } }` options Enhanced Region Behaviors passes
- * (../enhanced-region-behavior/dist/enhanced-region-behavior.mjs:157-164) so
- * the chat card is coloured by damage type. Falls back to a plain `Roll`.
- *
- * Unlike ERB this evaluates first and posts second, rather than reading the
- * total back off the created ChatMessage — that way `chatmessage: false` still
- * produces a total, and a chat failure cannot swallow the damage.
- *
- * @returns The rolled total, or `undefined` if the formula could not be rolled
- */
-async function rollDamageTotal(
-  formula: string,
-  rollData: Record<string, unknown>,
-  damageType: string,
-  chatOptions: { post: boolean; flavor: string; rollMode: string; speaker?: unknown }
-): Promise<number | undefined> {
-  const DamageRoll = (globalThis as any).CONFIG?.Dice?.DamageRoll;
-  const RollClass = (globalThis as any).Roll;
-  if (!DamageRoll && typeof RollClass !== 'function') return undefined;
-
-  let roll: any;
-  try {
-    roll = DamageRoll
-      ? new DamageRoll(formula, rollData, {
-          type: damageType,
-          appearance: { colorset: damageType }
-        })
-      : new RollClass(formula, rollData);
-    await roll.evaluate();
-  } catch (err) {
-    console.error(
-      `Dorman Lakely's Tile Utilities | Could not roll damage formula "${formula}"`,
-      err
-    );
-    return undefined;
-  }
-
-  if (chatOptions.post) {
-    try {
-      await roll.toMessage(
-        { flavor: chatOptions.flavor, speaker: chatOptions.speaker },
-        { rollMode: chatOptions.rollMode }
-      );
-    } catch (err) {
-      // A chat failure must not stop the damage from landing — that is exactly
-      // the silent-no-damage failure mode this action was written to remove.
-      console.error("Dorman Lakely's Tile Utilities | Could not post damage roll to chat", err);
-    }
-  }
-
-  const total = Number(roll.total);
-  return Number.isFinite(total) ? total : undefined;
-}
-
-/**
- * Apply an already-rolled amount to one token, mirroring Enhanced Region
- * Behaviors exactly.
- *
- * Fallback chain:
- *  1. midi-qol active AND the token has a canvas placeable →
- *     `MidiQOL.applyTokenDamage(damageDetail, total, targets, item, saves, opts)`
- *     (../midi-qol/midi-qol.js:14319). `forceApply` is read from the GM's own
- *     `autoApplyDamage` setting rather than overridden — midi gates the actual
- *     hit point write on `autoApplyDamage.includes("yes") || forceApply`
- *     (../midi-qol/midi-qol.js:23100), so passing the setting through means a
- *     GM who wants to confirm damage on a card still gets to.
- *  2. dnd5e without midi → `actor.applyDamage([{ value, type, properties }])`
- *     (../../systems/dnd5e/dnd5e.mjs:36705). `properties` must be a real `Set`;
- *     dnd5e calls `Set#intersection` on it for physical damage types
- *     (dnd5e.mjs:36827).
- *  3. Any other system → the bare-number `actor.applyDamage(value)` form, which
- *     is what Monk's `hurtheal` did. Untyped, but no worse than before.
- */
-async function applyRolledDamage(
-  tokenDocument: any,
-  actor: any,
-  total: number,
-  damageType: string
-): Promise<void> {
-  const midi = getMidiQol();
-  const placeable = tokenDocument?.object;
-
-  if (midi && placeable) {
-    // `.includes("yes")` matches ERB. It also matches "yesCardNPC", which midi
-    // itself treats as NPC-only (../midi-qol/midi-qol.js:23038) — deliberately
-    // kept identical so tile traps and region traps never disagree.
-    const forceApply = String(midi.configSettings?.()?.autoApplyDamage ?? '').includes('yes');
-    await midi.applyTokenDamage(
-      [{ value: total, damage: total, type: damageType }],
-      total,
-      new Set([placeable]),
-      null,
-      null,
-      { forceApply }
-    );
-    return;
-  }
-
-  if (typeof actor?.applyDamage !== 'function') return;
-
-  if (isDnd5eSystem()) {
-    await actor.applyDamage([{ value: total, type: damageType, properties: new Set() }]);
-  } else {
-    await actor.applyDamage(total);
-  }
 }
 
 /**
@@ -254,6 +148,11 @@ export async function applyDamageActionFn(args: any = {}): Promise<any> {
   if (!formula) return undefined;
 
   const damageType = String(data.damagetype || DEFAULT_DAMAGE_TYPE);
+  // The other half of the round trip. `data.properties` came back out of the
+  // tile flags as plain JSON — an array when this module wrote it, a
+  // comma-separated string when the GM edited it in Monk's own action sheet.
+  // Rebuild the real `Set` here, once, rather than at each application site.
+  const properties = toDamagePropertySet(data.properties);
   const automate = data.automate !== false;
   const post = data.chatmessage !== false;
   const rollMode = String(data.rollmode || 'roll');
@@ -284,7 +183,7 @@ export async function applyDamageActionFn(args: any = {}): Promise<any> {
     if (!automate) continue;
 
     try {
-      await applyRolledDamage(entity, actor, total, damageType);
+      await applyRolledDamage(entity, actor, total, damageType, properties);
     } catch (err) {
       console.error(
         `Dorman Lakely's Tile Utilities | Could not apply ${damageType} damage to ${actor.name}`,
@@ -345,6 +244,27 @@ export function buildApplyDamageActionDefinition(): Record<string, unknown> {
         // (../monks-active-tiles/apps/action-config.js:1254).
         list: () => getDamageTypeMap(),
         defvalue: DEFAULT_DAMAGE_TYPE
+      },
+      {
+        id: 'properties',
+        name: `${L}.Properties`,
+        type: 'text',
+        placeholder: 'mgc',
+        // A TEXT control, not checkboxes, and that is deliberate. MATT has no
+        // multi-value control (see the type switch in
+        // ../monks-active-tiles/templates/action-field.hbs), and the bypass
+        // list is sourced from CONFIG at runtime, so a fixed set of checkbox
+        // ctrls could not track it. One text field keeps `data.properties` a
+        // single source of truth that MATT can both render
+        // (`value="mgc,sil"`) and write back; `toDamagePropertySet` accepts
+        // either shape. The trap dialog offers real checkboxes over the same
+        // key — that is where a GM normally sets this.
+        get help() {
+          const ids = getDamagePropertyIds();
+          return ids.length
+            ? localize(`${L}.PropertiesHelp`, { properties: ids.join(', ') })
+            : localize(`${L}.PropertiesHelpEmpty`);
+        }
       },
       {
         id: 'automate',
@@ -453,8 +373,14 @@ export function registerEmTileActions(): void {
   try {
     const hooks = (globalThis as any).Hooks;
     if (!hooks) return;
-    hooks.on?.('setupTileActions', (matt: any) => registerApplyDamageAction(matt));
-    hooks.once?.('ready', () => registerApplyDamageAction(getMonksActiveTiles()));
+    const registerAll = (matt: any) => {
+      registerApplyDamageAction(matt);
+      registerApplyConditionAction(matt);
+      // dnd5e only, and it says so itself — see registerUseActivityAction.
+      registerUseActivityAction(matt);
+    };
+    hooks.on?.('setupTileActions', (matt: any) => registerAll(matt));
+    hooks.once?.('ready', () => registerAll(getMonksActiveTiles()));
   } catch (err) {
     console.error("Dorman Lakely's Tile Utilities | Could not hook tile action registration", err);
   }

@@ -6,6 +6,7 @@ import { createTileImageAction, createActivateAction, createShowHideAction } fro
 import { generateUniqueLightTag, parseCustomTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { createRollbackTracker } from '../helpers/rollback-helpers';
+import { notifyInfo, notifyError } from '../../dialogs/notify';
 
 /**
  * Creates a light tile with optional sound and overlay.
@@ -241,9 +242,7 @@ export async function createLightTile(
       }
 
       // Show notification about the tag
-      ui.notifications.info(
-        `Light entities tagged with "${lightGroupTag}". Use Tagger to find all related entities.`
-      );
+      notifyInfo('EMPUZZLES.NotifyLightGroupTagged', { tag: lightGroupTag });
     }
 
     return mainTile;
@@ -253,11 +252,15 @@ export async function createLightTile(
     // so callers (e.g. light-dialog.ts) can avoid showing a misleading
     // success message.
     await tracker.rollback();
-    const message =
+    // The thrown Error's message is the useful part; when there isn't one,
+    // fall back to a localized pointer at the console rather than inventing
+    // detail we don't have.
+    const reason =
       err instanceof Error
-        ? `Tile Utilities: Failed to create light tile — ${err.message}`
-        : 'Tile Utilities: Failed to create light tile. Check the console for details.';
-    ui.notifications?.error(message);
+        ? err.message
+        : game.i18n.localize('EMPUZZLES.NotifyCreateFailedSeeConsole');
+    const message = game.i18n.format('EMPUZZLES.NotifyLightTileFailed', { reason });
+    notifyError('EMPUZZLES.NotifyLightTileFailed', { reason });
     throw err instanceof Error ? err : new Error(message);
   }
 }

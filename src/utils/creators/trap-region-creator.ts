@@ -1,22 +1,40 @@
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
-  createEnhancedTrapRegionBehavior,
-  createEnhancedSoundRegionBehavior,
+  createEmTrapRegionBehavior,
+  createEmSoundRegionBehavior,
+  createEmTriggerTileRegionBehavior,
   createPauseGameRegionBehavior,
-  createExecuteMacroRegionBehavior,
+  applyMovementActionGate,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
+import { requireEmRegionBehaviors } from '../helpers/module-checks';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
-import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
+import { normalizeMovementActions } from '../helpers/movement-actions';
+import { notifyInfo } from '../../dialogs/notify';
 
 /**
- * Configuration for trap regions using Enhanced Region Behaviors
+ * Configuration for trap regions.
+ *
+ * Every behavior a trap region uses is now either Foundry core's or one of this
+ * module's own subtypes (src/utils/region-behaviors/). Enhanced Region
+ * Behaviors is no longer required, or consulted — see
+ * src/utils/region-behaviors/index.ts for what that means for regions built
+ * before v2.3.0.
  */
 export interface TrapRegionConfig {
   name: string;
   // Trigger events
-  events?: string[]; // e.g., ['tokenEnter', 'tokenMoveIn']
+  // Any of CONST.REGION_EVENTS supported by the Enhanced Region Behaviors Trap
+  // schema, e.g. ['tokenEnter', 'tokenTurnStart', 'tokenRoundStart'].
+  // Entry-triggered and turn-triggered are not exclusive: a lava region can
+  // damage on entry AND at the start of each turn by listing both.
+  events?: string[];
+  // Movement actions (CONFIG.Token.movement.actions ids) that may trigger the
+  // region. Undefined, empty, or the complete set all mean "no filtering", and
+  // emit exactly the behavior data this creator emitted before the filter
+  // existed.
+  movementActions?: string[];
   // Saving throw settings
   saveAbility: string | string[]; // e.g., 'dex' or ['dex', 'str'] for multiple abilities
   saveDC: number;
@@ -26,6 +44,10 @@ export interface TrapRegionConfig {
   damage: string; // Damage formula e.g., '2d6'
   savedDamage?: string; // Damage on successful save (empty for no damage on save)
   damageType: string; // e.g., 'piercing', 'fire', 'cold'
+  // Damage BYPASS properties ('mgc', 'sil', 'ada'), so a magical trap cuts
+  // through non-magical resistance. Tile traps have carried these since
+  // v2.2.0; region traps could not express them while they used ERB's Trap.
+  damageProperties?: string[];
   // Messages
   saveFailedMessage?: string; // Message when save fails
   saveSuccessMessage?: string; // Message when save succeeds
@@ -42,8 +64,11 @@ export interface TrapRegionConfig {
 }
 
 /**
- * Creates a trap region using Enhanced Region Behaviors
- * Uses the native Trap behavior for damage with saving throws
+ * Creates a trap region.
+ *
+ * The damaging behavior is `em-tile-utilities.Trap`, registered by this module
+ * during `init`. There is no module guard any more: everything the region needs
+ * ships in the box.
  *
  * @param scene - The scene to create the trap in
  * @param config - Trap region configuration
@@ -60,16 +85,10 @@ export async function createTrapRegion(
   width?: number,
   height?: number
 ): Promise<void> {
-  // Verify Enhanced Region Behaviors is available
-  if (
-    !requireEnhancedRegionBehaviors({
-      plural: 'trap regions',
-      singular: 'trap region',
-      limitation: 'apply damage or request saving throws'
-    })
-  ) {
-    return;
-  }
+  // The server may not have picked up our RegionBehavior subtypes yet; it
+  // rejects them by returning an empty array rather than throwing, which
+  // would leave a region that looks created and does nothing.
+  if (!requireEmRegionBehaviors()) return;
 
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
@@ -92,7 +111,7 @@ export async function createTrapRegion(
   // Add sound behavior if provided
   if (config.sound) {
     behaviors.push(
-      createEnhancedSoundRegionBehavior({
+      createEmSoundRegionBehavior({
         name: `${config.name} - Sound`,
         soundPath: config.sound,
         volume: 1.0,
@@ -104,9 +123,9 @@ export async function createTrapRegion(
   // Determine trigger events (default to tokenEnter)
   const triggerEvents = config.events?.length ? config.events : [RegionEvents.TOKEN_ENTER];
 
-  // Add trap behavior (Enhanced Region Behaviors Trap)
+  // Add the trap behavior itself
   behaviors.push(
-    createEnhancedTrapRegionBehavior({
+    createEmTrapRegionBehavior({
       name: config.name,
       saveAbility: config.saveAbility,
       saveDC: config.saveDC,
@@ -114,6 +133,7 @@ export async function createTrapRegion(
       damage: config.damage,
       savedDamage: config.savedDamage || '',
       damageType: config.damageType,
+      properties: config.damageProperties,
       automateDamage: config.automateDamage ?? true,
       saveFailedMessage: config.saveFailedMessage,
       saveSuccessMessage: config.saveSuccessMessage,
@@ -123,32 +143,27 @@ export async function createTrapRegion(
     })
   );
 
-  // Add Execute Script behavior to trigger MAT tiles if tilesToTrigger is provided
+  // Fire any Monk's Active Tiles tiles the GM wired to this trap. This used to
+  // be an Execute Script behavior with the tile ids baked into a generated
+  // script string; it is now a typed behavior with a `tileIds` set.
   if (config.tilesToTrigger && config.tilesToTrigger.length > 0) {
-    const tileIds = config.tilesToTrigger;
-    const triggerScript = `// Trigger MAT tiles when trap fires
-const tileIds = ${JSON.stringify(tileIds)};
-const scene = canvas.scene;
-
-for (const tileId of tileIds) {
-  const tile = scene.tiles.get(tileId);
-  if (tile && tile.flags?.['monks-active-tiles']) {
-    // Trigger the tile using Monk's Active Tiles API
-    const mat = game.modules.get('monks-active-tiles')?.api;
-    if (mat) {
-      await mat.triggerTile(tile, event?.data?.token || null);
-    }
-  }
-}`;
-
     behaviors.push(
-      createExecuteMacroRegionBehavior({
+      createEmTriggerTileRegionBehavior({
         name: `${config.name} - Trigger Tiles`,
-        macroScript: triggerScript,
+        tileIds: config.tilesToTrigger,
         events: triggerEvents
       })
     );
   }
+
+  // Route everything through a movement-action gate when the GM has narrowed
+  // the list. Sound and pause are gated too: a flying creature that does not
+  // set off the plate should not set off the noise it makes either.
+  const gatedBehaviors = applyMovementActionGate(
+    behaviors,
+    normalizeMovementActions(config.movementActions),
+    config.name
+  );
 
   // Create the region shape
   const shape = createRectangleShape({
@@ -170,8 +185,8 @@ for (const tileId of tileIds) {
   const [region] = (await scene.createEmbeddedDocuments('Region', [regionData])) as any[];
 
   // Now add behaviors to the region - this ensures proper schema initialization
-  if (behaviors.length > 0 && region) {
-    await region.createEmbeddedDocuments('RegionBehavior', behaviors);
+  if (gatedBehaviors.length > 0 && region) {
+    await region.createEmbeddedDocuments('RegionBehavior', gatedBehaviors);
   }
 
   // Tag the trap region using Tagger if available
@@ -180,5 +195,5 @@ for (const tileId of tileIds) {
     customTags: config.customTags
   });
 
-  ui.notifications.info(`Created trap region: ${config.name}`);
+  notifyInfo('EMPUZZLES.NotifyTrapRegionCreated', { name: config.name });
 }

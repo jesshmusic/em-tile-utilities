@@ -22,6 +22,9 @@
 .reset-config.application,
 .teleport-config.application,
 .check-state-dialog.application,
+.difficult-terrain-config.application,
+.darkness-config.application,
+.surface-config.application,
 .elevation-config.application {
   display: flex;
   flex-direction: column;
@@ -34,6 +37,9 @@
 .reset-config .window-content,
 .teleport-config .window-content,
 .check-state-dialog .window-content,
+.difficult-terrain-config .window-content,
+.darkness-config .window-content,
+.surface-config .window-content,
 .elevation-config .window-content {
   display: flex;
   flex-direction: column;
@@ -51,6 +57,9 @@
 .reset-config .form-footer,
 .teleport-config .form-footer,
 .check-state-dialog .form-footer,
+.difficult-terrain-config .form-footer,
+.darkness-config .form-footer,
+.surface-config .form-footer,
 .elevation-config .form-footer {
   position: sticky;
   bottom: 0;
@@ -373,6 +382,15 @@
 .check-state-dialog .checkbox-label input[type="checkbox"],
 .elevation-config .checkbox-label input[type="checkbox"] {
   cursor: pointer;
+}
+
+/* Damage bypass properties: a short row of checkboxes that wraps rather than
+   stacking one per line. The list length comes from the system, so it has to
+   survive a module adding a fourth or fifth entry. */
+.trap-config .checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
 }
 
 /* Variables viewer styles */
@@ -1106,6 +1124,7 @@
 .gi-hazard-sign { background-image: url('../icons/hazard-sign.svg'); }
 .gi-pause-button { background-image: url('../icons/pause-button.svg'); }
 .gi-padlock { background-image: url('../icons/padlock.svg'); }
+.gi-poison-cloud { background-image: url('../icons/poison-cloud.svg'); }
 .gi-look-at { background-image: url('../icons/look-at.svg'); }
 .gi-sight-disabled { background-image: url('../icons/sight-disabled.svg'); }
 .gi-cube { background-image: url('../icons/cube.svg'); }
@@ -2620,4 +2639,71 @@ i.gi-mesh-ball,
 
 .em-puzzles .tag-select-container.disabled .tag .tag-remove {
   display: none;
+}
+
+/* Movement action filter - a wrapping row of checkboxes, one per entry in
+   CONFIG.Token.movement.actions, so the row grows on its own if a system or
+   module registers another movement action. Scoped to .em-puzzles: the class
+   names are generic enough to collide with anything. */
+.em-puzzles .movement-action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+
+.em-puzzles .movement-action-list .movement-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.em-puzzles .movement-action-list .movement-action input[type='checkbox'] {
+  margin: 0;
+}
+
+/* Core region behavior dialogs (difficult terrain, darkness, surface).
+   Scoped to .em-puzzles for the same reason the movement-action list above is:
+   these class names are generic enough to collide with anything. */
+.em-puzzles .terrain-difficulty-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.25rem 0.75rem;
+}
+
+.em-puzzles .terrain-difficulty-list .terrain-difficulty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.em-puzzles .terrain-difficulty-list .terrain-difficulty label {
+  flex: 1 1 auto;
+  font-size: 12px;
+}
+
+.em-puzzles .terrain-difficulty-list .terrain-difficulty input[type='number'] {
+  flex: 0 0 5rem;
+}
+
+.em-puzzles .darkness-mode-guide,
+.em-puzzles .surface-preset-guide {
+  margin: 0 0 0.5rem 0;
+  padding-left: 1.25rem;
+  font-size: 12px;
+  color: var(--color-text-dark-secondary, inherit);
+  list-style: disc;
+}
+
+.em-puzzles .surface-toggle .checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.em-puzzles .surface-toggle .hint {
+  margin-top: 0.1rem;
 }

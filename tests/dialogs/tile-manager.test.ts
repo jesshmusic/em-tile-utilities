@@ -468,8 +468,12 @@ describe('TileManagerDialog', () => {
     it('should render when tile from current scene changes', () => {
       jest.useFakeTimers();
 
+      // A real `updateTile` diff names the fields that changed. It used to be
+      // enough to pass `{}` here because every update re-rendered; now the
+      // handler asks whether the diff touches anything the list shows, so the
+      // diff has to be a real one. See tile-manager-refresh.test.ts.
       const mockTile = { parent: { id: mockScene.id } };
-      dialog._onTileChange(mockTile, {}, {}, 'user-123');
+      dialog._onTileChange(mockTile, { _id: 'abc', name: 'Renamed' }, {}, 'user-123');
 
       jest.runAllTimers();
 
@@ -1158,57 +1162,27 @@ describe('TileManagerDialog', () => {
     });
   });
 
-  describe('hasEnhancedRegionBehaviors', () => {
-    it('should be true when enhanced-region-behavior module is active', async () => {
-      // The mock already has enhanced-region-behavior active
-      const context = await dialog._prepareContext({});
-
-      expect(context.hasEnhancedRegionBehaviors).toBe(true);
-    });
-
-    it('should be false when enhanced-region-behavior module is not active', async () => {
-      // Override the modules.get mock to return inactive
+  describe('Enhanced Region Behaviors independence', () => {
+    /**
+     * The dialog used to pass `hasEnhancedRegionBehaviors` into its context and
+     * the template hid the Elevation card behind it. This module registers its
+     * own trap, elevation and sound region behavior subtypes now, so nothing
+     * about the manager's contents depends on a third-party module being
+     * installed.
+     */
+    it('does not gate its context on the module being present', async () => {
       const originalGet = (game as any).modules.get;
       (game as any).modules.get = jest.fn((id: string) => {
-        if (id === 'enhanced-region-behavior') {
-          return { active: false };
-        }
+        if (id === 'enhanced-region-behavior') return undefined;
         return originalGet(id);
       });
 
       const context = await dialog._prepareContext({});
 
-      expect(context.hasEnhancedRegionBehaviors).toBe(false);
+      expect(context.hasEnhancedRegionBehaviors).toBeUndefined();
+      expect(context.tiles).toBeDefined();
 
-      // Restore original mock
       (game as any).modules.get = originalGet;
-    });
-
-    it('should be false when enhanced-region-behavior module is not installed', async () => {
-      // Override the modules.get mock to return undefined
-      const originalGet = (game as any).modules.get;
-      (game as any).modules.get = jest.fn((id: string) => {
-        if (id === 'enhanced-region-behavior') {
-          return undefined;
-        }
-        return originalGet(id);
-      });
-
-      const context = await dialog._prepareContext({});
-
-      expect(context.hasEnhancedRegionBehaviors).toBe(false);
-
-      // Restore original mock
-      (game as any).modules.get = originalGet;
-    });
-
-    it('should include hasEnhancedRegionBehaviors when scene is null', async () => {
-      (global as any).canvas.scene = null;
-
-      const context = await dialog._prepareContext({});
-
-      expect(context.hasEnhancedRegionBehaviors).toBeDefined();
-      expect(typeof context.hasEnhancedRegionBehaviors).toBe('boolean');
     });
   });
 });

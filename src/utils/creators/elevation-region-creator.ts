@@ -1,11 +1,13 @@
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
-  createEnhancedElevationRegionBehavior,
+  createEmElevationRegionBehavior,
+  applyMovementActionGate,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
+import { requireEmRegionBehaviors } from '../helpers/module-checks';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
-import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
+import { normalizeMovementActions } from '../helpers/movement-actions';
 
 /**
  * Configuration for elevation regions
@@ -14,11 +16,21 @@ export interface ElevationRegionConfig {
   name: string;
   elevationOnEnter: number;
   elevationOnExit: number;
+  // Movement actions (CONFIG.Token.movement.actions ids) that may trigger the
+  // region. Undefined, empty, or the complete set all mean "no filtering".
+  // The enter and exit behaviors listen for different events, so each gets its
+  // own gate.
+  movementActions?: string[];
   customTags?: string;
 }
 
 /**
- * Creates an elevation region that changes token elevation on enter/exit
+ * Creates an elevation region that changes token elevation on enter/exit.
+ *
+ * Uses `em-tile-utilities.Elevation`, registered by this module during `init`.
+ * Enhanced Region Behaviors is no longer required; regions built before v2.3.0
+ * keep their `enhanced-region-behavior.Elevation` behaviors untouched.
+ *
  * @param scene - The scene to create the region in
  * @param config - Elevation region configuration
  * @param x - X position (optional, defaults to scene center)
@@ -34,16 +46,10 @@ export async function createElevationRegion(
   width?: number,
   height?: number
 ): Promise<void> {
-  // Verify Enhanced Region Behaviors is available
-  if (
-    !requireEnhancedRegionBehaviors({
-      plural: 'elevation regions',
-      singular: 'elevation region',
-      limitation: 'modify token elevation'
-    })
-  ) {
-    return;
-  }
+  // The server may not have picked up our RegionBehavior subtypes yet; it
+  // rejects them by returning an empty array rather than throwing, which
+  // would leave a region that looks created and does nothing.
+  if (!requireEmRegionBehaviors()) return;
 
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
@@ -58,7 +64,7 @@ export async function createElevationRegion(
 
   // Add elevation on enter behavior (using Enhanced Region Behaviors)
   behaviors.push(
-    createEnhancedElevationRegionBehavior({
+    createEmElevationRegionBehavior({
       name: `${config.name} - Enter`,
       elevation: config.elevationOnEnter,
       events: [RegionEvents.TOKEN_ENTER]
@@ -67,11 +73,18 @@ export async function createElevationRegion(
 
   // Add elevation on exit behavior (return to original elevation)
   behaviors.push(
-    createEnhancedElevationRegionBehavior({
+    createEmElevationRegionBehavior({
       name: `${config.name} - Exit`,
       elevation: config.elevationOnExit,
       events: [RegionEvents.TOKEN_EXIT]
     })
+  );
+
+  // Apply the movement-action filter, if the GM narrowed it
+  const gatedBehaviors = applyMovementActionGate(
+    behaviors,
+    normalizeMovementActions(config.movementActions),
+    config.name
   );
 
   // Create the region shape
@@ -94,8 +107,8 @@ export async function createElevationRegion(
   const [region] = (await scene.createEmbeddedDocuments('Region', [regionData])) as any[];
 
   // Add behaviors to the region
-  if (behaviors.length > 0 && region) {
-    await region.createEmbeddedDocuments('RegionBehavior', behaviors);
+  if (gatedBehaviors.length > 0 && region) {
+    await region.createEmbeddedDocuments('RegionBehavior', gatedBehaviors);
   }
 
   // Tag the region if Tagger module is active

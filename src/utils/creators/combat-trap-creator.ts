@@ -18,6 +18,7 @@ import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { getOrCreateTrapActorsFolder } from '../helpers/folder-helpers';
 import { createRollbackTracker } from '../helpers/rollback-helpers';
+import { notifyError } from '../../dialogs/notify';
 
 /** Our own flag scope — safe from any schema clean another module runs over its flags. */
 const MODULE_FLAG_SCOPE = 'em-tile-utilities';
@@ -87,7 +88,7 @@ export async function createCombatTrapTile(
   // Get the item from the compendium
   const item = await (globalThis as any).fromUuid(config.itemId);
   if (!item) {
-    ui.notifications.error('Tile Utilities Error: Could not find the selected item!');
+    notifyError('EMPUZZLES.NotifyCombatTrapItemMissing');
     return null;
   }
 
@@ -346,12 +347,15 @@ export async function createCombatTrapTile(
     // Undo the actor / item / token / tile we already created so a partial
     // failure doesn't leave orphans behind in the world.
     await tracker.rollback();
-    const message =
+    // The thrown Error's message is the useful part; when there isn't one,
+    // fall back to a localized pointer at the console rather than inventing
+    // detail we don't have.
+    const reason =
       err instanceof Error
-        ? `Tile Utilities: Failed to create combat trap — ${err.message}`
-        : 'Tile Utilities: Failed to create combat trap. Check the console for details.';
+        ? err.message
+        : game.i18n.localize('EMPUZZLES.NotifyCreateFailedSeeConsole');
     console.error("Dorman Lakely's Tile Utilities - createCombatTrapTile failed:", err);
-    ui.notifications?.error(message);
+    notifyError('EMPUZZLES.NotifyCombatTrapFailed', { reason });
     // Deliberately not re-thrown (unlike createLightTile): the only caller,
     // trap-dialog.ts, doesn't guard this call and an escaping rejection would
     // strand its placement dialog. Returning null lets callers detect failure.

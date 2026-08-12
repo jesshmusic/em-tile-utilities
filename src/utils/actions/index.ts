@@ -5,11 +5,14 @@
  * Each builder function generates a properly structured action object with default values.
  */
 
+export * from './apply-condition-tile-action';
 export * from './apply-damage-tile-action';
 export * from './combat-actions';
 export * from './common-actions';
 export * from './door-actions';
 export * from './flow-control-actions';
 export * from './monks-tokenbar-actions';
+export * from './puzzle-actions';
 export * from './tile-actions';
+export * from './use-activity-tile-action';
 export * from './variable-actions';

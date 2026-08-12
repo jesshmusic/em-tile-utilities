@@ -41,3 +41,6 @@ scripts/main.js.bak
 .env.local
 /em-tile-utilities.lock
 /GITHUB-WORKFLOWS-AND-TESTING-GUIDE.md
+
+# Subagent git worktrees
+.claude/worktrees/

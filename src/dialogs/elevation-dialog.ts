@@ -2,7 +2,8 @@ import { createElevationRegion } from '../utils/creators';
 import {
   getNextTileNumber,
   startDragPlacePreview,
-  DragPlacePreviewManager
+  DragPlacePreviewManager,
+  getMovementActionOptions
 } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
@@ -27,6 +28,12 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected elevationOnEnter: number = 10;
   protected elevationOnExit: number = 0;
   protected customTags: string = '';
+
+  /**
+   * Movement actions that may trigger the region. `null` means "every action",
+   * which the creator turns back into no filtering at all.
+   */
+  protected movementActions: string[] | null = null;
 
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
@@ -83,6 +90,12 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       elevationOnEnter: this.elevationOnEnter,
       elevationOnExit: this.elevationOnExit,
       customTags: this.customTags,
+      // Everything ticked by default, so an elevation region behaves exactly as
+      // it did before the filter existed; the GM unticks what should be ignored.
+      movementActionOptions: getMovementActionOptions().map(option => ({
+        ...option,
+        checked: this.movementActions === null ? true : this.movementActions.includes(option.value)
+      })),
       buttons: [
         {
           type: 'submit',
@@ -119,6 +132,13 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       'input[name="elevationOnExit"]'
     ) as HTMLInputElement;
     if (elevationOnExitInput) this.elevationOnExit = parseInt(elevationOnExitInput.value) || 0;
+
+    const movementActionBoxes: HTMLInputElement[] = Array.from(
+      this.element.querySelectorAll?.('input[name="regionMovementAction"]') ?? []
+    );
+    if (movementActionBoxes.length > 0) {
+      this.movementActions = movementActionBoxes.filter(box => box.checked).map(box => box.value);
+    }
 
     const customTagsInput = this.element.querySelector(
       'input[name="customTags"]'
@@ -222,11 +242,23 @@ export class ElevationDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
 
+    // Movement action filter. FormDataExtended collapses a single checked box
+    // to a string and drops the key entirely when none is checked, so normalize
+    // before handing it to the creator (which reads "all" and "none" alike as
+    // no filtering).
+    const rawMovementActions = data.regionMovementAction;
+    const movementActions: string[] = Array.isArray(rawMovementActions)
+      ? rawMovementActions
+      : rawMovementActions
+        ? [rawMovementActions]
+        : [];
+
     // Build elevation config
     const config: ElevationRegionConfig = {
       name: data.regionName,
       elevationOnEnter: parseInt(data.elevationOnEnter) || 0,
       elevationOnExit: parseInt(data.elevationOnExit) || 0,
+      movementActions: movementActions.length > 0 ? movementActions : undefined,
       customTags: data.customTags || ''
     };
 

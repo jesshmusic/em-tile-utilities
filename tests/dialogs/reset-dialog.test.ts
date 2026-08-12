@@ -47,7 +47,10 @@ describe('ResetTileConfigDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-clockwise-rotation');
       expect(options.window.title).toBe('EMPUZZLES.CreateResetTile');
-      expect(options.position.width).toBe(650);
+      // Asserted against the shared config rather than a literal: the default
+      // width is tuned centrally in src/types/dialog-positions.ts, and pinning
+      // the number here just meant four tests to update when it moved.
+      expect(options.position.width).toBe(DialogPositions.RESET.width);
       // Content-driven height: the `max-height: 90vh` flex block in
       // styles/dialogs.css caps it, so the window fits short forms without
       // dead space and scrolls tall ones.
@@ -615,6 +618,7 @@ describe('ResetTileConfigDialog', () => {
 
 // Import utility functions for testing
 import type { ResetTileConfigDialog as ResetTileConfigDialogType } from '../../src/dialogs/reset-dialog';
+import { DialogPositions } from '../../src/types/dialog-positions';
 
 describe('ResetDialog Utility Functions', () => {
   describe('extractWallDoorActions', () => {

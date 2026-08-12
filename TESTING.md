@@ -2,7 +2,7 @@
 
 Jest + ts-jest, `node` test environment, no Foundry runtime — every Foundry global is mocked in `tests/mocks/foundry.ts`. The whole suite runs in about five seconds.
 
-**As of v2.2.0: 993 tests across 28 suites, all passing.**
+**As of v2.2.0: 1346 tests across 41 suites, all passing.**
 
 ```bash
 npm test                 # run everything

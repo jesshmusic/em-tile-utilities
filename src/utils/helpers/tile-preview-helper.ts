@@ -3,6 +3,7 @@
  */
 
 import { getGridSize } from './grid-helpers';
+import { notifyError } from '../../dialogs/notify';
 
 /**
  * `canvas.grid.getSnappedPoint({ mode })` takes a bit field, not an enum:
@@ -81,7 +82,7 @@ export class TilePreviewManager {
       this.updatePositionFromMouse();
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
-      ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
+      notifyError('EMPUZZLES.NotifyPreviewImageFailed', { path: this.config.imagePath });
 
       // Ensure texture is unloaded if it was partially loaded
       if (texture && this.config.imagePath) {
@@ -333,7 +334,7 @@ export class DragPlacePreviewManager {
       this.setupEventHandlers();
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities - Failed to load preview image:", error);
-      ui.notifications.error(`Failed to load preview image: ${this.config.imagePath}`);
+      notifyError('EMPUZZLES.NotifyPreviewImageFailed', { path: this.config.imagePath });
 
       // Ensure texture is unloaded if it was partially loaded
       if (this.texture && this.config.imagePath) {

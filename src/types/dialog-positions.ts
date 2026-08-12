@@ -27,10 +27,29 @@ export interface DialogPosition {
  * rendered with dead space below the footer while a tall one (Trap, Teleport)
  * was pinned to 800px whether or not the screen could take it.
  *
+ * The width was 650 until 3.0.0. It is 800 because the dialogs got
+ * substantially longer — measured on the real dialogs, content height at each
+ * candidate width:
+ *
+ * |            | 520  | 650  | 750  | 850  | 950  |
+ * | ---------- | ---- | ---- | ---- | ---- | ---- |
+ * | Gas cloud  | 1164 | 1003 |  940 |  884 |  866 |
+ * | Surface    | 1774 | 1689 | 1671 | 1621 | 1589 |
+ * | Trap       | 1699 | 1633 | 1616 | 1598 | 1563 |
+ *
+ * Extra width buys vertical space by letting form rows sit side by side
+ * instead of wrapping, and the returns flatten past ~850. 800 takes most of
+ * the gain while still fitting a 1024-wide window with room to spare.
+ *
+ * A dialog that genuinely needs a different size gets its own entry below —
+ * do NOT hardcode `position` in a dialog's `DEFAULT_OPTIONS`. Two dialogs did
+ * that when they were added, which is how one of them ended up back on a fixed
+ * pixel height and out of the 90vh behaviour entirely.
+ *
  * No left/top = centered on screen.
  */
 const DEFAULT_DIALOG_POSITION: DialogPosition = {
-  width: 650,
+  width: 800,
   height: 'auto'
 };
 
@@ -90,10 +109,16 @@ export const DialogPositions: Record<string, DialogPosition> = {
    * against an auto-height window. The window is resizable, and the fixed
    * `left: 100, top: 100` has been dropped so Foundry restores wherever the
    * user last dragged it instead of snapping back to the top-left on reopen.
+   *
+   * Sized up in 3.0.0. The card grid is two columns, and this release took it
+   * from 7 cards to 14 — at 650×750 the last row sat below the fold on open,
+   * so half the new tools were invisible until the GM thought to scroll. 900
+   * wide keeps two comfortable columns and 850 tall clears the grid on a
+   * 1080p screen without exceeding it.
    */
   TILE_MANAGER: {
-    width: 650,
-    height: 750
+    width: 900,
+    height: 850
   },
 
   /**
@@ -113,6 +138,55 @@ export const DialogPositions: Record<string, DialogPosition> = {
    * Elevation Region dialog
    */
   ELEVATION: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Difficult Terrain Region dialog
+   */
+  DIFFICULT_TERRAIN: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Magical Darkness Region dialog
+   */
+  DARKNESS: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Surface (illusory floor / ceiling) Region dialog
+   */
+  SURFACE: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Rotating Room dialog
+   */
+  ROTATE: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Gas Cloud / Aura dialog
+   */
+  GAS_CLOUD: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Lock & Key dialog
+   */
+  LOCK: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Combination Lock dialog
+   */
+  COMBINATION: {
     ...DEFAULT_DIALOG_POSITION
   }
 };
