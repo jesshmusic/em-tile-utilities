@@ -9,9 +9,12 @@ import { showElevationDialog } from './elevation-dialog';
 import { showDifficultTerrainDialog } from './difficult-terrain-dialog';
 import { showDarknessDialog } from './darkness-dialog';
 import { showSurfaceDialog } from './surface-dialog';
+import { showRotateDialog } from './rotate-dialog';
+import { showGasCloudDialog } from './gas-cloud-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 import { notifyInfo, notifyWarn, notifyError } from './notify';
+import { isDnd5eSystem } from '../utils/helpers/dnd5e-activity';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -47,6 +50,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createDifficultTerrain: TileManagerDialog.#onCreateDifficultTerrain,
       createDarkness: TileManagerDialog.#onCreateDarkness,
       createSurface: TileManagerDialog.#onCreateSurface,
+      createRotate: TileManagerDialog.#onCreateRotate,
+      createGasCloud: TileManagerDialog.#onCreateGasCloud,
       createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
@@ -107,6 +112,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         sortBy: this.sortBy,
         searchQuery: this.searchQuery,
         experimentalFeatures: experimentalFeatures,
+        isDnd5e: isDnd5eSystem(),
         hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
         version: version,
         buildNumber: buildNumber
@@ -275,6 +281,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       sortBy: this.sortBy,
       searchQuery: this.searchQuery,
       experimentalFeatures: experimentalFeatures,
+      isDnd5e: isDnd5eSystem(),
       hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
       version: version,
       buildNumber: buildNumber
@@ -687,6 +694,36 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     event.preventDefault();
     this.minimize();
     showSurfaceDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create rotating room region button click
+   */
+  static async #onCreateRotate(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showRotateDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create gas cloud / aura region button click
+   */
+  static async #onCreateGasCloud(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showGasCloudDialog();
   }
 
   /* -------------------------------------------- */

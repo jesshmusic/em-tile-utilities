@@ -29,3 +29,7 @@ export { createDarknessRegion } from './darkness-region-creator';
 export type { DarknessRegionConfig } from './darkness-region-creator';
 export { createSurfaceRegion } from './surface-region-creator';
 export type { SurfaceRegionConfig } from './surface-region-creator';
+export { createRotateRegion } from './rotate-region-creator';
+export type { RotateRegionConfig } from './rotate-region-creator';
+export { createGasCloudRegion } from './gas-cloud-region-creator';
+export type { GasCloudRegionConfig } from './gas-cloud-region-creator';

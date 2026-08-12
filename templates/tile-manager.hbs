@@ -105,6 +105,24 @@
       <div class="card-content">
         <h3 class="card-title">{{localize "EMPUZZLES.CreateSurface"}}</h3>
         <p class="card-description">{{localize "EMPUZZLES.CreateSurfaceDesc"}}</p>
+    {{#if isDnd5e}}
+      <button type="button" class="create-tile-card create-rotate-card" data-action="createRotate">
+        <div class="card-icon">
+          <i class="gi-clockwise-rotation"></i>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{localize "EMPUZZLES.CreateRotate"}}</h3>
+          <p class="card-description">{{localize "EMPUZZLES.CreateRotateDesc"}}</p>
+        </div>
+      </button>
+    {{/if}}
+    <button type="button" class="create-tile-card create-gas-cloud-card" data-action="createGasCloud">
+      <div class="card-icon">
+        <i class="gi-poison-cloud"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateGasCloud"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateGasCloudDesc"}}</p>
       </div>
     </button>
     {{#if experimentalFeatures}}

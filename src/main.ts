@@ -8,6 +8,7 @@ import { PatreonLink, DmGuruLink } from './settings/settings-menus';
 import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
 import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
 import { registerEmTileActions } from './utils/actions/apply-damage-tile-action';
+import { registerRotateAreaTileAction } from './utils/actions/rotate-area-tile-action';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
@@ -92,6 +93,13 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
 // registerEmTileActions swallows its own failures; nothing it does can abort
 // the settings registration in the `init` handler below.
 registerEmTileActions();
+
+// The rotating-room action, for the same reason and with the same timing. It
+// registers its own `setupTileActions` listener rather than joining the call
+// above so the two feature areas stay in separate files; MATT is happy to take
+// more than one listener, and `registerRotateAreaAction` is idempotent and
+// gated on dnd5e (the behavior it drives exists nowhere else).
+registerRotateAreaTileAction();
 
 // Module initialization
 Hooks.once('init', async () => {

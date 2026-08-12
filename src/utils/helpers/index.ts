@@ -12,6 +12,7 @@ export * from './grid-helpers';
 export * from './module-checks';
 export * from './movement-actions';
 export * from './naming-helpers';
+export * from './region-effect-helpers';
 export * from './rollback-helpers';
 export * from './tag-helpers';
 export * from './tile-preview-helper';
