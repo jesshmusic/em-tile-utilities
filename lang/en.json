@@ -217,6 +217,8 @@
     "SoundRadius": "Sound Radius",
     "SoundRadiusHint": "The radius in grid units for the ambient sound attenuation",
     "SoundVolume": "Sound Volume",
+    "TeleportSound": "Teleport Sound",
+    "TeleportSoundHint": "Played when a creature enters the teleport region. Regions only — tile teleports have no sound.",
     "SoundVolumeHint": "The volume level for the ambient sound (0 = silent, 1 = full volume)",
     "LightName": "Light Name",
     "UseDarknessTrigger": "Use Darkness Trigger",

@@ -622,10 +622,55 @@ describe('Teleport Region Creator', () => {
       const callArgs = (sourceRegion.createEmbeddedDocuments as jest.Mock).mock.calls[0] as any[];
       const behaviors = callArgs[1] as any[];
 
-      // Should have a script behavior for sound
+      // The sound is a typed Enhanced Region Behaviors sound behavior, not a
+      // generated script. The old implementation interpolated the path into a
+      // JavaScript source string; nothing in this module does that any more.
       const soundBehavior = behaviors.find((b: any) => b.name.includes('Sound'));
       expect(soundBehavior).toBeDefined();
-      expect(soundBehavior.type).toBe('executeScript');
+      expect(soundBehavior.type).toBe('enhanced-region-behavior.SoundEffect');
+      expect(soundBehavior.system.soundPath).toBe('sounds/teleport.ogg');
+      expect(soundBehavior.system.volume).toBe(0.8);
+      expect(JSON.stringify(soundBehavior)).not.toContain('AudioHelper');
+    });
+
+    it('honours a configured sound volume', async () => {
+      const sourceRegion = {
+        id: 'source-region',
+        createEmbeddedDocuments: jest.fn(async () => [])
+      };
+      mockScene.createEmbeddedDocuments = jest.fn(async () => [sourceRegion]);
+      mockDestScene.createEmbeddedDocuments = jest.fn(async () => [
+        { id: 'dest-region', createEmbeddedDocuments: jest.fn(async () => []) }
+      ]);
+
+      await createTeleportRegion(
+        mockScene,
+        {
+          name: 'Quiet Teleport',
+          tileImage: 'icons/portal.webp',
+          hidden: false,
+          teleportX: 300,
+          teleportY: 400,
+          teleportSceneId: 'dest-scene',
+          deleteSourceToken: true,
+          createReturnTeleport: false,
+          hasSavingThrow: false,
+          savingThrow: '',
+          dc: 0,
+          flavorText: '',
+          customTags: '',
+          sound: 'sounds/teleport.ogg',
+          soundVolume: 0.25
+        } as TeleportRegionConfig,
+        100,
+        100,
+        100,
+        100
+      );
+
+      const behaviors = (sourceRegion.createEmbeddedDocuments as jest.Mock).mock
+        .calls[0][1] as any[];
+      expect(behaviors.find((b: any) => b.name.includes('Sound')).system.volume).toBe(0.25);
     });
 
     it('should add sound behavior to return region when createReturnTeleport is true', async () => {

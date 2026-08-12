@@ -213,6 +213,7 @@ export interface TeleportTileConfig {
   flavorText: string;
   customTags?: string;
   sound?: string;
+  soundVolume?: number; // 0–1, defaults to 0.8. Region teleports only.
   pauseGameOnTrigger?: boolean; // Whether to pause the game when teleport triggers
 }
 

@@ -1,27 +1,21 @@
 import type { TeleportTileConfig } from '../../types/module';
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
-  createExecuteMacroRegionBehavior,
   createTeleportTokenRegionBehavior,
   createPauseGameRegionBehavior,
+  createEnhancedSoundRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 
 /**
- * Escape a string for safe embedding in JavaScript code
- * Handles quotes, backslashes, and newlines
+ * Volume for the teleport sound when the dialog does not specify one.
+ *
+ * Matches the value the old generated-script implementation hardcoded, so a
+ * teleport built before this change and one built after sound the same.
  */
-function escapeJsString(str: string): string {
-  return str
-    .replace(/\\/g, '\\\\') // Escape backslashes first
-    .replace(/'/g, "\\'") // Escape single quotes
-    .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/\n/g, '\\n') // Escape newlines
-    .replace(/\r/g, '\\r') // Escape carriage returns
-    .replace(/\t/g, '\\t'); // Escape tabs
-}
+const DEFAULT_TELEPORT_SOUND_VOLUME = 0.8;
 
 /**
  * Extended teleport config with region-specific options
@@ -124,15 +118,13 @@ export async function createTeleportRegion(
   // Now create behaviors for the SOURCE region
   const sourceBehaviors: any[] = [];
 
-  // Add Sound behavior FIRST if sound is set
-  // Uses Execute Script with foundry.audio.AudioHelper.play() for reliable sound playback
+  // Sound first, so it starts before the token is moved away.
   if (config.sound && config.sound.trim() !== '') {
-    const soundScript = `// Play teleport sound
-await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
     sourceBehaviors.push(
-      createExecuteMacroRegionBehavior({
+      createEnhancedSoundRegionBehavior({
         name: `${config.name} - Sound`,
-        macroScript: soundScript,
+        soundPath: config.sound,
+        volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,
         events: [RegionEvents.TOKEN_ENTER]
       })
     );
@@ -167,15 +159,12 @@ await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', v
   if (config.createReturnTeleport) {
     const destBehaviors: any[] = [];
 
-    // Add Sound behavior FIRST to destination if sound is set
-    // Uses Execute Script with foundry.audio.AudioHelper.play() for reliable sound playback
     if (config.sound && config.sound.trim() !== '') {
-      const returnSoundScript = `// Play return teleport sound
-await foundry.audio.AudioHelper.play({ src: '${escapeJsString(config.sound)}', volume: 0.8, loop: false });`;
       destBehaviors.push(
-        createExecuteMacroRegionBehavior({
+        createEnhancedSoundRegionBehavior({
           name: `Return: ${config.name} - Sound`,
-          macroScript: returnSoundScript,
+          soundPath: config.sound,
+          volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,
           events: [RegionEvents.TOKEN_ENTER]
         })
       );

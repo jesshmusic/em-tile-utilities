@@ -36,6 +36,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected dc: number = 15;
   protected flavorText: string = '';
   protected pauseGameOnTrigger: boolean = false;
+  protected sound: string = '';
+  protected soundVolume: number = 0.8;
   protected deleteSourceToken: boolean = false;
   protected createReturnTeleport: boolean = false;
   protected customTags: string = '';
@@ -185,6 +187,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       dc: this.dc,
       flavorText: this.flavorText,
       pauseGameOnTrigger: this.pauseGameOnTrigger,
+      sound: this.sound,
+      soundVolume: this.soundVolume,
       deleteSourceToken: this.deleteSourceToken,
       createReturnTeleport: this.createReturnTeleport,
       customTags: this.customTags,
@@ -256,6 +260,17 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       'input[name="pauseGameOnTrigger"]'
     ) as HTMLInputElement;
     if (pauseGameOnTriggerCheckbox) this.pauseGameOnTrigger = pauseGameOnTriggerCheckbox.checked;
+
+    // Region teleports only — the sound plays from a region behavior, so a tile
+    // teleport ignores both of these. The template hides them behind
+    // `.region-only-option` accordingly.
+    const soundInput = this.element.querySelector('input[name="sound"]') as HTMLInputElement;
+    if (soundInput) this.sound = soundInput.value;
+
+    const soundVolumeInput = this.element.querySelector(
+      'input[name="soundVolume"]'
+    ) as HTMLInputElement;
+    if (soundVolumeInput) this.soundVolume = parseFloat(soundVolumeInput.value);
 
     const deleteSourceTokenCheckbox = this.element.querySelector(
       'input[name="deleteSourceToken"]'
@@ -685,6 +700,8 @@ export class TeleportDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       teleportHeight: this.teleportHeight,
       teleportSceneId: this.teleportSceneId,
       pauseGameOnTrigger: data.pauseGameOnTrigger || false,
+      sound: data.sound || '',
+      soundVolume: data.soundVolume === undefined ? 0.8 : Number(data.soundVolume),
       deleteSourceToken: data.deleteSourceToken || false,
       createReturnTeleport: data.createReturnTeleport || false,
       hasSavingThrow: data.hasSavingThrow || false,
