@@ -213,6 +213,170 @@ export function createEnhancedElevationRegionBehavior(config: {
 }
 
 /* -------------------------------------------- */
+/*  Core: apply active effect                   */
+/* -------------------------------------------- */
+
+/** Behavior type id for Foundry's core Apply Active Effect behavior. */
+export const APPLY_ACTIVE_EFFECT_TYPE = 'applyActiveEffect';
+
+/**
+ * Create an Apply Active Effect region behavior (FoundryVTT core).
+ *
+ * The v14 schema is a single field —
+ * `effects: new fields.SetField(new fields.DocumentUUIDField({ type: "ActiveEffect" }))`
+ * (Resources/app/client/data/region-behaviors/apply-active-effect.mjs:31-35) —
+ * a change from v12/v13, which had `uuid` plus `overrides`. Verified live on
+ * Foundry 14.364 by reading `CONFIG.RegionBehavior.dataModels.applyActiveEffect
+ * .schema.fields`, which has exactly the one key.
+ *
+ * NO `events` is emitted, and that is deliberate. Unlike `executeScript` and
+ * `displayScrollingText`, this behavior does not expose a configurable events
+ * field; it declares a fixed `static events` map binding `tokenEnter` and
+ * `tokenExit` (apply-active-effect.mjs:77-81). Writing an `events` key here
+ * would be dead data. Enter creates the effects with `origin = behavior.uuid`,
+ * and exit deletes exactly the effects carrying that origin — so a cloud never
+ * strips a condition the party already had.
+ *
+ * @param config - Behavior configuration
+ * @returns Apply Active Effect behavior object
+ */
+export function createApplyActiveEffectRegionBehavior(config: {
+  name?: string;
+  /** ActiveEffect UUIDs. See helpers/region-effect-helpers.ts for how status
+   *  effect ids are turned into real documents with real UUIDs. */
+  effects: string[];
+}): any {
+  return {
+    type: APPLY_ACTIVE_EFFECT_TYPE,
+    name: config.name ?? 'Apply Effects',
+    system: {
+      effects: config.effects
+    },
+    disabled: false
+  };
+}
+
+/* -------------------------------------------- */
+/*  dnd5e: rotate area                          */
+/* -------------------------------------------- */
+
+/** Behavior type id for the dnd5e Rotate Area behavior. */
+export const ROTATE_AREA_TYPE = 'dnd5e.rotateArea';
+
+/**
+ * How the system picks a direction when travelling between two stop angles.
+ *
+ * Verbatim from `RotateAreaRegionBehaviorType.DIRECTION_MODES`
+ * (systems/dnd5e/dnd5e.mjs:77593-77599) and confirmed live as the `choices` of
+ * the `directionMode` field.
+ */
+export const RotateDirectionModes = {
+  CLOCKWISE: 'cw',
+  COUNTER_CLOCKWISE: 'ccw',
+  SHORTEST: 'short',
+  LONGEST: 'long'
+} as const;
+
+/**
+ * How the configured time maps onto the animation.
+ *
+ * `fixed` — `time.value` is the total time for the whole move.
+ * `variable` — `time.value` is the time to sweep 90°, so a longer turn takes
+ * proportionally longer (`time.value * (|angle| / 90)`, dnd5e.mjs:77667-77668).
+ * Either way the system floors the duration at 500 ms.
+ */
+export const RotateSpeedModes = {
+  FIXED: 'fixed',
+  VARIABLE: 'variable'
+} as const;
+
+/**
+ * Create a dnd5e Rotate Area region behavior.
+ *
+ * dnd5e 5.3 registers this as `"dnd5e.rotateArea"` (dnd5e.mjs:78054-78057,
+ * assigned into `CONFIG.RegionBehavior.dataModels` at dnd5e.mjs:78458) — note
+ * the lower-case namespace and camelCase name, matching its sibling
+ * `dnd5e.difficultTerrain`. Requires the dnd5e system; gate the caller with
+ * `isDnd5eSystem()`.
+ *
+ * What rotates
+ * ------------
+ * Everything except tokens is opted in BY DOCUMENT ID, through the five
+ * `*.ids` Sets. Tokens are the exception and take no ids at all: the behavior
+ * always rotates `this.region.tokens`, whatever is standing in the region at
+ * the moment it turns (`#getAnimatables`, dnd5e.mjs:77799-77804). That is why
+ * a turning bridge does not need the GM to list its passengers.
+ *
+ * The behavior's own region is always rotated too — `#getAnimatables` prepends
+ * `this.region.id` to `regions.ids` — so the region shape follows the room and
+ * keeps containing the same tokens. Listing the own region again is rejected by
+ * dnd5e's sheet as recursive, so `regionIds` is for OTHER regions only.
+ *
+ * `walls.link` (default true, matching dnd5e's own initial) expands each listed
+ * wall through `getLinkedSegments()`, so selecting one wall of a connected
+ * chain rotates the whole chain.
+ *
+ * Stop angles
+ * -----------
+ * There is no field called "stop angles"; the concept is `positions`, an
+ * ArrayField of `{ angle }` in DEGREES, each clamped to -360..360. `rotate()`
+ * steps through this array and wraps at both ends. A single-entry array means
+ * the room has nowhere to turn to, so the caller should supply at least two.
+ *
+ * `status` is emitted explicitly at the array's first entry rather than left to
+ * the schema default. The schema's own initial is `{ angle: 0, position: 0 }`,
+ * which is only correct when `positions[0].angle` is itself 0 — starting a
+ * bridge at 45° with a status angle of 0 would make the first rotation travel
+ * from the wrong place.
+ *
+ * @param config - Behavior configuration
+ * @returns Rotate Area behavior object
+ */
+export function createRotateAreaRegionBehavior(config: {
+  name?: string;
+  /** Stop angles in degrees. At least two for the room to have anywhere to go. */
+  angles: number[];
+  /** Milliseconds; total time (fixed) or time per 90° (variable). */
+  time?: number;
+  speedMode?: string;
+  directionMode?: string;
+  tileIds?: string[];
+  wallIds?: string[];
+  lightIds?: string[];
+  soundIds?: string[];
+  /** OTHER regions to carry along. The behavior's own region is automatic. */
+  regionIds?: string[];
+  linkWalls?: boolean;
+}): any {
+  const positions = (config.angles.length > 0 ? config.angles : [0]).map(angle => ({
+    // Clamped to the schema's own bounds so an out-of-range angle fails here,
+    // where it is debuggable, rather than being silently coerced on create.
+    angle: Math.max(-360, Math.min(360, Number(angle) || 0))
+  }));
+
+  return {
+    type: ROTATE_AREA_TYPE,
+    name: config.name ?? 'Rotate Area',
+    system: {
+      time: {
+        value: Math.max(0, Math.round(config.time ?? 1000)),
+        mode: config.speedMode ?? RotateSpeedModes.FIXED
+      },
+      tiles: { ids: config.tileIds ?? [] },
+      walls: { ids: config.wallIds ?? [], link: config.linkWalls ?? true },
+      lights: { ids: config.lightIds ?? [] },
+      regions: { ids: config.regionIds ?? [] },
+      sounds: { ids: config.soundIds ?? [] },
+      directionMode: config.directionMode ?? RotateDirectionModes.SHORTEST,
+      positions,
+      // Start parked at the first stop, not at a hardcoded zero.
+      status: { angle: positions[0].angle, position: 0, rotating: false }
+    },
+    disabled: false
+  };
+}
+
+/* -------------------------------------------- */
 /*  Movement-action filtering                   */
 /* -------------------------------------------- */
 

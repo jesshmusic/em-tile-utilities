@@ -114,5 +114,19 @@ export const DialogPositions: Record<string, DialogPosition> = {
    */
   ELEVATION: {
     ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Rotating Room dialog
+   */
+  ROTATE: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Gas Cloud / Aura dialog
+   */
+  GAS_CLOUD: {
+    ...DEFAULT_DIALOG_POSITION
   }
 };

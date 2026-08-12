@@ -6,6 +6,9 @@ import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
 import { showElevationDialog } from './elevation-dialog';
+import { showRotateDialog } from './rotate-dialog';
+import { showGasCloudDialog } from './gas-cloud-dialog';
+import { isDnd5eSystem } from '../utils/helpers/dnd5e-activity';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 import { notifyInfo, notifyWarn, notifyError } from './notify';
@@ -41,6 +44,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createTrap: TileManagerDialog.#onCreateTrap,
       createTeleport: TileManagerDialog.#onCreateTeleport,
       createElevation: TileManagerDialog.#onCreateElevation,
+      createRotate: TileManagerDialog.#onCreateRotate,
+      createGasCloud: TileManagerDialog.#onCreateGasCloud,
       createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
@@ -102,6 +107,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         searchQuery: this.searchQuery,
         experimentalFeatures: experimentalFeatures,
         hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
+        // Gates the rotating-room card: dnd5e.rotateArea does not exist in
+        // other systems, so the card would open a dialog that can only refuse.
+        isDnd5e: isDnd5eSystem(),
         version: version,
         buildNumber: buildNumber
       };
@@ -270,6 +278,7 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       searchQuery: this.searchQuery,
       experimentalFeatures: experimentalFeatures,
       hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors,
+      isDnd5e: isDnd5eSystem(),
       version: version,
       buildNumber: buildNumber
     };
@@ -569,6 +578,36 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     event.preventDefault();
     this.minimize();
     showElevationDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create rotating room region button click
+   */
+  static async #onCreateRotate(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showRotateDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create gas cloud / aura region button click
+   */
+  static async #onCreateGasCloud(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showGasCloudDialog();
   }
 
   /* -------------------------------------------- */

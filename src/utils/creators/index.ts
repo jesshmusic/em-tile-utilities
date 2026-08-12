@@ -23,3 +23,7 @@ export { createTeleportRegion } from './teleport-region-creator';
 export type { TeleportRegionConfig } from './teleport-region-creator';
 export { createElevationRegion } from './elevation-region-creator';
 export type { ElevationRegionConfig } from './elevation-region-creator';
+export { createRotateRegion } from './rotate-region-creator';
+export type { RotateRegionConfig } from './rotate-region-creator';
+export { createGasCloudRegion } from './gas-cloud-region-creator';
+export type { GasCloudRegionConfig } from './gas-cloud-region-creator';
