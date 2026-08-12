@@ -539,7 +539,12 @@ export class CheckStateDialog extends HandlebarsApplicationMixin(ApplicationV2) 
       const handler = async (clickEvent: any) => {
         try {
           const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-          const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+          // createCheckStateTile treats x/y as the tile's TOP-LEFT corner, so
+          // snap to a grid vertex. This used to pass `mode: 1` (CENTER), which
+          // placed the tile half a grid square off from the click.
+          const snapped = (canvas as any).grid.getSnappedPoint(position, {
+            mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.TOP_LEFT_VERTEX ?? 0x10
+          });
 
           await createCheckStateTile(canvas.scene, config, snapped.x, snapped.y);
 

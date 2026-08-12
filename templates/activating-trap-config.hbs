@@ -92,7 +92,7 @@
       <label for="savingThrow">{{localize "EMPUZZLES.SavingThrow"}}</label>
       <select id="savingThrow" name="savingThrow" {{#if hasDmgTrap}}disabled{{/if}}>
         {{#each savingThrowOptions as |option|}}
-          <option value="{{option.value}}" {{#if (eq option.value (or ../defaultSavingThrow "ability:dex"))}}selected{{/if}}>
+          <option value="{{option.value}}" {{#if (eq option.value (or ../defaultSavingThrow "save:dex"))}}selected{{/if}}>
             {{localize option.label}}
           </option>
         {{/each}}

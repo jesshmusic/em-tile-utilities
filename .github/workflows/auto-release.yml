@@ -5,6 +5,9 @@ on:
     types: [closed]
     branches:
       - main
+      # v13 maintenance line. The compatibility payload sent to the Foundry
+      # package API below is 13/13, which is correct for this branch.
+      - v13-maintenance
 
 jobs:
   auto-release:

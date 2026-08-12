@@ -550,8 +550,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       return;
     }
 
-    // Collect all variables and tile states from form
-    const varsToReset: Record<string, any> = {};
+    // Collect tile states from the form. Variables are kept per tile: Monk's
+    // Active Tiles stores them on the owning tile's flags, so the reset actions
+    // have to be addressed at that tile.
     const tilesToReset: any[] = [];
 
     (this as any).selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
@@ -568,23 +569,24 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         variables[varName] = value;
       });
 
-      Object.assign(varsToReset, variables);
-
-      // Collect wall/door states from form
+      // Collect wall/door states from form. The control name is
+      // `walldoor_<tileId>_<index>` (templates/reset-config.hbs), so the tile id
+      // has to be part of the lookup — the old `walldoor__<index>` only matched
+      // because the template was rendering an empty tile id.
       const wallDoorStates: any[] = [];
       tileData.wallDoorActions.forEach((action, index) => {
         if (action.entityId && action.state) {
           wallDoorStates.push({
             entityId: action.entityId,
             entityName: action.entityName,
-            state: data[`walldoor__${index}`]
+            state: data[`walldoor_${tileId}_${index}`] ?? action.state
           });
         }
       });
-      console.log('Tile Utilities', wallDoorStates);
 
       tilesToReset.push({
         tileId: tileId,
+        variables: variables,
         hidden: data[`visibility_${tileId}`] === 'hide',
         fileindex: parseInt(data[`fileindex_${tileId}`]) || 0,
         active: data[`active_${tileId}`] === 'true',
@@ -652,7 +654,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
             {
               name: data.resetName || 'Reset Tile',
               image: resetTileImage,
-              varsToReset: varsToReset,
               tilesToReset: tilesToReset,
               customTags: data.customTags || ''
             },

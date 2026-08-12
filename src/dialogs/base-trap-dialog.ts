@@ -26,7 +26,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
   protected targetType: string = TrapTargetType.TRIGGERING;
   protected hasSavingThrow: boolean = false;
   protected minRequired: string = '';
-  protected savingThrow: string = 'ability:dex';
+  protected savingThrow: string = 'save:dex';
   protected dc: string = '10';
   protected damageOnFail: string = '1d6';
   protected halfDamageOnSuccess: boolean = false;
@@ -328,12 +328,12 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       teleportX: this.teleportX,
       teleportY: this.teleportY,
       savingThrowOptions: [
-        { value: 'ability:str', label: 'EMPUZZLES.StrengthSave' },
-        { value: 'ability:dex', label: 'EMPUZZLES.DexteritySave' },
-        { value: 'ability:con', label: 'EMPUZZLES.ConstitutionSave' },
-        { value: 'ability:int', label: 'EMPUZZLES.IntelligenceSave' },
-        { value: 'ability:wis', label: 'EMPUZZLES.WisdomSave' },
-        { value: 'ability:cha', label: 'EMPUZZLES.CharismaSave' }
+        { value: 'save:str', label: 'EMPUZZLES.StrengthSave' },
+        { value: 'save:dex', label: 'EMPUZZLES.DexteritySave' },
+        { value: 'save:con', label: 'EMPUZZLES.ConstitutionSave' },
+        { value: 'save:int', label: 'EMPUZZLES.IntelligenceSave' },
+        { value: 'save:wis', label: 'EMPUZZLES.WisdomSave' },
+        { value: 'save:cha', label: 'EMPUZZLES.CharismaSave' }
       ],
       buttons: [
         {
@@ -354,7 +354,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       // Pre-populate fields from DMG trap activity
       defaultDC: activityData ? activityData.dc : undefined,
       defaultDamageOnFail: activityData ? activityData.damageFormula : undefined,
-      defaultSavingThrow: activityData ? `ability:${activityData.ability}` : undefined,
+      defaultSavingThrow: activityData ? `save:${activityData.ability}` : undefined,
       defaultHalfDamageOnSuccess: activityData ? activityData.halfDamageOnSuccess : undefined
     };
 
@@ -508,8 +508,13 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners) for consistent tile placement
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 2 });
+      // CENTER: this point is handed to Monk's Active Tiles as a teleport
+      // destination, which treats a location as a CENTRE point. The old
+      // `mode: 2` was EDGE_MIDPOINT despite the comment claiming corners --
+      // GRID_SNAPPING_MODES is a bit field, not an enum.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       // Store the teleport position
       this.teleportX = snapped.x;
@@ -946,7 +951,7 @@ export abstract class BaseTrapDialog extends HandlebarsApplicationMixin(Applicat
       targetType: targetType as TrapTargetType,
       hasSavingThrow: hasSavingThrow,
       minRequired: minRequired ? parseInt(minRequired) : null,
-      savingThrow: savingThrow || 'ability:dex',
+      savingThrow: savingThrow || 'save:dex',
       dc: dc ? parseInt(dc) : 10,
       damageOnFail: damageOnFail || '1d6',
       halfDamageOnSuccess: halfDamageOnSuccess,

@@ -5,6 +5,16 @@
 import { getGridSize } from './grid-helpers';
 
 /**
+ * `canvas.grid.getSnappedPoint({ mode })` takes a bit field, not an enum:
+ * CENTER is 0x1, EDGE_MIDPOINT is 0x2 and TOP_LEFT_VERTEX is 0x10. Read the
+ * value off CONST rather than hardcoding a literal — `mode: 2` snapped drag
+ * corners to EDGE MIDPOINTS while the comment beside it claimed corners. Falls
+ * back to the numeric value so the helper still behaves in unit tests, where
+ * CONST is not part of the Foundry mock.
+ */
+const GRID_SNAP_VERTEX = (globalThis as any).CONST?.GRID_SNAPPING_MODES?.VERTEX ?? 0xf0;
+
+/**
  * Configuration for tile preview
  */
 export interface TilePreviewConfig {
@@ -394,9 +404,10 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
-    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
+    // Drag corners snap to a grid VERTEX, since a document's x/y is its
+    // top-left. GRID_SNAPPING_MODES is a bit field, not an enum.
     const snapped = this.config.snapToGrid
-      ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
+      ? (canvas as any).grid.getSnappedPoint(position, { mode: GRID_SNAP_VERTEX })
       : position;
 
     this.startPos = { x: snapped.x, y: snapped.y };
@@ -454,9 +465,10 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
-    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
+    // Drag corners snap to a grid VERTEX, since a document's x/y is its
+    // top-left. GRID_SNAPPING_MODES is a bit field, not an enum.
     const snapped = this.config.snapToGrid
-      ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
+      ? (canvas as any).grid.getSnappedPoint(position, { mode: GRID_SNAP_VERTEX })
       : position;
 
     // Calculate dimensions
@@ -485,9 +497,10 @@ export class DragPlacePreviewManager {
 
     const layer = this.getLayer();
     const position = event.data.getLocalPosition(layer);
-    // FoundryVTT v13: mode: 2 = TOP_LEFT_VERTEX (corners), mode: 1 = CENTER
+    // Drag corners snap to a grid VERTEX, since a document's x/y is its
+    // top-left. GRID_SNAPPING_MODES is a bit field, not an enum.
     const snapped = this.config.snapToGrid
-      ? (canvas as any).grid.getSnappedPoint(position, { mode: 2 })
+      ? (canvas as any).grid.getSnappedPoint(position, { mode: GRID_SNAP_VERTEX })
       : position;
 
     // Calculate final dimensions

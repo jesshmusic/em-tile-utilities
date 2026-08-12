@@ -34,13 +34,13 @@
               {{#each tile.wallDoorActions as |action|}}
                 <div class="wall-door-field">
                   <label class="wall-door-label">{{{action.entityName}}}:</label>
-                  <select name="walldoor_{{../tile.tileId}}_{{@index}}" class="wall-door-select">
+                  <select name="walldoor_{{tile.tileId}}_{{@index}}" class="wall-door-select">
                     <option value="CLOSED" {{#if (eq action.state "CLOSED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorClosed"}}</option>
                     <option value="OPEN" {{#if (eq action.state "OPEN")}}selected{{/if}}>{{localize "EMPUZZLES.DoorOpen"}}</option>
                     <option value="LOCKED" {{#if (eq action.state "LOCKED")}}selected{{/if}}>{{localize "EMPUZZLES.DoorLocked"}}</option>
                   </select>
-                  <input type="hidden" name="walldoor_id_{{../tile.tileId}}_{{@index}}" value="{{action.entityId}}" />
-                  <input type="hidden" name="walldoor_name_{{../tile.tileId}}_{{@index}}" value="{{action.entityName}}" />
+                  <input type="hidden" name="walldoor_id_{{tile.tileId}}_{{@index}}" value="{{action.entityId}}" />
+                  <input type="hidden" name="walldoor_name_{{tile.tileId}}_{{@index}}" value="{{action.entityName}}" />
                 </div>
               {{/each}}
             </div>
@@ -76,7 +76,7 @@
               {{#each tile.files as |file index|}}
                 <div class="image-option">
                   <label>
-                    <input type="radio" name="fileindex_{{../tile.tileId}}" value="{{@index}}" {{#if (or (eq ../tile.fileindex @index) (and (eq @index 0) (not ../tile.fileindex)))}}checked{{/if}} />
+                    <input type="radio" name="fileindex_{{tile.tileId}}" value="{{@index}}" {{#if (or (eq tile.fileindex @index) (and (eq @index 0) (not tile.fileindex)))}}checked{{/if}} />
                     {{@index}}: {{file.name}}
                   </label>
                 </div>
@@ -113,18 +113,18 @@
                   <div class="variable-field">
                     <label class="variable-label">{{variable.name}}:</label>
                     <label class="radio-option">
-                      <input type="radio" name="var_{{../tile.tileId}}_{{variable.name}}" value="true" {{#if variable.boolValue}}checked{{/if}} />
+                      <input type="radio" name="var_{{tile.tileId}}_{{variable.name}}" value="true" {{#if variable.boolValue}}checked{{/if}} />
                       {{localize "EMPUZZLES.True"}}
                     </label>
                     <label class="radio-option">
-                      <input type="radio" name="var_{{../tile.tileId}}_{{variable.name}}" value="false" {{#unless variable.boolValue}}checked{{/unless}} />
+                      <input type="radio" name="var_{{tile.tileId}}_{{variable.name}}" value="false" {{#unless variable.boolValue}}checked{{/unless}} />
                       {{localize "EMPUZZLES.False"}}
                     </label>
                   </div>
                 {{else}}
                   <div class="variable-field">
                     <label class="variable-label">{{variable.name}}:</label>
-                    <input type="text" name="var_{{../tile.tileId}}_{{variable.name}}" value="{{variable.displayValue}}" class="variable-input" />
+                    <input type="text" name="var_{{tile.tileId}}_{{variable.name}}" value="{{variable.displayValue}}" class="variable-input" />
                   </div>
                 {{/if}}
               {{/each}}

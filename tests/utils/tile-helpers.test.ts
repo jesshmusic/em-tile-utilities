@@ -315,13 +315,15 @@ describe('tile-helpers', () => {
       resetConfig = {
         name: 'Reset Tile',
         image: 'path/to/reset.png',
-        varsToReset: {
-          switch_1: false,
-          switch_2: false
-        },
         tilesToReset: [
           {
             tileId: 'tile-1',
+            // Variables live on the tile that owns them: Monk's Active Tiles
+            // keeps them in that tile's own flags.
+            variables: {
+              switch_1: false,
+              switch_2: false
+            },
             hidden: false,
             fileindex: 0,
             active: true,
@@ -368,6 +370,25 @@ describe('tile-helpers', () => {
 
       const switch1Action = setVarActions.find((a: any) => a.data.name === 'switch_1');
       expect(switch1Action.data.value).toBe('false');
+      // Addressed at the tile that OWNS the variable, not at the reset tile.
+      // `{ id: 'tile' }` resolves to the tile running the action.
+      expect(switch1Action.data.entity.id).toBe(`Scene.${mockScene.id}.Tile.tile-1`);
+    });
+
+    it('should emit MATT _null sentinel when clearing a variable', async () => {
+      resetConfig.tilesToReset[0].variables = { cleared: null };
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const actions = callArgs[1][0].flags['monks-active-tiles'].actions;
+
+      const clearAction = actions.find(
+        (a: any) => a.action === 'setvariable' && a.data.name === 'cleared'
+      );
+      // The literal string "null" gets eval'd into a live JS null and clears
+      // nothing; MATT's sentinel is the quoted `_null`, which unsets the flag.
+      expect(clearAction.data.value).toBe('"_null"');
     });
 
     it('should create activate action when tile has activate action', async () => {
@@ -395,7 +416,23 @@ describe('tile-helpers', () => {
         (a: any) => a.action === 'tileimage' && a.data.entity.id.includes('tile-1')
       );
       expect(tileImageAction).toBeDefined();
-      expect(tileImageAction.data.select).toBe('0'); // fileindex
+      // `fileindex` is 0-based; MATT's `tileimage.select` is 1-based and clamps
+      // to [1, images.length], so the index has to be shifted on the way out.
+      expect(tileImageAction.data.select).toBe('1'); // fileindex 0 -> select 1
+    });
+
+    it('should shift a non-zero fileindex by one for tileimage.select', async () => {
+      resetConfig.tilesToReset[0].fileindex = 1;
+
+      await createResetTile(mockScene, resetConfig, 400, 400);
+
+      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
+      const actions = callArgs[1][0].flags['monks-active-tiles'].actions;
+
+      const tileImageAction = actions.find(
+        (a: any) => a.action === 'tileimage' && a.data.entity.id.includes('tile-1')
+      );
+      expect(tileImageAction.data.select).toBe('2');
     });
 
     it('should create chat message action', async () => {
@@ -1351,7 +1388,9 @@ describe('tile-helpers', () => {
       const actions = tileData.flags['monks-active-tiles'].actions;
 
       // Should have end anchor
-      const endAnchor = actions.find((a: any) => a.action === 'anchor' && a.data.tag === 'end');
+      // Branch anchors carry a `_b<index>` suffix, so the terminal anchor uses a
+      // reserved tag that no sanitized branch name can collide with.
+      const endAnchor = actions.find((a: any) => a.action === 'anchor' && a.data.tag === 'em_end');
       expect(endAnchor).toBeDefined();
 
       // Should have "no branch matched" message
@@ -1442,7 +1481,7 @@ describe('tile-helpers', () => {
         (a: any) => a.action === 'checkvariable' && a.data.name === 'switch1'
       );
       expect(firstCheck).toBeDefined();
-      expect(firstCheck.data.fail).toBe('second_branch');
+      expect(firstCheck.data.fail).toBe('second_branch_b1');
     });
   });
 

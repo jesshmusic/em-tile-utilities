@@ -68,7 +68,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   // Saving Throw (shared across result types)
   protected hasSavingThrow: boolean = false;
-  protected savingThrow: string = 'ability:dex';
+  protected savingThrow: string = 'save:dex';
   protected dc: number = 14;
 
   // Damage Result Type
@@ -276,12 +276,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Prepare saving throw options
     const savingThrowOptions = [
-      { value: 'ability:str', label: 'EMPUZZLES.StrengthSave' },
-      { value: 'ability:dex', label: 'EMPUZZLES.DexteritySave' },
-      { value: 'ability:con', label: 'EMPUZZLES.ConstitutionSave' },
-      { value: 'ability:int', label: 'EMPUZZLES.IntelligenceSave' },
-      { value: 'ability:wis', label: 'EMPUZZLES.WisdomSave' },
-      { value: 'ability:cha', label: 'EMPUZZLES.CharismaSave' }
+      { value: 'save:str', label: 'EMPUZZLES.StrengthSave' },
+      { value: 'save:dex', label: 'EMPUZZLES.DexteritySave' },
+      { value: 'save:con', label: 'EMPUZZLES.ConstitutionSave' },
+      { value: 'save:int', label: 'EMPUZZLES.IntelligenceSave' },
+      { value: 'save:wis', label: 'EMPUZZLES.WisdomSave' },
+      { value: 'save:cha', label: 'EMPUZZLES.CharismaSave' }
     ];
 
     // Prepare effect options (active effects from game system)
@@ -420,7 +420,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const useDamageOnFail = activityData?.damageFormula || this.damageOnFail;
     const useHasSavingThrow = activityData?.dc !== undefined || this.hasSavingThrow;
     const useSavingThrow = activityData?.ability
-      ? `ability:${activityData.ability}`
+      ? `save:${activityData.ability}`
       : this.savingThrow;
     const useDC = activityData?.dc !== undefined ? activityData.dc : this.dc;
     const useHalfDamageOnSuccess =
@@ -1633,7 +1633,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct and intentional here: this point is handed to Monk's
+      // Active Tiles as a teleport/movetoken destination, which treats a
+      // location as a CENTRE point rather than a top-left corner.
+      // GRID_SNAPPING_MODES is a bit field, not an enum.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       this.tokenX = snapped.x;
       this.tokenY = snapped.y;
@@ -1812,7 +1818,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct and intentional here: this point is handed to Monk's
+      // Active Tiles as a teleport/movetoken destination, which treats a
+      // location as a CENTRE point rather than a top-left corner.
+      // GRID_SNAPPING_MODES is a bit field, not an enum.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       // Update tile data with position
       const tileData = this.selectedTiles.get(tileId);
@@ -1918,7 +1930,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct and intentional here: this point is handed to Monk's
+      // Active Tiles as a teleport/movetoken destination, which treats a
+      // location as a CENTRE point rather than a top-left corner.
+      // GRID_SNAPPING_MODES is a bit field, not an enum.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       this.teleportX = snapped.x;
       this.teleportY = snapped.y;
@@ -2669,7 +2687,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (hasSavingThrow) {
       config.savingThrow =
         (form.querySelector('select[name="savingThrow"]') as HTMLSelectElement)?.value ||
-        'ability:dex';
+        'save:dex';
       config.dc = parseInt(
         (form.querySelector('input[name="dc"]') as HTMLInputElement)?.value || '14'
       );

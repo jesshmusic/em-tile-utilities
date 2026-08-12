@@ -35,12 +35,50 @@ export function getAllTagsInScene(): string[] {
 }
 
 /**
+ * Build the un-numbered base form of an EM tag.
+ * Shared by the generator and the tag matchers below so the two can't drift.
+ */
+function buildEMTagBase(name: string): string {
+  return 'EM' + toPascalCase(name);
+}
+
+/**
+ * Match a tag against a base name, allowing the numeric suffix that
+ * generateUniqueEMTag appends when disambiguating (e.g. "EMTeleport2").
+ * Anchored at both ends so "EMReturnTeleport" never reads as "EMTeleport".
+ */
+function matchesEMTagBase(tag: string, baseName: string): boolean {
+  return new RegExp(`^${baseName}\\d*$`).test(tag);
+}
+
+/**
+ * Does this tag identify an outbound (main) teleport created by this module?
+ *
+ * The paired-teleport cleanup in main.ts used to test for the prefixes
+ * `EM-Teleport-` / `EM-Return-Teleport-`, which this module has never emitted —
+ * generateUniqueEMTag produces PascalCase with no hyphens. Every match failed,
+ * so deleting one half of a teleport pair silently orphaned the other.
+ *
+ * NOTE: returns false for return-teleport tags — see matchesEMTagBase.
+ */
+export function isTeleportTag(tag: string): boolean {
+  return matchesEMTagBase(tag, buildEMTagBase('Teleport'));
+}
+
+/**
+ * Does this tag identify the return half of a teleport pair?
+ */
+export function isReturnTeleportTag(tag: string): boolean {
+  return matchesEMTagBase(tag, buildEMTagBase('Return Teleport'));
+}
+
+/**
  * Generate a unique tag with EM prefix
  * @param name - The base name (e.g., "Torch", "Floor Trap Damage", "My Switch")
  * @returns A unique tag in PascalCase format with EM prefix (e.g., "EMTorch", "EMTorch2")
  */
 export function generateUniqueEMTag(name: string): string {
-  const baseName = 'EM' + toPascalCase(name);
+  const baseName = buildEMTagBase(name);
   const existingTags = getAllTagsInScene();
 
   // If the base name is unique, use it

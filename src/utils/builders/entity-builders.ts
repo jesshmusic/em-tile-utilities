@@ -2,6 +2,39 @@
  * Entity creation builders for Foundry VTT entities
  */
 
+import { TrapTargetType } from '../../types/module';
+
+/**
+ * A Monk's Active Tiles entity reference.
+ */
+export interface MonksEntity {
+  id: string;
+  name: string;
+}
+
+/**
+ * Resolve a trap's target type to the Monk's Active Tiles entity reference.
+ *
+ * This is the single source of truth for the mapping. It used to be hand-rolled
+ * at each call site, and the copies written as
+ * `targetType === TRIGGERING ? 'token' : 'within'` silently swallowed
+ * PLAYER_TOKENS, targeting tokens inside the tile instead of every player token.
+ *
+ * @param targetType - The configured trap target type
+ * @returns The `data.entity` value for the resulting action
+ */
+export function resolveTargetEntity(targetType?: TrapTargetType): MonksEntity {
+  switch (targetType) {
+    case TrapTargetType.PLAYER_TOKENS:
+      return { id: 'players', name: 'Player Tokens' };
+    case TrapTargetType.WITHIN_TILE:
+      return { id: 'within', name: 'Tokens within Tile' };
+    case TrapTargetType.TRIGGERING:
+    default:
+      return { id: 'token', name: 'Triggering Token' };
+  }
+}
+
 /**
  * Create an AmbientLight entity
  * @param x - X coordinate (usually centered on tile)
