@@ -6,6 +6,9 @@ import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
 import { showElevationDialog } from './elevation-dialog';
+import { showDifficultTerrainDialog } from './difficult-terrain-dialog';
+import { showDarknessDialog } from './darkness-dialog';
+import { showSurfaceDialog } from './surface-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 import { notifyInfo, notifyWarn, notifyError } from './notify';
@@ -41,6 +44,9 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createTrap: TileManagerDialog.#onCreateTrap,
       createTeleport: TileManagerDialog.#onCreateTeleport,
       createElevation: TileManagerDialog.#onCreateElevation,
+      createDifficultTerrain: TileManagerDialog.#onCreateDifficultTerrain,
+      createDarkness: TileManagerDialog.#onCreateDarkness,
+      createSurface: TileManagerDialog.#onCreateSurface,
       createCheckState: TileManagerDialog.#onCreateCheckState,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
@@ -636,6 +642,51 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     event.preventDefault();
     this.minimize();
     showElevationDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create difficult terrain region button click
+   */
+  static async #onCreateDifficultTerrain(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showDifficultTerrainDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create magical darkness region button click
+   */
+  static async #onCreateDarkness(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showDarknessDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create surface region button click
+   */
+  static async #onCreateSurface(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showSurfaceDialog();
   }
 
   /* -------------------------------------------- */

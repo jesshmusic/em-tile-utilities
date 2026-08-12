@@ -114,5 +114,26 @@ export const DialogPositions: Record<string, DialogPosition> = {
    */
   ELEVATION: {
     ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Difficult Terrain Region dialog
+   */
+  DIFFICULT_TERRAIN: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Magical Darkness Region dialog
+   */
+  DARKNESS: {
+    ...DEFAULT_DIALOG_POSITION
+  },
+
+  /**
+   * Surface (illusory floor / ceiling) Region dialog
+   */
+  SURFACE: {
+    ...DEFAULT_DIALOG_POSITION
   }
 };

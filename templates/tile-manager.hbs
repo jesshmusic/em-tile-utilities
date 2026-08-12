@@ -79,6 +79,34 @@
         </div>
       </button>
     {{/if}}
+    {{! Core v14 region behaviors - no Enhanced Region Behaviors required }}
+    <button type="button" class="create-tile-card create-terrain-card" data-action="createDifficultTerrain">
+      <div class="card-icon">
+        <i class="gi-mesh-ball"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateDifficultTerrain"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateDifficultTerrainDesc"}}</p>
+      </div>
+    </button>
+    <button type="button" class="create-tile-card create-darkness-card" data-action="createDarkness">
+      <div class="card-icon">
+        <i class="gi-sight-disabled"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateDarkness"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateDarknessDesc"}}</p>
+      </div>
+    </button>
+    <button type="button" class="create-tile-card create-surface-card" data-action="createSurface">
+      <div class="card-icon">
+        <i class="gi-floor-hatch"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateSurface"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateSurfaceDesc"}}</p>
+      </div>
+    </button>
     {{#if experimentalFeatures}}
       <button type="button" class="create-tile-card create-utility-card" data-action="createCheckState">
         <div class="card-icon">

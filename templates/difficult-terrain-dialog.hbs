@@ -1,0 +1,45 @@
+{{! Difficult Terrain Region Configuration }}
+<fieldset class="basic-info-section">
+  <legend>
+    {{localize "EMPUZZLES.BasicInfo"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="regionName">{{localize "EMPUZZLES.RegionName"}}</label>
+    <input type="text" id="regionName" name="regionName" value="{{regionName}}" />
+    <p class="hint">{{localize "EMPUZZLES.RegionNameHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Movement cost per action }}
+<fieldset class="terrain-settings-section">
+  <legend>
+    {{localize "EMPUZZLES.TerrainSettings"}}
+  </legend>
+
+  <p class="hint">{{localize "EMPUZZLES.TerrainCostHint"}}</p>
+
+  <div class="terrain-difficulty-list">
+    {{#each difficultyRows as |row|}}
+      <div class="form-group terrain-difficulty">
+        <label for="difficulty-{{row.action}}">{{row.label}}</label>
+        <input
+          type="number"
+          id="difficulty-{{row.action}}"
+          name="difficulty-{{row.action}}"
+          value="{{row.value}}"
+          min="{{../difficultyMin}}"
+          max="{{../difficultyMax}}"
+          step="{{../difficultyStep}}"
+        />
+      </div>
+    {{/each}}
+  </div>
+
+  <p class="hint">{{localize "EMPUZZLES.TerrainStackingHint"}}</p>
+  <p class="hint">{{localize "EMPUZZLES.TerrainRangeHint"}}</p>
+  <p class="hint">{{localize "EMPUZZLES.TerrainDerivedActionsHint"}}</p>
+</fieldset>
+
+{{! Custom Tags Section }}
+{{> partials/custom-tags-section customTags=customTags}}

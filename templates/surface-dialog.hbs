@@ -1,0 +1,86 @@
+{{! Surface (Illusory Floor / Ceiling) Region Configuration }}
+<fieldset class="basic-info-section">
+  <legend>
+    {{localize "EMPUZZLES.BasicInfo"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="regionName">{{localize "EMPUZZLES.RegionName"}}</label>
+    <input type="text" id="regionName" name="regionName" value="{{regionName}}" />
+    <p class="hint">{{localize "EMPUZZLES.RegionNameHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Preset }}
+<fieldset class="surface-preset-section">
+  <legend>
+    {{localize "EMPUZZLES.SurfacePreset"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="preset">{{localize "EMPUZZLES.SurfacePreset"}}</label>
+    <select id="preset" name="preset">
+      {{#each presetOptions as |option|}}
+        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.SurfacePresetHint"}}</p>
+  </div>
+
+  <ul class="surface-preset-guide">
+    {{#each presetOptions as |option|}}
+      <li><strong>{{localize option.label}}</strong> — {{localize option.hint}}</li>
+    {{/each}}
+  </ul>
+</fieldset>
+
+{{! Placement and elevation }}
+<fieldset class="surface-placement-section">
+  <legend>
+    {{localize "EMPUZZLES.SurfacePlacement"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="placement">{{localize "EMPUZZLES.SurfacePlacement"}}</label>
+    <select id="placement" name="placement">
+      {{#each placementOptions as |option|}}
+        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.SurfacePlacementHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="bottomElevation">{{localize "EMPUZZLES.SurfaceBottomElevation"}}</label>
+    <input type="number" id="bottomElevation" name="bottomElevation" value="{{bottomElevation}}" step="1" />
+    <p class="hint">{{localize "EMPUZZLES.SurfaceBottomElevationHint"}}</p>
+  </div>
+
+  <div class="form-group">
+    <label for="topElevation">{{localize "EMPUZZLES.SurfaceTopElevation"}}</label>
+    <input type="number" id="topElevation" name="topElevation" value="{{topElevation}}" step="1" />
+    <p class="hint">{{localize "EMPUZZLES.SurfaceTopElevationHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Individual toggles }}
+<fieldset class="surface-toggle-section">
+  <legend>
+    {{localize "EMPUZZLES.SurfaceRestrictions"}}
+  </legend>
+
+  <p class="hint">{{localize "EMPUZZLES.SurfaceRestrictionsHint"}}</p>
+
+  {{#each toggleRows as |toggle|}}
+    <div class="form-group surface-toggle">
+      <label for="surface-{{toggle.name}}" class="checkbox-label">
+        <input type="checkbox" id="surface-{{toggle.name}}" name="surface-{{toggle.name}}" {{#if toggle.checked}}checked{{/if}} />
+        {{localize toggle.label}}
+      </label>
+      <p class="hint">{{localize toggle.hint}}</p>
+    </div>
+  {{/each}}
+</fieldset>
+
+{{! Custom Tags Section }}
+{{> partials/custom-tags-section customTags=customTags}}
