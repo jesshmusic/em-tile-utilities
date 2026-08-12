@@ -4,15 +4,34 @@
 
 /**
  * Create a set variable action
+ *
+ * Handlebars in `value` is compiled by `MonksActiveTiles.getValue` against the
+ * *global* Handlebars instance. The only helpers available there are the ones
+ * Foundry registers globally (`eq`, `ne`, `lt`, `gt`, `lte`, `gte`, `not`,
+ * `and`, `or`, `concat`, `localize`, …) plus Monk's Active Tiles' own
+ * `selectGroups` and whatever the system adds. There is no arithmetic helper
+ * and no `default` helper — an unknown helper invoked with arguments makes
+ * Handlebars' `helperMissing` throw, which aborts the whole action.
+ *
+ * For arithmetic use MATT's own increment syntax instead: a `value` of `"+ 1"`
+ * or `"- 1"` is applied to the current value, and an unset variable is seeded
+ * to `0` first.
+ *
  * @param name - Variable name
- * @param value - Variable value (can be Handlebars expression like "{{not variable.name}}")
+ * @param value - Variable value (Handlebars expression, or a "+ n" / "- n" delta)
  * @param scope - Variable scope ('scene', 'tile', 'global')
+ * @param entity - Which tile owns the variable. Defaults to the tile running the
+ *   action. MATT resolves `{ id: 'tile' }` to the *running* tile, so any caller
+ *   that needs to write a variable onto a different tile must pass that tile's
+ *   UUID here (`Scene.<sceneId>.Tile.<tileId>`) — otherwise the variable
+ *   silently lands on the wrong tile's flags.
  * @returns Monk's Active Tiles action object
  */
 export function createSetVariableAction(
   name: string,
   value: string | number | boolean,
-  scope: string = 'scene'
+  scope: string = 'scene',
+  entity: { id: string; name?: string } = { id: 'tile', name: 'This Tile' }
 ): any {
   return {
     action: 'setvariable',
@@ -20,7 +39,7 @@ export function createSetVariableAction(
       name,
       value: value.toString(),
       scope,
-      entity: { id: 'tile', name: 'This Tile' }
+      entity: { id: entity.id, name: entity.name ?? entity.id }
     },
     id: foundry.utils.randomID()
   };

@@ -7,14 +7,19 @@
   margin-bottom: 5px;
 }
 
-/* Dialog Scrolling - Applied to all tile creation dialogs */
-.trap-config.window-app,
-.switch-config.window-app,
-.light-config.window-app,
-.reset-config.window-app,
-.teleport-config.window-app,
-.check-state-dialog.window-app,
-.elevation-config.window-app {
+/* Dialog Scrolling - Applied to all tile creation dialogs
+ *
+ * NOTE: this used to be scoped to `.window-app`, which is the ApplicationV1
+ * root class. Every dialog in this module is ApplicationV2, whose root element
+ * carries `.application` instead — so none of these rules ever matched and the
+ * dialogs never got their scroll container. */
+.trap-config.application,
+.switch-config.application,
+.light-config.application,
+.reset-config.application,
+.teleport-config.application,
+.check-state-dialog.application,
+.elevation-config.application {
   display: flex;
   flex-direction: column;
   max-height: 90vh; /* Prevent dialogs from exceeding viewport */

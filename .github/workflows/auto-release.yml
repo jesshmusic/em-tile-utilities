@@ -5,6 +5,9 @@ on:
     types: [closed]
     branches:
       - main
+      # v13 maintenance line. The compatibility payload sent to the Foundry
+      # package API below is 13/13, which is correct for this branch.
+      - v13-maintenance
 
 jobs:
   auto-release:
@@ -93,23 +96,44 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
+          # Read compatibility from module.json rather than hardcoding it.
+          #
+          # A hardcoded payload here is how the 2.1.0-2.1.3 releases came to be
+          # registered as v13-compatible while the module.json they shipped
+          # said 14: the two simply drifted, and nothing checked. Foundry's
+          # package browser believed the payload, so v13 users were offered a
+          # release that refused to enable, and the four entries had to be
+          # corrected by hand on the package admin page afterwards.
+          #
+          # 13/13 is correct for this branch today and reading it from the
+          # manifest keeps it correct without anyone having to remember.
+          PAYLOAD=$(node -e '
+            const mod = require("./module.json");
+            const { VERSION, REPO } = process.env;
+            if (!mod.compatibility || !mod.compatibility.minimum || !mod.compatibility.verified) {
+              console.error("module.json is missing compatibility.minimum / compatibility.verified");
+              process.exit(1);
+            }
+            process.stdout.write(JSON.stringify({
+              id: mod.id,
+              "dry-run": false,
+              release: {
+                version: VERSION,
+                manifest: `https://github.com/${REPO}/releases/download/v${VERSION}/module.json`,
+                notes: `https://github.com/${REPO}/releases/tag/v${VERSION}`,
+                compatibility: mod.compatibility
+              }
+            }));
+          ')
+
+          echo "Payload: $PAYLOAD"
+
           RESPONSE=$(curl -X POST https://foundryvtt.com/_api/packages/release_version/ \
             -w "\n%{http_code}" \
             -H "Content-Type: application/json" \
             -H "Authorization: ${FOUNDRY_TOKEN}" \
-            -d "{
-              \"id\": \"em-tile-utilities\",
-              \"dry-run\": false,
-              \"release\": {
-                \"version\": \"${VERSION}\",
-                \"manifest\": \"https://github.com/${REPO}/releases/download/v${VERSION}/module.json\",
-                \"notes\": \"https://github.com/${REPO}/releases/tag/v${VERSION}\",
-                \"compatibility\": {
-                  \"minimum\": \"13\",
-                  \"verified\": \"13\"
-                }
-              }
-            }")
+            -d "$PAYLOAD")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')

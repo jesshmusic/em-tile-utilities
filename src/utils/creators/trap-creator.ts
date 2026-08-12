@@ -1,7 +1,8 @@
 import type { TrapConfig } from '../../types/module';
-import { TrapTargetType, TrapResultType } from '../../types/module';
+import { TrapResultType } from '../../types/module';
 import { createBaseTileData } from '../builders/base-tile-builder';
 import { createMonksConfig } from '../builders/monks-config-builder';
+import { resolveTargetEntity } from '../builders/entity-builders';
 import {
   createActivateAction,
   createShowHideAction,
@@ -140,24 +141,7 @@ export async function createTrapTile(
   // Action 4: Add result-based actions (only for non-activating traps)
   if (!config.tileActions || config.tileActions.length === 0) {
     // Determine target entity ID based on target type
-    let targetEntityId: string;
-    let targetEntityName: string;
-
-    switch (config.targetType) {
-      case TrapTargetType.PLAYER_TOKENS:
-        targetEntityId = 'players';
-        targetEntityName = 'Player Tokens';
-        break;
-      case TrapTargetType.WITHIN_TILE:
-        targetEntityId = 'within';
-        targetEntityName = 'Tokens within Tile';
-        break;
-      case TrapTargetType.TRIGGERING:
-      default:
-        targetEntityId = 'token';
-        targetEntityName = 'Triggering Token';
-        break;
-    }
+    const { id: targetEntityId, name: targetEntityName } = resolveTargetEntity(config.targetType);
 
     switch (config.resultType) {
       case TrapResultType.DAMAGE:
@@ -345,9 +329,7 @@ export async function createTrapTile(
 
   // Action 5: Add/Remove additional effects if specified
   if (config.additionalEffects && config.additionalEffects.length > 0) {
-    const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
-    const targetEntityName =
-      config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+    const { id: targetEntityId, name: targetEntityName } = resolveTargetEntity(config.targetType);
     const effectAction = config.additionalEffectsAction || 'add'; // Default to 'add' if not specified
 
     // Add/Remove each additional effect

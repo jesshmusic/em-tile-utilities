@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2026-08-12
+
+Maintenance release for **FoundryVTT v13**. Development of the module continues on the `main` branch, which is v14-only from v2.1.0 onward; this release backports the v2.2.0 bug fixes that apply to v13 so v13 users are not stranded on v2.0.1.
+
+Everything here was re-implemented by hand against the v2.0.1 code — nothing was cherry-picked.
+
+> **Not tested in a live Foundry v13 world.** There is no v13 instance available to the maintainer of this branch. The full unit suite, lint, formatting and build all pass, and every fix is covered by a regression test that asserts on the Monk's Active Tiles action data actually written to the tile — but no fix here has been exercised in a running game. Please report anything that misbehaves.
+
+### Fixed
+
+- **Saving throws roll a save, not an ability check**: trap and teleport tiles emitted `ability:dex` to Monk's Token Bar. `findBestRequest` resolves the `ability` namespace before `save`, so the roll came back as a Dexterity _check_ with no save proficiency. New tiles emit `save:dex`.
+- **Reset tile wrote its variables to itself**: reset actions used `entity: { id: 'tile' }`, which Monk's Active Tiles resolves to the tile _running_ the action. Every reset landed on the Reset tile's own flags and the target tiles never changed. Each variable is now addressed at the tile that owns it (`Scene.<sceneId>.Tile.<tileId>`).
+- **Reset tile could not clear a variable**: clearing emitted the literal string `"null"`, which is eval'd into a live value. It now emits Monk's `"_null"` sentinel, which unsets the flag.
+- **Reset tile restored the wrong image**: `fileindex` is 0-based but Monk's `tileimage.select` is 1-based and clamps to the image count, so a reset could only ever restore the _first_ image. The index is now converted.
+- **Reset tile form controls had no tile id**: `{{../tile.tileId}}` inside `{{#each tiles as |tile|}}` rendered empty (block parameters are lexically scoped, so `../tile` searches for a _property_ named `tile`). Controls came out named `fileindex_`, `walldoor__0` and so on, which broke wall/door state capture with more than one tile selected.
+- **Check State honoured only `eq`**: `ne`, `gt`, `lt`, `gte` and `lte` were silently discarded and the branch then ran unconditionally. Comparisons now go into `checkvariable.data.value`, where Monk's actually evaluates them (`data.type` accepts only `all`/`any`/`none` and is an aggregation, not an operator).
+- **Check State ignored AND/OR connectors**: multiple conditions are now compiled into disjunctive normal form using anchors and jumps, so `or` really is an `or`.
+- **Check State branch anchors could collide**: "Branch A" and "branch-a" both slugified to `branch_a`. Anchors now carry a per-branch index suffix.
+- **Check State could not target a second tile**: conditions were matched on variable name alone, and every switch defaults to the variable name `switch_1`, so every condition resolved to whichever tile came first. Conditions now match on tile id.
+- **Check State no longer emits an unconditional branch**: a condition it cannot express now skips the branch with a warning instead of leaving it to fire every time.
+- **Combat trap trigger limits were broken outright**: the generated actions used `{{default …}}` and `{{add …}}`, neither of which is a registered Handlebars helper when Monk's compiles an action value — and `helperMissing` _throws_ when an unknown helper is called with arguments. Trigger counting now uses Monk's own `setvariable` increment (`+ 1`) with the comparison in the check's value (`> 3`).
+- **Player-token traps targeted the wrong tokens**: one copy of the target-type switch was written as a ternary that fell through to "tokens within tile" for anything other than the triggering token, swallowing the Player Tokens option. There is now a single shared resolver.
+- **Deleting a teleport orphaned its partner**: the paired-teleport cleanup matched the tag prefixes `EM-Teleport-` / `EM-Return-Teleport-`, which this module has never emitted — the generator produces PascalCase (`EMTeleport`, `EMReturnTeleport`). Every match failed silently.
+- **Combat trap dropped custom tags**: tags entered in the dialog were never applied to the created tile.
+- **Combat trap revealed hidden trap tokens**: an unconditional `showhide … 'show'` defeated "token hidden" on the very first trigger, permanently exposing the trap actor. The reveal now only happens when the GM asked for a visible token.
+- **Combat trap left orphans on failure**: the actor, its item and its token are all created before the tile exists, so a later failure stranded them in the world. Creation is now rolled back.
+- **Combat trap actor id moved to this module's own flag scope**: it was written inside `flags['monks-active-tiles']`, where a schema clean by that module would drop it and break cleanup. Existing tiles are still read from the old location.
+- **Tiles and regions placed half a square off**: `CONST.GRID_SNAPPING_MODES` is a bit field (`CENTER 0x1`, `EDGE_MIDPOINT 0x2`, `TOP_LEFT_VERTEX 0x10`), not a sequential enum. Placement used `mode: 2` while its comment claimed corners, and `mode: 1` (centre) for documents whose `x`/`y` is the top-left. Named constants are now read off `CONST`. The centre-snapping calls that feed Monk's teleport/movetoken destinations are correct and were deliberately left alone.
+- **Dialog scroll containers never applied**: the stylesheet scoped them to `.window-app`, the ApplicationV1 root class. Every dialog in this module is ApplicationV2, whose root carries `.application`.
+- **Update checks on this branch pointed at the v14 line**: the `manifest` URL was `releases/latest/download/module.json`, and GitHub's "latest release" is repo-wide rather than per-branch — so a v13 world checking for updates was handed the v14 manifest, which declares `minimum: 14` and cannot be installed. It now points at this branch directly, so the v13 line only ever offers v13 releases. (Installing from Foundry's package browser was already correct: the release workflow registers each version with its own pinned manifest and its own compatibility range. This only affected worlds that installed the module by pasting a manifest URL.)
+
+### Upgrade notes
+
+- **Existing saving-throw traps and teleports must be recreated.** These fixes change what _newly created_ tiles emit; they do not rewrite tiles already saved in your world. Any trap or teleport built with an earlier version still carries `ability:dex` and will keep rolling an ability check. The same applies to the Reset, Check State and combat-trap fixes: recreate the affected tiles to pick them up.
+- Combat trap tiles created before this release keep working — the actor id is still read from the old flag location.
+
+### Deliberately not backported
+
+These three changes from the v14 line are **intentionally excluded** and should not be brought over later:
+
+- **Foundry v14 deprecated-global migration** (`loadTemplates` / `FilePicker` / `AudioHelper` moved under the `foundry.*` namespaces). v13 has the flat globals, and the v14 namespaces may not exist there.
+- **Tile occlusion schema fix** (`occlusion.modes` as a `SetField`). That is a v14 schema change; v13 uses `occlusion.mode`.
+- **Typed damage / midi-qol `em-tile-utilities.applydamage` custom action.** It depends on dnd5e 5.x APIs.
+
 ## [2.0.1] - 2026-01-14
 
 ### Fixed
