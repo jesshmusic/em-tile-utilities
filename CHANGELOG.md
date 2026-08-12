@@ -2,11 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.2.1] - 2026-08-12
+## [2.3.0] - 2026-08-12
+
+Region traps could only ever punish you for walking in. Stand in the lava and you were safe; fly over the pressure plate and it still went off. This release fixes both halves of that.
+
+### Added
+
+- **Traps that keep hurting you while you stand in them.** A trap region can now fire at the start or end of a creature's turn, or at the top or bottom of the round, and not just when something walks in. That is the whole "damage while you stand in it" category — lava, poison gas, a room filling with water, a collapsing ceiling — and none of it was buildable before.
+  - The triggers stack rather than replace each other. Tick both "Token Enter" and "Turn Start" and a lava pool burns anyone who steps in, then burns them again every turn they stay.
+  - Turn and round triggers are not the same thing, and picking the wrong one changes how much damage lands. A **turn** trigger fires for the one creature whose turn it is. A **round** trigger fires for every creature standing in the region at once — four party members in the gas cloud take four lots of damage the moment the round ticks over. The dialog now says which is which instead of leaving you to find out in play.
+  - Both need an active combat encounter. Outside combat, nothing fires.
+- **Traps that a flying creature does not set off.** Trap regions and elevation regions gained a "Set Off By" row listing every way a creature can move — walking, flying, swimming, burrowing, crawling, climbing, jumping, and the two kinds of teleporting Foundry distinguishes. Everything is ticked by default, so nothing changes until you untick something. Untick "fly" and the pressure plate ignores anyone gliding over it; untick the teleport actions and a rune ignores anyone blinking past.
+  - The list is read from Foundry's own movement actions rather than typed out here, so if your system or another module adds a way to move, it appears in the row on its own.
+  - Turn and round triggers are never filtered by this, because no movement caused them — a creature standing in the lava is not moving, and the fire should still burn.
+  - Regions you have already built are untouched; this only affects regions you create from here on.
 
 ### Fixed
 
 - **The trap effect list was missing twelve real D&D 5e conditions, and offered two that do not exist.** The list of status effects a trap can apply was a hardcoded allow-list, checked against the system's effects — so anything not written into that array was silently dropped from the dropdown. Against dnd5e 5.3.3 that meant **Dehydration, Falling, Inaudible, Malnutrition, Suffocation, Surprised** and **Transformed** could not be selected at all, along with the three cover levels (Half, Three-Quarters, Total). Meanwhile it offered "Slowed" and "Hasted", which are not D&D 5e conditions — they come from other modules, so those two entries never matched anything and never appeared. The list is now sourced from the system itself and the curated array only controls **ordering**: the effects a trap most often applies still sit at the top, and everything else the system defines appears below them. A condition added by a future D&D 5e release, or registered by another module, now shows up on its own.
+
 
 ## [2.2.0] - 2026-08-11
 

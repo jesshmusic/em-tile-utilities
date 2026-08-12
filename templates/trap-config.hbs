@@ -109,10 +109,27 @@
           <option value="tokenMoveIn" data-label="{{localize 'EMPUZZLES.EventTokenMoveIn'}}">{{localize "EMPUZZLES.EventTokenMoveIn"}}</option>
           <option value="tokenTurnStart" data-label="{{localize 'EMPUZZLES.EventTokenTurnStart'}}">{{localize "EMPUZZLES.EventTokenTurnStart"}}</option>
           <option value="tokenTurnEnd" data-label="{{localize 'EMPUZZLES.EventTokenTurnEnd'}}">{{localize "EMPUZZLES.EventTokenTurnEnd"}}</option>
+          <option value="tokenRoundStart" data-label="{{localize 'EMPUZZLES.EventTokenRoundStart'}}">{{localize "EMPUZZLES.EventTokenRoundStart"}}</option>
+          <option value="tokenRoundEnd" data-label="{{localize 'EMPUZZLES.EventTokenRoundEnd'}}">{{localize "EMPUZZLES.EventTokenRoundEnd"}}</option>
         </select>
         <input type="hidden" name="regionTriggerEvents" value="tokenEnter" />
       </div>
       <p class="hint">{{localize "EMPUZZLES.TriggerEventsHint"}}</p>
+      <p class="hint">{{localize "EMPUZZLES.TriggerEventsTurnRoundHint"}}</p>
+    </div>
+
+    {{! Movement action filter }}
+    <div class="form-group">
+      <label>{{localize "EMPUZZLES.MovementActions"}}</label>
+      <div class="movement-action-list">
+        {{#each regionMovementActionOptions as |action|}}
+          <label class="movement-action">
+            <input type="checkbox" name="regionMovementAction" value="{{action.value}}" {{#if action.checked}}checked{{/if}} />
+            {{action.label}}
+          </label>
+        {{/each}}
+      </div>
+      <p class="hint">{{localize "EMPUZZLES.MovementActionsHint"}}</p>
     </div>
 
     {{! Automate Damage }}

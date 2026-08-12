@@ -2621,3 +2621,26 @@ i.gi-mesh-ball,
 .em-puzzles .tag-select-container.disabled .tag .tag-remove {
   display: none;
 }
+
+/* Movement action filter - a wrapping row of checkboxes, one per entry in
+   CONFIG.Token.movement.actions, so the row grows on its own if a system or
+   module registers another movement action. Scoped to .em-puzzles: the class
+   names are generic enough to collide with anything. */
+.em-puzzles .movement-action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+
+.em-puzzles .movement-action-list .movement-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.em-puzzles .movement-action-list .movement-action input[type='checkbox'] {
+  margin: 0;
+}
