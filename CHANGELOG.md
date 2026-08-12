@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 The biggest release this module has had. Seven new things you can build, four new things a trap can do to a creature, and regions that finally understand *when* and *who*.
 
+### ⚠️ Return to Setup once after updating
+
+This release adds region behaviours of its own, and Foundry only registers those when the **server** reloads its module list — a browser refresh is not enough. Return to Setup and relaunch your world once after updating. Until you do, the region tools will refuse to build anything and tell you so, rather than quietly creating regions with none of their behaviour attached.
+
+Keep **Enhanced Region Behaviors** installed if you have trap or elevation regions built with an earlier version. They still rely on it. New regions do not.
+
 ### Added — seven new tools
 
 - **Rotating rooms.** Turning bridges, revolving corridors and rotating puzzle chambers are now a region and a switch. Draw a region over what should turn, pick the angles it stops at, and select the walls, tiles, lights and sounds that belong to it — the D&D 5e system does the geometry. Anyone standing on the bridge when it turns goes round with it, walls carry their whole linked chain, and the switch tile is built for you and wired up, so the party can operate the mechanism themselves. Choose whether it takes the short way round or always turns clockwise, how long the turn takes, and whether the switch advances or reverses. Requires the D&D 5e system, which is where the rotation behaviour lives.
@@ -17,6 +23,13 @@ The biggest release this module has had. Seven new things you can build, four ne
 - **Combination locks.** A tile that asks a question and acts on the answer: a keypad, a riddle, a password, a rune order. Answers ignore surrounding spaces and capitalisation unless you ask for exact matching. Set a limit on wrong answers and the mechanism seizes up for good once they run out, with its own message. A correct answer can unlock a door as well as posting to chat.
 
 Difficult terrain, magical darkness and surfaces are built on Foundry v14's own region behaviours, so unlike the trap and elevation regions they work without the Enhanced Region Behaviors module. Lock & key and combination locks are behind the Experimental Features setting for now.
+
+### Added — regions stand on their own
+
+- **Trap and elevation regions no longer need Enhanced Region Behaviors.** The module now ships its own region behaviours — trap, elevation, play sound, movement filter and trigger tiles — so every region tool works with nothing but Foundry installed. Regions you built before this update keep working exactly as they did, through the module that made them.
+- **Region traps can bypass resistance, and take a formula for their DC.** The same magical / silvered / adamantine options tile traps gained this release, plus a DC you can write as `10 + 1d4` instead of a flat number. Leaving "Damage if Saved" blank now means a trap that does nothing at all to someone who dodges it, rather than half damage.
+- **Region traps work outside D&D 5e.** They roll a save when the system can and simply hit when it cannot, instead of doing nothing at all.
+- **New "Use Activity" tile action.** Point a tile at any activity on any actor's item — an attack, a save, a heal, or a **check**, which finally makes "spot the trap" and "disarm the trap" something you can build. Monk's Active Tiles' own attack action stopped rolling damage on D&D 5e 5.x; use this instead.
 
 ### Added — regions understand when, and who
 
@@ -40,6 +53,8 @@ Difficult terrain, magical darkness and surfaces are built on Foundry v14's own 
 ### Changed
 
 - Traps that ask for an exhaustion level or a duration now use a purpose-built Monk's Active Tiles action instead of Monk's generic effect action, which structurally cannot express either. Traps that ask for neither still emit Monk's own action, unchanged, and so do traps in non-D&D-5e worlds. Existing tiles are never rewritten.
+- Region tools no longer generate scripts behind the scenes. Everything a region does is now a proper, editable behaviour you can open and change.
+- Sounds on trap and teleport regions now play for everyone at the table, including the player who set the region off.
 - New regions are placed on the level you are looking at, instead of quietly existing on every level of the scene at once.
 - Regions this module creates now default to the same visibility Foundry itself uses for a region you draw by hand. They previously used a different setting for no particular reason.
 - The Tile Manager's search box no longer lower-cases what you type as you type it, group headers count only the rows the search left visible, and nudging a tile on the canvas no longer throws away your scroll position, your place in the list, or a half-typed search.
