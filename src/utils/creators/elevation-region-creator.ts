@@ -1,12 +1,11 @@
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
-  createEnhancedElevationRegionBehavior,
+  createEmElevationRegionBehavior,
   applyMovementActionGate,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
-import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
 import { normalizeMovementActions } from '../helpers/movement-actions';
 
 /**
@@ -25,7 +24,12 @@ export interface ElevationRegionConfig {
 }
 
 /**
- * Creates an elevation region that changes token elevation on enter/exit
+ * Creates an elevation region that changes token elevation on enter/exit.
+ *
+ * Uses `em-tile-utilities.Elevation`, registered by this module during `init`.
+ * Enhanced Region Behaviors is no longer required; regions built before v2.3.0
+ * keep their `enhanced-region-behavior.Elevation` behaviors untouched.
+ *
  * @param scene - The scene to create the region in
  * @param config - Elevation region configuration
  * @param x - X position (optional, defaults to scene center)
@@ -41,17 +45,6 @@ export async function createElevationRegion(
   width?: number,
   height?: number
 ): Promise<void> {
-  // Verify Enhanced Region Behaviors is available
-  if (
-    !requireEnhancedRegionBehaviors({
-      plural: 'elevation regions',
-      singular: 'elevation region',
-      limitation: 'modify token elevation'
-    })
-  ) {
-    return;
-  }
-
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
   const regionWidth = width ?? gridSize;
@@ -65,7 +58,7 @@ export async function createElevationRegion(
 
   // Add elevation on enter behavior (using Enhanced Region Behaviors)
   behaviors.push(
-    createEnhancedElevationRegionBehavior({
+    createEmElevationRegionBehavior({
       name: `${config.name} - Enter`,
       elevation: config.elevationOnEnter,
       events: [RegionEvents.TOKEN_ENTER]
@@ -74,7 +67,7 @@ export async function createElevationRegion(
 
   // Add elevation on exit behavior (return to original elevation)
   behaviors.push(
-    createEnhancedElevationRegionBehavior({
+    createEmElevationRegionBehavior({
       name: `${config.name} - Exit`,
       elevation: config.elevationOnExit,
       events: [RegionEvents.TOKEN_EXIT]

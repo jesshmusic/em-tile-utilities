@@ -1,20 +1,25 @@
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
-  createEnhancedTrapRegionBehavior,
-  createEnhancedSoundRegionBehavior,
+  createEmTrapRegionBehavior,
+  createEmSoundRegionBehavior,
+  createEmTriggerTileRegionBehavior,
   createPauseGameRegionBehavior,
-  createExecuteMacroRegionBehavior,
   applyMovementActionGate,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
-import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
 import { normalizeMovementActions } from '../helpers/movement-actions';
 import { notifyInfo } from '../../dialogs/notify';
 
 /**
- * Configuration for trap regions using Enhanced Region Behaviors
+ * Configuration for trap regions.
+ *
+ * Every behavior a trap region uses is now either Foundry core's or one of this
+ * module's own subtypes (src/utils/region-behaviors/). Enhanced Region
+ * Behaviors is no longer required, or consulted — see
+ * src/utils/region-behaviors/index.ts for what that means for regions built
+ * before v2.3.0.
  */
 export interface TrapRegionConfig {
   name: string;
@@ -38,6 +43,10 @@ export interface TrapRegionConfig {
   damage: string; // Damage formula e.g., '2d6'
   savedDamage?: string; // Damage on successful save (empty for no damage on save)
   damageType: string; // e.g., 'piercing', 'fire', 'cold'
+  // Damage BYPASS properties ('mgc', 'sil', 'ada'), so a magical trap cuts
+  // through non-magical resistance. Tile traps have carried these since
+  // v2.2.0; region traps could not express them while they used ERB's Trap.
+  damageProperties?: string[];
   // Messages
   saveFailedMessage?: string; // Message when save fails
   saveSuccessMessage?: string; // Message when save succeeds
@@ -54,8 +63,11 @@ export interface TrapRegionConfig {
 }
 
 /**
- * Creates a trap region using Enhanced Region Behaviors
- * Uses the native Trap behavior for damage with saving throws
+ * Creates a trap region.
+ *
+ * The damaging behavior is `em-tile-utilities.Trap`, registered by this module
+ * during `init`. There is no module guard any more: everything the region needs
+ * ships in the box.
  *
  * @param scene - The scene to create the trap in
  * @param config - Trap region configuration
@@ -72,17 +84,6 @@ export async function createTrapRegion(
   width?: number,
   height?: number
 ): Promise<void> {
-  // Verify Enhanced Region Behaviors is available
-  if (
-    !requireEnhancedRegionBehaviors({
-      plural: 'trap regions',
-      singular: 'trap region',
-      limitation: 'apply damage or request saving throws'
-    })
-  ) {
-    return;
-  }
-
   const gridSize = getGridSize();
   const position = getDefaultPosition(x, y);
   const regionWidth = width ?? gridSize;
@@ -104,7 +105,7 @@ export async function createTrapRegion(
   // Add sound behavior if provided
   if (config.sound) {
     behaviors.push(
-      createEnhancedSoundRegionBehavior({
+      createEmSoundRegionBehavior({
         name: `${config.name} - Sound`,
         soundPath: config.sound,
         volume: 1.0,
@@ -116,9 +117,9 @@ export async function createTrapRegion(
   // Determine trigger events (default to tokenEnter)
   const triggerEvents = config.events?.length ? config.events : [RegionEvents.TOKEN_ENTER];
 
-  // Add trap behavior (Enhanced Region Behaviors Trap)
+  // Add the trap behavior itself
   behaviors.push(
-    createEnhancedTrapRegionBehavior({
+    createEmTrapRegionBehavior({
       name: config.name,
       saveAbility: config.saveAbility,
       saveDC: config.saveDC,
@@ -126,6 +127,7 @@ export async function createTrapRegion(
       damage: config.damage,
       savedDamage: config.savedDamage || '',
       damageType: config.damageType,
+      properties: config.damageProperties,
       automateDamage: config.automateDamage ?? true,
       saveFailedMessage: config.saveFailedMessage,
       saveSuccessMessage: config.saveSuccessMessage,
@@ -135,28 +137,14 @@ export async function createTrapRegion(
     })
   );
 
-  // Add Execute Script behavior to trigger MAT tiles if tilesToTrigger is provided
+  // Fire any Monk's Active Tiles tiles the GM wired to this trap. This used to
+  // be an Execute Script behavior with the tile ids baked into a generated
+  // script string; it is now a typed behavior with a `tileIds` set.
   if (config.tilesToTrigger && config.tilesToTrigger.length > 0) {
-    const tileIds = config.tilesToTrigger;
-    const triggerScript = `// Trigger MAT tiles when trap fires
-const tileIds = ${JSON.stringify(tileIds)};
-const scene = canvas.scene;
-
-for (const tileId of tileIds) {
-  const tile = scene.tiles.get(tileId);
-  if (tile && tile.flags?.['monks-active-tiles']) {
-    // Trigger the tile using Monk's Active Tiles API
-    const mat = game.modules.get('monks-active-tiles')?.api;
-    if (mat) {
-      await mat.triggerTile(tile, event?.data?.token || null);
-    }
-  }
-}`;
-
     behaviors.push(
-      createExecuteMacroRegionBehavior({
+      createEmTriggerTileRegionBehavior({
         name: `${config.name} - Trigger Tiles`,
-        macroScript: triggerScript,
+        tileIds: config.tilesToTrigger,
         events: triggerEvents
       })
     );

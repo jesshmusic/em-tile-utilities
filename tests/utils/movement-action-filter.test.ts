@@ -2,8 +2,8 @@
  * Turn/round region triggers and movement-action filtering.
  *
  * Every assertion here is on the region behavior data that actually reaches
- * `createEmbeddedDocuments`, or on the behaviour of the emitted gate script
- * when it is executed the way Foundry executes it. Nothing asserts on dialog
+ * `createEmbeddedDocuments`, or on the movement filter behavior's own event
+ * handler. Nothing asserts on dialog
  * state: v2.2.0 shipped three bugs where the dialog held the right values and
  * the emitted documents did not.
  */
@@ -20,13 +20,16 @@ import {
 } from '../../src/utils/helpers/movement-actions';
 import {
   applyMovementActionGate,
-  createMovementFilterScript,
   createMovementFilterRegionBehavior,
   RegionEvents,
   MOVEMENT_GATE_SCOPE,
   MOVEMENT_GATE_FLAG,
   MOVEMENT_GATE_KEY_FLAG
 } from '../../src/utils/builders/region-behavior-builder';
+import {
+  handleMovementFilterRegionEvent,
+  EM_MOVEMENT_FILTER_TYPE
+} from '../../src/utils/region-behaviors/movement-filter-behavior';
 import { createTrapRegion } from '../../src/utils/creators/trap-region-creator';
 import type { TrapRegionConfig } from '../../src/utils/creators/trap-region-creator';
 import { createElevationRegion } from '../../src/utils/creators/elevation-region-creator';
@@ -150,7 +153,7 @@ describe('movement filter gate', () => {
   it('leaves behaviors untouched when no filter is in force', () => {
     const behaviors = [
       {
-        type: 'enhanced-region-behavior.Trap',
+        type: 'em-tile-utilities.Trap',
         events: ['tokenEnter'],
         system: { events: ['tokenEnter'] }
       }
@@ -167,7 +170,7 @@ describe('movement filter gate', () => {
   it('empties the gated behavior events and flags it to the gate', () => {
     const behaviors = [
       {
-        type: 'enhanced-region-behavior.Trap',
+        type: 'em-tile-utilities.Trap',
         events: ['tokenEnter'],
         system: { events: ['tokenEnter'] }
       }
@@ -175,7 +178,7 @@ describe('movement filter gate', () => {
 
     const [gate, trap] = applyMovementActionGate(behaviors, ['walk'], 'Pit');
 
-    expect(gate.type).toBe('executeScript');
+    expect(gate.type).toBe(EM_MOVEMENT_FILTER_TYPE);
     expect(gate.name).toBe('Pit - Movement Filter');
     expect(gate.events).toEqual(['tokenEnter']);
     expect(gate.system.events).toEqual(['tokenEnter']);
@@ -191,12 +194,12 @@ describe('movement filter gate', () => {
   it('gives each distinct event set its own gate', () => {
     const behaviors = [
       {
-        type: 'enhanced-region-behavior.Elevation',
+        type: 'em-tile-utilities.Elevation',
         events: ['tokenEnter'],
         system: { events: ['tokenEnter'] }
       },
       {
-        type: 'enhanced-region-behavior.Elevation',
+        type: 'em-tile-utilities.Elevation',
         events: ['tokenExit'],
         system: { events: ['tokenExit'] }
       }
@@ -218,12 +221,12 @@ describe('movement filter gate', () => {
   it('shares one gate between behaviors listening for the same events', () => {
     const behaviors = [
       {
-        type: 'enhanced-region-behavior.Trap',
+        type: 'em-tile-utilities.Trap',
         events: ['tokenEnter'],
         system: { events: ['tokenEnter'] }
       },
       {
-        type: 'enhanced-region-behavior.SoundEffect',
+        type: 'em-tile-utilities.SoundEffect',
         events: ['tokenEnter'],
         system: { events: ['tokenEnter'] }
       }
@@ -239,18 +242,13 @@ describe('movement filter gate', () => {
 
 /* -------------------------------------------- */
 
-describe('movement filter script', () => {
+describe('movement filter behavior', () => {
   /**
-   * Run the emitted script the way core does:
-   * `new AsyncFunction("scene", "region", "behavior", "event", `{${source}\n}`)`
-   * — client/data/region-behaviors/execute-script.mjs:33.
+   * Until v2.3.0 the gate was a core `executeScript` behavior and this block
+   * built an `AsyncFunction` out of the emitted source to run it the way
+   * Foundry does. The gate is now a typed data model, so these drive
+   * `handleMovementFilterRegionEvent` directly — same dispatch, no `eval`.
    */
-  async function run(source: string, region: any, event: any): Promise<void> {
-    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-    const fn = new AsyncFunction('scene', 'region', 'behavior', 'event', `{${source}\n}`);
-    await fn.call(globalThis, null, region, null, event);
-  }
-
   function gatedRegion(gateKey = 'gate-0') {
     const handled: any[] = [];
     return {
@@ -293,16 +291,19 @@ describe('movement filter script', () => {
     };
   }
 
+  /** A stand-in for the live data model: the schema fields plus `region`. */
+  function filter(region: any, actions = ['walk', 'crawl'], gateKey = 'gate-0') {
+    return { movementActions: new Set(actions), gateKey, region };
+  }
+
   function movementEvent(action: string) {
     return { name: 'tokenEnter', data: { movement: { passed: { waypoints: [{ action }] } } } };
   }
 
-  const source = createMovementFilterScript(['walk', 'crawl'], 'gate-0');
-
   it('forwards the event when the movement action is allowed', async () => {
     const { region, handled } = gatedRegion();
 
-    await run(source, region, movementEvent('walk'));
+    await handleMovementFilterRegionEvent(filter(region), movementEvent('walk'));
 
     expect(handled).toHaveLength(1);
     expect(handled[0].data.movement.passed.waypoints[0].action).toBe('walk');
@@ -311,7 +312,7 @@ describe('movement filter script', () => {
   it('swallows the event when the movement action is not allowed', async () => {
     const { region, handled } = gatedRegion();
 
-    await run(source, region, movementEvent('fly'));
+    await handleMovementFilterRegionEvent(filter(region), movementEvent('fly'));
 
     expect(handled).toEqual([]);
   });
@@ -319,10 +320,10 @@ describe('movement filter script', () => {
   it('reads the LAST passed waypoint, as core does', async () => {
     const { region, handled } = gatedRegion();
 
-    await run(source, region, {
+    await handleMovementFilterRegionEvent(filter(region), {
       name: 'tokenMoveIn',
       data: { movement: { passed: { waypoints: [{ action: 'walk' }, { action: 'fly' }] } } }
-    });
+    } as any);
 
     expect(handled).toEqual([]);
   });
@@ -330,8 +331,14 @@ describe('movement filter script', () => {
   it('lets turn and round events through - they carry no movement', async () => {
     const { region, handled } = gatedRegion();
 
-    await run(source, region, { name: 'tokenTurnStart', data: { token: {}, combatant: {} } });
-    await run(source, region, { name: 'tokenRoundStart', data: { token: {}, combatant: {} } });
+    await handleMovementFilterRegionEvent(filter(region), {
+      name: 'tokenTurnStart',
+      data: { token: {}, combatant: {} }
+    } as any);
+    await handleMovementFilterRegionEvent(filter(region), {
+      name: 'tokenRoundStart',
+      data: { token: {}, combatant: {} }
+    } as any);
 
     expect(handled).toHaveLength(2);
   });
@@ -339,26 +346,37 @@ describe('movement filter script', () => {
   it('lets a token created inside the region through - movement is null', async () => {
     const { region, handled } = gatedRegion();
 
-    await run(source, region, { name: 'tokenEnter', data: { token: {}, movement: null } });
+    await handleMovementFilterRegionEvent(filter(region), {
+      name: 'tokenEnter',
+      data: { token: {}, movement: null }
+    } as any);
 
     expect(handled).toHaveLength(1);
   });
 
-  it('embeds the allowed actions and gate key literally', () => {
-    expect(source).toContain('["walk","crawl"]');
-    expect(source).toContain('"gate-0"');
-    expect(source).toContain('waypoints?.at(-1)');
+  it('reaches the region through the parent behavior when it has no own getter', async () => {
+    const { region, handled } = gatedRegion();
+
+    await handleMovementFilterRegionEvent(
+      { movementActions: new Set(['walk']), gateKey: 'gate-0', behavior: { region } },
+      movementEvent('walk')
+    );
+
+    expect(handled).toHaveLength(1);
   });
 
-  it('the behavior wrapper carries the script and the gate key flag', () => {
+  it('the behavior wrapper carries the actions, the key and the gate flag', () => {
     const behavior = createMovementFilterRegionBehavior({
       allowedActions: ['walk'],
       gateKey: 'gate-0',
       events: [RegionEvents.TOKEN_MOVE_IN]
     });
 
-    expect(behavior.type).toBe('executeScript');
-    expect(behavior.system.source).toContain('["walk"]');
+    expect(behavior.type).toBe(EM_MOVEMENT_FILTER_TYPE);
+    // Not a generated script any more.
+    expect(behavior.system.source).toBeUndefined();
+    expect(behavior.system.movementActions).toEqual(['walk']);
+    expect(behavior.system.gateKey).toBe('gate-0');
     expect(behavior.system.events).toEqual(['tokenMoveIn']);
     expect(behavior.disabled).toBe(false);
     expect(behavior.flags[MOVEMENT_GATE_SCOPE][MOVEMENT_GATE_KEY_FLAG]).toBe('gate-0');
@@ -413,12 +431,12 @@ describe('trap region emitted behaviors', () => {
   it('defaults to tokenEnter only', async () => {
     await createTrapRegion(mockScene, baseConfig, 100, 200);
 
-    const trap = behaviorOfType('enhanced-region-behavior.Trap');
+    const trap = behaviorOfType('em-tile-utilities.Trap');
     expect(trap.events).toEqual(['tokenEnter']);
     expect(trap.system.events).toEqual(['tokenEnter']);
   });
 
-  it('emits turn and round events on both the document and the ERB schema', async () => {
+  it('emits turn and round events on both the document and the system schema', async () => {
     await createTrapRegion(
       mockScene,
       {
@@ -429,9 +447,9 @@ describe('trap region emitted behaviors', () => {
       200
     );
 
-    const trap = behaviorOfType('enhanced-region-behavior.Trap');
-    // ERB's Trap schema (enhanced-region-behavior.mjs, TrapRegionBehaviorType)
-    // whitelists all four of these alongside the enter/exit/move events.
+    const trap = behaviorOfType('em-tile-utilities.Trap');
+    // The Trap schema (src/utils/region-behaviors/trap-behavior.ts) whitelists
+    // all four of these alongside the enter/exit/move events.
     expect(trap.system.events).toEqual([
       'tokenEnter',
       'tokenTurnStart',
@@ -450,7 +468,7 @@ describe('trap region emitted behaviors', () => {
       200
     );
 
-    const trap = behaviorOfType('enhanced-region-behavior.Trap');
+    const trap = behaviorOfType('em-tile-utilities.Trap');
     expect(trap.system.events).toContain('tokenEnter');
     expect(trap.system.events).toContain('tokenTurnStart');
   });
@@ -463,8 +481,8 @@ describe('trap region emitted behaviors', () => {
       200
     );
 
-    expect(behaviorOfType('executeScript')).toBeUndefined();
-    expect(behaviorOfType('enhanced-region-behavior.Trap').events).toEqual(['tokenEnter']);
+    expect(behaviorOfType(EM_MOVEMENT_FILTER_TYPE)).toBeUndefined();
+    expect(behaviorOfType('em-tile-utilities.Trap').events).toEqual(['tokenEnter']);
   });
 
   it('gates the trap, the sound and the pause behind one filter', async () => {
@@ -485,13 +503,10 @@ describe('trap region emitted behaviors', () => {
       (b: any) => b.flags?.[MOVEMENT_GATE_SCOPE]?.[MOVEMENT_GATE_KEY_FLAG]
     );
     expect(gates).toHaveLength(1);
-    expect(gates[0].system.source).toContain('["walk","crawl"]');
+    expect(gates[0].type).toBe(EM_MOVEMENT_FILTER_TYPE);
+    expect(gates[0].system.movementActions).toEqual(['walk', 'crawl']);
 
-    for (const type of [
-      'enhanced-region-behavior.Trap',
-      'enhanced-region-behavior.SoundEffect',
-      'pauseGame'
-    ]) {
+    for (const type of ['em-tile-utilities.Trap', 'em-tile-utilities.SoundEffect', 'pauseGame']) {
       const behavior = behaviorOfType(type);
       expect(behavior).toBeDefined();
       expect(behavior.events).toEqual([]);

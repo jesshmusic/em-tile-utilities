@@ -1,6 +1,27 @@
 /**
- * Region behavior builders for FoundryVTT v13 regions
+ * Region behavior builders.
+ *
+ * Three families live here: Foundry core behaviors, dnd5e's own, and the five
+ * subtypes this module registers itself (src/utils/region-behaviors/). The
+ * `em-tile-utilities.*` builders replaced a set of `enhanced-region-behavior.*`
+ * ones in v2.3.0 — see src/utils/region-behaviors/index.ts for why existing
+ * ERB-typed regions are deliberately left untouched rather than migrated.
  */
+
+import { DEFAULT_DAMAGE_TYPE } from '../helpers/damage-types';
+import { normalizeDamageProperties } from '../helpers/damage-properties';
+import {
+  EM_ELEVATION_TYPE,
+  EM_MOVEMENT_FILTER_TYPE,
+  EM_SOUND_TYPE,
+  EM_TRAP_TYPE,
+  EM_TRIGGER_TILE_TYPE
+} from '../region-behaviors/constants';
+import {
+  MOVEMENT_GATE_FLAG as GATE_FLAG,
+  MOVEMENT_GATE_KEY_FLAG as GATE_KEY_FLAG,
+  MOVEMENT_GATE_SCOPE as GATE_SCOPE
+} from '../region-behaviors/movement-filter-behavior';
 
 /**
  * Region event types for token interactions.
@@ -35,14 +56,16 @@ export const RegionEvents = {
   TOKEN_ROUND_END: 'tokenRoundEnd'
 } as const;
 
-/** Flag scope used for the movement-action gate wiring. */
-export const MOVEMENT_GATE_SCOPE = 'em-tile-utilities';
-
-/** Flag set on a behavior that a movement gate forwards events to. */
-export const MOVEMENT_GATE_FLAG = 'movementGate';
-
-/** Flag set on the gate behavior itself, so it is identifiable after creation. */
-export const MOVEMENT_GATE_KEY_FLAG = 'movementGateKey';
+/**
+ * The movement-gate flag names live with the behavior type that reads them, in
+ * src/utils/region-behaviors/movement-filter-behavior.ts. Re-exported here so
+ * the builders and their callers keep a single import site.
+ */
+export {
+  MOVEMENT_GATE_SCOPE,
+  MOVEMENT_GATE_FLAG,
+  MOVEMENT_GATE_KEY_FLAG
+} from '../region-behaviors/movement-filter-behavior';
 
 /**
  * Create an Execute Script region behavior (FoundryVTT core)
@@ -103,112 +126,159 @@ export function createPauseGameRegionBehavior(config?: { name?: string; events?:
   };
 }
 
+/* -------------------------------------------- */
+/*  This module's own region behavior subtypes  */
+/* -------------------------------------------- */
+
 /**
- * Create an Enhanced Region Behaviors trap behavior
- * Requires the Enhanced Region Behaviors module (dnd5e only)
- * @see https://github.com/txm3278/Enhanced-Region-Behaviors
+ * Create an `em-tile-utilities.Trap` region behavior.
+ *
+ * Replaces `createEnhancedTrapRegionBehavior`, which emitted
+ * `enhanced-region-behavior.Trap` and made Enhanced Region Behaviors a hard
+ * dependency of trap regions. The field names are unchanged from ERB's schema
+ * on purpose (see src/utils/region-behaviors/trap-behavior.ts), so the only
+ * differences in the emitted document are the `type` string and the added
+ * `properties` array.
+ *
+ * `events` is written BOTH at the document top level and inside `system`. The
+ * top-level value is what `RegionBehavior` dispatches on; the `system` value is
+ * the data model's own `events` field, which the sheet renders. They must
+ * agree, and `applyMovementActionGate` clears both together.
+ *
  * @param config - Behavior configuration
- * @returns Trap region behavior object for Enhanced Region Behaviors
+ * @returns Trap region behavior object
  */
-export function createEnhancedTrapRegionBehavior(config: {
+export function createEmTrapRegionBehavior(config: {
   name?: string;
-  saveAbility: string | string[]; // e.g., 'dex' or ['dex', 'str']
-  saveDC: number;
-  skillChecks?: string[]; // Alternative skill checks e.g., ['acr', 'ath']
-  damage: string; // Damage formula e.g., '2d6'
-  savedDamage?: string; // Damage on successful save e.g., '1d6'
-  damageType?: string; // e.g., 'piercing', 'fire'
+  /** `'dex'`, `['dex', 'str']`, or a namespaced `'save:dex'`. */
+  saveAbility: string | string[];
+  /** A number, or a formula such as `10 + 1d4`. */
+  saveDC: number | string;
+  skillChecks?: string[];
+  damage: string;
+  /** Blank means no damage at all on a successful save. */
+  savedDamage?: string;
+  damageType?: string;
+  /** Damage BYPASS ids (`mgc`, `sil`, `ada`). Stored as an array. */
+  properties?: string[] | Set<string> | string;
   automateDamage?: boolean;
   saveFailedMessage?: string;
   saveSuccessMessage?: string;
   events?: string[];
-  triggerBehaviorOnSave?: string[]; // Array of behavior UUIDs to trigger on save success
-  triggerBehaviorOnFail?: string[]; // Array of behavior UUIDs to trigger on save failure
+  triggerBehaviorOnSave?: string[];
+  triggerBehaviorOnFail?: string[];
 }): any {
-  // Handle saveAbility as string or array
-  let abilities: string[] = [];
-  if (Array.isArray(config.saveAbility)) {
-    abilities = config.saveAbility.map(a => (a.includes(':') ? a.split(':')[1] : a));
-  } else if (config.saveAbility) {
-    const ability = config.saveAbility.includes(':')
-      ? config.saveAbility.split(':')[1]
-      : config.saveAbility;
-    abilities = [ability];
-  }
+  // Monk's Token Bar namespaces its roll requests (`save:dex`), and the trap
+  // dialog shares one control between the tile and region paths. Strip the
+  // namespace here rather than making every caller remember to.
+  const abilities = (Array.isArray(config.saveAbility) ? config.saveAbility : [config.saveAbility])
+    .filter(Boolean)
+    .map(ability => (ability.includes(':') ? ability.split(':')[1] : ability));
 
-  // Events go at top level for RegionBehavior document AND in system for TypeDataModel
   const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
-    type: 'enhanced-region-behavior.Trap',
+    type: EM_TRAP_TYPE,
     name: config.name ?? 'Trap',
     system: {
-      events: events, // Also in system for ERB schema
+      events,
       automateDamage: config.automateDamage ?? true,
-      saveDC: config.saveDC,
-      saveAbility: abilities, // Set of ability strings
-      skillChecks: config.skillChecks ?? [], // Alternative skill checks
+      saveDC: String(config.saveDC),
+      saveAbility: abilities,
+      skillChecks: config.skillChecks ?? [],
       damage: config.damage,
       savedDamage: config.savedDamage ?? '',
-      damageType: config.damageType ?? 'piercing',
+      damageType: config.damageType || DEFAULT_DAMAGE_TYPE,
+      properties: normalizeDamageProperties(config.properties),
       saveFailedMessage: config.saveFailedMessage ?? '',
       saveSucceededMessage: config.saveSuccessMessage ?? '',
       triggerBehaviorOnSave: config.triggerBehaviorOnSave ?? [],
       triggerBehaviorOnFail: config.triggerBehaviorOnFail ?? []
     },
     disabled: false,
-    events: events // Top level for RegionBehavior
+    events
   };
 }
 
 /**
- * Create an Enhanced Region Behaviors sound effect behavior
- * Requires the Enhanced Region Behaviors module
- * @see https://github.com/txm3278/Enhanced-Region-Behaviors
+ * Create an `em-tile-utilities.SoundEffect` region behavior.
+ *
+ * Foundry core has no sound behavior, so this used to be ERB's `SoundEffect`.
+ * Owning it means ticking "play a sound" on a trap or teleport region no longer
+ * silently produces an inert document in a world without ERB.
+ *
  * @param config - Behavior configuration
  * @returns Sound effect region behavior object
  */
-export function createEnhancedSoundRegionBehavior(config: {
+export function createEmSoundRegionBehavior(config: {
   name?: string;
   soundPath: string;
-  volume?: number; // 0 to 1, default 0.8
+  /** 0 to 1. Defaults to 0.8, matching the schema. */
+  volume?: number;
   events?: string[];
 }): any {
   const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
-    type: 'enhanced-region-behavior.SoundEffect',
+    type: EM_SOUND_TYPE,
     name: config.name ?? 'Sound Effect',
     system: {
-      events: events, // Also in system for ERB schema
+      events,
       soundPath: config.soundPath,
       volume: config.volume ?? 0.8
     },
     disabled: false,
-    events: events // Top level for RegionBehavior
+    events
   };
 }
 
 /**
- * Create an Enhanced Region Behaviors elevation behavior
- * Requires the Enhanced Region Behaviors module
- * @see https://github.com/txm3278/Enhanced-Region-Behaviors
+ * Create an `em-tile-utilities.Elevation` region behavior.
+ *
  * @param config - Behavior configuration
  * @returns Elevation region behavior object
  */
-export function createEnhancedElevationRegionBehavior(config: {
+export function createEmElevationRegionBehavior(config: {
   name?: string;
   elevation: number;
   events?: string[];
 }): any {
   const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
-    type: 'enhanced-region-behavior.Elevation',
+    type: EM_ELEVATION_TYPE,
     name: config.name ?? 'Set Elevation',
     system: {
-      events: events, // Also in system for ERB schema
+      events,
       elevation: config.elevation
     },
     disabled: false,
-    events: events // Top level for RegionBehavior
+    events
+  };
+}
+
+/**
+ * Create an `em-tile-utilities.TriggerTile` region behavior.
+ *
+ * Replaces a generated `executeScript` that built a JSON array of tile ids into
+ * its own script source and looped over it.
+ *
+ * @param config - Behavior configuration
+ * @returns Trigger tile region behavior object
+ */
+export function createEmTriggerTileRegionBehavior(config: {
+  name?: string;
+  /** Tile ids on the region's own scene. */
+  tileIds: string[];
+  events?: string[];
+}): any {
+  const events = config.events ?? [RegionEvents.TOKEN_ENTER];
+  return {
+    type: EM_TRIGGER_TILE_TYPE,
+    name: config.name ?? 'Trigger Tiles',
+    system: {
+      events,
+      tileIds: config.tileIds
+    },
+    disabled: false,
+    events
   };
 }
 
@@ -381,61 +451,21 @@ export function createRotateAreaRegionBehavior(config: {
 /* -------------------------------------------- */
 
 /**
- * Build the source of the Execute Script behavior that filters region events by
- * the movement action that produced them.
+ * Create the behavior that fronts a set of gated behaviors.
  *
- * Foundry tags every movement waypoint with its action; core reads the action of
- * the last passed waypoint — `event.data.movement.passed.waypoints.at(-1).action`
- * — in client/data/region-behaviors/teleport-token.mjs:77 and
- * change-level.mjs:64. This copies that shape exactly.
+ * Until v2.3.0 this emitted a core `executeScript` behavior whose
+ * `system.source` was twenty lines of generated JavaScript. It is now an
+ * `em-tile-utilities.MovementFilter` — the same dispatch, as a typed data model
+ * with a `movementActions` set and a `gateKey`. See
+ * src/utils/region-behaviors/movement-filter-behavior.ts for how the gate works
+ * and why one is needed at all.
  *
- * Neither Foundry nor Enhanced Region Behaviors offers a movement filter on a
- * behavior, and region events are broadcast to every behavior with no way to
- * cancel one from another. So the gate takes over dispatch: the behaviors it
- * guards are created with an empty `events` set (which
- * client/documents/region-behavior.mjs:110 checks before dispatching, so they
- * never fire on their own), and this script calls
- * `behavior.system._handleRegionEvent(event)` on each of them once the movement
- * passes. That is the same call Enhanced Region Behaviors makes for its own
- * `triggerBehaviorOnSave` / `triggerBehaviorOnFail` chaining, so the pattern is
- * ERB's rather than an invention.
- *
- * Events that carry no movement — `tokenTurnStart`, `tokenTurnEnd`,
- * `tokenRoundStart`, `tokenRoundEnd`, and a `tokenEnter` produced by creating a
- * token inside the region rather than moving it there (the `movement` property
- * of `RegionTokenEnterExitEventData` is explicitly nullable) — are always let
- * through. There is no movement action to judge them by, and swallowing them
- * would make "damage at the start of each turn" stop working the moment a GM
- * unticked one box.
- *
- * @param allowedActions - Movement action ids that may trigger the region
- * @param gateKey - Identifier linking this gate to the behaviors it guards
- * @returns Script source for an Execute Script region behavior
- */
-export function createMovementFilterScript(allowedActions: string[], gateKey: string): string {
-  const scope = JSON.stringify(MOVEMENT_GATE_SCOPE);
-  const flag = JSON.stringify(MOVEMENT_GATE_FLAG);
-  return `// Movement action filter - only these actions trigger this region
-const allowedActions = ${JSON.stringify(allowedActions)};
-const gateKey = ${JSON.stringify(gateKey)};
-
-// Turn and round events carry no movement, and a token created inside the
-// region enters without one. Nothing to filter on, so let those through.
-const waypoint = event?.data?.movement?.passed?.waypoints?.at(-1);
-if (waypoint && !allowedActions.includes(waypoint.action)) return;
-
-for (const gated of region.behaviors) {
-  if (gated.disabled) continue;
-  if (gated.getFlag(${scope}, ${flag}) !== gateKey) continue;
-  await gated.system?._handleRegionEvent?.(event);
-}`;
-}
-
-/**
- * Create the Execute Script behavior that fronts a set of gated behaviors.
+ * Regions built before this version still carry the generated script and keep
+ * working: core's `executeScript` is untouched and nothing rewrites saved
+ * regions.
  *
  * @param config - Gate configuration
- * @returns Execute Script behavior object carrying the gate flag
+ * @returns Movement filter behavior object carrying the gate flag
  */
 export function createMovementFilterRegionBehavior(config: {
   name?: string;
@@ -445,17 +475,18 @@ export function createMovementFilterRegionBehavior(config: {
 }): any {
   const events = config.events ?? [RegionEvents.TOKEN_ENTER];
   return {
-    type: 'executeScript',
+    type: EM_MOVEMENT_FILTER_TYPE,
     name: config.name ?? 'Movement Filter',
     system: {
-      events: events,
-      source: createMovementFilterScript(config.allowedActions, config.gateKey)
+      events,
+      movementActions: config.allowedActions,
+      gateKey: config.gateKey
     },
     disabled: false,
-    events: events,
+    events,
     flags: {
-      [MOVEMENT_GATE_SCOPE]: {
-        [MOVEMENT_GATE_KEY_FLAG]: config.gateKey
+      [GATE_SCOPE]: {
+        [GATE_KEY_FLAG]: config.gateKey
       }
     }
   };
@@ -510,15 +541,17 @@ export function applyMovementActionGate(
     );
 
     for (const behavior of group.behaviors) {
-      // Empty events on both the document and the ERB/core system schema: the
-      // gate is now the only thing that reaches these behaviors.
+      // Empty events on both the document and the system schema: the gate is
+      // now the only thing that reaches these behaviors. Both halves matter —
+      // RegionBehavior dispatches on the document field, and the sheet reads
+      // the system one.
       behavior.events = [];
       if (behavior.system) behavior.system.events = [];
       behavior.flags = {
         ...(behavior.flags ?? {}),
-        [MOVEMENT_GATE_SCOPE]: {
-          ...(behavior.flags?.[MOVEMENT_GATE_SCOPE] ?? {}),
-          [MOVEMENT_GATE_FLAG]: gateKey
+        [GATE_SCOPE]: {
+          ...(behavior.flags?.[GATE_SCOPE] ?? {}),
+          [GATE_FLAG]: gateKey
         }
       };
     }

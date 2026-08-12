@@ -4,7 +4,6 @@ import { createTrapTile, createCombatTrapTile, createTrapRegion } from '../utils
 import {
   getNextTileNumber,
   hasMonksTokenBar,
-  hasEnhancedRegionBehaviors,
   startDragPlacePreview,
   DragPlacePreviewManager,
   isDnd5eSystem,
@@ -593,7 +592,6 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
       // Feature availability
       hasMonksTokenBar: hasMonksTokenBar(),
-      hasEnhancedRegionBehaviors: hasEnhancedRegionBehaviors(),
 
       // Footer buttons
       buttons: [

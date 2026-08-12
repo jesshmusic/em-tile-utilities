@@ -146,7 +146,6 @@ function renderTileManager(): string {
     regionCount: 1,
     searchQuery: 'switch',
     sortBy: 'name',
-    hasEnhancedRegionBehaviors: true,
     experimentalFeatures: true,
     version: '2.2.0',
     buildNumber: 1,

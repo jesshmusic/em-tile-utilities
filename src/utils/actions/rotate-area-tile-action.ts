@@ -46,6 +46,7 @@
 
 import { isDnd5eSystem } from '../helpers/dnd5e-activity';
 import { ROTATE_AREA_TYPE } from '../builders/region-behavior-builder';
+import { localize } from '../helpers/localize';
 
 /** Namespace for actions this module registers. Must be the module id. */
 export const EM_ACTION_NAMESPACE = 'em-tile-utilities';
@@ -105,12 +106,6 @@ export function createRotateAreaAction(
 /** The live `MonksActiveTiles` class, if the module has installed it. */
 function getMonksActiveTiles(): any {
   return (globalThis as any).MonksActiveTiles ?? (globalThis as any).game?.MonksActiveTiles;
-}
-
-function localize(key: string, data?: Record<string, unknown>): string {
-  const i18n = (globalThis as any).game?.i18n;
-  if (!i18n) return key;
-  return data ? (i18n.format?.(key, data) ?? key) : (i18n.localize?.(key) ?? key);
 }
 
 /**

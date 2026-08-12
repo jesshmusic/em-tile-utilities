@@ -9,6 +9,7 @@ import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers'
 import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
 import { registerEmTileActions } from './utils/actions/apply-damage-tile-action';
 import { registerRotateAreaTileAction } from './utils/actions/rotate-area-tile-action';
+import { registerEmRegionBehaviors, localizeEmRegionBehaviors } from './utils/region-behaviors';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
@@ -101,8 +102,23 @@ registerEmTileActions();
 // gated on dnd5e (the behavior it drives exists nowhere else).
 registerRotateAreaTileAction();
 
+// This module's own RegionBehavior subtypes — trap, elevation, sound, movement
+// filter and trigger-tile. They must land in CONFIG.RegionBehavior.dataModels
+// during `init`, before any Scene is loaded and its Regions are instantiated,
+// so this runs in the `init` handler below rather than at script-evaluation
+// time like the Monk's Active Tiles actions above (those have to beat MATT's
+// own `init`; these only have to beat the first canvas draw).
+//
+// The field labels are localized on `i18nInit`, which is the earliest hook at
+// which `game.i18n` is loaded.
+Hooks.once('i18nInit', () => {
+  localizeEmRegionBehaviors();
+});
+
 // Module initialization
 Hooks.once('init', async () => {
+  registerEmRegionBehaviors();
+
   // Module initialization banner
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %cv" +

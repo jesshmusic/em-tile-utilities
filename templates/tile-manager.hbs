@@ -68,18 +68,16 @@
         <p class="card-description">{{localize "EMPUZZLES.CreateTeleportDesc"}}</p>
       </div>
     </button>
-    {{#if hasEnhancedRegionBehaviors}}
-      <button type="button" class="create-tile-card create-elevation-card" data-action="createElevation">
-        <div class="card-icon">
-          <i class="gi-mountaintop"></i>
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">{{localize "EMPUZZLES.CreateElevation"}}</h3>
-          <p class="card-description">{{localize "EMPUZZLES.CreateElevationDesc"}}</p>
-        </div>
-      </button>
-    {{/if}}
-    {{! Core v14 region behaviors - no Enhanced Region Behaviors required }}
+    <button type="button" class="create-tile-card create-elevation-card" data-action="createElevation">
+      <div class="card-icon">
+        <i class="gi-mountaintop"></i>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">{{localize "EMPUZZLES.CreateElevation"}}</h3>
+        <p class="card-description">{{localize "EMPUZZLES.CreateElevationDesc"}}</p>
+      </div>
+    </button>
+    {{! Region behaviors: Foundry core's, dnd5e's, and this module's own }}
     <button type="button" class="create-tile-card create-terrain-card" data-action="createDifficultTerrain">
       <div class="card-icon">
         <i class="gi-mesh-ball"></i>
@@ -157,16 +155,6 @@
       </button>
     {{/if}}
   </div>
-
-  {{#unless hasEnhancedRegionBehaviors}}
-    <div class="enhanced-region-info">
-      <i class="gi-info"></i>
-      <div class="info-content">
-        <strong>{{localize "EMPUZZLES.EnhancedRegionModuleTitle"}}</strong>
-        <p>{{localize "EMPUZZLES.EnhancedRegionModuleDescription"}}</p>
-      </div>
-    </div>
-  {{/unless}}
 
   <div class="tile-manager-controls">
     <div class="search-group">

@@ -3,7 +3,7 @@ import { createBaseRegionData, createRectangleShape } from '../builders/base-reg
 import {
   createTeleportTokenRegionBehavior,
   createPauseGameRegionBehavior,
-  createEnhancedSoundRegionBehavior,
+  createEmSoundRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
@@ -122,7 +122,7 @@ export async function createTeleportRegion(
   // Sound first, so it starts before the token is moved away.
   if (config.sound && config.sound.trim() !== '') {
     sourceBehaviors.push(
-      createEnhancedSoundRegionBehavior({
+      createEmSoundRegionBehavior({
         name: `${config.name} - Sound`,
         soundPath: config.sound,
         volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,
@@ -162,7 +162,7 @@ export async function createTeleportRegion(
 
     if (config.sound && config.sound.trim() !== '') {
       destBehaviors.push(
-        createEnhancedSoundRegionBehavior({
+        createEmSoundRegionBehavior({
           name: `Return: ${config.name} - Sound`,
           soundPath: config.sound,
           volume: config.soundVolume ?? DEFAULT_TELEPORT_SOUND_VOLUME,

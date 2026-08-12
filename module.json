@@ -12,6 +12,15 @@
       "name": "jesshmusic"
     }
   ],
+  "documentTypes": {
+    "RegionBehavior": {
+      "Trap": {},
+      "Elevation": {},
+      "SoundEffect": {},
+      "MovementFilter": {},
+      "TriggerTile": {}
+    }
+  },
   "relationships": {
     "requires": [
       {

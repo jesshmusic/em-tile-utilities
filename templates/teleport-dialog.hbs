@@ -10,8 +10,7 @@
     <p class="hint">{{localize "EMPUZZLES.TileNameHint"}}</p>
   </div>
 
-  {{! Creation Type Toggle (Tile vs Region) - only shown if Enhanced Region Behaviors is installed }}
-  {{#if hasEnhancedRegionBehaviors}}
+  {{! Creation Type Toggle (Tile vs Region) }}
   <div class="form-group creation-type-group">
     <label>{{localize "EMPUZZLES.CreationType"}}</label>
     <div class="toggle-group">
@@ -35,7 +34,6 @@
     </label>
     <p class="hint">{{localize "EMPUZZLES.AllowChoiceHint"}}</p>
   </div>
-  {{/if}}
 
   <div class="form-group tile-only-option">
     <label for="tileImage">{{localize "EMPUZZLES.TileImage"}}</label>

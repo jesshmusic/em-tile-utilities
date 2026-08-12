@@ -116,9 +116,9 @@ describe('Elevation Region Creator', () => {
       expect(callArgs[0]).toBe('RegionBehavior');
       const behaviors = callArgs[1] as any[];
       expect(behaviors.length).toBe(2);
-      expect(behaviors[0].type).toBe('enhanced-region-behavior.Elevation');
+      expect(behaviors[0].type).toBe('em-tile-utilities.Elevation');
       expect(behaviors[0].name).toBe('Test Elevation - Enter');
-      expect(behaviors[1].type).toBe('enhanced-region-behavior.Elevation');
+      expect(behaviors[1].type).toBe('em-tile-utilities.Elevation');
       expect(behaviors[1].name).toBe('Test Elevation - Exit');
     });
 
@@ -629,7 +629,7 @@ describe('Teleport Region Creator', () => {
       // JavaScript source string; nothing in this module does that any more.
       const soundBehavior = behaviors.find((b: any) => b.name.includes('Sound'));
       expect(soundBehavior).toBeDefined();
-      expect(soundBehavior.type).toBe('enhanced-region-behavior.SoundEffect');
+      expect(soundBehavior.type).toBe('em-tile-utilities.SoundEffect');
       expect(soundBehavior.system.soundPath).toBe('sounds/teleport.ogg');
       expect(soundBehavior.system.volume).toBe(0.8);
       expect(JSON.stringify(soundBehavior)).not.toContain('AudioHelper');
@@ -825,11 +825,11 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior).toBeDefined();
       expect(trapBehavior.name).toBe('Test Trap');
       expect(trapBehavior.system.saveAbility).toEqual(['dex']); // Converted to array
-      expect(trapBehavior.system.saveDC).toBe(15);
+      expect(trapBehavior.system.saveDC).toBe('15');
       expect(trapBehavior.system.damage).toBe('2d6');
       expect(trapBehavior.system.damageType).toBe('piercing');
     });
@@ -841,7 +841,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.automateDamage).toBe(true);
     });
 
@@ -857,7 +857,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.automateDamage).toBe(false);
     });
 
@@ -890,14 +890,12 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const soundBehavior = behaviors.find(
-        (b: any) => b.type === 'enhanced-region-behavior.SoundEffect'
-      );
+      const soundBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.SoundEffect');
       expect(soundBehavior).toBeDefined();
       expect(soundBehavior.system.soundPath).toBe('sounds/trap.ogg');
     });
 
-    it('should add execute script behavior for tilesToTrigger', async () => {
+    it('should add a typed trigger-tile behavior for tilesToTrigger', async () => {
       const config: TrapRegionConfig = {
         ...basicConfig,
         tilesToTrigger: ['tile-1', 'tile-2']
@@ -909,10 +907,13 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const scriptBehavior = behaviors.find((b: any) => b.type === 'executeScript');
-      expect(scriptBehavior).toBeDefined();
-      expect(scriptBehavior.system.source).toContain('tile-1');
-      expect(scriptBehavior.system.source).toContain('tile-2');
+      // This used to be an `executeScript` whose source had the tile ids baked
+      // into a JSON literal. No behavior a creator emits generates code now.
+      expect(behaviors.some((b: any) => b.type === 'executeScript')).toBe(false);
+
+      const trigger = behaviors.find((b: any) => b.type === 'em-tile-utilities.TriggerTile');
+      expect(trigger).toBeDefined();
+      expect(trigger.system.tileIds).toEqual(['tile-1', 'tile-2']);
     });
 
     it('should include skill checks when provided', async () => {
@@ -927,7 +928,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.skillChecks).toEqual(['acr', 'ath']);
     });
 
@@ -943,7 +944,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.saveAbility).toEqual(['dex', 'str']);
     });
 
@@ -959,7 +960,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.savedDamage).toBe('1d6');
     });
 
@@ -976,7 +977,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.saveFailedMessage).toBe('You triggered the trap!');
       expect(trapBehavior.system.saveSucceededMessage).toBe('You avoided the trap!');
     });
@@ -994,7 +995,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       expect(trapBehavior.system.triggerBehaviorOnSave).toEqual(['uuid-1', 'uuid-2']);
       expect(trapBehavior.system.triggerBehaviorOnFail).toEqual(['uuid-3']);
     });
@@ -1022,20 +1023,24 @@ describe('Trap Region Creator', () => {
       );
     });
 
-    it('should show error when Enhanced Region Behaviors is not active', async () => {
-      // Mock ERB as not active (note: singular 'behavior')
+    it('builds a trap region with Enhanced Region Behaviors absent', async () => {
+      // The whole point of owning the Trap subtype: ERB used to be a hard
+      // requirement here and its absence aborted the creator with an error.
       (global as any).game.modules.get = jest.fn((id: string) => ({
         active: id === 'monks-active-tiles' || id === 'tagger'
-        // enhanced-region-behavior NOT included
+        // enhanced-region-behavior deliberately NOT active
       }));
 
       await createTrapRegion(mockScene, basicConfig, 100, 200);
 
-      expect((global as any).ui.notifications.error).toHaveBeenCalledWith(
-        expect.stringContaining('Enhanced Region Behaviors')
-      );
-      // Should NOT create any region
-      expect(mockScene.createEmbeddedDocuments).not.toHaveBeenCalled();
+      expect((global as any).ui.notifications.error).not.toHaveBeenCalled();
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
+
+      const behaviors = (mockRegion.createEmbeddedDocuments as jest.Mock).mock.calls[0][1] as any[];
+      expect(behaviors.some((b: any) => b.type === 'em-tile-utilities.Trap')).toBe(true);
+      expect(
+        behaviors.some((b: any) => String(b.type).startsWith('enhanced-region-behavior.'))
+      ).toBe(false);
     });
 
     it('should use default grid size when width/height not provided', async () => {
@@ -1068,7 +1073,7 @@ describe('Trap Region Creator', () => {
         .calls[0] as any[];
       const behaviors = behaviorCallArgs[1] as any[];
 
-      const trapBehavior = behaviors.find((b: any) => b.type === 'enhanced-region-behavior.Trap');
+      const trapBehavior = behaviors.find((b: any) => b.type === 'em-tile-utilities.Trap');
       // Events should be in BOTH places - top level for RegionBehavior and system for ERB
       expect(trapBehavior.system.events).toEqual(['tokenMoveIn', 'tokenExit']);
       expect(trapBehavior.events).toEqual(['tokenMoveIn', 'tokenExit']);
