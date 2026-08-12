@@ -22,17 +22,13 @@ const TRANSLATIONS = JSON.parse(readFileSync(LANG_FILE, 'utf8'));
  * Files whose user-facing notifications have been migrated onto the
  * `notifyInfo` / `notifyWarn` / `notifyError` helpers in src/dialogs/notify.ts.
  *
- * This is an allow-list rather than "all of src/" on purpose: the tile
- * creators under src/utils/{creators,helpers,builders,actions} still call
- * `ui.notifications` with English literals. Add their directories here as
- * they are migrated — that is the point of the list.
+ * This started as a narrow allow-list because the creators and helpers under
+ * src/utils still called `ui.notifications` with English literals. That
+ * migration is now finished, so this is simply `src/` — every file in the
+ * module is covered, and a new raw literal anywhere fails the suite rather
+ * than quietly landing in a directory nobody had added to the list yet.
  */
-const LOCALIZED_SOURCE_ROOTS = [
-  join('src', 'main.ts'),
-  join('src', 'dialogs'),
-  join('src', 'settings'),
-  join('src', 'utils', 'tag-input-manager.ts')
-];
+const LOCALIZED_SOURCE_ROOTS = ['src'];
 
 /** The one file that is allowed to touch `ui.notifications` directly. */
 const NOTIFY_HELPER = join('src', 'dialogs', 'notify.ts');

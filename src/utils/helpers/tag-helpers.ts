@@ -3,6 +3,7 @@
  */
 
 import { toPascalCase } from './naming-helpers';
+import { notifyInfo } from '../../dialogs/notify';
 
 /**
  * Embedded collections this module actually creates tagged documents in.
@@ -137,9 +138,7 @@ export async function showTaggerWithWarning(tile: any, appliedTag: string): Prom
   }
 
   // Show notification about the applied tag
-  ui.notifications.info(
-    `Tile tagged with "${appliedTag}". Warning: Do not remove EM-generated tags.`
-  );
+  notifyInfo('EMPUZZLES.NotifyTileTagged', { tag: appliedTag });
 
   // Note: We don't auto-open the tile sheet anymore as it interferes with canvas interaction
   // Users can right-click the tile to open configuration if they want to edit tags

@@ -11,6 +11,7 @@ import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
 import { normalizeMovementActions } from '../helpers/movement-actions';
+import { notifyInfo } from '../../dialogs/notify';
 
 /**
  * Configuration for trap regions using Enhanced Region Behaviors
@@ -200,5 +201,5 @@ for (const tileId of tileIds) {
     customTags: config.customTags
   });
 
-  ui.notifications.info(`Created trap region: ${config.name}`);
+  notifyInfo('EMPUZZLES.NotifyTrapRegionCreated', { name: config.name });
 }

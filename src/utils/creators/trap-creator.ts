@@ -24,6 +24,7 @@ import { buildEffectDuration, EXHAUSTION_STATUS_ID } from '../helpers/dnd5e-cond
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 import { isDnd5eSystem } from '../helpers/dnd5e-activity';
+import { notifyWarn } from '../../dialogs/notify';
 
 /**
  * Emit the action that changes a token's hit points.
@@ -186,10 +187,7 @@ export async function createTrapTile(
         // rather than failing the whole trap.
         const { x: moveX, y: moveY } = tileAction;
         if (moveX === undefined || moveY === undefined) {
-          ui.notifications.warn(
-            `Dorman Lakely's Tile Utilities | Skipping "move tile" action for tile ` +
-              `${tileAction.tileId}: no destination coordinates were set.`
-          );
+          notifyWarn('EMPUZZLES.NotifyTrapMoveActionSkipped', { tileId: tileAction.tileId });
           return;
         }
 

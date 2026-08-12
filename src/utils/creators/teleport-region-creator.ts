@@ -8,6 +8,7 @@ import {
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
+import { notifyError, notifyInfo, notifyWarn } from '../../dialogs/notify';
 
 /**
  * Volume for the teleport sound when the dialog does not specify one.
@@ -59,7 +60,7 @@ export async function createTeleportRegion(
     config.teleportSceneId === scene.id ? scene : (game as any).scenes.get(config.teleportSceneId);
 
   if (!destScene) {
-    ui.notifications.error('Destination scene not found for teleport region.');
+    notifyError('EMPUZZLES.NotifyTeleportDestSceneMissing');
     return;
   }
 
@@ -185,15 +186,11 @@ export async function createTeleportRegion(
       await destRegion.createEmbeddedDocuments('RegionBehavior', destBehaviors);
     }
 
-    ui.notifications.info(
-      `Dorman Lakely's Tile Utilities | Return teleport region created at destination.`
-    );
+    notifyInfo('EMPUZZLES.NotifyReturnTeleportRegionCreated');
   }
 
   // Note: the core teleport behavior doesn't support saving throws or delete source token
   if (config.hasSavingThrow) {
-    ui.notifications.warn(
-      "Native region teleport doesn't support saving throws. Use a teleport tile for full features."
-    );
+    notifyWarn('EMPUZZLES.NotifyRegionTeleportNoSavingThrow');
   }
 }

@@ -10,6 +10,7 @@ import {
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
+import { notifyError, notifyInfo, notifyWarn } from '../../dialogs/notify';
 
 /**
  * Creates a teleport tile with optional saving throw and return teleport
@@ -108,9 +109,7 @@ export async function createTeleportTile(
     try {
       const destinationScene = (game as any).scenes.get(config.teleportSceneId);
       if (!destinationScene) {
-        ui.notifications.warn(
-          "Dorman Lakely's Tile Utilities | Could not find destination scene for return teleport."
-        );
+        notifyWarn('EMPUZZLES.NotifyReturnTeleportSceneMissing');
         return;
       }
 
@@ -190,14 +189,10 @@ export async function createTeleportTile(
         showWarning: false
       });
 
-      ui.notifications.info(
-        `Dorman Lakely's Tile Utilities | Return teleport tile created at destination.`
-      );
+      notifyInfo('EMPUZZLES.NotifyReturnTeleportTileCreated');
     } catch (error) {
       console.error("Dorman Lakely's Tile Utilities | Error creating return teleport tile:", error);
-      ui.notifications.error(
-        `Dorman Lakely's Tile Utilities | Failed to create return teleport tile: ${error}`
-      );
+      notifyError('EMPUZZLES.NotifyReturnTeleportFailed', { error: String(error) });
     }
   }
 }

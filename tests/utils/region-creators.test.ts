@@ -524,8 +524,10 @@ describe('Teleport Region Creator', () => {
 
       await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
 
+      // The warning is localized now, so assert on the English the mock i18n
+      // resolves from lang/en.json rather than on a literal in the source.
       expect((global as any).ui.notifications.warn).toHaveBeenCalledWith(
-        expect.stringContaining("doesn't support saving throws")
+        expect.stringContaining('cannot roll a saving throw')
       );
     });
 

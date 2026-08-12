@@ -594,6 +594,22 @@
     "EffectDurationRounds": "Rounds",
     "EffectDurationTurns": "Turns",
     "EffectDurationMinutes": "Minutes",
-    "EffectDurationHours": "Hours"
+    "EffectDurationHours": "Hours",
+    "NotifyCombatTrapItemMissing": "Could not find the selected item.",
+    "NotifyTeleportDestSceneMissing": "Destination scene not found for this teleport region.",
+    "NotifyReturnTeleportRegionCreated": "Return teleport region created at the destination.",
+    "NotifyRegionTeleportNoSavingThrow": "Region teleports cannot roll a saving throw. Use a teleport tile if you need one.",
+    "NotifyTrapRegionCreated": "Created trap region: {name}",
+    "NotifyTrapMoveActionSkipped": "Skipped the \"move tile\" action for tile {tileId}: no destination coordinates were set.",
+    "NotifyLightGroupTagged": "Light entities tagged with \"{tag}\". Use Tagger to find all related entities.",
+    "NotifyReturnTeleportSceneMissing": "Could not find the destination scene for the return teleport.",
+    "NotifyReturnTeleportTileCreated": "Return teleport tile created at the destination.",
+    "NotifyReturnTeleportFailed": "Failed to create the return teleport tile: {error}",
+    "NotifyTileTagged": "Tile tagged with \"{tag}\". Do not remove tags this module generated.",
+    "NotifyEnhancedRegionBehaviorsRequired": "The Enhanced Region Behaviors module is required for {plural}. Install and enable it from the Foundry module browser — without it, {plural} cannot {limitation}.",
+    "NotifyPreviewImageFailed": "Could not load the preview image: {path}",
+    "NotifyLightTileFailed": "Failed to create the light tile: {reason}",
+    "NotifyCombatTrapFailed": "Failed to create the combat trap: {reason}",
+    "NotifyCreateFailedSeeConsole": "check the console for details"
   }
 }

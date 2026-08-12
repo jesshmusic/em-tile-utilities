@@ -1,3 +1,4 @@
+import { notifyError } from '../../dialogs/notify';
 /**
  * Module availability checks for Foundry VTT modules
  */
@@ -61,11 +62,10 @@ export interface EnhancedRegionFeature {
 export function requireEnhancedRegionBehaviors(feature: EnhancedRegionFeature): boolean {
   if (hasEnhancedRegionBehaviors()) return true;
 
-  ui.notifications.error(
-    `Dorman Lakely's Tile Utilities | Enhanced Region Behaviors module is required for ${feature.plural}. ` +
-      'Please install and enable it from the FoundryVTT module browser. ' +
-      `Without this module, ${feature.plural} cannot ${feature.limitation}.`
-  );
+  notifyError('EMPUZZLES.NotifyEnhancedRegionBehaviorsRequired', {
+    plural: feature.plural,
+    limitation: feature.limitation
+  });
   console.error(
     `Dorman Lakely's Tile Utilities | Cannot create ${feature.singular}: Enhanced Region Behaviors module is not installed or not active. ` +
       'Install from: https://foundryvtt.com/packages/enhanced-region-behaviors'
