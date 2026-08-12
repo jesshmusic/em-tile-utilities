@@ -6,6 +6,8 @@ import { showTeleportDialog } from './teleport-dialog';
 import { showSceneVariablesDialog } from './variables-viewer';
 import { showCheckStateDialog } from './check-state-dialog';
 import { showElevationDialog } from './elevation-dialog';
+import { showLockDialog } from './lock-dialog';
+import { showCombinationDialog } from './combination-dialog';
 import { getActiveTileManager, setActiveTileManager } from './tile-manager-state';
 import { DialogPositions } from '../types/dialog-positions';
 import { notifyInfo, notifyWarn, notifyError } from './notify';
@@ -42,6 +44,8 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
       createTeleport: TileManagerDialog.#onCreateTeleport,
       createElevation: TileManagerDialog.#onCreateElevation,
       createCheckState: TileManagerDialog.#onCreateCheckState,
+      createLock: TileManagerDialog.#onCreateLock,
+      createCombination: TileManagerDialog.#onCreateCombination,
       viewVariables: TileManagerDialog.#onViewVariables,
       editTile: TileManagerDialog.#onEditTile,
       selectTile: TileManagerDialog.#onSelectTile,
@@ -584,6 +588,36 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
     event.preventDefault();
     this.minimize();
     showCheckStateDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create lock-and-key button click
+   */
+  static async #onCreateLock(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showLockDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle create combination lock button click
+   */
+  static async #onCreateCombination(
+    this: TileManagerDialog,
+    event: PointerEvent,
+    _target: HTMLElement
+  ): Promise<void> {
+    event.preventDefault();
+    this.minimize();
+    showCombinationDialog();
   }
 
   /* -------------------------------------------- */

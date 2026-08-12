@@ -15,6 +15,15 @@ export { createTeleportTile } from './teleport-creator';
 export { createCombatTrapTile } from './combat-trap-creator';
 export { createCheckStateTile } from './check-state-creator';
 export { createTrapTile } from './trap-creator';
+export { createLockTile, buildLockActions } from './lock-creator';
+export type { LockConfig } from './lock-creator';
+export {
+  createCombinationTile,
+  buildCombinationActions,
+  buildAnswerComparison,
+  buildPromptContent
+} from './combination-creator';
+export type { CombinationConfig } from './combination-creator';
 
 // Export region creators
 export { createTrapRegion } from './trap-region-creator';
