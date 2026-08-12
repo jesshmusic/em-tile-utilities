@@ -26,7 +26,7 @@ npm run lint        # eslint src/ tests/ scripts/, --max-warnings 0
 npm run lint:fix
 npm run format      # prettier --write over src, tests, **/*.json, **/*.md
 npm run format:check
-npm test            # jest — 993 tests, 28 suites
+npm test            # jest — 1346 tests, 41 suites
 npm run test:coverage
 npm run release:patch|minor|major
 ```
@@ -56,12 +56,14 @@ src/
     ├── helpers/     # naming, tag, grid, folder, module-checks, rollback, tile-preview, dnd5e-activity
     ├── actions/     # 21 Monk's Active Tiles action builders across 7 modules
     ├── builders/    # base-tile, base-region, monks-config, entity, region-behavior
-    └── creators/    # 7 tile creators + 3 region creators
+    └── creators/    # 9 tile creators + 8 region creators
 ```
 
 Four layers, bottom-up: **helpers** (pure utilities) → **actions** (typed Monk's Active Tiles action objects) → **builders** (document data and flag envelopes) → **creators** (the whole create-a-thing flow). Dialogs collect input and call a creator; creators are where the behaviour actually lives, and where the tests are.
 
-Creators exported from `utils/creators/index.ts`: `createSwitchTile`, `createLightTile`, `createResetTile`, `createTeleportTile`, `createTrapTile`, `createCombatTrapTile`, `createCheckStateTile`, `createTrapRegion`, `createTeleportRegion`, `createElevationRegion`. All are `async` and create documents on the scene; they do not return the document.
+Creators exported from `utils/creators/index.ts`: **tiles** — `createSwitchTile`, `createLightTile`, `createResetTile`, `createTeleportTile`, `createTrapTile`, `createCombatTrapTile`, `createCheckStateTile`, `createLockTile`, `createCombinationTile`; **regions** — `createTrapRegion`, `createTeleportRegion`, `createElevationRegion`, `createDifficultTerrainRegion`, `createDarknessRegion`, `createSurfaceRegion`, `createRotateRegion`, `createGasCloudRegion`. All are `async` and create documents on the scene; they do not return the document.
+
+The three core-behavior region creators (difficult terrain, darkness, surface) and the gas cloud deliberately do **not** call `requireEnhancedRegionBehaviors()` — they are built on Foundry v14's own region behaviors and work without that module. Only the trap and elevation regions need it. `createRotateRegion` is gated on `isDnd5eSystem()` instead, since `dnd5e.rotateArea` is a system behavior.
 
 Shared creator utilities (use these rather than re-inlining):
 

@@ -2,11 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.3.0] - 2026-08-12
+## [3.0.0] - 2026-08-12
 
-Region traps could only ever punish you for walking in. Stand in the lava and you were safe; fly over the pressure plate and it still went off. This release fixes both halves of that.
+The biggest release this module has had. Seven new things you can build, four new things a trap can do to a creature, and regions that finally understand *when* and *who*.
 
-### Added
+### Added — seven new tools
+
+- **Rotating rooms.** Turning bridges, revolving corridors and rotating puzzle chambers are now a region and a switch. Draw a region over what should turn, pick the angles it stops at, and select the walls, tiles, lights and sounds that belong to it — the D&D 5e system does the geometry. Anyone standing on the bridge when it turns goes round with it, walls carry their whole linked chain, and the switch tile is built for you and wired up, so the party can operate the mechanism themselves. Choose whether it takes the short way round or always turns clockwise, how long the turn takes, and whether the switch advances or reverses. Requires the D&D 5e system, which is where the rotation behaviour lives.
+- **Gas clouds and auras.** A region that applies conditions to anything inside it, in two flavours. A **gas cloud** is drawn on the map and stays put: stand in the stinking cloud, be poisoned; walk out, stop being poisoned. An **aura** attaches to a token and follows it around the map — a troll's stench, a paladin's aura of protection, the cold coming off an ice devil. Pick conditions from your system's own list, set a radius in feet, and optionally leave the creature's own square out of its own aura. Only the conditions the region applied are removed on the way out, so a cloud never strips something the party was already suffering from.
+- **Difficult terrain.** Drag out an area and set what each way of moving costs inside it. Mud that is a slog on foot but nothing to a flier, a rushing current that only fights swimmers, an antimagic field that grounds the wizard without slowing the fighter — each is one number per movement type. Overlapping terrain regions multiply, so a bog inside a briar patch is genuinely worse than either. The dialog reads the movement types from your world, so anything your system adds shows up on its own, and it is honest about Foundry's limit: costs run from 0 to 5, and there is no "impassable" — for that you still want a wall.
+- **Magical darkness.** A *darkness* spell, a shaft of daylight, a permanently gloomy crypt. Darken and brighten stack with each other and with the scene's own lighting, so two overlapping shadows are darker than one and neither can push past pitch black; override sets the light level outright and ignores the scene.
+- **Surfaces — illusory floors, ceilings and catwalks.** The pit is covered by a floor that looks and behaves solid. The party walks across it. You disable the region and everyone standing on it falls through. Presets get you the common cases in two clicks — illusory floor, solid ceiling or roof, glass floor you can see through but still stand on — and every individual switch (light, movement, sight, sound, tile fading, roof reveal, token hiding) stays there underneath if you want to build something stranger.
+- **Lock & key doors.** Point the new tool at a door, name the item that opens it, and the door refuses everyone else with a message of your choosing. Wildcards work, so `* Key` accepts the brass one and the rusty one alike. You can search only the token that tried the door, or every player token in the scene — handy if your players do not keep a token selected. A correct key can either unlock the door or swing it open outright.
+- **Combination locks.** A tile that asks a question and acts on the answer: a keypad, a riddle, a password, a rune order. Answers ignore surrounding spaces and capitalisation unless you ask for exact matching. Set a limit on wrong answers and the mechanism seizes up for good once they run out, with its own message. A correct answer can unlock a door as well as posting to chat.
+
+Difficult terrain, magical darkness and surfaces are built on Foundry v14's own region behaviours, so unlike the trap and elevation regions they work without the Enhanced Region Behaviors module. Lock & key and combination locks are behind the Experimental Features setting for now.
+
+### Added — regions understand when, and who
 
 - **Traps that keep hurting you while you stand in them.** A trap region can now fire at the start or end of a creature's turn, or at the top or bottom of the round, and not just when something walks in. That is the whole "damage while you stand in it" category — lava, poison gas, a room filling with water, a collapsing ceiling — and none of it was buildable before.
   - The triggers stack rather than replace each other. Tick both "Token Enter" and "Turn Start" and a lava pool burns anyone who steps in, then burns them again every turn they stay.
@@ -16,24 +28,22 @@ Region traps could only ever punish you for walking in. Stand in the lava and yo
   - The list is read from Foundry's own movement actions rather than typed out here, so if your system or another module adds a way to move, it appears in the row on its own.
   - Turn and round triggers are never filtered by this, because no movement caused them — a creature standing in the lava is not moving, and the fire should still burn.
   - Regions you have already built are untouched; this only affects regions you create from here on.
-
-### Fixed
-
-- **The trap effect list was missing twelve real D&D 5e conditions, and offered two that do not exist.** The list of status effects a trap can apply was a hardcoded allow-list, checked against the system's effects — so anything not written into that array was silently dropped from the dropdown. Against dnd5e 5.3.3 that meant **Dehydration, Falling, Inaudible, Malnutrition, Suffocation, Surprised** and **Transformed** could not be selected at all, along with the three cover levels (Half, Three-Quarters, Total). Meanwhile it offered "Slowed" and "Hasted", which are not D&D 5e conditions — they come from other modules, so those two entries never matched anything and never appeared. The list is now sourced from the system itself and the curated array only controls **ordering**: the effects a trap most often applies still sit at the top, and everything else the system defines appears below them. A condition added by a future D&D 5e release, or registered by another module, now shows up on its own.
-
-Four things a trap could not previously do to a creature, all in the trap dialog. Nothing changes for traps you have already built, and nothing changes for a trap you configure the way you always have — every new control defaults to the old behaviour.
-
-### Added
-
 - **Magical, silvered and adamantine traps now get through resistance.** A trap's damage carried no properties, so a demon resistant to "bludgeoning, piercing and slashing from nonmagical attacks" shrugged off your enchanted blade trap exactly as if it were mundane — quietly, with no error and no indication anything was wrong. The damage section of the trap dialog gained checkboxes for the bypass properties your system defines (magical, silvered and adamantine in stock D&D 5e), and ticking one lets the trap punch through that resistance. This works whether or not you run midi-qol; both apply the same rule. The list is read from the system, so a module that adds its own bypass — cold iron, say — shows up automatically.
 - **Traps that grant temporary hit points, and traps that drain maximum hit points.** Two new entries in the damage type list, "Temp HP" and "Max HP". Temp HP is the healing font or blessing trap; Max HP is the wight, the curse, the thing that follows you out of the room — the loss stays until a long rest or a remove curse, rather than being healed off. Enter a positive formula for both, exactly as you would for damage.
 - **Exhaustion traps can inflict more than one level.** Choosing Exhaustion previously always applied a single level, no matter what the trap was meant to represent, because there was no way to say otherwise. There is now a level selector, 1 to 6, and the maximum is read from your system so a rules module that changes the exhaustion ladder is respected.
 - **Conditions can have a duration.** "Poisoned for 1 minute" was impossible to build; a condition went on and stayed on until someone remembered to clear it. Effects now take an optional duration in rounds, turns, minutes or hours. Rounds and turns count down during combat, minutes and hours count down with world time so they also expire when the party is exploring rather than fighting. The control defaults to **Until removed**, which is what traps did before — so a trap you configure without touching it behaves identically.
 
+### Fixed
+
+- **The trap effect list was missing twelve real D&D 5e conditions, and offered two that do not exist.** The list of status effects a trap can apply was a hardcoded allow-list, checked against the system's effects — so anything not written into that array was silently dropped from the dropdown. Against dnd5e 5.3.3 that meant **Dehydration, Falling, Inaudible, Malnutrition, Suffocation, Surprised** and **Transformed** could not be selected at all, along with the three cover levels (Half, Three-Quarters, Total). Meanwhile it offered "Slowed" and "Hasted", which are not D&D 5e conditions — they come from other modules, so those two entries never matched anything and never appeared. The list is now sourced from the system itself and the curated array only controls **ordering**: the effects a trap most often applies still sit at the top, and everything else the system defines appears below them. A condition added by a future D&D 5e release, or registered by another module, now shows up on its own.
+
 ### Changed
 
 - Traps that ask for an exhaustion level or a duration now use a purpose-built Monk's Active Tiles action instead of Monk's generic effect action, which structurally cannot express either. Traps that ask for neither still emit Monk's own action, unchanged, and so do traps in non-D&D-5e worlds. Existing tiles are never rewritten.
-
+- New regions are placed on the level you are looking at, instead of quietly existing on every level of the scene at once.
+- Regions this module creates now default to the same visibility Foundry itself uses for a region you draw by hand. They previously used a different setting for no particular reason.
+- The Tile Manager's search box no longer lower-cases what you type as you type it, group headers count only the rows the search left visible, and nudging a tile on the canvas no longer throws away your scroll position, your place in the list, or a half-typed search.
+- Teleport regions can play a sound again — the option existed in the code but no dialog ever offered it, so it could never be switched on.
 
 ## [2.2.0] - 2026-08-11
 
