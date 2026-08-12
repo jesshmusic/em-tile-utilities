@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-08-12
+
+Region traps could only ever punish you for walking in. Stand in the lava and you were safe; fly over the pressure plate and it still went off. This release fixes both halves of that.
+
+### Added
+
+- **Traps that keep hurting you while you stand in them.** A trap region can now fire at the start or end of a creature's turn, or at the top or bottom of the round, and not just when something walks in. That is the whole "damage while you stand in it" category — lava, poison gas, a room filling with water, a collapsing ceiling — and none of it was buildable before.
+  - The triggers stack rather than replace each other. Tick both "Token Enter" and "Turn Start" and a lava pool burns anyone who steps in, then burns them again every turn they stay.
+  - Turn and round triggers are not the same thing, and picking the wrong one changes how much damage lands. A **turn** trigger fires for the one creature whose turn it is. A **round** trigger fires for every creature standing in the region at once — four party members in the gas cloud take four lots of damage the moment the round ticks over. The dialog now says which is which instead of leaving you to find out in play.
+  - Both need an active combat encounter. Outside combat, nothing fires.
+- **Traps that a flying creature does not set off.** Trap regions and elevation regions gained a "Set Off By" row listing every way a creature can move — walking, flying, swimming, burrowing, crawling, climbing, jumping, and the two kinds of teleporting Foundry distinguishes. Everything is ticked by default, so nothing changes until you untick something. Untick "fly" and the pressure plate ignores anyone gliding over it; untick the teleport actions and a rune ignores anyone blinking past.
+  - The list is read from Foundry's own movement actions rather than typed out here, so if your system or another module adds a way to move, it appears in the row on its own.
+  - Turn and round triggers are never filtered by this, because no movement caused them — a creature standing in the lava is not moving, and the fire should still burn.
+  - Regions you have already built are untouched; this only affects regions you create from here on.
+
 ## [2.2.0] - 2026-08-11
 
 A correctness release. Three features that appeared to work in the UI never actually did anything at the table — saving throws, trap damage under midi-qol, and the Reset tile — and this release fixes all three, along with the dnd5e 5.3.3 and Monk's Active Tiles 14.01 integration points that had silently drifted out of date.
