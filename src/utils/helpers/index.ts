@@ -16,3 +16,4 @@ export * from './region-effect-helpers';
 export * from './rollback-helpers';
 export * from './tag-helpers';
 export * from './tile-preview-helper';
+export * from './wall-picker';

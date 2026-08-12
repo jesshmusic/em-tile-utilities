@@ -136,6 +136,26 @@
         </div>
       </button>
     {{/if}}
+    {{#if experimentalFeatures}}
+      <button type="button" class="create-tile-card create-utility-card" data-action="createLock">
+        <div class="card-icon">
+          <i class="gi-padlock"></i>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{localize "EMPUZZLES.CreateLock"}}</h3>
+          <p class="card-description">{{localize "EMPUZZLES.CreateLockDesc"}}</p>
+        </div>
+      </button>
+      <button type="button" class="create-tile-card create-utility-card" data-action="createCombination">
+        <div class="card-icon">
+          <i class="gi-checklist"></i>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{localize "EMPUZZLES.CreateCombination"}}</h3>
+          <p class="card-description">{{localize "EMPUZZLES.CreateCombinationDesc"}}</p>
+        </div>
+      </button>
+    {{/if}}
   </div>
 
   {{#unless hasEnhancedRegionBehaviors}}

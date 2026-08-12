@@ -44,6 +44,19 @@ function collect(roots: string[], extensions: string[]): string[] {
   return roots.flatMap(root => walk(join(REPO_ROOT, root), extensions)).sort();
 }
 
+/**
+ * Split source into lines with comments removed, so a guard can look for code
+ * without matching prose. Deliberately simple: it strips `//` to end-of-line
+ * and whole `/* … *\/` blocks, and does not try to understand strings — good
+ * enough to tell a call from a comment, which is all these guards need.
+ */
+function stripComments(text: string): string[] {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''));
+}
+
 function read(absPath: string): { rel: string; text: string } {
   return {
     rel: relative(REPO_ROOT, absPath).split(sep).join('/'),
@@ -79,9 +92,15 @@ describe('ui.notifications guards', () => {
   });
 
   it('routes every notification through src/dialogs/notify.ts', () => {
+    // Match a *call*, not a mention. `ui.notifications` appearing in prose —
+    // including a comment saying a file deliberately does not call it — is not
+    // a violation, and flagging it made this guard cry wolf the first time a
+    // new helper documented its own restraint.
+    const notificationCall = /\bui\s*\.\s*notifications\s*\??\s*\.\s*\w+\s*\(/;
+
     const direct = localizedSources
       .filter(({ rel }) => rel !== NOTIFY_HELPER.split(sep).join('/'))
-      .filter(({ text }) => /\bui\.notifications\b/.test(text))
+      .filter(({ text }) => stripComments(text).some(line => notificationCall.test(line)))
       .map(({ rel }) => rel);
 
     expect(direct).toEqual([]);

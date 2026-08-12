@@ -1,0 +1,85 @@
+<div class="form-group">
+  <label for="em-lock-name">{{localize "EMPUZZLES.LockName"}}</label>
+  <input type="text" id="em-lock-name" name="lockName" value="{{lockName}}" />
+</div>
+
+<div class="form-group">
+  <label>{{localize "EMPUZZLES.LockDoor"}}</label>
+  <div class="form-fields">
+    <span class="em-lock-door-label">
+      {{#if wallId}}
+        {{wallName}}
+        {{#unless wallIsDoor}}
+          — {{localize "EMPUZZLES.LockWallIsNotADoor"}}
+        {{/unless}}
+      {{else}}
+        {{localize "EMPUZZLES.LockNoDoorSelected"}}
+      {{/if}}
+    </span>
+    <button type="button" data-action="selectDoor" title="{{localize 'EMPUZZLES.SelectWall'}}" aria-label="{{localize 'EMPUZZLES.SelectWall'}}">
+      <i class="gi-entry-door"></i> {{localize "EMPUZZLES.SelectWall"}}
+    </button>
+  </div>
+  <p class="hint">{{localize "EMPUZZLES.LockDoorHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-lock-key">{{localize "EMPUZZLES.LockKeyItem"}}</label>
+  <input type="text" id="em-lock-key" name="keyItemName" value="{{keyItemName}}" />
+  <p class="hint">{{localize "EMPUZZLES.LockKeyItemHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-lock-scope">{{localize "EMPUZZLES.LockCheckScope"}}</label>
+  <select id="em-lock-scope" name="checkScope">
+    <option value="token" {{#if (eq checkScope "token")}}selected{{/if}}>{{localize "EMPUZZLES.LockCheckScopeToken"}}</option>
+    <option value="players" {{#if (eq checkScope "players")}}selected{{/if}}>{{localize "EMPUZZLES.LockCheckScopePlayers"}}</option>
+  </select>
+  <p class="hint">{{localize "EMPUZZLES.LockCheckScopeHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-lock-unlock-mode">{{localize "EMPUZZLES.LockUnlockMode"}}</label>
+  <select id="em-lock-unlock-mode" name="unlockMode">
+    <option value="unlock" {{#if (eq unlockMode "unlock")}}selected{{/if}}>{{localize "EMPUZZLES.LockUnlockModeUnlock"}}</option>
+    <option value="open" {{#if (eq unlockMode "open")}}selected{{/if}}>{{localize "EMPUZZLES.LockUnlockModeOpen"}}</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label for="em-lock-lock-on-create">{{localize "EMPUZZLES.LockDoorOnCreate"}}</label>
+  <input type="checkbox" id="em-lock-lock-on-create" name="lockDoorOnCreate" {{#if lockDoorOnCreate}}checked{{/if}} />
+  <p class="hint">{{localize "EMPUZZLES.LockDoorOnCreateHint"}}</p>
+</div>
+
+<div class="form-group">
+  <label for="em-lock-success-message">{{localize "EMPUZZLES.LockSuccessMessage"}}</label>
+  <input type="text" id="em-lock-success-message" name="successMessage" value="{{successMessage}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-lock-failure-message">{{localize "EMPUZZLES.LockFailureMessage"}}</label>
+  <input type="text" id="em-lock-failure-message" name="failureMessage" value="{{failureMessage}}" />
+</div>
+
+<div class="form-group">
+  <label for="em-lock-success-sound">{{localize "EMPUZZLES.LockSuccessSound"}}</label>
+  <div class="form-fields">
+    <input type="text" id="em-lock-success-sound" name="successSound" value="{{successSound}}" data-dtype="String" />
+    <button type="button" class="file-picker" data-type="audio" data-target="successSound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <i class="gi-load"></i>
+    </button>
+  </div>
+</div>
+
+<div class="form-group">
+  <label for="em-lock-failure-sound">{{localize "EMPUZZLES.LockFailureSound"}}</label>
+  <div class="form-fields">
+    <input type="text" id="em-lock-failure-sound" name="failureSound" value="{{failureSound}}" data-dtype="String" />
+    <button type="button" class="file-picker" data-type="audio" data-target="failureSound" title="{{localize 'EMPUZZLES.BrowseFiles'}}" aria-label="{{localize 'EMPUZZLES.BrowseFiles'}}" tabindex="-1">
+      <i class="gi-load"></i>
+    </button>
+  </div>
+</div>
+
+{{> partials/custom-tags-section customTags=customTags}}
