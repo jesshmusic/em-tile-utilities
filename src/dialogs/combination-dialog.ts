@@ -8,6 +8,7 @@ import {
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { notifyInfo, notifyWarn, notifyError } from './notify';
+import { DialogPositions } from '../types/dialog-positions';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
 
@@ -49,7 +50,7 @@ export class CombinationDialog extends HandlebarsApplicationMixin(ApplicationV2)
       title: 'EMPUZZLES.CreateCombination',
       resizable: true
     },
-    position: { width: 520, height: 700 },
+    position: DialogPositions.COMBINATION,
     form: {
       closeOnSubmit: false,
       handler: CombinationDialog.prototype._onSubmit

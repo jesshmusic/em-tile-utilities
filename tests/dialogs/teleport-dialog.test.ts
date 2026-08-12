@@ -10,6 +10,7 @@ mockFoundry();
 
 import { TeleportDialog, showTeleportDialog } from '../../src/dialogs/teleport-dialog';
 import * as tileManagerState from '../../src/dialogs/tile-manager-state';
+import { DialogPositions } from '../../src/types/dialog-positions';
 
 describe('TeleportDialog', () => {
   let dialog: TeleportDialog;
@@ -29,7 +30,10 @@ describe('TeleportDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-swap-bag');
       expect(options.window.title).toBe('EMPUZZLES.CreateTeleport');
-      expect(options.position.width).toBe(650);
+      // Asserted against the shared config rather than a literal: the default
+      // width is tuned centrally in src/types/dialog-positions.ts, and pinning
+      // the number here just meant four tests to update when it moved.
+      expect(options.position.width).toBe(DialogPositions.TELEPORT.width);
     });
 
     it('should have correct parts configuration', () => {

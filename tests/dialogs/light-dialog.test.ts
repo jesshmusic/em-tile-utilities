@@ -10,6 +10,7 @@ mockFoundry();
 
 import { LightConfigDialog, showLightDialog } from '../../src/dialogs/light-dialog';
 import * as tileManagerState from '../../src/dialogs/tile-manager-state';
+import { DialogPositions } from '../../src/types/dialog-positions';
 
 describe('LightConfigDialog', () => {
   let dialog: LightConfigDialog;
@@ -42,7 +43,10 @@ describe('LightConfigDialog', () => {
       expect(options.tag).toBe('form');
       expect(options.window.icon).toBe('gi-candle-flame');
       expect(options.window.title).toBe('EMPUZZLES.CreateLightTile');
-      expect(options.position.width).toBe(650);
+      // Asserted against the shared config rather than a literal: the default
+      // width is tuned centrally in src/types/dialog-positions.ts, and pinning
+      // the number here just meant four tests to update when it moved.
+      expect(options.position.width).toBe(DialogPositions.LIGHT.width);
     });
 
     it('should have correct parts configuration', () => {

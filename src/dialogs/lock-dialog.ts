@@ -3,6 +3,7 @@ import { getNextTileNumber, pickWallFromCanvas } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { notifyInfo, notifyWarn, notifyError } from './notify';
+import { DialogPositions } from '../types/dialog-positions';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
 
@@ -58,7 +59,7 @@ export class LockDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       title: 'EMPUZZLES.CreateLock',
       resizable: true
     },
-    position: { width: 520, height: 'auto' as const },
+    position: DialogPositions.LOCK,
     form: {
       closeOnSubmit: false,
       handler: LockDialog.prototype._onSubmit
