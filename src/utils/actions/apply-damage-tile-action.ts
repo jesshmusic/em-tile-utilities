@@ -38,6 +38,7 @@ import {
 import { applyRolledDamage, rollDamageTotal } from '../helpers/damage-application';
 import { localize } from '../helpers/localize';
 import { registerApplyConditionAction } from './apply-condition-tile-action';
+import { registerUseActivityAction } from './use-activity-tile-action';
 
 /** Namespace for actions this module registers. Must be the module id. */
 export const EM_ACTION_NAMESPACE = 'em-tile-utilities';
@@ -375,6 +376,8 @@ export function registerEmTileActions(): void {
     const registerAll = (matt: any) => {
       registerApplyDamageAction(matt);
       registerApplyConditionAction(matt);
+      // dnd5e only, and it says so itself — see registerUseActivityAction.
+      registerUseActivityAction(matt);
     };
     hooks.on?.('setupTileActions', (matt: any) => registerAll(matt));
     hooks.once?.('ready', () => registerAll(getMonksActiveTiles()));

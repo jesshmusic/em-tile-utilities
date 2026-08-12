@@ -256,6 +256,43 @@ full argument. Verified live: an ERB-typed trap region fires, rolls and damages
 exactly as before, and the new `MovementFilter` forwards to it through
 `system._handleRegionEvent` — the same call ERB makes for its own chaining.
 
+### Custom MATT action: `em-tile-utilities.useactivity`
+
+`src/utils/actions/use-activity-tile-action.ts`. Monk's own `attack` action is
+broken on dnd5e 5.x in two independent ways, both re-confirmed live on 5.3.3:
+
+- MATT calls `item.use({ rollMode, flavor, skipDialog, fastForward })`
+  (../monks-active-tiles/actions.js:4746-4751) against a `(config, dialog,
+message)` signature, so everything lands in `config`. `fastforward` does not
+  skip the dialog and the flavor never reaches the card.
+- MATT then reads `item?.rollDamage` (actions.js:4767).
+  `Item5e.prototype.rollDamage` is `undefined` — damage rolling moved onto
+  Activities — so `rolldamage` is inert whatever the GM ticks.
+
+This action calls `Activity#use(usage, dialog, message)` with the arguments in
+their real slots, and addresses **activities** rather than items, which is what
+makes **check** activities (spot the trap, disarm the trap) expressible at all.
+
+- **Activities are addressed as `<itemId>:<activityId>`.** Activity ids are only
+  unique within their item. MATT's grouped list builds an option value as
+  `` `${group.id}:${key}` `` (apps/action-config.js:617), so grouping by item
+  gives the composite id for free; `parseActivityRef` reads it back.
+- **`ctrl.list` is called as `ctrl.list.call(app, app, action, data)`** and may
+  return a Promise (action-config.js:1253-1256), so the activity list can depend
+  on the actor already chosen in the same sheet.
+- **`fastforward` defaults to TRUE here**, unlike MATT's attack action. A tile
+  that fires on its own must not stop to ask the GM to configure the roll.
+- **Targets are restored afterwards.** MATT's attack action releases the GM's
+  targets and never puts them back.
+- **Never import `EM_ACTION_NAMESPACE` from `apply-damage-tile-action.ts`.**
+  That file owns `registerEmTileActions()` and imports every other action
+  module; importing back makes them circular, and in the IIFE bundle Rollup hits
+  the `const` in its temporal dead zone and throws a `ReferenceError` **above**
+  every `init` hook, killing the entire module — no settings, no tools, no
+  dialogs. Typecheck, lint and the unit suite all pass regardless, because Jest
+  loads each module independently. Declare a local const per module, as all
+  three siblings do; `tests/integration/action-module-cycles.test.ts` enforces it.
+
 ## dnd5e integration
 
 All of it lives in `src/utils/helpers/dnd5e-activity.ts`, behind `isDnd5eSystem()`, with source citations inline. Verified against dnd5e 5.3.3:

@@ -43,6 +43,12 @@
         "UnitHours": "Hours",
         "DurationValue": "Duration Amount",
         "DurationValueHelp": "How many rounds, turns, minutes or hours the condition lasts. Ignored when the duration is \"Until removed\". Rounds and turns only tick during combat; minutes and hours tick with world time."
+      },
+      "UseActivity": {
+        "Name": "Use Activity",
+        "Activity": "Activity",
+        "ActivityHelp": "Any activity on any of the actor's items — attack, save, damage, heal, or a <b>check</b> for spotting or disarming the trap.",
+        "FastForwardHelp": "Roll straight away instead of opening the activity dialog."
       }
     },
     "Regions": {
