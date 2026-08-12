@@ -4,11 +4,13 @@ import {
   createEnhancedSoundRegionBehavior,
   createPauseGameRegionBehavior,
   createExecuteMacroRegionBehavior,
+  applyMovementActionGate,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
+import { normalizeMovementActions } from '../helpers/movement-actions';
 
 /**
  * Configuration for trap regions using Enhanced Region Behaviors
@@ -16,7 +18,16 @@ import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
 export interface TrapRegionConfig {
   name: string;
   // Trigger events
-  events?: string[]; // e.g., ['tokenEnter', 'tokenMoveIn']
+  // Any of CONST.REGION_EVENTS supported by the Enhanced Region Behaviors Trap
+  // schema, e.g. ['tokenEnter', 'tokenTurnStart', 'tokenRoundStart'].
+  // Entry-triggered and turn-triggered are not exclusive: a lava region can
+  // damage on entry AND at the start of each turn by listing both.
+  events?: string[];
+  // Movement actions (CONFIG.Token.movement.actions ids) that may trigger the
+  // region. Undefined, empty, or the complete set all mean "no filtering", and
+  // emit exactly the behavior data this creator emitted before the filter
+  // existed.
+  movementActions?: string[];
   // Saving throw settings
   saveAbility: string | string[]; // e.g., 'dex' or ['dex', 'str'] for multiple abilities
   saveDC: number;
@@ -150,6 +161,15 @@ for (const tileId of tileIds) {
     );
   }
 
+  // Route everything through a movement-action gate when the GM has narrowed
+  // the list. Sound and pause are gated too: a flying creature that does not
+  // set off the plate should not set off the noise it makes either.
+  const gatedBehaviors = applyMovementActionGate(
+    behaviors,
+    normalizeMovementActions(config.movementActions),
+    config.name
+  );
+
   // Create the region shape
   const shape = createRectangleShape({
     x: position.x,
@@ -170,8 +190,8 @@ for (const tileId of tileIds) {
   const [region] = (await scene.createEmbeddedDocuments('Region', [regionData])) as any[];
 
   // Now add behaviors to the region - this ensures proper schema initialization
-  if (behaviors.length > 0 && region) {
-    await region.createEmbeddedDocuments('RegionBehavior', behaviors);
+  if (gatedBehaviors.length > 0 && region) {
+    await region.createEmbeddedDocuments('RegionBehavior', gatedBehaviors);
   }
 
   // Tag the trap region using Tagger if available

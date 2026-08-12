@@ -11,7 +11,8 @@ import {
   getItemActivities,
   extractTrapActivityData,
   getDamageTypeOptions,
-  DEFAULT_DAMAGE_TYPE
+  DEFAULT_DAMAGE_TYPE,
+  getMovementActionOptions
 } from '../utils/helpers';
 import type { TrapActivityData } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
@@ -153,6 +154,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   protected regionTriggerOnSave: string[] = [];
   protected regionTriggerOnFail: string[] = [];
+
+  /**
+   * Movement actions that may trigger a region trap.
+   *
+   * `null` means "every action", which is the default and which the creator
+   * turns back into no filtering at all. The GM opts *out* of actions here.
+   */
+  protected regionMovementActions: string[] | null = null;
 
   /**
    * Region trap tiles to trigger (MAT tiles triggered via Execute Script behavior)
@@ -535,6 +544,19 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       regionEventTokenMoveIn: false,
       regionEventTokenTurnStart: false,
       regionEventTokenTurnEnd: false,
+      regionEventTokenRoundStart: false,
+      regionEventTokenRoundEnd: false,
+
+      // Movement action filter. Everything is ticked by default so a region
+      // behaves exactly as it did before this option existed; the GM unticks
+      // the actions that should be ignored.
+      regionMovementActionOptions: getMovementActionOptions().map(option => ({
+        ...option,
+        checked:
+          this.regionMovementActions === null
+            ? true
+            : this.regionMovementActions.includes(option.value)
+      })),
       // Default ON, matching both Enhanced Region Behaviors' own schema
       // (automateDamage is a BooleanField with initial: true) and this module's
       // creator layer (`config.automateDamage ?? true`). Rendering it unchecked
@@ -728,6 +750,18 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const tokenImageInput = this.element.querySelector('[name="tokenImage"]') as HTMLInputElement;
     if (tokenImageInput) this.tokenImage = tokenImageInput.value;
+
+    // Region trap movement action filter. Only sync when the checkboxes are
+    // actually rendered — a tile-mode render has none, and reading zero boxes
+    // as "nothing selected" would wipe the GM's choice on the next re-render.
+    const movementActionBoxes: HTMLInputElement[] = Array.from(
+      this.element.querySelectorAll?.('input[name="regionMovementAction"]') ?? []
+    );
+    if (movementActionBoxes.length > 0) {
+      this.regionMovementActions = movementActionBoxes
+        .filter(box => box.checked)
+        .map(box => box.value);
+    }
 
     // Custom Tags
     const customTagsInput = this.element.querySelector('[name="customTags"]') as HTMLInputElement;
@@ -2591,9 +2625,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       tilesToTrigger = tilesToTriggerInput.value.split(',').filter(v => v.trim());
     }
 
+    // Movement action filter. Every box ticked (or none rendered) leaves this
+    // undefined, which the creator reads as "do not filter".
+    const movementActionBoxes = Array.from(
+      form.querySelectorAll('input[name="regionMovementAction"]')
+    ) as HTMLInputElement[];
+    const movementActions = movementActionBoxes.filter(box => box.checked).map(box => box.value);
+
     return {
       name,
       events,
+      movementActions: movementActions.length > 0 ? movementActions : undefined,
       automateDamage,
       saveAbility, // Array of abilities (default to ['dex'] if empty, handled above)
       saveDC,

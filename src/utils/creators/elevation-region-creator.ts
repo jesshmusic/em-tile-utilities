@@ -1,11 +1,13 @@
 import { createBaseRegionData, createRectangleShape } from '../builders/base-region-builder';
 import {
   createEnhancedElevationRegionBehavior,
+  applyMovementActionGate,
   RegionEvents
 } from '../builders/region-behavior-builder';
 import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
+import { normalizeMovementActions } from '../helpers/movement-actions';
 
 /**
  * Configuration for elevation regions
@@ -14,6 +16,11 @@ export interface ElevationRegionConfig {
   name: string;
   elevationOnEnter: number;
   elevationOnExit: number;
+  // Movement actions (CONFIG.Token.movement.actions ids) that may trigger the
+  // region. Undefined, empty, or the complete set all mean "no filtering".
+  // The enter and exit behaviors listen for different events, so each gets its
+  // own gate.
+  movementActions?: string[];
   customTags?: string;
 }
 
@@ -74,6 +81,13 @@ export async function createElevationRegion(
     })
   );
 
+  // Apply the movement-action filter, if the GM narrowed it
+  const gatedBehaviors = applyMovementActionGate(
+    behaviors,
+    normalizeMovementActions(config.movementActions),
+    config.name
+  );
+
   // Create the region shape
   const shape = createRectangleShape({
     x: position.x,
@@ -94,8 +108,8 @@ export async function createElevationRegion(
   const [region] = (await scene.createEmbeddedDocuments('Region', [regionData])) as any[];
 
   // Add behaviors to the region
-  if (behaviors.length > 0 && region) {
-    await region.createEmbeddedDocuments('RegionBehavior', behaviors);
+  if (gatedBehaviors.length > 0 && region) {
+    await region.createEmbeddedDocuments('RegionBehavior', gatedBehaviors);
   }
 
   // Tag the region if Tagger module is active

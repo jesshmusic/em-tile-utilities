@@ -28,6 +28,20 @@
     <input type="number" id="elevationOnExit" name="elevationOnExit" value="{{elevationOnExit}}" step="1" />
     <p class="hint">{{localize "EMPUZZLES.ElevationOnExitHint"}}</p>
   </div>
+
+  {{! Movement action filter }}
+  <div class="form-group">
+    <label>{{localize "EMPUZZLES.MovementActions"}}</label>
+    <div class="movement-action-list">
+      {{#each movementActionOptions as |action|}}
+        <label class="movement-action">
+          <input type="checkbox" name="regionMovementAction" value="{{action.value}}" {{#if action.checked}}checked{{/if}} />
+          {{action.label}}
+        </label>
+      {{/each}}
+    </div>
+    <p class="hint">{{localize "EMPUZZLES.MovementActionsHint"}}</p>
+  </div>
 </fieldset>
 
 {{! Custom Tags Section }}
