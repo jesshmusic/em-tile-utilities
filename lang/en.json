@@ -919,7 +919,16 @@
     "NotifyGasCloudCreated": "Gas cloud \"{name}\" created!",
     "NotifyAuraCreated": "Aura \"{name}\" attached to the token!",
     "NotifyGasCloudFailed": "Dorman Lakely's Tile Utilities | Failed to create gas cloud: {error}",
-    "NotifyRegionBehaviorsNeedRestart": "This version added new region behaviours, and Foundry only registers them when the server reloads the module list. Return to Setup and relaunch your world, then try again — otherwise the region would be created with none of its behaviours."
+    "NotifyRegionBehaviorsNeedRestart": "This version added new region behaviours, and Foundry only registers them when the server reloads the module list. Return to Setup and relaunch your world, then try again — otherwise the region would be created with none of its behaviours.",
+    "ToolclipIntro": "Point-and-click builders for interactive tiles and regions.",
+    "ToolclipTilesHeading": "Tiles",
+    "ToolclipTiles": "Switches, lights, traps, teleports, locks and reset tiles.",
+    "ToolclipRegionsHeading": "Regions",
+    "ToolclipRegions": "Traps, elevation, difficult terrain, darkness, surfaces, gas clouds and rotating rooms.",
+    "ToolclipManageHeading": "Manage",
+    "ToolclipManage": "Find, edit, export and delete everything this module has built on the scene.",
+    "TileLinkUnresolved": "Nothing on this scene matches that id or tag.",
+    "NotifyTileLinkUnresolved": "Nothing on this scene matches \"{target}\". It may be on another scene, or have been deleted."
   },
   "TYPES": {
     "RegionBehavior": {

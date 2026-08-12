@@ -10,6 +10,7 @@ import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
 import { registerEmTileActions } from './utils/actions/apply-damage-tile-action';
 import { registerRotateAreaTileAction } from './utils/actions/rotate-area-tile-action';
 import { registerEmRegionBehaviors, localizeEmRegionBehaviors } from './utils/region-behaviors';
+import { registerTileEnricher } from './utils/tile-enricher';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
@@ -149,6 +150,11 @@ Hooks.once('init', async () => {
     'partials/visibility-section': `${TEMPLATE_ROOT}/partials/visibility-section.hbs`,
     'partials/custom-tags-section': `${TEMPLATE_ROOT}/partials/custom-tags-section.hbs`
   });
+
+  // `@EMTile[…]` / `@EMRegion[…]` journal links. Registered here rather than in
+  // `ready` because CONFIG.TextEditor.enrichers is read when text is enriched,
+  // and a journal can be open before `ready` fires.
+  registerTileEnricher();
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {
@@ -298,7 +304,21 @@ Hooks.on('getSceneControlButtons', (controls: any) => {
     button: true,
     // Foundry v14 SceneControlTool fires `onChange` for button-style tools.
     onChange: () => showTileManagerDialog(),
-    order: 1000
+    order: 1000,
+    // Free onboarding: Foundry renders this on hover when the user has
+    // toolclips enabled. Items take `heading` and `paragraph` directly rather
+    // than going through `SceneControls#buildToolclipItems`, which only knows
+    // core's own shared keys (create/move/rotate/hud/edit/delete) — see
+    // client/canvas/layers/tiles.mjs:104 for the core usage this mirrors.
+    toolclip: {
+      heading: 'EMPUZZLES.TileManager',
+      items: [
+        { paragraph: 'EMPUZZLES.ToolclipIntro' },
+        { heading: 'EMPUZZLES.ToolclipTilesHeading', paragraph: 'EMPUZZLES.ToolclipTiles' },
+        { heading: 'EMPUZZLES.ToolclipRegionsHeading', paragraph: 'EMPUZZLES.ToolclipRegions' },
+        { heading: 'EMPUZZLES.ToolclipManageHeading', paragraph: 'EMPUZZLES.ToolclipManage' }
+      ]
+    }
   };
 });
 

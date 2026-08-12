@@ -29,6 +29,7 @@ Difficult terrain, magical darkness and surfaces are built on Foundry v14's own 
 - **Trap and elevation regions no longer need Enhanced Region Behaviors.** The module now ships its own region behaviours — trap, elevation, play sound, movement filter and trigger tiles — so every region tool works with nothing but Foundry installed. Regions you built before this update keep working exactly as they did, through the module that made them.
 - **Region traps can bypass resistance, and take a formula for their DC.** The same magical / silvered / adamantine options tile traps gained this release, plus a DC you can write as `10 + 1d4` instead of a flat number. Leaving "Damage if Saved" blank now means a trap that does nothing at all to someone who dodges it, rather than half damage.
 - **Region traps work outside D&D 5e.** They roll a save when the system can and simply hit when it cannot, instead of doing nothing at all.
+- **Journal links to your puzzle pieces.** Write `@EMTile[EMSwitch1]{the brass lever}` in a journal and it becomes a link that selects the tile and pans the canvas to it — so your puzzle notes can point at the actual thing. Works with a Tagger tag or a document id, and `@EMRegion[…]` does the same for regions. A link whose target is missing renders as a marked link with an explanation rather than as raw text. (The `EM` prefix is deliberate: Monk's Active Tiles already uses `@Tile[…]` for links that *trigger* a tile, and both are worth having.)
 - **New "Use Activity" tile action.** Point a tile at any activity on any actor's item — an attack, a save, a heal, or a **check**, which finally makes "spot the trap" and "disarm the trap" something you can build. Monk's Active Tiles' own attack action stopped rolling damage on D&D 5e 5.x; use this instead.
 
 ### Added — regions understand when, and who
@@ -53,6 +54,7 @@ Difficult terrain, magical darkness and surfaces are built on Foundry v14's own 
 ### Changed
 
 - Traps that ask for an exhaustion level or a duration now use a purpose-built Monk's Active Tiles action instead of Monk's generic effect action, which structurally cannot express either. Traps that ask for neither still emit Monk's own action, unchanged, and so do traps in non-D&D-5e worlds. Existing tiles are never rewritten.
+- Hovering the Tile Utilities button on the scene controls now explains what it does, if you have Foundry's tool tips turned on.
 - Region tools no longer generate scripts behind the scenes. Everything a region does is now a proper, editable behaviour you can open and change.
 - Sounds on trap and teleport regions now play for everyone at the table, including the player who set the region off.
 - New regions are placed on the level you are looking at, instead of quietly existing on every level of the scene at once.
