@@ -89,7 +89,10 @@ describe('Base Region Builder', () => {
       expect(region.color).toBe('#4080ff');
       expect(region.behaviors).toEqual([]);
       expect(region.elevation).toEqual({ bottom: null, top: null });
-      expect(region.visibility).toBe(0);
+      // LAYER_UNLOCKED (4), matching Foundry's own schema default. This used
+      // to be LAYER (0), which made a region built by this module behave
+      // differently from one a GM drew by hand.
+      expect(region.visibility).toBe(4);
       expect(region.locked).toBe(false);
     });
 
