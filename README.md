@@ -57,7 +57,7 @@ The trap can start visible or hidden, and after it fires it can stay as it is, s
 
 **Add consequences:**
 
-- **Damage**: Roll dice for damage, with an optional saving throw and half damage on a success
+- **Damage**: Roll dice for damage, with a damage type, an optional saving throw and half damage on a success. Damage is applied through your game system, so resistances, vulnerabilities and immunities all count. If you use midi-qol, traps go through it and follow your own auto-apply setting; if you don't, it works the same way without it.
 - **Healing**: The same, but restoring hit points (fountains, restorative glyphs)
 - **Teleportation**: Transport unlucky characters to another location, with an optional save
 - **Status effects**: Apply conditions like poisoned, stunned, or blinded
