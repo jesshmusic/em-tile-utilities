@@ -54,12 +54,33 @@ const TRAP_EFFECT_PRIORITY: readonly string[] = [
 ];
 
 /**
- * Effects that are bookkeeping rather than something a trap applies. Monk's
- * Little Details registers combat-tracker markers this way, and dnd5e's own
- * `concentrating` is managed by the system's concentration tracking — offering
- * them as trap effects is noise.
+ * Effects that are bookkeeping rather than something a trap applies.
+ *
+ * Note this is a *deny*-list, and that asymmetry is the point: it fails toward
+ * showing an unrecognised effect, where the allow-list this replaced failed
+ * toward hiding one. Keep it short, and only for effects a trap applying would
+ * be meaningless rather than merely unusual.
+ *
+ * Confirmed against the live world's rendered dropdown on Foundry 14.364:
+ * - `concentrating` is dnd5e's own, driven by the system's concentration
+ *   tracking.
+ * - `bonusaction` / `reaction` ("Bonus Action used", "Reaction used") are
+ *   action-economy markers cleared every turn, so a trap setting one is
+ *   erased almost immediately.
+ * - `flanking` / `flanked` are positional state recomputed from token
+ *   positions, so setting them by hand does not survive.
+ *
+ * Deliberately NOT excluded: `marked` is a real tactical condition some tables
+ * use, and dnd5e's own `encumbered` / `heavilyEncumbered` /
+ * `exceedingCarryingCapacity` are plausible trap effects.
  */
-const EXCLUDED_EFFECT_IDS: readonly string[] = ['concentrating'];
+const EXCLUDED_EFFECT_IDS: readonly string[] = [
+  'concentrating',
+  'bonusaction',
+  'reaction',
+  'flanking',
+  'flanked'
+];
 
 /** Effects whose id or label marks them as another module's internal tracking. */
 function isTrackingEffect(id: string, label: string): boolean {

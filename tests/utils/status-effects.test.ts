@@ -145,6 +145,29 @@ describe('getStatusEffectOptions', () => {
     expect(ids).toEqual(['poisoned']);
   });
 
+  it('excludes action-economy and flanking markers, which a trap cannot meaningfully set', () => {
+    // All four appeared in the live dropdown and are cleared or recomputed by
+    // the module that owns them, so a trap setting one has no lasting effect.
+    setStatusEffects([
+      { id: 'poisoned', name: 'Poisoned' },
+      { id: 'bonusaction', name: 'Bonus Action used' },
+      { id: 'reaction', name: 'Reaction used' },
+      { id: 'flanking', name: 'Flanking' },
+      { id: 'flanked', name: 'Flanked' }
+    ]);
+    expect(getStatusEffectOptions().map(o => o.value)).toEqual(['poisoned']);
+  });
+
+  it('keeps marked and the encumbrance statuses, which are legitimate trap effects', () => {
+    setStatusEffects([
+      { id: 'marked', name: 'Marked' },
+      { id: 'encumbered', name: 'Encumbered' },
+      { id: 'heavilyEncumbered', name: 'Heavily Encumbered' },
+      { id: 'exceedingCarryingCapacity', name: 'Exceeding Carrying Capacity' }
+    ]);
+    expect(getStatusEffectOptions()).toHaveLength(4);
+  });
+
   it('does not offer slowed or hasted, which no dnd5e version defines', () => {
     mockDnd5eStatusEffects();
     const ids = getStatusEffectOptions().map(o => o.value);
