@@ -109,10 +109,16 @@ export const DialogPositions: Record<string, DialogPosition> = {
    * against an auto-height window. The window is resizable, and the fixed
    * `left: 100, top: 100` has been dropped so Foundry restores wherever the
    * user last dragged it instead of snapping back to the top-left on reopen.
+   *
+   * Sized up in 3.0.0. The card grid is two columns, and this release took it
+   * from 7 cards to 14 — at 650×750 the last row sat below the fold on open,
+   * so half the new tools were invisible until the GM thought to scroll. 900
+   * wide keeps two comfortable columns and 850 tall clears the grid on a
+   * 1080p screen without exceeding it.
    */
   TILE_MANAGER: {
-    width: 650,
-    height: 750
+    width: 900,
+    height: 850
   },
 
   /**
