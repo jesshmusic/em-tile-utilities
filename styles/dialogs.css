@@ -375,6 +375,15 @@
   cursor: pointer;
 }
 
+/* Damage bypass properties: a short row of checkboxes that wraps rather than
+   stacking one per line. The list length comes from the system, so it has to
+   survive a module adding a fourth or fifth entry. */
+.trap-config .checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
 /* Variables viewer styles */
 .em-puzzles-variables-dialog {
   padding: 0.5rem;

@@ -21,6 +21,19 @@ Region traps could only ever punish you for walking in. Stand in the lava and yo
 
 - **The trap effect list was missing twelve real D&D 5e conditions, and offered two that do not exist.** The list of status effects a trap can apply was a hardcoded allow-list, checked against the system's effects — so anything not written into that array was silently dropped from the dropdown. Against dnd5e 5.3.3 that meant **Dehydration, Falling, Inaudible, Malnutrition, Suffocation, Surprised** and **Transformed** could not be selected at all, along with the three cover levels (Half, Three-Quarters, Total). Meanwhile it offered "Slowed" and "Hasted", which are not D&D 5e conditions — they come from other modules, so those two entries never matched anything and never appeared. The list is now sourced from the system itself and the curated array only controls **ordering**: the effects a trap most often applies still sit at the top, and everything else the system defines appears below them. A condition added by a future D&D 5e release, or registered by another module, now shows up on its own.
 
+Four things a trap could not previously do to a creature, all in the trap dialog. Nothing changes for traps you have already built, and nothing changes for a trap you configure the way you always have — every new control defaults to the old behaviour.
+
+### Added
+
+- **Magical, silvered and adamantine traps now get through resistance.** A trap's damage carried no properties, so a demon resistant to "bludgeoning, piercing and slashing from nonmagical attacks" shrugged off your enchanted blade trap exactly as if it were mundane — quietly, with no error and no indication anything was wrong. The damage section of the trap dialog gained checkboxes for the bypass properties your system defines (magical, silvered and adamantine in stock D&D 5e), and ticking one lets the trap punch through that resistance. This works whether or not you run midi-qol; both apply the same rule. The list is read from the system, so a module that adds its own bypass — cold iron, say — shows up automatically.
+- **Traps that grant temporary hit points, and traps that drain maximum hit points.** Two new entries in the damage type list, "Temp HP" and "Max HP". Temp HP is the healing font or blessing trap; Max HP is the wight, the curse, the thing that follows you out of the room — the loss stays until a long rest or a remove curse, rather than being healed off. Enter a positive formula for both, exactly as you would for damage.
+- **Exhaustion traps can inflict more than one level.** Choosing Exhaustion previously always applied a single level, no matter what the trap was meant to represent, because there was no way to say otherwise. There is now a level selector, 1 to 6, and the maximum is read from your system so a rules module that changes the exhaustion ladder is respected.
+- **Conditions can have a duration.** "Poisoned for 1 minute" was impossible to build; a condition went on and stayed on until someone remembered to clear it. Effects now take an optional duration in rounds, turns, minutes or hours. Rounds and turns count down during combat, minutes and hours count down with world time so they also expire when the party is exploring rather than fighting. The control defaults to **Until removed**, which is what traps did before — so a trap you configure without touching it behaves identically.
+
+### Changed
+
+- Traps that ask for an exhaustion level or a duration now use a purpose-built Monk's Active Tiles action instead of Monk's generic effect action, which structurally cannot express either. Traps that ask for neither still emit Monk's own action, unchanged, and so do traps in non-D&D-5e worlds. Existing tiles are never rewritten.
+
 
 ## [2.2.0] - 2026-08-11
 

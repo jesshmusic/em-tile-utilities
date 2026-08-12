@@ -17,8 +17,10 @@ import {
   createApplyEffectAction
 } from '../actions';
 import { createApplyDamageAction } from '../actions/apply-damage-tile-action';
+import { createApplyConditionAction } from '../actions/apply-condition-tile-action';
 import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { DEFAULT_DAMAGE_TYPE, HEALING_DAMAGE_TYPE } from '../helpers/damage-types';
+import { buildEffectDuration, EXHAUSTION_STATUS_ID } from '../helpers/dnd5e-conditions';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 import { isDnd5eSystem } from '../helpers/dnd5e-activity';
@@ -46,14 +48,18 @@ import { isDnd5eSystem } from '../helpers/dnd5e-activity';
  *   both positive and distinguishes them by damage type.
  * @param damageType - Damage type id, or `healing`
  * @param entity - Monk's entity reference for the target
+ * @param properties - Damage bypass ids (`mgc`, `sil`, `ada`, …). Dropped on
+ *   the `hurtheal` path, which has nowhere to put them — Monk's action applies
+ *   a bare number and never reaches dnd5e's bypass check at all.
  */
 function createDamageAction(
   formula: string,
   damageType: string,
-  entity: { id: string; name?: string }
+  entity: { id: string; name?: string },
+  properties?: string[]
 ): any {
   if (isDnd5eSystem()) {
-    return createApplyDamageAction(formula, damageType, { entity });
+    return createApplyDamageAction(formula, damageType, { entity, properties });
   }
 
   const signed = damageType === HEALING_DAMAGE_TYPE ? formula : `-${formula}`;
@@ -62,6 +68,67 @@ function createDamageAction(
     chatmessage: true,
     rollmode: 'roll'
   });
+}
+
+/**
+ * Emit the action that applies a status effect to a token.
+ *
+ * Monk's own `activeeffect` remains the default and stays byte-identical for
+ * every trap that does not ask for more, so existing tiles, non-dnd5e worlds
+ * and the `toggle`/`clear` modes Monk supports are all untouched.
+ *
+ * The module's `em-tile-utilities.applycondition` action is emitted only when
+ * the GM asked for something `activeeffect` structurally cannot do:
+ *
+ *  - **an exhaustion level above 1** — `activeeffect` ends in
+ *    `toggleStatusEffect`, and dnd5e derives the level from
+ *    `system.attributes.exhaustion` rather than from the effect
+ *    (`Actor5e#_onUpdateExhaustion`, ../../systems/dnd5e/dnd5e.mjs:39498-39511),
+ *    so toggling can only ever produce level 1; or
+ *  - **a duration** — toggled effects carry none.
+ *
+ * Both are dnd5e-only, so the upgrade is gated on `isDnd5eSystem()`: a PF2e
+ * world that somehow carries these fields still gets Monk's action rather than
+ * a silently inert one.
+ *
+ * @param effectConfig - The dialog's active-effect configuration
+ * @param entityId - Monk's entity id for the target
+ * @param entityName - Display name for that entity
+ */
+function createEffectAction(
+  effectConfig: NonNullable<TrapConfig['activeEffectConfig']>,
+  entityId: string,
+  entityName: string
+): any {
+  const wantsLevel =
+    effectConfig.effectid === EXHAUSTION_STATUS_ID && (effectConfig.exhaustionLevel ?? 1) > 1;
+  const wantsDuration = !!buildEffectDuration(
+    effectConfig.durationUnit,
+    effectConfig.durationValue
+  );
+  // `toggle` and `clear` have no equivalent in `applycondition`, which models
+  // only add/remove. Leave them on Monk's action rather than silently changing
+  // what they mean. Compared inline so TypeScript narrows the union.
+  const mode = effectConfig.addeffect;
+  const supportedMode = mode === 'add' || mode === 'remove';
+
+  if (supportedMode && isDnd5eSystem() && (wantsLevel || wantsDuration)) {
+    return createApplyConditionAction(effectConfig.effectid, {
+      entity: { id: entityId, name: entityName },
+      addEffect: mode,
+      exhaustionLevel: effectConfig.exhaustionLevel ?? 1,
+      durationUnit: effectConfig.durationUnit,
+      durationValue: effectConfig.durationValue
+    });
+  }
+
+  return createApplyEffectAction(
+    entityId,
+    entityName,
+    effectConfig.effectid,
+    effectConfig.addeffect,
+    effectConfig.altereffect || ''
+  );
 }
 
 /**
@@ -197,6 +264,10 @@ export async function createTrapTile(
     // Determine target entity based on target type
     const { id: targetEntityId, name: targetEntityName } = resolveTargetEntity(config.targetType);
     const damageType = config.damageType || DEFAULT_DAMAGE_TYPE;
+    // Bypass properties ride along with every damage action this trap emits,
+    // including the half-damage-on-success branch — a magical trap is magical
+    // whether or not the target made its save.
+    const damageProperties = config.damageProperties;
 
     switch (config.resultType) {
       case TrapResultType.DAMAGE:
@@ -231,10 +302,12 @@ export async function createTrapTile(
             // 4. Full damage to failed saves
             if (config.damageOnFail) {
               actions.push(
-                createDamageAction(config.damageOnFail, damageType, {
-                  id: 'previous',
-                  name: 'Current tokens'
-                })
+                createDamageAction(
+                  config.damageOnFail,
+                  damageType,
+                  { id: 'previous', name: 'Current tokens' },
+                  damageProperties
+                )
               );
             }
 
@@ -244,10 +317,12 @@ export async function createTrapTile(
             // 6. Half damage to successful saves
             if (config.damageOnFail) {
               actions.push(
-                createDamageAction(`floor((${config.damageOnFail}) / 2)`, damageType, {
-                  id: 'previous',
-                  name: 'Current tokens'
-                })
+                createDamageAction(
+                  `floor((${config.damageOnFail}) / 2)`,
+                  damageType,
+                  { id: 'previous', name: 'Current tokens' },
+                  damageProperties
+                )
               );
             }
 
@@ -269,10 +344,12 @@ export async function createTrapTile(
             // Full damage to failed saves only
             if (config.damageOnFail) {
               actions.push(
-                createDamageAction(config.damageOnFail, damageType, {
-                  id: 'previous',
-                  name: 'Current tokens'
-                })
+                createDamageAction(
+                  config.damageOnFail,
+                  damageType,
+                  { id: 'previous', name: 'Current tokens' },
+                  damageProperties
+                )
               );
             }
           }
@@ -280,10 +357,12 @@ export async function createTrapTile(
           // No saving throw - damage all targets
           if (config.damageOnFail) {
             actions.push(
-              createDamageAction(config.damageOnFail, damageType, {
-                id: targetEntityId,
-                name: targetEntityName
-              })
+              createDamageAction(
+                config.damageOnFail,
+                damageType,
+                { id: targetEntityId, name: targetEntityName },
+                damageProperties
+              )
             );
           }
         }
@@ -366,12 +445,10 @@ export async function createTrapTile(
         // Active Effect action (applies to tokens that failed saving throw if enabled, or all targets if not)
         if (config.activeEffectConfig) {
           actions.push(
-            createApplyEffectAction(
+            createEffectAction(
+              config.activeEffectConfig,
               config.hasSavingThrow ? 'previous' : targetEntityId,
-              config.hasSavingThrow ? 'Current tokens' : targetEntityName,
-              config.activeEffectConfig.effectid,
-              config.activeEffectConfig.addeffect,
-              config.activeEffectConfig.altereffect || ''
+              config.hasSavingThrow ? 'Current tokens' : targetEntityName
             )
           );
         }
