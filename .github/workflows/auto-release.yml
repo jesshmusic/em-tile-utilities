@@ -16,45 +16,70 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Get version from package.json
         id: version
         run: |
+          set -euo pipefail
           VERSION=$(node -p "require('./package.json').version")
+          MODULE_VERSION=$(node -p "require('./module.json').version")
+          if [ "$VERSION" != "$MODULE_VERSION" ]; then
+            echo "::error::package.json ($VERSION) and module.json ($MODULE_VERSION) versions are out of sync."
+            exit 1
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Release version: $VERSION"
 
-      - name: Check if version was bumped
+      # The "was the version bumped?" gate now lives in test.yml's `version-bump`
+      # job, which runs on the PR *before* it merges. This step is only the
+      # last-ditch check that we are not about to re-tag an existing release --
+      # the old `git describe --tags --abbrev=0` comparison was unreliable
+      # anyway (describe returns the nearest reachable tag, not the highest
+      # version) and it ran after the merge, so an unbumped PR still landed on
+      # main and only the release failed.
+      - name: Check if tag already exists
         run: |
-          # Get the previous version from the last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          LAST_VERSION=${LAST_TAG#v}
-          CURRENT_VERSION="${{ steps.version.outputs.version }}"
-
-          echo "Last tagged version: $LAST_VERSION"
-          echo "Current version: $CURRENT_VERSION"
-
-          if [ "$LAST_VERSION" = "$CURRENT_VERSION" ]; then
-            echo "::error::Version was not bumped! Please run 'npm run release:patch/minor/major' before creating the PR."
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ steps.version.outputs.version }} already exists - the version was not bumped in this PR."
+            echo "::error::Bump with 'npm run release:patch/minor/major' and open a follow-up PR."
             exit 1
           fi
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Type check
+        run: npm run typecheck
+
       - name: Build project
         run: npm run build
 
+      # `zip` prints "name not matched" for a missing path and still exits 0,
+      # which is how releases shipped without a LICENSE for months. Check the
+      # manifest of paths up front and fail loudly instead.
       - name: Create module archive
-        run: zip -r ./module.zip module.json README.md LICENSE styles/ templates/ lang/ dist/ icons/
+        run: |
+          set -euo pipefail
+          PATHS=(module.json README.md LICENSE styles templates lang dist icons)
+          MISSING=()
+          for p in "${PATHS[@]}"; do
+            [ -e "$p" ] || MISSING+=("$p")
+          done
+          if [ "${#MISSING[@]}" -gt 0 ]; then
+            echo "::error::Refusing to build module.zip - missing path(s): ${MISSING[*]}"
+            exit 1
+          fi
+          zip -r ./module.zip "${PATHS[@]}"
+          echo "--- module.zip contents ---"
+          unzip -l ./module.zip
 
       - name: Create git tag
         run: |
@@ -87,29 +112,42 @@ jobs:
           draft: false
           prerelease: false
 
+      # Compatibility is read out of module.json rather than hardcoded. It used
+      # to be pinned at 13/13 here while module.json declared 14/14, so every
+      # release since v2.1.0 was registered with the wrong core version range.
       - name: Notify FoundryVTT Package Release API
         env:
           FOUNDRY_TOKEN: ${{ secrets.FOUNDRY_PACKAGE_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
           REPO: ${{ github.repository }}
         run: |
-          RESPONSE=$(curl -X POST https://foundryvtt.com/_api/packages/release_version/ \
+          set -euo pipefail
+          PAYLOAD=$(node -e '
+            const mod = require("./module.json");
+            const { VERSION, REPO } = process.env;
+            if (!mod.compatibility || !mod.compatibility.minimum || !mod.compatibility.verified) {
+              console.error("module.json is missing compatibility.minimum / compatibility.verified");
+              process.exit(1);
+            }
+            process.stdout.write(JSON.stringify({
+              id: mod.id,
+              "dry-run": false,
+              release: {
+                version: VERSION,
+                manifest: `https://github.com/${REPO}/releases/download/v${VERSION}/module.json`,
+                notes: `https://github.com/${REPO}/releases/tag/v${VERSION}`,
+                compatibility: mod.compatibility
+              }
+            }));
+          ')
+
+          echo "Payload: $PAYLOAD"
+
+          RESPONSE=$(curl -sS -X POST https://foundryvtt.com/_api/packages/release_version/ \
             -w "\n%{http_code}" \
             -H "Content-Type: application/json" \
             -H "Authorization: ${FOUNDRY_TOKEN}" \
-            -d "{
-              \"id\": \"em-tile-utilities\",
-              \"dry-run\": false,
-              \"release\": {
-                \"version\": \"${VERSION}\",
-                \"manifest\": \"https://github.com/${REPO}/releases/download/v${VERSION}/module.json\",
-                \"notes\": \"https://github.com/${REPO}/releases/tag/v${VERSION}\",
-                \"compatibility\": {
-                  \"minimum\": \"13\",
-                  \"verified\": \"13\"
-                }
-              }
-            }")
+            -d "$PAYLOAD")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')

@@ -3,12 +3,15 @@
  * Utility tile creation tools for Monk's Active Tiles
  */
 import { showTileManagerDialog } from './dialogs/tile-manager';
+import { notifyError, notifyWarn } from './dialogs/notify';
 import { PatreonLink, DmGuruLink } from './settings/settings-menus';
-import buildInfo from '../build-info.json';
-import packageInfo from '../package.json';
+import { isTeleportTag, isReturnTeleportTag } from './utils/helpers/tag-helpers';
+import { getCombatTrapActorId } from './utils/creators/combat-trap-creator';
+import { registerEmTileActions } from './utils/actions/apply-damage-tile-action';
 
 const MODULE_ID = 'em-tile-utilities';
 const MODULE_TITLE = "Dorman Lakely's Tile Utilities";
+const TEMPLATE_ROOT = `modules/${MODULE_ID}/templates`;
 
 /**
  * Compare an installed dependency's declared Foundry compatibility against
@@ -31,8 +34,7 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
   }
 
   const coreMajor =
-    (game as any).release?.generation ??
-    parseInt(String((game as any).version ?? '0'), 10);
+    (game as any).release?.generation ?? parseInt(String((game as any).version ?? '0'), 10);
   if (!coreMajor || Number.isNaN(coreMajor)) return;
 
   const parseMajor = (v: unknown): number | null => {
@@ -47,9 +49,15 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
 
   // Hard cap below current Foundry major → permanent warning
   if (depMax != null && depMax < coreMajor) {
-    ui.notifications?.warn(
-      `${MODULE_TITLE}: ${displayName} v${mod.version} declares Foundry v${compat.maximum} as its maximum, ` +
-        `but you are running Foundry v${(game as any).version}. Expect bugs until ${displayName} ships an update.`,
+    notifyWarn(
+      'EMPUZZLES.NotifyDepMaximumBehind',
+      {
+        module: MODULE_TITLE,
+        dependency: displayName,
+        dependencyVersion: mod.version,
+        maximum: compat.maximum,
+        coreVersion: (game as any).version
+      },
       { permanent: true }
     );
     return;
@@ -57,100 +65,71 @@ function warnIfDepOutdated(depId: string, displayName: string): void {
 
   // No hard cap but verified is behind → transient warning
   if (depVerified != null && depVerified < coreMajor) {
-    ui.notifications?.warn(
-      `${MODULE_TITLE}: ${displayName} v${mod.version} is only verified for Foundry v${compat.verified}. ` +
-        `You're running v${(game as any).version} — some features may not work until ${displayName} ships a v${coreMajor}-verified release.`,
+    notifyWarn(
+      'EMPUZZLES.NotifyDepVerifiedBehind',
+      {
+        module: MODULE_TITLE,
+        dependency: displayName,
+        dependencyVersion: mod.version,
+        verified: compat.verified,
+        coreVersion: (game as any).version,
+        coreMajor
+      },
       { permanent: false }
     );
   }
 }
+
+// Register this module's custom Monk's Active Tiles actions.
+//
+// This runs at SCRIPT-EVALUATION time, deliberately not inside the `init`
+// handler below. Monk's Active Tiles fires its `setupTileActions` hook from
+// inside its own `init` handler (../monks-active-tiles/monks-active-tiles.js:2368),
+// and because MATT is a declared dependency Foundry loads and registers its
+// `init` handler first — so by the time our `init` runs, `setupTileActions`
+// has already fired. The listener has to be attached before any hook does.
+//
+// registerEmTileActions swallows its own failures; nothing it does can abort
+// the settings registration in the `init` handler below.
+registerEmTileActions();
 
 // Module initialization
 Hooks.once('init', async () => {
   // Module initialization banner
   console.log(
     "%c⚔️ Dorman Lakely's Tile Utilities %cv" +
-      packageInfo.version +
+      __MODULE_VERSION__ +
       ' %c(build ' +
-      buildInfo.buildNumber +
+      __BUILD_NUMBER__ +
       ')',
     'color: #d32f2f; font-weight: bold; font-size: 16px;',
     'color: #ff9800; font-weight: bold; font-size: 14px;',
     'color: #ffeb3b; font-weight: normal; font-size: 12px;'
   );
 
-  // Pre-load templates
-  const SAVING_THROW_SECTION_PARTIAL_PATH =
-    'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs';
-  const VISIBILITY_SECTION_PARTIAL_PATH =
-    'modules/em-tile-utilities/templates/partials/visibility-section.hbs';
-  const CUSTOM_TAGS_SECTION_PARTIAL_PATH =
-    'modules/em-tile-utilities/templates/partials/custom-tags-section.hbs';
-  await loadTemplates([
-    SAVING_THROW_SECTION_PARTIAL_PATH,
-    VISIBILITY_SECTION_PARTIAL_PATH,
-    CUSTOM_TAGS_SECTION_PARTIAL_PATH
-  ]);
-
-  // Register Handlebars partials manually
-  // IMPORTANT: loadTemplates() only preloads template files for caching.
-  // It does NOT register Handlebars partials automatically (verified by integration tests).
-  // We must explicitly register partials with Handlebars.registerPartial() for them to work.
-  try {
-    const response = await fetch(SAVING_THROW_SECTION_PARTIAL_PATH);
-    if (!response.ok) {
-      console.error(
-        `[em-tile-utilities] Failed to load partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
-      );
-    } else {
-      const partialTemplate = await response.text();
-      (Handlebars as any).registerPartial('partials/saving-throw-section', partialTemplate);
-    }
-  } catch (err) {
-    console.error(
-      `[em-tile-utilities] Error fetching partial template: ${SAVING_THROW_SECTION_PARTIAL_PATH}.`,
-      err
-    );
-  }
-
-  try {
-    const response = await fetch(VISIBILITY_SECTION_PARTIAL_PATH);
-    if (!response.ok) {
-      console.error(
-        `[em-tile-utilities] Failed to load partial template: ${VISIBILITY_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
-      );
-    } else {
-      const partialTemplate = await response.text();
-      (Handlebars as any).registerPartial('partials/visibility-section', partialTemplate);
-    }
-  } catch (err) {
-    console.error(
-      `[em-tile-utilities] Error fetching partial template: ${VISIBILITY_SECTION_PARTIAL_PATH}.`,
-      err
-    );
-  }
-
-  try {
-    const response = await fetch(CUSTOM_TAGS_SECTION_PARTIAL_PATH);
-    if (!response.ok) {
-      console.error(
-        `[em-tile-utilities] Failed to load partial template: ${CUSTOM_TAGS_SECTION_PARTIAL_PATH}. Status: ${response.status} ${response.statusText}`
-      );
-    } else {
-      const partialTemplate = await response.text();
-      (Handlebars as any).registerPartial('partials/custom-tags-section', partialTemplate);
-    }
-  } catch (err) {
-    console.error(
-      `[em-tile-utilities] Error fetching partial template: ${CUSTOM_TAGS_SECTION_PARTIAL_PATH}.`,
-      err
-    );
-  }
+  // Pre-load templates and register them as named Handlebars partials.
+  //
+  // The flat `loadTemplates` global still resolves in v14, but only through
+  // addBackwardsCompatibilityReferences, which installs a deprecation getter
+  // marked "since 13, until 15" — so it logs a warning on every access and
+  // stops working in Foundry v15. The real home is
+  // foundry.applications.handlebars.loadTemplates.
+  //
+  // The object form maps partial ID -> path. Under the hood it calls
+  // getTemplate(path, id), which compiles the file and runs
+  // Handlebars.registerPartial(id, compiled). That replaces the three manual
+  // fetch() + registerPartial() blocks this used to carry, and it drops their
+  // route-relative fetch, which broke on servers using a Foundry route prefix.
+  await foundry.applications.handlebars.loadTemplates({
+    'partials/saving-throw-section': `${TEMPLATE_ROOT}/partials/saving-throw-section.hbs`,
+    'partials/visibility-section': `${TEMPLATE_ROOT}/partials/visibility-section.hbs`,
+    'partials/custom-tags-section': `${TEMPLATE_ROOT}/partials/custom-tags-section.hbs`
+  });
 
   // Register settings
   game.settings.register('em-tile-utilities', 'defaultOnImage', {
-    name: 'Default ON Image',
-    hint: 'Default image path for the ON state of switches',
+    name: 'EMPUZZLES.SettingDefaultOnImage',
+    hint: 'EMPUZZLES.SettingDefaultOnImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -159,8 +138,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultOffImage', {
-    name: 'Default OFF Image',
-    hint: 'Default image path for the OFF state of switches',
+    name: 'EMPUZZLES.SettingDefaultOffImage',
+    hint: 'EMPUZZLES.SettingDefaultOffImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -169,8 +148,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultSound', {
-    name: 'Default Sound',
-    hint: 'Default sound for switch activation',
+    name: 'EMPUZZLES.SettingDefaultSound',
+    hint: 'EMPUZZLES.SettingDefaultSoundHint',
     scope: 'world',
     config: true,
     type: String,
@@ -179,8 +158,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultLightOnImage', {
-    name: 'Default Light ON Image',
-    hint: 'Default image path for the ON state of light tiles',
+    name: 'EMPUZZLES.SettingDefaultLightOnImage',
+    hint: 'EMPUZZLES.SettingDefaultLightOnImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -189,8 +168,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultLightOffImage', {
-    name: 'Default Light OFF Image',
-    hint: 'Default image path for the OFF state of light tiles',
+    name: 'EMPUZZLES.SettingDefaultLightOffImage',
+    hint: 'EMPUZZLES.SettingDefaultLightOffImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -199,8 +178,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultTrapImage', {
-    name: 'Default Trap Image',
-    hint: 'Default image path for trap tiles (starting state)',
+    name: 'EMPUZZLES.SettingDefaultTrapImage',
+    hint: 'EMPUZZLES.SettingDefaultTrapImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -209,8 +188,8 @@ Hooks.once('init', async () => {
   });
 
   game.settings.register('em-tile-utilities', 'defaultTrapTriggeredImage', {
-    name: 'Default Trap Triggered Image',
-    hint: 'Default image path for triggered trap tiles',
+    name: 'EMPUZZLES.SettingDefaultTrapTriggeredImage',
+    hint: 'EMPUZZLES.SettingDefaultTrapTriggeredImageHint',
     scope: 'world',
     config: true,
     type: String,
@@ -220,8 +199,8 @@ Hooks.once('init', async () => {
 
   // Register experimental features toggle
   game.settings.register('em-tile-utilities', 'experimentalFeatures', {
-    name: 'Experimental Features',
-    hint: 'Enable experimental features such as the Check State tile. These features may be incomplete or subject to change.',
+    name: 'EMPUZZLES.SettingExperimentalFeatures',
+    hint: 'EMPUZZLES.SettingExperimentalFeaturesHint',
     scope: 'world',
     config: true,
     type: Boolean,
@@ -233,17 +212,17 @@ Hooks.once('init', async () => {
   // cross-promotion. Each opens a small confirmation dialog before launching
   // the destination URL in a new tab.
   game.settings.registerMenu(MODULE_ID, 'patreonLink', {
-    name: 'Support on Patreon',
-    label: 'Visit Patreon',
-    hint: 'Support the development of this module on Patreon! Your contributions help fund new features and updates.',
+    name: 'EMPUZZLES.SupportOnPatreon',
+    label: 'EMPUZZLES.SettingPatreonLabel',
+    hint: 'EMPUZZLES.SettingPatreonHint',
     icon: 'fab fa-patreon',
     type: PatreonLink as any,
     restricted: true
   });
   game.settings.registerMenu(MODULE_ID, 'dmGuruLink', {
-    name: 'Dungeon Master Guru',
-    label: 'Visit Dungeon Master Guru',
-    hint: 'SRD rules and DM tools. Free resources for Dungeon Masters at dungeonmaster.guru.',
+    name: 'EMPUZZLES.DungeonMasterGuru',
+    label: 'EMPUZZLES.SettingDmGuruLabel',
+    hint: 'EMPUZZLES.SettingDmGuruHint',
     icon: 'fas fa-dragon',
     type: DmGuruLink as any,
     restricted: true
@@ -253,22 +232,16 @@ Hooks.once('init', async () => {
 // Check for dependencies
 Hooks.once('ready', () => {
   if (!game.modules.get('monks-active-tiles')?.active) {
-    ui.notifications.error(
-      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Monk's Active Tiles to be installed and active."
-    );
+    notifyError('EMPUZZLES.NotifyRequiresMonksActiveTiles');
     return;
   }
 
   if (!game.modules.get('monks-tokenbar')?.active) {
-    ui.notifications.warn(
-      "Tile Utilities: Monk's Token Bar is not active. Saving throw features will be unavailable for traps and teleports."
-    );
+    notifyWarn('EMPUZZLES.NotifyMonksTokenBarInactive');
   }
 
   if (!game.modules.get('tagger')?.active) {
-    ui.notifications.error(
-      "Tile Utilities Error: Dorman Lakely's Tile Utilities requires Tagger to be installed and active."
-    );
+    notifyError('EMPUZZLES.NotifyRequiresTagger');
     return;
   }
 
@@ -323,10 +296,42 @@ function escapeHtml(str: string): string {
 }
 
 /**
+ * Best-effort display name for a tile.
+ *
+ * These tiles are created without a TileDocument#name -- the label the user
+ * typed lives in MATT's own flag. Reading `tile.name` alone rendered the
+ * deletion prompts as `has a return tile: ""`, which tells the user nothing
+ * about what they are about to delete.
+ */
+function getTileDisplayName(tile: any): string {
+  return (
+    tile?.name ||
+    tile?.flags?.['monks-active-tiles']?.name ||
+    game.i18n.localize('EMPUZZLES.UnnamedTile')
+  );
+}
+
+/**
+ * Body markup for the "this tile has a partner tile, delete that too?" prompts.
+ * The name is HTML-escaped before it reaches `game.i18n.format`, which performs
+ * plain `{placeholder}` substitution and does no escaping of its own.
+ */
+function buildRelatedTileDeletionContent(messageKey: string, entity: any): string {
+  const message = game.i18n.format(messageKey, {
+    name: escapeHtml(getTileDisplayName(entity))
+  });
+  const prompt = game.i18n.localize('EMPUZZLES.DeleteRelatedTilePrompt');
+  return `<p>${message}</p><p>${prompt}</p>`;
+}
+
+/**
  * Helper: Clean up trap actors and tokens when combat trap tiles are deleted
  */
 async function cleanupCombatTrap(tile: any): Promise<void> {
-  const actorId = tile.flags?.['monks-active-tiles']?.['em-trap-actor-id'];
+  // Reads flags['em-tile-utilities'], falling back to the legacy location
+  // inside MATT's own flag namespace so combat traps built before 2.2.0 still
+  // clean up.
+  const actorId = getCombatTrapActorId(tile);
 
   if (actorId) {
     const scene = tile.parent;
@@ -421,7 +426,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
 
   // Case 1: Main teleport being deleted → delete return teleports
   // Use filter instead of find to handle edge case of multiple teleport tags
-  const mainTeleportTags = tags.filter((t: string) => t.startsWith('EM-Teleport-'));
+  const mainTeleportTags = tags.filter(isTeleportTag);
 
   for (const teleportTag of mainTeleportTags) {
     // Find all tiles with the same tag across all scenes
@@ -439,9 +444,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
       if (pendingDeletionConfirmations.has(entity.id)) continue;
 
       const entityTags = Tagger.getTags(entity);
-      const isReturnTeleport = entityTags?.some((tag: string) =>
-        tag.startsWith('EM-Return-Teleport-')
-      );
+      const isReturnTeleport = entityTags?.some(isReturnTeleportTag);
 
       if (isReturnTeleport) {
         // Mark this entity as pending confirmation
@@ -450,8 +453,11 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
         try {
           // Ask user for confirmation before deleting return teleport
           const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
-            window: { title: 'Delete Return Teleport?' },
-            content: `<p>This teleport has a return tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
+            window: { title: game.i18n.localize('EMPUZZLES.DeleteReturnTeleportConfirmTitle') },
+            content: buildRelatedTileDeletionContent(
+              'EMPUZZLES.DeleteReturnTeleportConfirmMessage',
+              entity
+            ),
             yes: { default: true }
           });
 
@@ -475,11 +481,11 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
 
   // Case 2: Return teleport being deleted → delete main teleport
   for (const returnTag of tags) {
-    if (!returnTag.startsWith('EM-Return-Teleport-')) continue;
+    if (!isReturnTeleportTag(returnTag)) continue;
 
     // The return teleport is tagged with BOTH its return tag AND the main teleport's tag
     // Use filter instead of find to handle edge case of multiple main teleport tags
-    const mainTeleportTags = tags.filter((t: string) => t.startsWith('EM-Teleport-'));
+    const mainTeleportTags = tags.filter(isTeleportTag);
 
     for (const mainTeleportTag of mainTeleportTags) {
       // Find all tiles with the main teleport tag
@@ -497,9 +503,7 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
         if (pendingDeletionConfirmations.has(entity.id)) continue;
 
         const entityTags = Tagger.getTags(entity);
-        const hasReturnTag = entityTags?.some((tag: string) =>
-          tag.startsWith('EM-Return-Teleport-')
-        );
+        const hasReturnTag = entityTags?.some(isReturnTeleportTag);
         const isMainTeleport = !hasReturnTag;
 
         if (isMainTeleport) {
@@ -509,8 +513,11 @@ async function cleanupTeleportTile(tile: any): Promise<void> {
           try {
             // Ask user for confirmation before deleting main teleport
             const confirmed = await (foundry as any).applications.api.DialogV2.confirm({
-              window: { title: 'Delete Main Teleport?' },
-              content: `<p>This return teleport has a main tile: <strong>"${escapeHtml(entity.name)}"</strong></p><p>Do you want to delete it as well?</p>`,
+              window: { title: game.i18n.localize('EMPUZZLES.DeleteMainTeleportConfirmTitle') },
+              content: buildRelatedTileDeletionContent(
+                'EMPUZZLES.DeleteMainTeleportConfirmMessage',
+                entity
+              ),
               yes: { default: true }
             });
 

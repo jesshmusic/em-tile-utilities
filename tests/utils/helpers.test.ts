@@ -5,12 +5,7 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { mockFoundry, createMockScene } from '../mocks/foundry';
 mockFoundry();
 
-import {
-  getGridSize,
-  getGridSizeMultiplied,
-  getDefaultPosition,
-  getCenteredLightPosition
-} from '../../src/utils/helpers/grid-helpers';
+import { getGridSize, getDefaultPosition } from '../../src/utils/helpers/grid-helpers';
 import { getOrCreateTrapActorsFolder } from '../../src/utils/helpers/folder-helpers';
 
 describe('Grid Helpers', () => {
@@ -32,28 +27,6 @@ describe('Grid Helpers', () => {
 
       (global as any).canvas.grid.size = 150;
       expect(getGridSize()).toBe(150);
-    });
-  });
-
-  describe('getGridSizeMultiplied', () => {
-    it('should return grid size multiplied by factor', () => {
-      (global as any).canvas.grid.size = 100;
-      expect(getGridSizeMultiplied(2)).toBe(200);
-    });
-
-    it('should handle fractional multipliers', () => {
-      (global as any).canvas.grid.size = 100;
-      expect(getGridSizeMultiplied(0.5)).toBe(50);
-    });
-
-    it('should handle zero multiplier', () => {
-      (global as any).canvas.grid.size = 100;
-      expect(getGridSizeMultiplied(0)).toBe(0);
-    });
-
-    it('should handle large multipliers', () => {
-      (global as any).canvas.grid.size = 100;
-      expect(getGridSizeMultiplied(10)).toBe(1000);
     });
   });
 
@@ -92,42 +65,6 @@ describe('Grid Helpers', () => {
       const position = getDefaultPosition(0, 0);
       expect(position.x).toBe(0);
       expect(position.y).toBe(0);
-    });
-  });
-
-  describe('getCenteredLightPosition', () => {
-    beforeEach(() => {
-      (global as any).canvas.grid.size = 100;
-    });
-
-    it('should center position by half grid size using default grid', () => {
-      const position = getCenteredLightPosition(100, 200);
-      expect(position.x).toBe(150); // 100 + 50
-      expect(position.y).toBe(250); // 200 + 50
-    });
-
-    it('should use provided grid size for centering', () => {
-      const position = getCenteredLightPosition(100, 200, 200);
-      expect(position.x).toBe(200); // 100 + 100
-      expect(position.y).toBe(300); // 200 + 100
-    });
-
-    it('should handle zero coordinates', () => {
-      const position = getCenteredLightPosition(0, 0);
-      expect(position.x).toBe(50); // 0 + 50
-      expect(position.y).toBe(50); // 0 + 50
-    });
-
-    it('should handle small grid sizes', () => {
-      const position = getCenteredLightPosition(100, 100, 10);
-      expect(position.x).toBe(105); // 100 + 5
-      expect(position.y).toBe(105); // 100 + 5
-    });
-
-    it('should handle odd grid sizes', () => {
-      const position = getCenteredLightPosition(100, 100, 75);
-      expect(position.x).toBe(137.5); // 100 + 37.5
-      expect(position.y).toBe(137.5); // 100 + 37.5
     });
   });
 });

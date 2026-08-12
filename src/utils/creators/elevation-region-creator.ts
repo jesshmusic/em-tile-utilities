@@ -3,13 +3,9 @@ import {
   createEnhancedElevationRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
-import {
-  generateUniqueEMTag,
-  parseCustomTags,
-  showTaggerWithWarning
-} from '../helpers/tag-helpers';
+import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
-import { hasEnhancedRegionBehaviors } from '../helpers/module-checks';
+import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
 
 /**
  * Configuration for elevation regions
@@ -39,16 +35,13 @@ export async function createElevationRegion(
   height?: number
 ): Promise<void> {
   // Verify Enhanced Region Behaviors is available
-  if (!hasEnhancedRegionBehaviors()) {
-    ui.notifications.error(
-      "Dorman Lakely's Tile Utilities | Enhanced Region Behaviors module is required for elevation regions. " +
-        'Please install and enable it from the FoundryVTT module browser. ' +
-        'Without this module, elevation regions cannot modify token elevation.'
-    );
-    console.error(
-      "Dorman Lakely's Tile Utilities | Cannot create elevation region: Enhanced Region Behaviors module is not installed or not active. " +
-        'Install from: https://foundryvtt.com/packages/enhanced-region-behaviors'
-    );
+  if (
+    !requireEnhancedRegionBehaviors({
+      plural: 'elevation regions',
+      singular: 'elevation region',
+      limitation: 'modify token elevation'
+    })
+  ) {
     return;
   }
 
@@ -106,10 +99,8 @@ export async function createElevationRegion(
   }
 
   // Tag the region if Tagger module is active
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-    const allTags = [tag, 'EM_Region', ...parseCustomTags(config.customTags)];
-    await Tagger.setTags(region, allTags);
-    await showTaggerWithWarning(region, tag);
-  }
+  await applyEMTags(region, tag, {
+    extraTags: ['EM_Region'],
+    customTags: config.customTags
+  });
 }

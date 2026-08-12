@@ -4,6 +4,7 @@ import { startTilePreview, TilePreviewManager, getGridSize } from '../utils/help
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -182,7 +183,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       handler: ResetTileConfigDialog.#onSubmit
     },
     actions: {
-      close: ResetTileConfigDialog.prototype._onClose,
+      close: ResetTileConfigDialog.prototype._onCancel,
       addTile: ResetTileConfigDialog.#onAddTile,
       removeTile: ResetTileConfigDialog.#onRemoveTile,
       addTag: ResetTileConfigDialog.#onAddTag,
@@ -206,6 +207,12 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   /** @inheritDoc */
   async _prepareContext(_options: any): Promise<any> {
     const context = await super._prepareContext(_options);
+
+    // Sync form state before rebuilding the context, so user input made since
+    // the last render (including the per-tile fields) survives a re-render.
+    if (this.element) {
+      this._syncFormToState();
+    }
 
     // Prepare tiles data for template
     const tiles: any[] = [];
@@ -261,11 +268,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       });
     });
 
-    // Sync form state before re-render to preserve user input
-    if (this.element) {
-      this._syncFormToState();
-    }
-
     return {
       ...context,
       resetName: this.resetName,
@@ -311,22 +313,104 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       'input[name="customTags"]'
     ) as HTMLInputElement;
     if (customTagsInput) this.customTags = customTagsInput.value;
+
+    this._syncTilesToState();
+  }
+
+  /**
+   * Look up a form control by its `name` attribute.
+   * Names embed tile ids and user-authored variable names, so the selector is
+   * escaped and the lookup is defensive.
+   */
+  private _field(name: string, suffix: string = ''): any {
+    const escaped = name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    try {
+      return this.element?.querySelector(`[name="${escaped}"]${suffix}`) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Sync the per-tile form controls (image index, visibility, active state,
+   * position, variables, door states) back onto `selectedTiles`.
+   *
+   * Without this, adding or removing a tile re-renders the dialog from the
+   * values captured when each tile was first picked, silently discarding e.g. a
+   * chosen image index and emitting the stale one on submit.
+   */
+  private _syncTilesToState(): void {
+    if (!this.element) return;
+
+    this.selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
+      const visibility = this._field(`visibility_${tileId}`);
+      if (visibility) tileData.hidden = visibility.value === 'hide';
+
+      const active = this._field(`active_${tileId}`);
+      if (active) tileData.active = active.value === 'true';
+
+      const fileindex = this._field(`fileindex_${tileId}`, ':checked');
+      if (fileindex) {
+        const parsed = parseInt(fileindex.value, 10);
+        if (!isNaN(parsed)) tileData.fileindex = parsed;
+      }
+
+      const rotation = this._field(`rotation_${tileId}`);
+      if (rotation) {
+        const parsed = parseFloat(rotation.value);
+        if (!isNaN(parsed)) tileData.rotation = parsed;
+      }
+
+      const xInput = this._field(`x_${tileId}`);
+      if (xInput) {
+        const parsed = parseFloat(xInput.value);
+        if (!isNaN(parsed)) tileData.x = parsed;
+      }
+
+      const yInput = this._field(`y_${tileId}`);
+      if (yInput) {
+        const parsed = parseFloat(yInput.value);
+        if (!isNaN(parsed)) tileData.y = parsed;
+      }
+
+      const history = this._field(`resetTriggerHistory_${tileId}`);
+      if (history) tileData.resetTriggerHistory = !!history.checked;
+
+      Object.keys(tileData.variables).forEach(varName => {
+        const fieldName = `var_${tileId}_${varName}`;
+        // Booleans render as a radio pair, everything else as a text input.
+        const field = this._field(fieldName, ':checked') ?? this._field(fieldName);
+        if (field) tileData.variables[varName] = field.value;
+      });
+
+      tileData.wallDoorActions.forEach((action, index) => {
+        const field = this._field(`walldoor_${tileId}_${index}`);
+        if (field) action.state = field.value;
+      });
+    });
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up preview if active
     if (this.previewManager) {
       this.previewManager.stop();
       this.previewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -372,8 +456,8 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
 
     const current = input.value;
 
-    // Foundry v14 removed the global FilePicker shim; use the namespaced class.
-    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (globalThis as any).FilePicker;
+    // Foundry v14 removed the global FilePicker shim; it lives here now.
+    const FilePickerClass = foundry.applications.apps.FilePicker;
     const fp = new FilePickerClass({
       type: type,
       current: current,
@@ -436,13 +520,13 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
    * Handle adding a tile
    */
   static async #onAddTile(this: ResetTileConfigDialog, _event: PointerEvent): Promise<void> {
-    ui.notifications.info('Click on a tile to add it to the reset list...');
+    notifyInfo('EMPUZZLES.NotifyClickTileForResetList');
 
     const handler = async (clickEvent: any) => {
       const tile = clickEvent.interactionData?.object?.document;
 
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         return;
       }
 
@@ -497,7 +581,9 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
       // Capture form values before re-rendering
       this.captureFormValues();
       await this.render();
-      ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
+      notifyInfo('EMPUZZLES.NotifyAdded', {
+        name: tile.name || game.i18n.localize('EMPUZZLES.Tile')
+      });
 
       // Remove the handler after selection
       (canvas as any).stage.off('click', handler);
@@ -541,23 +627,24 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('Tile Utilities Error: No active scene!');
+      notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
       return;
     }
 
     const data = formData.object;
 
     if ((this as any).selectedTiles.size === 0) {
-      ui.notifications.warn('No tiles selected!');
+      notifyWarn('EMPUZZLES.NotifyNoTilesSelected');
       return;
     }
 
     // Collect all variables and tile states from form
-    const varsToReset: Record<string, any> = {};
     const tilesToReset: any[] = [];
 
     (this as any).selectedTiles.forEach((tileData: SelectedTileData, tileId: string) => {
-      // Get updated values from form inputs
+      // Get updated values from form inputs. Variables stay grouped under the
+      // tile that owns them: Monk's Active Tiles stores variables per tile, so
+      // the reset actions have to be addressed at that tile.
       const variables: Record<string, any> = {};
       Object.keys(tileData.variables).forEach(varName => {
         let value = data[`var_${tileId}_${varName}`];
@@ -570,23 +657,23 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
         variables[varName] = value;
       });
 
-      Object.assign(varsToReset, variables);
-
-      // Collect wall/door states from form
+      // Collect wall/door states from form. The select is named
+      // `walldoor_<tileId>_<index>` (templates/reset-config.hbs), so the tile id
+      // has to be part of the lookup key.
       const wallDoorStates: any[] = [];
       tileData.wallDoorActions.forEach((action, index) => {
         if (action.entityId && action.state) {
           wallDoorStates.push({
             entityId: action.entityId,
             entityName: action.entityName,
-            state: data[`walldoor__${index}`]
+            state: data[`walldoor_${tileId}_${index}`] ?? action.state
           });
         }
       });
-      console.log('Tile Utilities', wallDoorStates);
 
       tilesToReset.push({
         tileId: tileId,
+        variables: variables,
         hidden: data[`visibility_${tileId}`] === 'hide',
         fileindex: parseInt(data[`fileindex_${tileId}`]) || 0,
         active: data[`active_${tileId}`] === 'true',
@@ -627,9 +714,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     );
 
     if (!hasValidExtension) {
-      ui.notifications.error(
-        `Tile Utilities Error: Invalid image file: ${resetTileImage}. Please use a valid image file.`
-      );
+      notifyError('EMPUZZLES.NotifyInvalidImageFile', { path: resetTileImage });
       return;
     }
 
@@ -637,7 +722,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the reset tile. Press ESC to cancel.');
+    notifyInfo('EMPUZZLES.NotifyPlaceResetTile');
 
     // Start tile preview with ghost image (reset tile is 2x2 grid squares)
     const gridSize = getGridSize();
@@ -654,7 +739,6 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
             {
               name: data.resetName || 'Reset Tile',
               image: resetTileImage,
-              varsToReset: varsToReset,
               tilesToReset: tilesToReset,
               customTags: data.customTags || ''
             },
@@ -662,7 +746,7 @@ export class ResetTileConfigDialog extends HandlebarsApplicationMixin(Applicatio
             y
           );
 
-          ui.notifications.info('Reset tile created!');
+          notifyInfo('EMPUZZLES.NotifyResetTileCreated');
 
           // Clear preview reference before closing to avoid race condition with _onClose
           this.previewManager = undefined;

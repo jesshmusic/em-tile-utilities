@@ -11,7 +11,6 @@ import { createTrapRegion } from '../../src/utils/creators/trap-region-creator';
 import type { TrapRegionConfig } from '../../src/utils/creators/trap-region-creator';
 import { createTeleportRegion } from '../../src/utils/creators/teleport-region-creator';
 import type { TeleportRegionConfig } from '../../src/utils/creators/teleport-region-creator';
-import { RegionBehaviorMode } from '../../src/types/module';
 
 describe('Elevation Region Creator', () => {
   let mockScene: any;
@@ -337,7 +336,6 @@ describe('Teleport Region Creator', () => {
       teleportX: 300,
       teleportY: 400,
       teleportSceneId: 'dest-scene',
-      behaviorMode: RegionBehaviorMode.NATIVE,
       deleteSourceToken: true,
       createReturnTeleport: false,
       hasSavingThrow: false,
@@ -565,273 +563,6 @@ describe('Teleport Region Creator', () => {
     });
   });
 
-  describe('createTeleportRegion - MONKS_MACRO mode', () => {
-    const basicConfig: TeleportRegionConfig = {
-      name: 'Test Teleport Macro',
-      tileImage: 'icons/portal.webp',
-      hidden: false,
-      teleportX: 300,
-      teleportY: 400,
-      teleportSceneId: 'source-scene', // Same scene for simpler testing
-      behaviorMode: RegionBehaviorMode.MONKS_MACRO,
-      deleteSourceToken: true,
-      createReturnTeleport: false,
-      hasSavingThrow: false,
-      savingThrow: '',
-      dc: 0,
-      flavorText: '',
-      customTags: ''
-    };
-
-    it('should create region with execute script behavior', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      await createTeleportRegion(mockScene, basicConfig, 100, 100, 100, 100);
-
-      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'Region',
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: 'Test Teleport Macro'
-          })
-        ])
-      );
-    });
-
-    it('should create return teleport in monks mode', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        createReturnTeleport: true
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      // Should have created return teleport region
-      expect((global as any).ui.notifications.info).toHaveBeenCalledWith(
-        expect.stringContaining('Return teleport region created')
-      );
-    });
-
-    it('should include sound in macro script when provided', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        sound: 'sounds/teleport.ogg'
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      // The script should contain AudioHelper.play with the sound path
-      const behavior = regionData.behaviors[0];
-      expect(behavior.system.source).toContain('AudioHelper.play');
-      expect(behavior.system.source).toContain('sounds/teleport.ogg');
-    });
-
-    it('should include pause game in macro script when enabled', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        pauseGameOnTrigger: true
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      const behavior = regionData.behaviors[0];
-      expect(behavior.system.source).toContain('game.togglePause(true)');
-    });
-
-    it('should include saving throw in macro script when hasSavingThrow is true', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        hasSavingThrow: true,
-        savingThrow: 'dex',
-        dc: 15,
-        flavorText: 'Avoid the portal!'
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      const behavior = regionData.behaviors[0];
-      expect(behavior.system.source).toContain("request: 'dex'");
-      expect(behavior.system.source).toContain('dc: 15');
-      expect(behavior.system.source).toContain('Avoid the portal!');
-    });
-
-    it('should generate cross-scene teleport script when destination is different scene', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        teleportSceneId: 'dest-scene',
-        deleteSourceToken: true
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      const behavior = regionData.behaviors[0];
-      expect(behavior.system.source).toContain("game.scenes.get('dest-scene')");
-      expect(behavior.system.source).toContain('token.document.delete()');
-    });
-
-    it('should not delete source token when deleteSourceToken is false (cross-scene)', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        teleportSceneId: 'dest-scene',
-        deleteSourceToken: false
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      const behavior = regionData.behaviors[0];
-      // Script should create copy but NOT delete
-      expect(behavior.system.source).toContain('createEmbeddedDocuments');
-      expect(behavior.system.source).not.toContain('token.document.delete()');
-    });
-
-    it('should generate same-scene teleport update when deleteSourceToken is true', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      // Same scene teleport
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        teleportSceneId: 'source-scene',
-        deleteSourceToken: true
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      const behavior = regionData.behaviors[0];
-      // Should use update instead of delete/create
-      expect(behavior.system.source).toContain('token.document.update');
-    });
-
-    it('should create copy for same-scene teleport when deleteSourceToken is false', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        behaviors: [],
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        teleportSceneId: 'source-scene',
-        deleteSourceToken: false
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      const callArgs = mockScene.createEmbeddedDocuments.mock.calls[0];
-      const regionData = callArgs[1][0];
-      const behavior = regionData.behaviors[0];
-      expect(behavior.system.source).toContain('canvas.scene.createEmbeddedDocuments');
-    });
-
-    it('should handle return teleport error when destination scene not found', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      // Make scenes.get return null for destination
-      (global as any).game.scenes.get = jest.fn((id: string) => {
-        if (id === 'source-scene') return mockScene;
-        return null;
-      });
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        teleportSceneId: 'nonexistent-scene',
-        createReturnTeleport: true
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      expect((global as any).ui.notifications.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Could not find destination scene')
-      );
-    });
-
-    it('should tag region with custom tags', async () => {
-      const mockRegion = {
-        id: 'test-region',
-        createEmbeddedDocuments: jest.fn(async () => [])
-      };
-      mockScene.createEmbeddedDocuments = jest.fn(async () => [mockRegion]);
-
-      const config: TeleportRegionConfig = {
-        ...basicConfig,
-        customTags: 'portal, magic'
-      };
-
-      await createTeleportRegion(mockScene, config, 100, 100, 100, 100);
-
-      expect((globalThis as any).Tagger.setTags).toHaveBeenCalledWith(
-        mockRegion,
-        expect.arrayContaining(['portal', 'magic', 'EM_Region'])
-      );
-    });
-  });
-
   describe('createTeleportRegion - NATIVE mode with sound', () => {
     let mockScene: any;
     let mockDestScene: any;
@@ -876,7 +607,6 @@ describe('Teleport Region Creator', () => {
         teleportX: 300,
         teleportY: 400,
         teleportSceneId: 'dest-scene',
-        behaviorMode: RegionBehaviorMode.NATIVE,
         deleteSourceToken: true,
         createReturnTeleport: false,
         hasSavingThrow: false,
@@ -918,7 +648,6 @@ describe('Teleport Region Creator', () => {
         teleportX: 300,
         teleportY: 400,
         teleportSceneId: 'dest-scene',
-        behaviorMode: RegionBehaviorMode.NATIVE,
         deleteSourceToken: true,
         createReturnTeleport: true,
         hasSavingThrow: false,
@@ -954,7 +683,6 @@ describe('Teleport Region Creator', () => {
         teleportX: 300,
         teleportY: 400,
         teleportSceneId: 'source-scene', // Same scene
-        behaviorMode: RegionBehaviorMode.NATIVE,
         deleteSourceToken: true,
         createReturnTeleport: false,
         hasSavingThrow: false,

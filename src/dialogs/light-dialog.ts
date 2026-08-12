@@ -3,6 +3,7 @@ import { startTilePreview, TilePreviewManager } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -50,7 +51,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
       handler: LightConfigDialog.#onSubmit
     },
     actions: {
-      close: LightConfigDialog.prototype._onClose,
+      close: LightConfigDialog.prototype._onCancel,
       addTag: LightConfigDialog.#onAddTag,
       confirmTags: LightConfigDialog.#onConfirmTags
     }
@@ -201,17 +202,24 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up preview if active
     if (this.previewManager) {
       this.previewManager.stop();
       this.previewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -339,8 +347,8 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
 
     const current = input.value;
 
-    // Foundry v14 removed the global FilePicker shim; use the namespaced class.
-    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (globalThis as any).FilePicker;
+    // Foundry v14 removed the global FilePicker shim; it lives here now.
+    const FilePickerClass = foundry.applications.apps.FilePicker;
     const fp = new FilePickerClass({
       type: type,
       current: current,
@@ -385,7 +393,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('Tile Utilities Error: No active scene!');
+      notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
       return;
     }
 
@@ -395,7 +403,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     const previewImage = data.offImage || data.onImage;
 
     if (!previewImage) {
-      ui.notifications.error('Tile Utilities Error: No image selected for the light tile!');
+      notifyError('EMPUZZLES.NotifyErrorNoLightImage');
       return;
     }
 
@@ -403,7 +411,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the light tile. Press ESC to cancel.');
+    notifyInfo('EMPUZZLES.NotifyPlaceLightTile');
 
     // Start tile preview with ghost image
     try {
@@ -439,7 +447,7 @@ export class LightConfigDialog extends HandlebarsApplicationMixin(ApplicationV2)
               y
             );
 
-            ui.notifications.info('Light tile created!');
+            notifyInfo('EMPUZZLES.NotifyLightTileCreated');
           } catch (err) {
             // createLightTile already showed an error notification and
             // rolled back any partial state. Log for diagnostics, then

@@ -7,11 +7,7 @@ import {
   createTeleportAction,
   createRequestRollAction
 } from '../actions';
-import {
-  generateUniqueEMTag,
-  parseCustomTags,
-  showTaggerWithWarning
-} from '../helpers/tag-helpers';
+import { generateUniqueEMTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
 
@@ -105,15 +101,7 @@ export async function createTeleportTile(
   const [tile] = await scene.createEmbeddedDocuments('Tile', [tileData]);
 
   // Tag the tile if Tagger module is active
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-
-    // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [tag, ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(tile, allTags);
-    await showTaggerWithWarning(tile, tag);
-  }
+  await applyEMTags(tile, tag, { customTags: config.customTags });
 
   // Create return teleport tile if requested
   if (config.createReturnTeleport) {
@@ -126,7 +114,9 @@ export async function createTeleportTile(
         return;
       }
 
-      const returnTag = generateUniqueEMTag('Return Teleport');
+      // Uniqueness is checked against the destination scene, which is where the
+      // return tile is about to be created.
+      const returnTag = generateUniqueEMTag('Return Teleport', destinationScene);
 
       // Build return actions (teleport back to source)
       const returnActions: any[] = [];
@@ -138,10 +128,27 @@ export async function createTeleportTile(
 
       // Return teleport does NOT require a saving throw (you already passed it to get here)
 
-      // Add return teleport action (back to source scene and position)
+      // Add return teleport action (back to the source scene, beside the pad).
+      //
+      // Sending the token to position.x/position.y drops it on the outbound
+      // tile's own top-left corner — i.e. standing on the live teleporter it
+      // just came from, and in the corner rather than the middle of a
+      // multi-square pad. Monk's suppresses the 'enter' trigger while a token
+      // is already inside a tile, so it doesn't loop instantly, but the first
+      // step off and back on re-fires the outbound teleport. Aim one square
+      // past the pad's bottom edge, horizontally centred on it, so the token
+      // arrives next to the teleporter instead. Monk's floors this point onto
+      // the grid (remotesnap), which keeps the arrival square clear of the
+      // tile footprint even for freely-placed, non-grid-aligned pads.
+      const returnDestX = position.x + tileWidth / 2;
+      const returnDestY = position.y + tileHeight;
+
       returnActions.push(
-        createTeleportAction(position.x, position.y, scene.id, {
-          deletesource: config.deleteSourceToken // Use same delete token setting as main teleport
+        createTeleportAction(returnDestX, returnDestY, scene.id, {
+          // The dialog offers a single "Delete Source Token" checkbox for the
+          // pair, and its meaning ("delete the token at the source location")
+          // applies to each leg in turn, so the return leg reuses it.
+          deletesource: config.deleteSourceToken
         })
       );
 
@@ -177,14 +184,11 @@ export async function createTeleportTile(
 
       // Tag the return tile if Tagger module is active
       // Use BOTH the main teleport's tag AND the return tag, plus any custom tags
-      if ((game as any).modules.get('tagger')?.active) {
-        const Tagger = (globalThis as any).Tagger;
-
-        // Build tag array: main tag + return tag + custom tags
-        const returnTileTags = [tag, returnTag, ...parseCustomTags(config.customTags)];
-
-        await Tagger.setTags(returnTile, returnTileTags);
-      }
+      await applyEMTags(returnTile, tag, {
+        extraTags: [returnTag],
+        customTags: config.customTags,
+        showWarning: false
+      });
 
       ui.notifications.info(
         `Dorman Lakely's Tile Utilities | Return teleport tile created at destination.`

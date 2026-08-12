@@ -8,13 +8,21 @@
 }
 
 /* Dialog Scrolling - Applied to all tile creation dialogs */
-.trap-config.window-app,
-.switch-config.window-app,
-.light-config.window-app,
-.reset-config.window-app,
-.teleport-config.window-app,
-.check-state-dialog.window-app,
-.elevation-config.window-app {
+/*
+ * NOTE: this used to be scoped to `.window-app`, which is the ApplicationV1
+ * root class. ApplicationV2 unshifts `application` onto its class list
+ * instead (see ApplicationV2#_initializeApplicationOptions), so this rule had
+ * been matching nothing since the V2 migration -- taking the `max-height:
+ * 90vh` viewport guard with it. That is why the fixed 750/800px heights in
+ * src/types/dialog-positions.ts could overflow the screen.
+ */
+.trap-config.application,
+.switch-config.application,
+.light-config.application,
+.reset-config.application,
+.teleport-config.application,
+.check-state-dialog.application,
+.elevation-config.application {
   display: flex;
   flex-direction: column;
   max-height: 90vh; /* Prevent dialogs from exceeding viewport */
@@ -47,7 +55,16 @@
   position: sticky;
   bottom: 0;
   flex-shrink: 0;
-  background: #000;
+  /*
+   * The footer is sticky, so it needs an opaque backdrop or the scrolled form
+   * shows through it. This used to be a hard `#000`, which reads as a broken
+   * black bar in Foundry's light theme. `--background` is the same variable
+   * `.app` paints the window with (dark: `--color-cool-5-90`, light: the
+   * parchment texture), so the footer now blends into whatever theme is
+   * active. `--dialog-background` is the fallback for any context that sets
+   * one but not the other.
+   */
+  background: var(--background, var(--dialog-background, var(--color-cool-5)));
   padding: 0.75rem;
   border-top: 1px solid var(--color-border-light-tertiary);
   z-index: 10;
@@ -341,8 +358,7 @@
 .light-config .checkbox-label,
 .reset-config .checkbox-label,
 .check-state-dialog .checkbox-label,
-.elevation-config .checkbox-label,
-.token-config-section .checkbox-label {
+.elevation-config .checkbox-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -355,8 +371,7 @@
 .light-config .checkbox-label input[type="checkbox"],
 .reset-config .checkbox-label input[type="checkbox"],
 .check-state-dialog .checkbox-label input[type="checkbox"],
-.elevation-config .checkbox-label input[type="checkbox"],
-.token-config-section .checkbox-label input[type="checkbox"] {
+.elevation-config .checkbox-label input[type="checkbox"] {
   cursor: pointer;
 }
 
@@ -968,8 +983,13 @@
 /* Custom Icons from game-icons.net */
 /* Icons are licensed under CC BY 3.0 - see icons/README.md for attribution */
 
-/* Base icon class for game-icons.net SVGs */
-.game-icon {
+/* Base icon class for game-icons.net SVGs.
+   Scoped to .em-puzzles: `.game-icon` is a plausible class name for any other
+   package to pick, and these rules force width/height/background on whatever
+   they match. (Nothing in src/ or templates/ currently emits `.game-icon` --
+   the module uses the `gi-*` classes below instead -- so this block is a
+   candidate for deletion rather than upkeep.) */
+.em-puzzles .game-icon {
   display: inline-block;
   width: 1em;
   height: 1em;
@@ -980,22 +1000,22 @@
 }
 
 /* Icon sizing variants */
-.game-icon-sm {
+.em-puzzles .game-icon-sm {
   width: 0.875em;
   height: 0.875em;
 }
 
-.game-icon-lg {
+.em-puzzles .game-icon-lg {
   width: 1.33em;
   height: 1.33em;
 }
 
-.game-icon-xl {
+.em-puzzles .game-icon-xl {
   width: 1.5em;
   height: 1.5em;
 }
 
-.game-icon-2x {
+.em-puzzles .game-icon-2x {
   width: 2em;
   height: 2em;
 }
@@ -1017,15 +1037,32 @@
   background-position: center;
 }
 
-/* Fix gi- icons in toolbar to match Font Awesome */
-button.control[class*="gi-"],
-button.ui-control[class*="gi-"] {
-  background-image: none !important;
-  background: var(--control-bg-color) !important;
+/*
+ * Fix gi- icons in the scene-controls toolbar to match Font Awesome.
+ *
+ * These two rules used to be written as bare `button.control[class*="gi-"]` /
+ * `button.ui-control[class*="gi-"]` with `!important` on both declarations,
+ * which reached into Foundry's own control chrome anywhere in the UI (the
+ * HUD, the players list, other modules' `.ui-control` elements) and could not
+ * be overridden by anything.
+ *
+ * Now scoped to `#scene-controls`, which is the only place this module puts a
+ * gi- icon on a control (see the `getSceneControlButtons` hook in
+ * src/main.ts -- Foundry renders the tool as
+ * `<button class="control ui-control tool icon gi-floor-hatch">`). The id
+ * raises specificity to (1,2,1), comfortably above Foundry's own
+ * `button.ui-control` (0,1,1) and above the `.gi-*` background-image rules
+ * further down this file, so the `!important` flags are no longer needed.
+ * The `background` shorthand also resets `background-image`, so the separate
+ * `background-image: none` declaration was redundant and is gone too.
+ */
+#scene-controls button.control[class*="gi-"],
+#scene-controls button.ui-control[class*="gi-"] {
+  background: var(--control-bg-color);
 }
 
-button.control[class*="gi-"]::before,
-button.ui-control[class*="gi-"]::before {
+#scene-controls button.control[class*="gi-"]::before,
+#scene-controls button.ui-control[class*="gi-"]::before {
   content: "";
   display: inline-block;
   width: 24px;
@@ -1036,13 +1073,13 @@ button.ui-control[class*="gi-"]::before {
   background-position: center;
 }
 
-button.control.gi-checklist::before,
-button.ui-control.gi-checklist::before {
+#scene-controls button.control.gi-checklist::before,
+#scene-controls button.ui-control.gi-checklist::before {
   background-image: url('../icons/checklist.svg');
 }
 
-button.control.gi-floor-hatch::before,
-button.ui-control.gi-floor-hatch::before {
+#scene-controls button.control.gi-floor-hatch::before,
+#scene-controls button.ui-control.gi-floor-hatch::before {
   background-image: url('../icons/floor-hatch.svg');
 }
 
@@ -1094,8 +1131,8 @@ button.ui-control.gi-floor-hatch::before {
 .gi-checklist { background-image: url('../icons/checklist.svg'); }
 
 /* Icon in buttons */
-button .game-icon,
-.button .game-icon {
+.em-puzzles button .game-icon,
+.em-puzzles .button .game-icon {
   margin-right: 0.25em;
 }
 
@@ -1942,114 +1979,32 @@ button .game-icon,
 }
 
 /* Required field indicator */
-.required {
+.em-puzzles .required {
   color: #ff4444;
   font-weight: bold;
   margin-left: 0.25rem;
 }
 
-/* Form validation styles */
-input:invalid,
-select:invalid,
-textarea:invalid {
+/*
+ * Form validation styles.
+ *
+ * These were previously unscoped, so `input:valid` / `input:invalid` restyled
+ * the border of every input in the entire Foundry UI -- actor sheets, chat,
+ * the settings menus and every other module's dialogs. `:valid` matches any
+ * input without constraints, so the "valid" rule in particular was repainting
+ * essentially the whole application. Scoped to `.em-puzzles`, which every
+ * dialog in this module carries on its root element.
+ */
+.em-puzzles input:invalid,
+.em-puzzles select:invalid,
+.em-puzzles textarea:invalid {
   border-color: rgba(255, 68, 68, 0.5);
 }
 
-input:valid,
-select:valid,
-textarea:valid {
+.em-puzzles input:valid,
+.em-puzzles select:valid,
+.em-puzzles textarea:valid {
   border-color: var(--color-border-light-primary);
-}
-
-/* Trap footer - two row layout */
-.trap-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-}
-
-/* Row 1: Setup tasks styling */
-.trap-footer .trap-todo-list {
-  background: transparent;
-  margin: 0;
-  padding: 0 0 0.75rem 0;
-  border-bottom: 1px solid var(--color-border-light-tertiary);
-  width: 100%;
-}
-
-/* Row 2: Footer buttons */
-.trap-footer .footer-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
-  width: 100%;
-}
-
-.trap-footer .debug-btn {
-  background: rgba(150, 100, 200, 0.2);
-  border: 1px solid rgba(150, 100, 200, 0.4);
-  color: #b19cd9;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  border-radius: 3px;
-  transition: all 0.2s;
-}
-
-.trap-footer .debug-btn:hover {
-  background: rgba(150, 100, 200, 0.3);
-  border-color: rgba(150, 100, 200, 0.6);
-}
-
-.trap-footer .main-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-/* State Debug Dialog Styling */
-.state-debug {
-  font-family: 'Roboto', sans-serif;
-}
-
-.state-debug-content {
-  padding: 1rem;
-}
-
-.state-debug .debug-header {
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-border-light-tertiary);
-}
-
-.state-debug .debug-header h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.2em;
-  color: var(--color-text-light-heading);
-}
-
-.state-debug .last-update {
-  margin: 0;
-  font-size: 0.85em;
-  color: var(--color-text-dark-secondary);
-}
-
-.state-debug .state-json {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border-light-tertiary);
-  border-radius: 3px;
-  padding: 1rem;
-  margin: 0;
-  overflow: auto;
-  max-height: 600px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9em;
-  line-height: 1.5;
-  color: #e0e0e0;
-  white-space: pre;
 }
 
 .em-puzzles fieldset.tagger .tag-container {
@@ -2078,6 +2033,42 @@ textarea:valid {
 
 .em-puzzles fieldset.tagger .tag-container .tag span:hover {
   color: #834100;
+}
+
+/*
+ * The chip's remove control is a real <button> (see
+ * src/utils/tag-input-manager.ts) so it is focusable and Enter/Space
+ * operable. Strip Foundry's default button chrome so it still looks like the
+ * bare glyph it replaced -- note `.em-puzzles fieldset.tagger .form-group
+ * button` sizes the Add/Apply buttons, but that selector is scoped to
+ * `.form-group` and does not reach the chips in `.tag-container`.
+ */
+.em-puzzles fieldset.tagger .tag-container .tag .tag-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.em-puzzles fieldset.tagger .tag-container .tag .tag-remove-btn:hover {
+  background: none;
+}
+
+/* Keyboard users get a visible focus ring; :hover alone is not enough. */
+.em-puzzles fieldset.tagger .tag-container .tag .tag-remove-btn:focus-visible {
+  outline: 2px solid #834100;
+  outline-offset: 1px;
 }
 
 .em-puzzles fieldset.tagger .tag-container .tag i {
@@ -2165,15 +2156,19 @@ textarea:valid {
 
 /* ====================================
    Patreon Support Link
-   ==================================== */
+   ====================================
+   Scoped to .em-puzzles -- the Tile Manager root carries it (see
+   TileManagerDialog.DEFAULT_OPTIONS.classes) and the --dmguru-* custom
+   properties these rules read are declared on .tile-manager-container, which
+   wraps this footer in templates/tile-manager.hbs. */
 
-.tile-manager-footer {
+.em-puzzles .tile-manager-footer {
   padding: 12px;
   margin-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.tile-manager-footer .footer-content {
+.em-puzzles .tile-manager-footer .footer-content {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2183,7 +2178,7 @@ textarea:valid {
 /* Both buttons live in a flex row that fills the full width, splitting
    the available space equally so the two pills always match widths
    regardless of label length. */
-.tile-manager-footer .footer-links {
+.em-puzzles .tile-manager-footer .footer-links {
   display: flex;
   flex: 1 1 100%;
   gap: 12px;
@@ -2194,8 +2189,8 @@ textarea:valid {
    Background / colors are per-link below. All selectors are scoped to
    .tile-manager-footer so they don't leak into any other app that
    happens to use a .patreon-link or .dmguru-link class. */
-.tile-manager-footer .patreon-link,
-.tile-manager-footer .dmguru-link {
+.em-puzzles .tile-manager-footer .patreon-link,
+.em-puzzles .tile-manager-footer .dmguru-link {
   flex: 1 1 0;
   display: inline-flex;
   align-items: center;
@@ -2212,21 +2207,21 @@ textarea:valid {
   border: 1px solid transparent;
 }
 
-.tile-manager-footer .patreon-link i {
+.em-puzzles .tile-manager-footer .patreon-link i {
   font-size: 18px;
 }
 
 /* Patreon: solid burgundy (matches the dragon body color in the DM Guru
    logo, which is also the brand burgundy) */
-.tile-manager-footer .patreon-link {
+.em-puzzles .tile-manager-footer .patreon-link {
   background: var(--dmguru-burgundy);
   color: white;
   border-color: var(--dmguru-burgundy);
 }
 
 /* Both :hover and :focus-visible get the same treatment for keyboard a11y */
-.tile-manager-footer .patreon-link:hover,
-.tile-manager-footer .patreon-link:focus-visible {
+.em-puzzles .tile-manager-footer .patreon-link:hover,
+.em-puzzles .tile-manager-footer .patreon-link:focus-visible {
   background: #7a2518;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
@@ -2238,14 +2233,14 @@ textarea:valid {
 /* DM Guru: parchment cream background with burgundy text + dragon logo.
    Visually distinct from Patreon (which uses solid burgundy) but on-brand
    with the logo's color palette. */
-.tile-manager-footer .dmguru-link {
+.em-puzzles .tile-manager-footer .dmguru-link {
   background: var(--dmguru-cream);
   color: var(--dmguru-burgundy);
   border-color: var(--dmguru-taupe);
 }
 
-.tile-manager-footer .dmguru-link:hover,
-.tile-manager-footer .dmguru-link:focus-visible {
+.em-puzzles .tile-manager-footer .dmguru-link:hover,
+.em-puzzles .tile-manager-footer .dmguru-link:focus-visible {
   background: #ece1c0;
   color: var(--dmguru-rust);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -2256,13 +2251,13 @@ textarea:valid {
 
 /* Logo image inside the DM Guru link — sized to match the Patreon icon
    visually. The SVG is 1200x1200 viewBox, so it scales cleanly to any size. */
-.tile-manager-footer .dmguru-link .dmguru-logo {
+.em-puzzles .tile-manager-footer .dmguru-link .dmguru-logo {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
 }
 
-.tile-manager-footer .version-info {
+.em-puzzles .tile-manager-footer .version-info {
   flex: 1 1 100%;
   display: flex;
   align-items: center;
@@ -2270,7 +2265,7 @@ textarea:valid {
   gap: 4px;
 }
 
-.tile-manager-footer .version-text {
+.em-puzzles .tile-manager-footer .version-text {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   font-family: monospace;
@@ -2472,62 +2467,16 @@ i.gi-mesh-ball,
   margin-bottom: 0.5rem;
 }
 
-/* Accordion Section Styling */
-.accordion-section {
-  margin-bottom: 1rem;
-  border: 1px solid var(--color-border-light-tertiary);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.accordion-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  margin: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  user-select: none;
-  font-weight: normal;
-  font-size: 13px;
-  color: inherit;
-}
-
-.accordion-header:hover {
-  color: var(--color-text-light-heading);
-}
-
-.accordion-icon {
-  transition: transform 0.2s ease;
-  font-size: 12px;
-  color: var(--color-text-light-primary);
-}
-
-/* Required field indicator */
-.accordion-header .required-indicator {
-  width: 8px;
-  height: 8px;
-  background-color: #ff4444;
-  border-radius: 50%;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.accordion-content {
-  padding: 1rem;
-  transition: all 0.3s ease;
-}
-
-/* Basic Info Section - always open by default */
-.basic-info-section[open] .accordion-content {
-  display: block;
-}
-
-.basic-info-section[open] .accordion-icon {
-  transform: rotate(0deg);
-}
+/*
+ * The `.accordion-section` / `.accordion-header` / `.accordion-icon` /
+ * `.accordion-content` rules that used to sit here have been removed along
+ * with the dead `{{#if isAccordion}}` branch of
+ * templates/partials/custom-tags-section.hbs -- that partial was the only
+ * markup in the module that emitted any of those classes, and nothing ever
+ * set `isAccordion`. The `.basic-info-section[open]` rules went with them:
+ * `.basic-info-section` is a <fieldset>, which has no `open` attribute, so
+ * they never matched either.
+ */
 
 /* Section-specific styling */
 .basic-info-section {
@@ -2616,21 +2565,23 @@ i.gi-mesh-ball,
   color: #4caf50;
 }
 
-/* Tag Select Component - for multi-value selections like trigger events and skills */
-.tag-select-container {
+/* Tag Select Component - for multi-value selections like trigger events and skills.
+   Scoped to .em-puzzles: `.tag` in particular collides head-on with the Tagger
+   module's own tag chips, which are styled globally by that module. */
+.em-puzzles .tag-select-container {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.tag-select-container .tag-display {
+.em-puzzles .tag-select-container .tag-display {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
   min-height: 24px;
 }
 
-.tag-select-container .tag {
+.em-puzzles .tag-select-container .tag {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -2642,31 +2593,31 @@ i.gi-mesh-ball,
   color: var(--color-text-light-primary);
 }
 
-.tag-select-container .tag .tag-remove {
+.em-puzzles .tag-select-container .tag .tag-remove {
   cursor: pointer;
   opacity: 0.7;
   font-size: 10px;
 }
 
-.tag-select-container .tag .tag-remove:hover {
+.em-puzzles .tag-select-container .tag .tag-remove:hover {
   opacity: 1;
   color: #ff6b6b;
 }
 
-.tag-select-container .tag-select-dropdown {
+.em-puzzles .tag-select-container .tag-select-dropdown {
   flex: 1;
 }
 
 /* Disabled state for tag-select (mutual exclusivity between save abilities and skills) */
-.tag-select-container.disabled {
+.em-puzzles .tag-select-container.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
 
-.tag-select-container.disabled .tag-select-dropdown {
+.em-puzzles .tag-select-container.disabled .tag-select-dropdown {
   cursor: not-allowed;
 }
 
-.tag-select-container.disabled .tag .tag-remove {
+.em-puzzles .tag-select-container.disabled .tag .tag-remove {
   display: none;
 }

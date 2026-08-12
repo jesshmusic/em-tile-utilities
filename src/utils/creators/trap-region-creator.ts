@@ -6,13 +6,9 @@ import {
   createExecuteMacroRegionBehavior,
   RegionEvents
 } from '../builders/region-behavior-builder';
-import {
-  generateUniqueTrapTag,
-  showTaggerWithWarning,
-  parseCustomTags
-} from '../helpers/tag-helpers';
+import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
-import { hasEnhancedRegionBehaviors } from '../helpers/module-checks';
+import { requireEnhancedRegionBehaviors } from '../helpers/module-checks';
 
 /**
  * Configuration for trap regions using Enhanced Region Behaviors
@@ -65,16 +61,13 @@ export async function createTrapRegion(
   height?: number
 ): Promise<void> {
   // Verify Enhanced Region Behaviors is available
-  if (!hasEnhancedRegionBehaviors()) {
-    ui.notifications.error(
-      "Dorman Lakely's Tile Utilities | Enhanced Region Behaviors module is required for trap regions. " +
-        'Please install and enable it from the FoundryVTT module browser. ' +
-        'Without this module, trap regions cannot apply damage or request saving throws.'
-    );
-    console.error(
-      "Dorman Lakely's Tile Utilities | Cannot create trap region: Enhanced Region Behaviors module is not installed or not active. " +
-        'Install from: https://foundryvtt.com/packages/enhanced-region-behaviors'
-    );
+  if (
+    !requireEnhancedRegionBehaviors({
+      plural: 'trap regions',
+      singular: 'trap region',
+      limitation: 'apply damage or request saving throws'
+    })
+  ) {
     return;
   }
 
@@ -182,16 +175,10 @@ for (const tileId of tileIds) {
   }
 
   // Tag the trap region using Tagger if available
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-    const trapTag = generateUniqueTrapTag(config.name, 'region');
-
-    // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [trapTag, 'EM_Region', 'EM_Trap', ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(region, allTags);
-    await showTaggerWithWarning(region, trapTag);
-  }
+  await applyEMTags(region, generateUniqueTrapTag(config.name, 'region'), {
+    extraTags: ['EM_Region', 'EM_Trap'],
+    customTags: config.customTags
+  });
 
   ui.notifications.info(`Created trap region: ${config.name}`);
 }

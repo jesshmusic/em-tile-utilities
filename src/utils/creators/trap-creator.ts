@@ -1,7 +1,8 @@
 import type { TrapConfig } from '../../types/module';
-import { TrapTargetType, TrapResultType } from '../../types/module';
+import { TrapResultType } from '../../types/module';
 import { createBaseTileData } from '../builders/base-tile-builder';
 import { createMonksConfig } from '../builders/monks-config-builder';
+import { resolveTargetEntity } from '../builders/entity-builders';
 import {
   createActivateAction,
   createShowHideAction,
@@ -15,13 +16,53 @@ import {
   createHurtHealAction,
   createApplyEffectAction
 } from '../actions';
-import {
-  generateUniqueTrapTag,
-  showTaggerWithWarning,
-  parseCustomTags
-} from '../helpers/tag-helpers';
+import { createApplyDamageAction } from '../actions/apply-damage-tile-action';
+import { generateUniqueTrapTag, applyEMTags } from '../helpers/tag-helpers';
+import { DEFAULT_DAMAGE_TYPE, HEALING_DAMAGE_TYPE } from '../helpers/damage-types';
 import { getGridSize, getDefaultPosition } from '../helpers/grid-helpers';
 import { hasMonksTokenBar } from '../helpers/module-checks';
+import { isDnd5eSystem } from '../helpers/dnd5e-activity';
+
+/**
+ * Emit the action that changes a token's hit points.
+ *
+ * On dnd5e this is `em-tile-utilities.applydamage`, the module's own registered
+ * Monk's Active Tiles action (src/utils/actions/apply-damage-tile-action.ts).
+ * It carries a damage type and routes through midi-qol when the GM has it, so a
+ * tile trap now respects resistance, vulnerability, immunity and the GM's
+ * `autoApplyDamage` setting — exactly as a trap region already did.
+ *
+ * On every other system it stays on Monk's `hurtheal`. dnd5e is the only system
+ * whose `Actor#applyDamage` takes the `[{ value, type, properties }]` shape
+ * this depends on; pf2e and pf1 take entirely different arguments
+ * (../monks-active-tiles/actions.js:2166-2172), so switching them would be a
+ * regression, not a fix.
+ *
+ * Tiles created before this change still carry `hurtheal` and keep working:
+ * Monk's own action is untouched and nothing here rewrites existing tiles.
+ *
+ * @param formula - POSITIVE roll formula. Sign handling differs per action:
+ *   `hurtheal` wants damage negative and healing positive, `applydamage` wants
+ *   both positive and distinguishes them by damage type.
+ * @param damageType - Damage type id, or `healing`
+ * @param entity - Monk's entity reference for the target
+ */
+function createDamageAction(
+  formula: string,
+  damageType: string,
+  entity: { id: string; name?: string }
+): any {
+  if (isDnd5eSystem()) {
+    return createApplyDamageAction(formula, damageType, { entity });
+  }
+
+  const signed = damageType === HEALING_DAMAGE_TYPE ? formula : `-${formula}`;
+  return createHurtHealAction(signed, {
+    entity,
+    chatmessage: true,
+    rollmode: 'roll'
+  });
+}
 
 /**
  * Creates a trap tile with damage, healing, teleport, or active effect results
@@ -71,6 +112,20 @@ export async function createTrapTile(
           )
         );
       } else if (tileAction.actionType === 'moveto') {
+        // x/y are optional on TileAction, so a moveto configured without a
+        // destination gets here with them undefined. Emitting the action
+        // anyway produced an unusable "move to nowhere" that threw on
+        // .toString(); skip it and tell the GM which tile is misconfigured
+        // rather than failing the whole trap.
+        const { x: moveX, y: moveY } = tileAction;
+        if (moveX === undefined || moveY === undefined) {
+          ui.notifications.warn(
+            `Dorman Lakely's Tile Utilities | Skipping "move tile" action for tile ` +
+              `${tileAction.tileId}: no destination coordinates were set.`
+          );
+          return;
+        }
+
         // Move tile to position - use raw action for position field
         actions.push({
           action: 'movetoken',
@@ -80,13 +135,13 @@ export async function createTrapTile(
               name: `Tile: ${tileAction.tileId}`
             },
             duration: 0,
-            x: tileAction.x.toString(),
-            y: tileAction.y.toString(),
+            x: moveX.toString(),
+            y: moveY.toString(),
             location: {
               id: '',
-              x: tileAction.x,
-              y: tileAction.y,
-              name: `[x:${tileAction.x} y:${tileAction.y}]`
+              x: moveX,
+              y: moveY,
+              name: `[x:${moveX} y:${moveY}]`
             },
             position: 'random',
             snap: true,
@@ -139,25 +194,9 @@ export async function createTrapTile(
 
   // Action 4: Add result-based actions (only for non-activating traps)
   if (!config.tileActions || config.tileActions.length === 0) {
-    // Determine target entity ID based on target type
-    let targetEntityId: string;
-    let targetEntityName: string;
-
-    switch (config.targetType) {
-      case TrapTargetType.PLAYER_TOKENS:
-        targetEntityId = 'players';
-        targetEntityName = 'Player Tokens';
-        break;
-      case TrapTargetType.WITHIN_TILE:
-        targetEntityId = 'within';
-        targetEntityName = 'Tokens within Tile';
-        break;
-      case TrapTargetType.TRIGGERING:
-      default:
-        targetEntityId = 'token';
-        targetEntityName = 'Triggering Token';
-        break;
-    }
+    // Determine target entity based on target type
+    const { id: targetEntityId, name: targetEntityName } = resolveTargetEntity(config.targetType);
+    const damageType = config.damageType || DEFAULT_DAMAGE_TYPE;
 
     switch (config.resultType) {
       case TrapResultType.DAMAGE:
@@ -192,10 +231,9 @@ export async function createTrapTile(
             // 4. Full damage to failed saves
             if (config.damageOnFail) {
               actions.push(
-                createHurtHealAction(`-[[${config.damageOnFail}]]`, {
-                  entity: { id: 'previous', name: 'Current tokens' },
-                  chatmessage: true,
-                  rollmode: 'roll'
+                createDamageAction(config.damageOnFail, damageType, {
+                  id: 'previous',
+                  name: 'Current tokens'
                 })
               );
             }
@@ -206,10 +244,9 @@ export async function createTrapTile(
             // 6. Half damage to successful saves
             if (config.damageOnFail) {
               actions.push(
-                createHurtHealAction(`-[[floor((${config.damageOnFail}) / 2)]]`, {
-                  entity: { id: 'previous', name: 'Current tokens' },
-                  chatmessage: true,
-                  rollmode: 'roll'
+                createDamageAction(`floor((${config.damageOnFail}) / 2)`, damageType, {
+                  id: 'previous',
+                  name: 'Current tokens'
                 })
               );
             }
@@ -232,10 +269,9 @@ export async function createTrapTile(
             // Full damage to failed saves only
             if (config.damageOnFail) {
               actions.push(
-                createHurtHealAction(`-[[${config.damageOnFail}]]`, {
-                  entity: { id: 'previous', name: 'Current tokens' },
-                  chatmessage: true,
-                  rollmode: 'roll'
+                createDamageAction(config.damageOnFail, damageType, {
+                  id: 'previous',
+                  name: 'Current tokens'
                 })
               );
             }
@@ -244,10 +280,9 @@ export async function createTrapTile(
           // No saving throw - damage all targets
           if (config.damageOnFail) {
             actions.push(
-              createHurtHealAction(`-[[${config.damageOnFail}]]`, {
-                entity: { id: targetEntityId, name: targetEntityName },
-                chatmessage: true,
-                rollmode: 'roll'
+              createDamageAction(config.damageOnFail, damageType, {
+                id: targetEntityId,
+                name: targetEntityName
               })
             );
           }
@@ -300,13 +335,14 @@ export async function createTrapTile(
         break;
 
       case TrapResultType.HEAL:
-        // Heal action (applies healing to targets)
+        // Heal action (applies healing to targets). `healing` is a real dnd5e
+        // damage type whose sign is inverted by Actor5e#calculateDamage, so the
+        // formula stays positive on both paths.
         if (config.healingAmount) {
           actions.push(
-            createHurtHealAction(`[[${config.healingAmount}]]`, {
-              entity: { id: targetEntityId, name: targetEntityName },
-              chatmessage: true,
-              rollmode: 'roll'
+            createDamageAction(config.healingAmount, HEALING_DAMAGE_TYPE, {
+              id: targetEntityId,
+              name: targetEntityName
             })
           );
         }
@@ -345,9 +381,7 @@ export async function createTrapTile(
 
   // Action 5: Add/Remove additional effects if specified
   if (config.additionalEffects && config.additionalEffects.length > 0) {
-    const targetEntityId = config.targetType === TrapTargetType.TRIGGERING ? 'token' : 'within';
-    const targetEntityName =
-      config.targetType === TrapTargetType.TRIGGERING ? 'Triggering Token' : 'Tokens within Tile';
+    const { id: targetEntityId, name: targetEntityName } = resolveTargetEntity(config.targetType);
     const effectAction = config.additionalEffectsAction || 'add'; // Default to 'add' if not specified
 
     // Add/Remove each additional effect
@@ -401,14 +435,7 @@ export async function createTrapTile(
     config.tileActions && config.tileActions.length > 0 ? 'activating' : config.resultType;
 
   // Tag the trap tile using Tagger if available
-  if ((game as any).modules.get('tagger')?.active) {
-    const Tagger = (globalThis as any).Tagger;
-    const trapTag = generateUniqueTrapTag(config.name, trapType);
-
-    // Parse custom tags (comma-separated) and combine with auto-generated tag
-    const allTags = [trapTag, ...parseCustomTags(config.customTags)];
-
-    await Tagger.setTags(tile, allTags);
-    await showTaggerWithWarning(tile, trapTag);
-  }
+  await applyEMTags(tile, generateUniqueTrapTag(config.name, trapType), {
+    customTags: config.customTags
+  });
 }

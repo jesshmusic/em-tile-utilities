@@ -1,36 +1,27 @@
-{{#if isAccordion}}
-  {{!-- Accordion version for trap dialog --}}
-  <fieldset class='tagger accordion-section' data-section='tagger'>
-    <legend class='accordion-header'>
-      <i class='gi-expand accordion-icon'></i>
-      {{localize 'EMPUZZLES.TaggerLegend'}}
-    </legend>
-    <div class='accordion-content' style='display: none;'>
-      <div class='form-group'>
-        <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
-        <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
-        <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
-        <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
-          <i class='gi-check-mark'></i>
-        </button>
-      </div>
-      <div class='tag-container' data-tags-container></div>
-      <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
-    </div>
-  </fieldset>
-{{else}}
-  {{!-- Regular section for other dialogs --}}
-  <fieldset class='tagger'>
-    <legend>{{localize 'EMPUZZLES.TaggerLegend'}}</legend>
-    <div class='form-group'>
-      <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
-      <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
-      <button type='button' data-action='addTag' style='min-width: 65px;'>Add tags</button>
-      <button type='button' data-action='confirmTags' data-tooltip='Apply tag rules'>
-        <i class='gi-check-mark'></i>
-      </button>
-    </div>
-    <div class='tag-container' data-tags-container></div>
-    <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
-  </fieldset>
-{{/if}}
+{{!--
+  Tagger custom-tag input, shared by every tile/region dialog.
+
+  This partial used to carry a second `{{#if isAccordion}}` branch that wrapped
+  identical markup in a `<fieldset class='accordion-section'>` with a
+  `<legend class='accordion-header'>` and a `display: none` content div. It has
+  been removed: no dialog ever passed `isAccordion` (the flag appears nowhere in
+  src/), and nothing anywhere bound a handler to `.accordion-header`, so that
+  branch could only ever have rendered a permanently-collapsed section with no
+  way to open it. Adding aria-expanded/aria-controls to it would have meant
+  inventing the toggle behaviour it never had. If accordions come back, build
+  the header as a real <button> carrying aria-expanded + aria-controls and
+  toggle the `hidden` attribute rather than an inline display style.
+--}}
+<fieldset class='tagger'>
+  <legend>{{localize 'EMPUZZLES.TaggerLegend'}}</legend>
+  <div class='form-group'>
+    <input type='text' data-tag-input placeholder='{{localize "EMPUZZLES.CustomTagsPlaceholder"}}' />
+    <input type='hidden' name='customTags' value='{{customTags}}' data-tags-hidden />
+    <button type='button' data-action='addTag' style='min-width: 65px;'>{{localize 'EMPUZZLES.AddTags'}}</button>
+    <button type='button' data-action='confirmTags' data-tooltip='{{localize "EMPUZZLES.ApplyTagRules"}}' aria-label='{{localize "EMPUZZLES.ApplyTagRules"}}'>
+      <i class='gi-check-mark' aria-hidden='true'></i>
+    </button>
+  </div>
+  <div class='tag-container' data-tags-container></div>
+  <p class='hint'>{{localize 'EMPUZZLES.CustomTagsHint'}}</p>
+</fieldset>

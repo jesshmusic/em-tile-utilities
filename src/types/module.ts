@@ -6,14 +6,6 @@ export enum CreationType {
   REGION = 'region'
 }
 
-/**
- * Enum for region behavior mode
- */
-export enum RegionBehaviorMode {
-  MONKS_MACRO = 'monks-macro',
-  NATIVE = 'native'
-}
-
 export interface SwitchConfig {
   name: string;
   variableName: string;
@@ -62,15 +54,6 @@ export enum TrapTargetType {
 }
 
 /**
- * Configuration for teleport result
- */
-export interface TeleportConfig {
-  x: number;
-  y: number;
-  scene?: string; // Optional: scene ID for cross-scene teleport
-}
-
-/**
  * Configuration for active effect result (using Monk's Active Tiles structure)
  */
 export interface ActiveEffectConfig {
@@ -95,7 +78,14 @@ export interface TileAction {
  */
 export interface WallAction {
   wallId: string;
-  state: string; // 'OPEN', 'CLOSED', 'LOCKED'
+  /**
+   * Monk's `changedoor` state. UPPERCASE is the wire format: MATT 14.01 builds
+   * the control from `Object.keys(CONST.WALL_DOOR_STATES)`
+   * (../monks-active-tiles/actions.js:2718-2729). See `DoorState` in
+   * src/utils/actions/door-actions.ts. Sourced from templates/trap-config.hbs
+   * and templates/reset-config.hbs, which already emit uppercase.
+   */
+  state: 'OPEN' | 'CLOSED' | 'LOCKED';
 }
 
 /**
@@ -130,13 +120,9 @@ export interface TrapConfig {
   // For teleport result type
   teleportX?: number; // Teleport destination X
   teleportY?: number; // Teleport destination Y
-  teleportConfig?: TeleportConfig; // Optional: teleport destination (legacy)
   // For active effect result type
-  effectId?: string; // Effect ID to apply
-  addEffect?: boolean; // True = add, False = remove
-  activeEffectConfig?: ActiveEffectConfig; // Optional: active effect to apply (legacy)
+  activeEffectConfig?: ActiveEffectConfig; // Effect to apply; built by trap-dialog, consumed by trap-creator
   // For activating trap type
-  tilesToActivate?: string[]; // Optional: IDs of tiles to activate (deprecated, use tileActions)
   tileActions?: TileAction[]; // Optional: tile actions with configurations
   wallActions?: WallAction[]; // Optional: wall/door actions
   // For DMG trap items
@@ -176,7 +162,7 @@ export interface CombatTrapConfig {
 export interface ResetTileConfig {
   name: string;
   image: string;
-  varsToReset: Record<string, any>;
+  /** Variables are carried per tile on `TileResetState.variables`. */
   tilesToReset: TileResetState[];
   customTags?: string;
 }
@@ -207,11 +193,20 @@ export interface TeleportTileConfig {
 export interface WallDoorState {
   entityId: string;
   entityName: string;
-  state: string; // "CLOSED", "OPEN", "LOCKED"
+  /** UPPERCASE `CONST.WALL_DOOR_STATES` key — see `WallAction.state` above. */
+  state: 'OPEN' | 'CLOSED' | 'LOCKED';
 }
 
 export interface TileResetState {
   tileId: string;
+  /**
+   * Variables owned by this tile, mapped to the value they should be reset to.
+   * Monk's Active Tiles stores variables in each tile's own
+   * `flags.monks-active-tiles.variables`, so the reset actions have to be
+   * addressed at the owning tile — that is why this lives per tile rather than
+   * in a single flat map on `ResetTileConfig`.
+   */
+  variables?: Record<string, any>;
   hidden: boolean;
   fileindex: number;
   active: boolean;
@@ -327,6 +322,11 @@ export interface BranchAction {
   // For door change:
   wallId?: string;
   wallName?: string;
+  /**
+   * Lowercase here because templates/check-state-dialog.hbs emits lowercase
+   * option values. `check-state-creator.ts` normalizes to the UPPERCASE form
+   * Monk's Active Tiles 14.01 expects before writing the action.
+   */
   doorState?: 'open' | 'closed' | 'locked';
 }
 

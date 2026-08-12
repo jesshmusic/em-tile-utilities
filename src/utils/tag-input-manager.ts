@@ -2,6 +2,8 @@
  * Reusable utility for managing Tagger-style tag input UI
  * Handles tag chip creation, removal, and hidden input synchronization
  */
+
+import { notifyInfo } from '../dialogs/notify';
 export class TagInputManager {
   private rootElement: HTMLElement;
 
@@ -102,8 +104,23 @@ export class TagInputManager {
     const tagLabel = document.createElement('span');
     tagLabel.textContent = tag;
 
-    const removeButton = document.createElement('i');
-    removeButton.className = 'gi-cancel';
+    // A real <button> rather than a bare <i>: it lands in the tab order, is
+    // activated by Enter/Space for free, and carries an accessible name. The
+    // <i> stays as the (decorative, aria-hidden) glyph so the existing
+    // `.tag i` styling keeps applying.
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'tag-remove-btn';
+    removeButton.setAttribute(
+      'aria-label',
+      (game as any).i18n.format('EMPUZZLES.RemoveTag', { tag })
+    );
+
+    const removeIcon = document.createElement('i');
+    removeIcon.className = 'gi-cancel';
+    removeIcon.setAttribute('aria-hidden', 'true');
+    removeButton.appendChild(removeIcon);
+
     removeButton.onclick = () => {
       tagElement.remove();
       this.updateHiddenInput();
@@ -154,7 +171,7 @@ export class TagInputManager {
     const tags = this.getCurrentTags();
     if (tags) {
       const tagCount = tags.split(',').filter(t => t.trim()).length;
-      ui.notifications.info(`${tagCount} tag(s) ready to be applied.`);
+      notifyInfo('EMPUZZLES.NotifyTagsReady', { count: tagCount });
     }
   }
 }

@@ -2,7 +2,7 @@
  * Tests for main.ts
  */
 
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { mockFoundry } from './mocks/foundry';
 
 // Mock foundry before importing main
@@ -11,13 +11,27 @@ mockFoundry();
 // Import main to trigger hook registration
 import '../src/main';
 
+import { generateUniqueEMTag } from '../src/utils/helpers/tag-helpers';
+
 // Capture hooks immediately after import
 const onceCalls = ((global as any).Hooks.once as any).mock?.calls || [];
 const onCalls = ((global as any).Hooks.on as any).mock?.calls || [];
 
 const initCallback = onceCalls.find((call: any[]) => call[0] === 'init')?.[1];
-const readyCallback = onceCalls.find((call: any[]) => call[0] === 'ready')?.[1];
+
+// main.ts registers MORE THAN ONE `ready` handler: the dependency-check one
+// below, plus the safety-net retry in registerEmTileActions() that re-attempts
+// custom Monk's Active Tiles action registration if the `setupTileActions` hook
+// never fired. Picking `[0]` would silently test whichever happened to be
+// registered first, so run them all — the assertions here are on side effects
+// (notifications), and the action registration produces none without a
+// MonksActiveTiles global.
+const readyCallbacks = onceCalls
+  .filter((call: any[]) => call[0] === 'ready')
+  .map((call: any[]) => call[1]);
+const readyCallback = () => readyCallbacks.forEach((cb: any) => cb());
 const toolbarCallback = onCalls.find((call: any[]) => call[0] === 'getSceneControlButtons')?.[1];
+const preDeleteTileCallback = onCalls.find((call: any[]) => call[0] === 'preDeleteTile')?.[1];
 
 describe('Main Module', () => {
   describe('initialization hook', () => {
@@ -37,7 +51,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultOnImage',
         expect.objectContaining({
-          name: 'Default ON Image',
+          name: 'EMPUZZLES.SettingDefaultOnImage',
           scope: 'world',
           config: true,
           type: String,
@@ -58,7 +72,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultOffImage',
         expect.objectContaining({
-          name: 'Default OFF Image',
+          name: 'EMPUZZLES.SettingDefaultOffImage',
           default: 'icons/svg/d20.svg',
           filePicker: 'imagevideo'
         })
@@ -76,7 +90,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultSound',
         expect.objectContaining({
-          name: 'Default Sound',
+          name: 'EMPUZZLES.SettingDefaultSound',
           default: 'sounds/doors/industrial/unlock.ogg',
           filePicker: 'audio'
         })
@@ -94,7 +108,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultLightOnImage',
         expect.objectContaining({
-          name: 'Default Light ON Image',
+          name: 'EMPUZZLES.SettingDefaultLightOnImage',
           default: 'icons/svg/light.svg',
           filePicker: 'imagevideo'
         })
@@ -112,7 +126,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultLightOffImage',
         expect.objectContaining({
-          name: 'Default Light OFF Image',
+          name: 'EMPUZZLES.SettingDefaultLightOffImage',
           default: 'icons/svg/light-off.svg',
           filePicker: 'imagevideo'
         })
@@ -130,7 +144,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultTrapImage',
         expect.objectContaining({
-          name: 'Default Trap Image',
+          name: 'EMPUZZLES.SettingDefaultTrapImage',
           default: 'icons/environment/traps/trap-jaw-tan.webp',
           filePicker: 'imagevideo'
         })
@@ -148,7 +162,7 @@ describe('Main Module', () => {
         'em-tile-utilities',
         'defaultTrapTriggeredImage',
         expect.objectContaining({
-          name: 'Default Trap Triggered Image',
+          name: 'EMPUZZLES.SettingDefaultTrapTriggeredImage',
           default: 'modules/em-tile-utilities/icons/broken-trap.svg',
           filePicker: 'imagevideo'
         })
@@ -177,35 +191,46 @@ describe('Main Module', () => {
         await initCallback();
       }
 
-      // Verify loadTemplates was called
-      expect((global as any).loadTemplates).toHaveBeenCalled();
+      // Foundry v14 removed the flat `loadTemplates` global; it now lives at
+      // foundry.applications.handlebars.loadTemplates.
+      const loadTemplates = (global as any).foundry.applications.handlebars.loadTemplates;
+      expect(loadTemplates).toHaveBeenCalled();
 
-      // Verify it was called with the saving-throw-section partial
-      const loadCalls = ((global as any).loadTemplates as any).mock.calls;
+      // It must be called with the Record<partialId, path> form, which both
+      // preloads the template and registers it as a named partial. The old
+      // array form preloads only, which is why this used to need three manual
+      // fetch() + Handlebars.registerPartial() blocks.
+      const loadCalls = (loadTemplates as any).mock.calls;
       expect(loadCalls.length).toBeGreaterThan(0);
 
-      const partialPaths = loadCalls[0][0];
-      expect(partialPaths).toContain(
+      const partialMap = loadCalls[0][0];
+      expect(Array.isArray(partialMap)).toBe(false);
+      expect(partialMap['partials/saving-throw-section']).toBe(
         'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
       );
+      expect(partialMap['partials/visibility-section']).toBe(
+        'modules/em-tile-utilities/templates/partials/visibility-section.hbs'
+      );
+      expect(partialMap['partials/custom-tags-section']).toBe(
+        'modules/em-tile-utilities/templates/partials/custom-tags-section.hbs'
+      );
 
-      // CRITICAL: Verify the partial was registered with Handlebars
+      // CRITICAL: the partials must actually end up registered with Handlebars.
       expect((global as any).Handlebars.registerPartial).toHaveBeenCalledWith(
         'partials/saving-throw-section',
-        expect.any(String)
+        expect.anything()
       );
 
-      // Verify fetch was called to load the partial content
-      expect((global as any).fetch).toHaveBeenCalledWith(
-        'modules/em-tile-utilities/templates/partials/saving-throw-section.hbs'
-      );
+      // The route-relative fetch() the old implementation used is gone; it
+      // broke on servers running under a Foundry route prefix.
+      expect((global as any).fetch).not.toHaveBeenCalled();
     });
   });
 
   describe('ready hook', () => {
     it('should register ready hook', () => {
-      expect(readyCallback).toBeDefined();
-      expect(typeof readyCallback).toBe('function');
+      expect(readyCallbacks.length).toBeGreaterThan(0);
+      readyCallbacks.forEach((cb: any) => expect(typeof cb).toBe('function'));
     });
 
     it("should check for Monk's Active Tiles module", () => {
@@ -402,6 +427,130 @@ describe('Main Module', () => {
       }
 
       expect(mockControls.tiles.tools['em-tile-utilities'].order).toBe(1000);
+    });
+  });
+
+  describe('paired teleport cleanup', () => {
+    /**
+     * The tags here are derived from generateUniqueEMTag rather than written
+     * out by hand. Hardcoding them on both sides is exactly how this broke:
+     * the generator emits "EMTeleport" while the cleanup hook searched for
+     * "EM-Teleport-", so deleting one half of a pair silently orphaned the
+     * other and the confirmation dialog never appeared.
+     */
+    const mainTag = generateUniqueEMTag('Teleport');
+    const returnTag = generateUniqueEMTag('Return Teleport');
+
+    const makeTeleportTile = (id: string, name: string, tags: string[]) => ({
+      id,
+      name,
+      documentName: 'Tile',
+      tags,
+      flags: { 'monks-active-tiles': { actions: [{ action: 'teleport' }] } },
+      parent: null,
+      delete: jest.fn(async () => {})
+    });
+
+    let mainTile: any;
+    let returnTile: any;
+
+    beforeEach(() => {
+      mainTile = makeTeleportTile('main-1', 'Teleport 1', [mainTag]);
+      // The return tile carries BOTH tags — that is how the pair is linked.
+      returnTile = makeTeleportTile('return-1', 'Return: Teleport 1', [mainTag, returnTag]);
+
+      (global as any).game.modules.get = jest.fn(() => ({ active: true }));
+      (global as any).game.scenes = new Map();
+      (global as any).ui.notifications = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+
+      const Tagger = (globalThis as any).Tagger;
+      Tagger.getTags = jest.fn((doc: any) => doc?.tags ?? []);
+      Tagger.getByTag = jest.fn((tag: string) =>
+        [mainTile, returnTile].filter(t => t.tags.includes(tag))
+      );
+
+      (global as any).foundry.applications.api.DialogV2.confirm = jest.fn(async () => true);
+
+      // escapeHtml() round-trips the partner's name through a detached DOM
+      // node; the node test environment has no real document.
+      (global as any).document = {
+        ...((global as any).document ?? {}),
+        createElement: () => {
+          let text = '';
+          return {
+            set textContent(value: string) {
+              text = value;
+            },
+            get textContent() {
+              return text;
+            },
+            get innerHTML() {
+              return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+          };
+        }
+      };
+    });
+
+    it('should register preDeleteTile hook', () => {
+      expect(preDeleteTileCallback).toBeDefined();
+      expect(typeof preDeleteTileCallback).toBe('function');
+    });
+
+    it('should prompt for and delete the return tile when the main teleport is deleted', async () => {
+      await preDeleteTileCallback(mainTile, {}, 'user-1');
+
+      expect((global as any).foundry.applications.api.DialogV2.confirm).toHaveBeenCalled();
+      expect(returnTile.delete).toHaveBeenCalled();
+      expect(mainTile.delete).not.toHaveBeenCalled();
+    });
+
+    it('should prompt for and delete the main tile when the return teleport is deleted', async () => {
+      await preDeleteTileCallback(returnTile, {}, 'user-1');
+
+      expect((global as any).foundry.applications.api.DialogV2.confirm).toHaveBeenCalled();
+      expect(mainTile.delete).toHaveBeenCalled();
+      expect(returnTile.delete).not.toHaveBeenCalled();
+    });
+
+    it('should leave the partner tile alone when the user declines', async () => {
+      (global as any).foundry.applications.api.DialogV2.confirm = jest.fn(async () => false);
+
+      await preDeleteTileCallback(mainTile, {}, 'user-1');
+
+      expect(returnTile.delete).not.toHaveBeenCalled();
+    });
+
+    it('should not treat the return tag as an outbound teleport tag', async () => {
+      // Deleting the return tile must not also prompt for itself: its own
+      // "EMReturnTeleport" tag must not be classified as a main teleport tag.
+      await preDeleteTileCallback(returnTile, {}, 'user-1');
+
+      const confirmCalls = ((global as any).foundry.applications.api.DialogV2.confirm as any).mock
+        .calls;
+      expect(confirmCalls).toHaveLength(1);
+      expect(confirmCalls[0][0].window.title).toBe('Delete Main Teleport?');
+    });
+
+    it('should ignore tiles that carry no EM teleport tags', async () => {
+      const untagged = makeTeleportTile('other-1', 'Some Teleport', ['MyCustomTag']);
+
+      await preDeleteTileCallback(untagged, {}, 'user-1');
+
+      expect((global as any).foundry.applications.api.DialogV2.confirm).not.toHaveBeenCalled();
+      expect(mainTile.delete).not.toHaveBeenCalled();
+      expect(returnTile.delete).not.toHaveBeenCalled();
+    });
+
+    it('should ignore tiles without teleport actions even when tagged', async () => {
+      const nonTeleport = {
+        ...makeTeleportTile('other-2', 'Not A Teleport', [mainTag]),
+        flags: { 'monks-active-tiles': { actions: [{ action: 'activate' }] } }
+      };
+
+      await preDeleteTileCallback(nonTeleport, {}, 'user-1');
+
+      expect((global as any).foundry.applications.api.DialogV2.confirm).not.toHaveBeenCalled();
     });
   });
 });

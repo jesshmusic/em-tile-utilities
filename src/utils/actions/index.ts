@@ -5,6 +5,7 @@
  * Each builder function generates a properly structured action object with default values.
  */
 
+export * from './apply-damage-tile-action';
 export * from './combat-actions';
 export * from './common-actions';
 export * from './door-actions';

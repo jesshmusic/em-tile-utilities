@@ -11,7 +11,6 @@ export const RegionEvents = {
   TOKEN_MOVE_IN: 'tokenMoveIn',
   TOKEN_MOVE_OUT: 'tokenMoveOut',
   TOKEN_MOVE_WITHIN: 'tokenMoveWithin',
-  TOKEN_PRE_MOVE: 'tokenPreMove', // Deprecated in v13
   TOKEN_TURN_START: 'tokenTurnStart',
   TOKEN_TURN_END: 'tokenTurnEnd',
   TOKEN_ROUND_START: 'tokenRoundStart',
@@ -74,50 +73,6 @@ export function createPauseGameRegionBehavior(config?: { name?: string; events?:
     system: {},
     disabled: false,
     events: config?.events ?? [RegionEvents.TOKEN_ENTER]
-  };
-}
-
-/**
- * Create a Display Scrolling Text region behavior (FoundryVTT core)
- * @param config - Behavior configuration
- * @returns Display Scrolling Text behavior object
- */
-export function createScrollingTextRegionBehavior(config: {
-  name?: string;
-  text: string;
-  events?: string[];
-}): any {
-  return {
-    type: 'displayScrollingText',
-    name: config.name ?? 'Scrolling Text',
-    system: {
-      text: config.text
-    },
-    disabled: false,
-    events: config.events ?? [RegionEvents.TOKEN_ENTER]
-  };
-}
-
-/**
- * Create an Adjust Elevation region behavior (FoundryVTT core)
- * @param config - Behavior configuration
- * @returns Adjust Elevation behavior object
- */
-export function createAdjustElevationRegionBehavior(config: {
-  name?: string;
-  elevation: number;
-  mode?: 'set' | 'add'; // 'set' = absolute, 'add' = relative
-  events?: string[];
-}): any {
-  return {
-    type: 'adjustElevation',
-    name: config.name ?? 'Adjust Elevation',
-    system: {
-      elevation: config.elevation,
-      mode: config.mode ?? 'set'
-    },
-    disabled: false,
-    events: config.events ?? [RegionEvents.TOKEN_ENTER]
   };
 }
 
@@ -224,32 +179,6 @@ export function createEnhancedElevationRegionBehavior(config: {
     system: {
       events: events, // Also in system for ERB schema
       elevation: config.elevation
-    },
-    disabled: false,
-    events: events // Top level for RegionBehavior
-  };
-}
-
-/**
- * Create an Enhanced Region Behaviors trigger action behavior
- * Executes an item action when triggered (dnd5e only)
- * Requires the Enhanced Region Behaviors module
- * @see https://github.com/txm3278/Enhanced-Region-Behaviors
- * @param config - Behavior configuration
- * @returns Trigger action region behavior object
- */
-export function createEnhancedTriggerActionRegionBehavior(config: {
-  name?: string;
-  itemId: string; // Item UUID
-  events?: string[];
-}): any {
-  const events = config.events ?? [RegionEvents.TOKEN_ENTER];
-  return {
-    type: 'enhanced-region-behavior.TriggerAction',
-    name: config.name ?? 'Trigger Action',
-    system: {
-      events: events, // Also in system for ERB schema
-      itemId: config.itemId
     },
     disabled: false,
     events: events // Top level for RegionBehavior

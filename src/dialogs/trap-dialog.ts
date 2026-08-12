@@ -6,11 +6,18 @@ import {
   hasMonksTokenBar,
   hasEnhancedRegionBehaviors,
   startDragPlacePreview,
-  DragPlacePreviewManager
+  DragPlacePreviewManager,
+  isDnd5eSystem,
+  getItemActivities,
+  extractTrapActivityData,
+  getDamageTypeOptions,
+  DEFAULT_DAMAGE_TYPE
 } from '../utils/helpers';
+import type { TrapActivityData } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyWarn, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -68,13 +75,19 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   // Saving Throw (shared across result types)
   protected hasSavingThrow: boolean = false;
-  protected savingThrow: string = 'ability:dex';
+  protected savingThrow: string = 'save:dex';
   protected dc: number = 14;
 
   // Damage Result Type
   protected damageOnFail: string = '';
   protected halfDamageOnSuccess: boolean = false;
   protected flavorText: string = '';
+  /**
+   * Damage type for TILE traps. Region traps carry their own
+   * (`regionDamageType`); this is the tile-side equivalent, consumed by the
+   * custom `em-tile-utilities.applydamage` action the trap creator emits.
+   */
+  protected damageType: string = DEFAULT_DAMAGE_TYPE;
 
   // Heal Result Type
   protected healingAmount: string = '2d4+2';
@@ -177,7 +190,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     },
     actions: {
       // Dialog actions
-      close: TrapDialog.prototype._onClose,
+      close: TrapDialog.prototype._onCancel,
       // DMG trap actions
       removeDmgTrapItem: TrapDialog.prototype._onRemoveDmgTrapItem,
       // Activating trap actions
@@ -276,12 +289,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Prepare saving throw options
     const savingThrowOptions = [
-      { value: 'ability:str', label: 'EMPUZZLES.StrengthSave' },
-      { value: 'ability:dex', label: 'EMPUZZLES.DexteritySave' },
-      { value: 'ability:con', label: 'EMPUZZLES.ConstitutionSave' },
-      { value: 'ability:int', label: 'EMPUZZLES.IntelligenceSave' },
-      { value: 'ability:wis', label: 'EMPUZZLES.WisdomSave' },
-      { value: 'ability:cha', label: 'EMPUZZLES.CharismaSave' }
+      { value: 'save:str', label: 'EMPUZZLES.StrengthSave' },
+      { value: 'save:dex', label: 'EMPUZZLES.DexteritySave' },
+      { value: 'save:con', label: 'EMPUZZLES.ConstitutionSave' },
+      { value: 'save:int', label: 'EMPUZZLES.IntelligenceSave' },
+      { value: 'save:wis', label: 'EMPUZZLES.WisdomSave' },
+      { value: 'save:cha', label: 'EMPUZZLES.CharismaSave' }
     ];
 
     // Prepare effect options (active effects from game system)
@@ -343,6 +356,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       });
     }
+
+    // Damage types come from the system so this list cannot silently drift from
+    // dnd5e's. Shared with the custom `em-tile-utilities.applydamage` Monk's
+    // Active Tiles action — see src/utils/helpers/damage-types.ts.
+    const damageTypeOptions = getDamageTypeOptions();
 
     // Prepare DMG trap item data if active
     let dmgTrapData: any = null;
@@ -419,8 +437,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Use DMG trap data if available, otherwise use class properties
     const useDamageOnFail = activityData?.damageFormula || this.damageOnFail;
     const useHasSavingThrow = activityData?.dc !== undefined || this.hasSavingThrow;
+    // `save:` -- activityData.ability comes from a dnd5e save activity, so this
+    // must request a saving throw. `ability:` is Monk's Token Bar's namespace
+    // for a raw ability CHECK, which silently drops save proficiency.
     const useSavingThrow = activityData?.ability
-      ? `ability:${activityData.ability}`
+      ? `save:${activityData.ability}`
       : this.savingThrow;
     const useDC = activityData?.dc !== undefined ? activityData.dc : this.dc;
     const useHalfDamageOnSuccess =
@@ -459,6 +480,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Damage Result Type - use class properties
       defaultDamageOnFail: useDamageOnFail,
       defaultHalfDamageOnSuccess: useHalfDamageOnSuccess,
+      damageType: this.damageType,
       flavorText: this.flavorText,
 
       // Heal Result Type - use class properties
@@ -482,6 +504,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       targetTypeOptions: targetTypeOptions,
       savingThrowOptions: savingThrowOptions,
       effectOptions: effectOptions,
+      damageTypeOptions: damageTypeOptions,
 
       // DMG trap state
       hasDmgTrap: !!this.dmgTrapItemId,
@@ -512,7 +535,12 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       regionEventTokenMoveIn: false,
       regionEventTokenTurnStart: false,
       regionEventTokenTurnEnd: false,
-      regionAutomateDamage: false,
+      // Default ON, matching both Enhanced Region Behaviors' own schema
+      // (automateDamage is a BooleanField with initial: true) and this module's
+      // creator layer (`config.automateDamage ?? true`). Rendering it unchecked
+      // meant a region trap rolled the save and then did nothing to the token
+      // unless the GM noticed the box.
+      regionAutomateDamage: true,
       regionSaveAbility: 'dex',
       regionSaveDC: 15,
       regionSkillAcr: false,
@@ -645,6 +673,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       '[name="halfDamageOnSuccess"]'
     ) as HTMLInputElement;
     if (halfDamageCheckbox) this.halfDamageOnSuccess = halfDamageCheckbox.checked;
+
+    const damageTypeSelect = this.element.querySelector(
+      'select[name="damageType"]'
+    ) as HTMLSelectElement;
+    if (damageTypeSelect?.value) this.damageType = damageTypeSelect.value;
 
     const flavorTextArea = this.element.querySelector('[name="flavorText"]') as HTMLTextAreaElement;
     if (flavorTextArea) this.flavorText = flavorTextArea.value;
@@ -1000,8 +1033,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           );
           if (selectedActivity) {
             const activityData = this._extractActivityData(selectedActivity);
-            halfDamageCheckbox.checked = activityData.halfDamageOnSuccess;
-            halfDamageCheckbox.disabled = true;
+            if (activityData) {
+              halfDamageCheckbox.checked = activityData.halfDamageOnSuccess;
+              halfDamageCheckbox.disabled = true;
+            }
           }
         }
       }
@@ -1111,7 +1146,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Check for trap name (always required)
     if (!this.trapName || this.trapName.trim() === '') {
-      tasks.push('Enter a trap name');
+      tasks.push(game.i18n.localize('EMPUZZLES.TodoEnterTrapName'));
     }
 
     // Region traps: only need trap name (other fields have defaults)
@@ -1121,27 +1156,28 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Check for required fields based on trap type (tile mode only)
       if (this.trapType === TrapType.IMAGE) {
         if (!this.resultType) {
-          tasks.push('Select a result type');
+          tasks.push(game.i18n.localize('EMPUZZLES.TodoSelectResultType'));
         }
 
         if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
-          tasks.push('Add a DMG trap item for combat');
+          tasks.push(game.i18n.localize('EMPUZZLES.TodoAddDmgTrapItem'));
         }
 
         if (this.resultType === TrapResultType.TELEPORT && (!this.teleportX || !this.teleportY)) {
-          tasks.push('Select teleport destination');
+          tasks.push(game.i18n.localize('EMPUZZLES.TodoSelectTeleportDestination'));
         }
       }
 
       if (this.trapType === TrapType.ACTIVATING && this.selectedTiles.size === 0) {
-        tasks.push('Add at least one tile to activate');
+        tasks.push(game.i18n.localize('EMPUZZLES.TodoAddTileToActivate'));
       }
     }
 
     // Update the DOM
     if (tasks.length === 0) {
-      todoContainer.innerHTML =
-        '<li class="todo-item complete">All required fields completed!</li>';
+      todoContainer.innerHTML = `<li class="todo-item complete">${game.i18n.localize(
+        'EMPUZZLES.TodoAllFieldsComplete'
+      )}</li>`;
     } else {
       todoContainer.innerHTML = tasks
         .map(task => `<li class="todo-item incomplete">${task}</li>`)
@@ -1389,8 +1425,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const input = this.element.querySelector(`input[name="${target}"]`) as HTMLInputElement;
     if (!input) return;
 
-    // Foundry v14 removed the global FilePicker shim; use the namespaced class.
-    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (globalThis as any).FilePicker;
+    // Foundry v14 removed the global FilePicker shim; it lives here now.
+    const FilePickerClass = foundry.applications.apps.FilePicker;
     const fp = new FilePickerClass({
       type: type,
       current: input.value,
@@ -1433,38 +1469,28 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
 
-    // Get the item from the UUID
-    const item = await (globalThis as any).fromUuid(data.uuid);
-    if (!item) {
-      ui.notifications.error('Failed to load item!');
+    // DMG trap items are a dnd5e concept - Activities, save DCs and damage
+    // parts do not exist in other systems, so bail out rather than reading
+    // fields that are not there.
+    if (!isDnd5eSystem()) {
+      notifyWarn('EMPUZZLES.NotifyTrapItemsDnd5eOnly');
       return;
     }
 
-    // Extract activities from the item
-    const activities = (item as any).system?.activities;
-    let activitiesArray: any[] = [];
-    if (activities) {
-      if (activities instanceof Map || activities?.contents) {
-        activitiesArray = Array.from(activities.values?.() || activities.contents || []);
-      } else if (typeof activities === 'object') {
-        const keys = Object.keys(activities);
-        if (keys.length > 0) {
-          activitiesArray = Object.values(activities);
-        } else {
-          for (const key in activities) {
-            if (activities.hasOwnProperty(key)) {
-              activitiesArray.push(activities[key]);
-            }
-          }
-        }
-      }
+    // Get the item from the UUID
+    const item = await (globalThis as any).fromUuid(data.uuid);
+    if (!item) {
+      notifyError('EMPUZZLES.NotifyItemLoadFailed');
+      return;
     }
 
-    // Filter activities to only save activities
-    activitiesArray = activitiesArray.filter((activity: any) => activity.type === 'save');
+    // Only save activities are usable here: this dialog populates the trap's
+    // *saving throw* section (ability, DC, damage-on-fail), and only a save
+    // activity carries `save.ability` / `save.dc` / `damage.onSave`.
+    const activitiesArray = getItemActivities(item, 'save');
 
     if (activitiesArray.length === 0) {
-      ui.notifications.warn('This item has no activities to use!');
+      notifyWarn('EMPUZZLES.NotifyItemNoSaveActivities');
       return;
     }
 
@@ -1530,41 +1556,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Extract save and damage data from a DMG trap activity
+   * Extract save and damage data from a DMG trap activity.
+   *
+   * All of the dnd5e schema knowledge lives in `extractTrapActivityData`; see
+   * `src/utils/helpers/dnd5e-activity.ts` for the cited 5.3.3 field shapes.
+   *
+   * @param activity - The selected dnd5e save activity
+   * @returns Trap-ready save/damage data, or null outside dnd5e
    */
-  protected _extractActivityData(activity: any): {
-    ability: string;
-    dc: number;
-    damageFormula: string;
-    damageType: string;
-    halfDamageOnSuccess: boolean;
-  } {
-    const ability = activity.save?.ability?.[0] || 'dex';
-    const dc = parseInt(activity.save?.dc?.formula || '14');
-
-    // Extract damage formula - check if parts.custom exists directly
-    let damageFormula = '';
-    if (activity.damage?.parts?.custom) {
-      damageFormula = activity.damage.parts.custom;
-    } else if (
-      activity.damage?.parts?.[0]?.custom?.enabled &&
-      activity.damage.parts[0].custom?.formula
-    ) {
-      // Fallback: check if parts is an array with custom formula
-      damageFormula = activity.damage.parts[0].custom.formula;
-    } else if (activity.damage?.parts?.[0]?.number && activity.damage.parts[0]?.denomination) {
-      // Fallback: build from number and denomination
-      damageFormula = `${activity.damage.parts[0].number}d${activity.damage.parts[0].denomination}`;
-    }
-
-    // Check if save allows half damage on success (property is damage.onSave, not save.damage)
-    const halfDamageOnSuccess = activity.damage?.onSave === 'half' && !!damageFormula;
-
-    // Extract damage type
-    const damageType =
-      activity.damage?.parts?.types?.[0] || activity.damage?.parts?.[0]?.types?.[0] || 'untyped';
-
-    return { ability, dc, damageFormula, damageType, halfDamageOnSuccess };
+  protected _extractActivityData(activity: any): TrapActivityData | null {
+    return extractTrapActivityData(activity);
   }
 
   /* -------------------------------------------- */
@@ -1592,14 +1593,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Get the item from the UUID
     const item = await (globalThis as any).fromUuid(data.uuid);
     if (!item) {
-      ui.notifications.error('Failed to load item!');
+      notifyError('EMPUZZLES.NotifyItemLoadFailed');
       return;
     }
 
     // Validate it's an appropriate attack item (weapon or feature)
     const itemType = (item as any).type;
     if (itemType !== 'weapon' && itemType !== 'feat') {
-      ui.notifications.warn('Please drop a weapon or feature item with attack actions!');
+      notifyWarn('EMPUZZLES.NotifyDropWeaponOrFeature');
       return;
     }
 
@@ -1631,11 +1632,18 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected async _onSelectTokenPosition(event: Event, _target: HTMLElement): Promise<void> {
     event.preventDefault();
 
-    ui.notifications.info('Click on the canvas to select token position...');
+    notifyInfo('EMPUZZLES.NotifySelectTokenPosition');
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct here, unlike the tile-placement call sites. This
+      // point is handed to a Monk's Active Tiles action (teleport / movetoken),
+      // and MATT treats the location as a CENTRE: it subtracts half the token
+      // size to derive the token's top-left. See monks-active-tiles/actions.js
+      // (`midX`/`midY`, ~line 437 and ~line 814) in MATT 14.01.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       this.tokenX = snapped.x;
       this.tokenY = snapped.y;
@@ -1658,7 +1666,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * Handle adding a tile to the activation list
    */
   async _onAddTile(_event: Event, _target: HTMLElement): Promise<void> {
-    ui.notifications.info('Click on a tile to add it to the activation list...');
+    notifyInfo('EMPUZZLES.NotifyClickTileForActivationList');
 
     // Sync form state to class properties before re-rendering
     this._syncFormToState();
@@ -1668,14 +1676,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       const hoverObjects = (canvas as any).tiles.hover ? [(canvas as any).tiles.hover] : [];
 
       if (hoverObjects.length === 0) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         return;
       }
 
       const tile = hoverObjects[0].document;
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         return;
       }
@@ -1744,13 +1752,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Minimize this dialog
     await this.minimize();
-    ui.notifications.info('Click on a tile to add it to the trigger list...');
+    notifyInfo('EMPUZZLES.NotifyClickTileForTriggerList');
 
     const handler = async (clickEvent: any) => {
       const tile = clickEvent.interactionData?.object?.document;
 
       if (!tile) {
-        ui.notifications.warn('No tile selected!');
+        notifyWarn('EMPUZZLES.NotifyNoTileSelected');
         (canvas as any).stage.off('click', handler);
         this.maximize();
         return;
@@ -1769,7 +1777,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Re-render to show updated list
       await this.render(true);
       this.maximize();
-      ui.notifications.info(`Added: ${tile.name || 'Tile'}`);
+      notifyInfo('EMPUZZLES.NotifyAdded', {
+        name: tile.name || game.i18n.localize('EMPUZZLES.Tile')
+      });
     };
 
     (canvas as any).stage.on('click', handler);
@@ -1807,14 +1817,21 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const tileId = target.dataset.tileId;
     if (!tileId) return;
 
-    ui.notifications.info('Click on the canvas to select move position...');
+    notifyInfo('EMPUZZLES.NotifySelectMovePosition');
 
     // Sync form state to class properties before re-rendering
     this._syncFormToState();
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct here, unlike the tile-placement call sites. This
+      // point is handed to a Monk's Active Tiles action (teleport / movetoken),
+      // and MATT treats the location as a CENTRE: it subtracts half the token
+      // size to derive the token's top-left. See monks-active-tiles/actions.js
+      // (`midX`/`midY`, ~line 437 and ~line 814) in MATT 14.01.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       // Update tile data with position
       const tileData = this.selectedTiles.get(tileId);
@@ -1849,7 +1866,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       (canvas as any).walls.activate();
     }
 
-    ui.notifications.info('Select a wall or door, then it will be added to the list.');
+    notifyInfo('EMPUZZLES.NotifySelectWallOrDoor');
 
     // Store that we're waiting for wall selection
     (this as any)._waitingForWall = true;
@@ -1863,7 +1880,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
       // Check if already added
       if (this.selectedWalls.some(w => w.wallId === wall.id)) {
-        ui.notifications.warn('This wall/door is already in the list!');
+        notifyWarn('EMPUZZLES.NotifyWallAlreadyInList');
         this.maximize();
         return;
       }
@@ -1916,11 +1933,18 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected async _onSelectTeleportPosition(event: Event, _target: HTMLElement): Promise<void> {
     event.preventDefault();
 
-    ui.notifications.info('Click on the canvas to select teleport destination...');
+    notifyInfo('EMPUZZLES.NotifySelectTeleportDestination');
 
     const handler = (clickEvent: any) => {
       const position = clickEvent.data.getLocalPosition((canvas as any).tiles);
-      const snapped = (canvas as any).grid.getSnappedPoint(position, { mode: 1 });
+      // CENTER is correct here, unlike the tile-placement call sites. This
+      // point is handed to a Monk's Active Tiles action (teleport / movetoken),
+      // and MATT treats the location as a CENTRE: it subtracts half the token
+      // size to derive the token's top-left. See monks-active-tiles/actions.js
+      // (`midX`/`midY`, ~line 437 and ~line 814) in MATT 14.01.
+      const snapped = (canvas as any).grid.getSnappedPoint(position, {
+        mode: (globalThis as any).CONST?.GRID_SNAPPING_MODES?.CENTER ?? 0x1
+      });
 
       this.teleportX = snapped.x;
       this.teleportY = snapped.y;
@@ -1940,17 +1964,24 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. Only requests a close; cleanup lives in the
+   * `_onClose` lifecycle hook so it runs on every close path.
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up drag preview manager if it exists
     if (this.dragPreviewManager) {
       this.dragPreviewManager.stop();
       this.dragPreviewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -1969,7 +2000,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected _onAddTag(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -1981,7 +2012,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -2003,7 +2034,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Validate form
     const validation = this._validateForm(form);
     if (!validation.valid) {
-      ui.notifications.error(validation.message || 'Form validation failed!');
+      notifyError(validation.message || 'EMPUZZLES.NotifyFormValidationFailed');
       return;
     }
 
@@ -2017,12 +2048,16 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Validate form based on trap type and result type
+   *
+   * @returns `message`, when present, is a localization KEY (not display
+   * text) — callers must resolve it via `notifyError`/`game.i18n` before
+   * showing it to the user.
    */
   protected _validateForm(form: HTMLFormElement): { valid: boolean; message?: string } {
     // Common validation
     const trapName = (form.querySelector('input[name="trapName"]') as HTMLInputElement)?.value;
     if (!trapName) {
-      return { valid: false, message: 'Trap name is required!' };
+      return { valid: false, message: 'EMPUZZLES.NotifyTrapNameRequired' };
     }
 
     // Region traps: only need trap name (region-specific fields have defaults)
@@ -2033,7 +2068,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Activating trap validation
     if (this.trapType === TrapType.ACTIVATING) {
       if (this.selectedTiles.size === 0) {
-        return { valid: false, message: 'You must select at least one tile to activate!' };
+        return { valid: false, message: 'EMPUZZLES.NotifySelectTileToActivate' };
       }
       return { valid: true };
     }
@@ -2042,7 +2077,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (this.trapType === TrapType.IMAGE) {
       // Check result type is selected
       if (!this.resultType) {
-        return { valid: false, message: 'Please select a result type!' };
+        return { valid: false, message: 'EMPUZZLES.NotifySelectResultType' };
       }
 
       // Check triggered image when switching behavior is selected
@@ -2054,7 +2089,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           form.querySelector('input[name="triggeredImage"]') as HTMLInputElement
         )?.value;
         if (!triggeredImage) {
-          return { valid: false, message: 'Triggered image is required when switching images!' };
+          return { valid: false, message: 'EMPUZZLES.NotifyTriggeredImageRequired' };
         }
       }
 
@@ -2063,14 +2098,14 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const damageOnFail = (form.querySelector('input[name="damageOnFail"]') as HTMLInputElement)
           ?.value;
         if (!damageOnFail) {
-          return { valid: false, message: 'Damage formula is required!' };
+          return { valid: false, message: 'EMPUZZLES.NotifyDamageFormulaRequired' };
         }
       }
 
       if (this.resultType === TrapResultType.COMBAT && !this.attackItemId) {
         return {
           valid: false,
-          message: 'Please drop a weapon or feature item for combat attacks!'
+          message: 'EMPUZZLES.NotifyDropCombatAttackItem'
         };
       }
     }
@@ -2148,9 +2183,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     this.minimize();
 
     // Set up drag-to-place handlers for activating trap
-    ui.notifications.info(
-      'Drag on the canvas to place and size the activating trap. Press ESC to cancel.'
-    );
+    notifyInfo('EMPUZZLES.NotifyPlaceActivatingTrap');
 
     // Start drag-to-place preview with ghost image
     this.dragPreviewManager = await startDragPlacePreview({
@@ -2166,7 +2199,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
           } else {
             await createTrapTile(canvas.scene, trapConfig, x, y, width, height);
-            ui.notifications.info(`Activating trap "${trapConfig.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyActivatingTrapCreated', { name: trapConfig.name });
           }
         }
 
@@ -2233,9 +2266,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       this.minimize();
 
       // Set up drag-to-place handlers for combat trap
-      ui.notifications.info(
-        'Drag on the canvas to place and size the combat trap. Press ESC to cancel.'
-      );
+      notifyInfo('EMPUZZLES.NotifyPlaceCombatTrap');
 
       // Use ghost preview if there's an image, otherwise fall back to rectangle
       const previewImage = combatConfig.startingImage || 'icons/svg/hazard.svg';
@@ -2251,7 +2282,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             // Combat traps only support tile creation (not regions)
             // Region creation for combat would require significant additional work
             await createCombatTrapTile(canvas.scene, combatConfig, x, y, width, height);
-            ui.notifications.info(`Combat trap "${combatConfig.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyCombatTrapCreated', { name: combatConfig.name });
           }
 
           this.close();
@@ -2285,6 +2316,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         imageTrapConfig.flavorText =
           (form.querySelector('textarea[name="flavorText"]') as HTMLTextAreaElement)?.value || '';
 
+        // Damage type drives the custom `em-tile-utilities.applydamage` action,
+        // which is what makes tile-trap damage honour resistance/immunity and
+        // the GM's midi-qol automation. Regions already had this field.
+        imageTrapConfig.damageType =
+          (form.querySelector('select[name="damageType"]') as HTMLSelectElement)?.value ||
+          DEFAULT_DAMAGE_TYPE;
+
         // Extract half damage checkbox
         const halfDamageCheckbox = form.querySelector(
           'input[name="halfDamageOnSuccess"]'
@@ -2299,7 +2337,9 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           );
           if (selectedActivity) {
             const activityData = this._extractActivityData(selectedActivity);
-            halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+            if (activityData) {
+              halfDamageOnSuccess = activityData.halfDamageOnSuccess;
+            }
           }
         }
         imageTrapConfig.halfDamageOnSuccess = halfDamageOnSuccess;
@@ -2349,12 +2389,10 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Switch to appropriate canvas layer based on creation type
     if (isRegion) {
       (canvas as any).regions?.activate();
-      ui.notifications.info(
-        'Drag on the canvas to place and size the region trap. Press ESC to cancel.'
-      );
+      notifyInfo('EMPUZZLES.NotifyPlaceRegionTrap');
     } else {
       (canvas as any).tiles?.activate();
-      ui.notifications.info('Drag on the canvas to place and size the trap. Press ESC to cancel.');
+      notifyInfo('EMPUZZLES.NotifyPlaceTrap');
     }
 
     // Configure preview based on creation type
@@ -2370,7 +2408,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
             await createTrapRegion(canvas.scene, regionConfig, x, y, width, height);
           } else {
             await createTrapTile(canvas.scene, trapConfig as TrapConfig, x, y, width, height);
-            ui.notifications.info(`Trap "${trapConfig.name}" created!`);
+            notifyInfo('EMPUZZLES.NotifyTrapCreated', { name: trapConfig.name });
           }
         }
 
@@ -2671,7 +2709,7 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     if (hasSavingThrow) {
       config.savingThrow =
         (form.querySelector('select[name="savingThrow"]') as HTMLSelectElement)?.value ||
-        'ability:dex';
+        'save:dex';
       config.dc = parseInt(
         (form.querySelector('input[name="dc"]') as HTMLInputElement)?.value || '14'
       );

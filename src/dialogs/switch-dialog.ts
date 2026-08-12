@@ -3,6 +3,7 @@ import { getNextTileNumber, startTilePreview, TilePreviewManager } from '../util
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
+import { notifyInfo, notifyError } from './notify';
 
 // Access ApplicationV2 and HandlebarsApplicationMixin from Foundry v13 API
 const { ApplicationV2, HandlebarsApplicationMixin } = (foundry as any).applications.api;
@@ -41,7 +42,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
       handler: SwitchConfigDialog.prototype._onSubmit
     },
     actions: {
-      close: SwitchConfigDialog.prototype._onClose,
+      close: SwitchConfigDialog.prototype._onCancel,
       addTag: SwitchConfigDialog.prototype._onAddTag,
       confirmTags: SwitchConfigDialog.prototype._onConfirmTags
     }
@@ -145,17 +146,25 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   /* -------------------------------------------- */
 
   /**
-   * Handle dialog close (cancel button)
+   * Handle the Cancel button. This only *requests* a close — all cleanup lives
+   * in the `_onClose` lifecycle hook below, which ApplicationV2 invokes from
+   * inside `close()` for every close path (button, window ✕, ESC, programmatic).
    */
-  protected _onClose(): void {
+  protected _onCancel(): void {
+    this.close();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  protected _onClose(options: any): void {
+    super._onClose(options);
+
     // Clean up preview if active
     if (this.previewManager) {
       this.previewManager.stop();
       this.previewManager = undefined;
     }
-
-    // Close the dialog
-    this.close();
 
     // Restore Tile Manager if it was minimized
     const tileManager = getActiveTileManager();
@@ -203,8 +212,8 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
 
     const current = input.value;
 
-    // Foundry v14 removed the global FilePicker shim; use the namespaced class.
-    const FilePickerClass = (foundry as any).applications?.apps?.FilePicker ?? (globalThis as any).FilePicker;
+    // Foundry v14 removed the global FilePicker shim; it lives here now.
+    const FilePickerClass = foundry.applications.apps.FilePicker;
     const fp = new FilePickerClass({
       type: type,
       current: current,
@@ -226,7 +235,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   protected _onAddTag(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -240,7 +249,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   protected _onConfirmTags(_event: Event, _target: HTMLElement): void {
     if (!this.tagInputManager) {
       console.error("Dorman Lakely's Tile Utilities - TagInputManager not initialized!");
-      ui.notifications.error('Tag manager not initialized. Please report this issue.');
+      notifyError('EMPUZZLES.NotifyTagManagerNotInitializedReport');
       return;
     }
     this.tagInputManager.addTagsFromInput();
@@ -262,7 +271,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
   ): Promise<void> {
     const scene = canvas.scene;
     if (!scene) {
-      ui.notifications.error('Tile Utilities Error: No active scene!');
+      notifyError('EMPUZZLES.NotifyErrorNoActiveScene');
       return;
     }
 
@@ -272,7 +281,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     const previewImage = data.offImage || data.onImage;
 
     if (!previewImage) {
-      ui.notifications.error('Tile Utilities Error: No image selected for the switch tile!');
+      notifyError('EMPUZZLES.NotifyErrorNoSwitchImage');
       return;
     }
 
@@ -280,7 +289,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
     this.minimize();
 
     // Show notification to click on canvas
-    ui.notifications.info('Click on the canvas to place the switch tile. Press ESC to cancel.');
+    notifyInfo('EMPUZZLES.NotifyPlaceSwitchTile');
 
     // Start tile preview with ghost image
     try {
@@ -303,7 +312,7 @@ export class SwitchConfigDialog extends HandlebarsApplicationMixin(ApplicationV2
             y
           );
 
-          ui.notifications.info('Switch tile created!');
+          notifyInfo('EMPUZZLES.NotifySwitchTileCreated');
 
           // Clear preview reference before closing to avoid race condition with _onClose
           this.previewManager = undefined;

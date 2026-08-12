@@ -13,7 +13,7 @@ export class PatreonLink extends ApplicationV2 {
     classes: [],
     tag: 'div',
     window: {
-      title: 'Support on Patreon',
+      title: 'EMPUZZLES.SupportOnPatreon',
       icon: 'fab fa-patreon'
     },
     position: { width: 1, height: 1 }
@@ -31,10 +31,10 @@ export class PatreonLink extends ApplicationV2 {
     (this as any).element?.style?.setProperty('display', 'none');
 
     await DialogV2.prompt({
-      window: { title: 'Support on Patreon' },
-      content: '<p>Open the Patreon page in a new tab.</p>',
+      window: { title: game.i18n.localize('EMPUZZLES.SupportOnPatreon') },
+      content: `<p>${game.i18n.localize('EMPUZZLES.SettingPatreonPromptBody')}</p>`,
       ok: {
-        label: '<i class="fab fa-patreon"></i> Visit Patreon',
+        label: `<i class="fab fa-patreon"></i> ${game.i18n.localize('EMPUZZLES.SettingPatreonLabel')}`,
         callback: () => {
           // `noopener,noreferrer` prevents reverse-tabnabbing — the new tab
           // cannot navigate or read the Foundry page via window.opener.
@@ -53,7 +53,7 @@ export class DmGuruLink extends ApplicationV2 {
     classes: [],
     tag: 'div',
     window: {
-      title: 'Dungeon Master Guru',
+      title: 'EMPUZZLES.DungeonMasterGuru',
       icon: 'fas fa-dragon'
     },
     position: { width: 1, height: 1 }
@@ -71,10 +71,10 @@ export class DmGuruLink extends ApplicationV2 {
     (this as any).element?.style?.setProperty('display', 'none');
 
     await DialogV2.prompt({
-      window: { title: 'Dungeon Master Guru' },
-      content: '<p>Open the Dungeon Master Guru site in a new tab.</p>',
+      window: { title: game.i18n.localize('EMPUZZLES.DungeonMasterGuru') },
+      content: `<p>${game.i18n.localize('EMPUZZLES.SettingDmGuruPromptBody')}</p>`,
       ok: {
-        label: '<i class="fas fa-dragon"></i> Visit Dungeon Master Guru',
+        label: `<i class="fas fa-dragon"></i> ${game.i18n.localize('EMPUZZLES.SettingDmGuruLabel')}`,
         callback: () => {
           window.open('https://dungeonmaster.guru', '_blank', 'noopener,noreferrer');
         }

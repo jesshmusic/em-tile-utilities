@@ -3,6 +3,30 @@
  */
 
 import { jest } from '@jest/globals';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// The i18n mock resolves against the REAL lang/en.json rather than echoing the
+// key back. Two reasons: assertions can be written against the English a GM
+// actually sees, and a key that is referenced but never defined shows up as a
+// failing test instead of a dialog rendering a raw key name.
+const LANG_FILE = join(__dirname, '..', '..', 'lang', 'en.json');
+const TRANSLATIONS = JSON.parse(readFileSync(LANG_FILE, 'utf8'));
+
+function localizeKey(key: string): string {
+  const value = String(key)
+    .split('.')
+    .reduce((node: any, part: string) => (node == null ? undefined : node[part]), TRANSLATIONS);
+  // Foundry returns the key unchanged when there is no translation for it.
+  return typeof value === 'string' ? value : key;
+}
+
+// Mirrors foundry.helpers.Localization#format: a single global pass replacing
+// every {placeholder} token, so a placeholder repeated in one string is
+// substituted at each occurrence.
+function formatKey(key: string, data: Record<string, unknown> = {}): string {
+  return localizeKey(key).replace(/{[^}]+}/g, token => String(data[token.slice(1, -1)]));
+}
 
 export function mockFoundry() {
   // Mock foundry.utils
@@ -42,8 +66,37 @@ export function mockFoundry() {
           };
         },
         DialogV2: {
-          confirm: jest.fn(async () => true)
+          confirm: jest.fn(async () => true),
+          prompt: jest.fn(async () => true)
         }
+      },
+      // Foundry v14 moved FilePicker off the global scope to here.
+      apps: {
+        FilePicker: jest.fn().mockImplementation((_options: any) => ({
+          browse: jest.fn()
+        }))
+      },
+      // Foundry v14 moved loadTemplates/renderTemplate off the global scope
+      // to here. The Record<string, string> form of loadTemplates preloads
+      // each template AND registers it as a named Handlebars partial.
+      handlebars: {
+        loadTemplates: jest.fn(async (paths: string[] | Record<string, string>) => {
+          const entries = Array.isArray(paths)
+            ? paths.map(p => [p, p] as const)
+            : Object.entries(paths);
+          for (const [id] of entries) {
+            (global as any).Handlebars?.registerPartial?.(id, `<!-- ${id} -->`);
+          }
+          return entries.map(() => () => '');
+        }),
+        renderTemplate: jest.fn(async () => ''),
+        getTemplate: jest.fn(async () => () => '')
+      }
+    },
+    // Foundry v14 moved AudioHelper off the global scope to here.
+    audio: {
+      AudioHelper: {
+        play: jest.fn(async () => ({}))
       }
     }
   };
@@ -79,7 +132,8 @@ export function mockFoundry() {
       set: jest.fn()
     },
     i18n: {
-      localize: jest.fn((key: string) => key)
+      localize: jest.fn((key: string) => localizeKey(key)),
+      format: jest.fn((key: string, data: Record<string, unknown> = {}) => formatKey(key, data))
     },
     scenes: new Map()
   };
@@ -147,6 +201,39 @@ export function mockFoundry() {
     }
   };
 
+  // Mock Roll.
+  //
+  // Real Foundry evaluates dice; that is not what the code under test cares
+  // about, so this resolves a deterministic total: the sum of every integer in
+  // the formula ("2d6" -> 8, "0" -> 0). `total` is only readable after
+  // `evaluate()`, mirroring Foundry's own "unevaluated roll" contract closely
+  // enough that forgetting to await shows up as NaN rather than passing.
+  (global as any).Roll = class MockRoll {
+    formula: string;
+    data: Record<string, unknown>;
+    options: Record<string, unknown>;
+    total: number | undefined = undefined;
+    evaluate = jest.fn(async () => {
+      const numbers: string[] = String(this.formula).match(/\d+/g) ?? [];
+      let sum = 0;
+      for (const n of numbers) sum += parseInt(n, 10);
+      this.total = sum;
+      return this;
+    });
+    toMessage = jest.fn(async () => ({ id: 'mock-message' }));
+
+    constructor(formula: string, data: Record<string, unknown> = {}, options: any = {}) {
+      this.formula = formula;
+      this.data = data;
+      this.options = options;
+    }
+  };
+
+  // Mock ChatMessage (only the speaker helper is used by src/).
+  (global as any).ChatMessage = {
+    getSpeaker: jest.fn((data: any) => ({ token: data?.token?.id, actor: data?.actor?.id }))
+  };
+
   // Mock Hooks
   (global as any).Hooks = {
     once: jest.fn(),
@@ -156,15 +243,10 @@ export function mockFoundry() {
     callAll: jest.fn()
   };
 
-  // Mock Dialog
-  (global as any).Dialog = {
-    confirm: jest.fn(async () => true)
-  };
-
-  // Mock FilePicker
-  (global as any).FilePicker = jest.fn().mockImplementation((_options: any) => ({
-    browse: jest.fn()
-  }));
+  // NOTE: the flat `Dialog`, `FilePicker`, `loadTemplates`, `renderTemplate`
+  // and `AudioHelper` globals were REMOVED in Foundry v14 and are deliberately
+  // not mocked. Their v14 homes are on the `foundry` namespace above. Adding
+  // them back here would let v13-era code pass tests and then fail in Foundry.
 
   // Mock Tagger (3rd party module API)
   (globalThis as any).Tagger = {
@@ -173,11 +255,6 @@ export function mockFoundry() {
     hasTags: jest.fn(() => false),
     getByTag: jest.fn(() => [])
   };
-
-  // Mock loadTemplates (Foundry template loader)
-  (global as any).loadTemplates = jest.fn(async (_paths: string[]) => {
-    return Promise.resolve();
-  });
 
   // Mock document if not in jsdom environment
   if (typeof document === 'undefined') {

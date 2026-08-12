@@ -8,7 +8,12 @@ import { mockFoundry, createMockScene, createMockTile } from '../mocks/foundry';
 // Mock foundry before importing
 mockFoundry();
 
+jest.mock('../../src/utils/creators', () => ({
+  createResetTile: jest.fn(async () => undefined)
+}));
+
 import { ResetTileConfigDialog, showResetTileDialog } from '../../src/dialogs/reset-dialog';
+import { createResetTile } from '../../src/utils/creators';
 import * as tileManagerState from '../../src/dialogs/tile-manager-state';
 
 describe('ResetTileConfigDialog', () => {
@@ -43,7 +48,10 @@ describe('ResetTileConfigDialog', () => {
       expect(options.window.icon).toBe('gi-clockwise-rotation');
       expect(options.window.title).toBe('EMPUZZLES.CreateResetTile');
       expect(options.position.width).toBe(650);
-      expect(options.position.height).toBe(525);
+      // Content-driven height: the `max-height: 90vh` flex block in
+      // styles/dialogs.css caps it, so the window fits short forms without
+      // dead space and scrolls tall ones.
+      expect(options.position.height).toBe('auto');
     });
 
     it('should have correct parts configuration', () => {
@@ -543,19 +551,56 @@ describe('ResetTileConfigDialog', () => {
     });
   });
 
-  describe('_onClose', () => {
-    it('should close the dialog', () => {
+  describe('_onCancel', () => {
+    it('should request a close', () => {
       dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onCancel();
       expect(dialog.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('_onClose', () => {
+    /** Walk up the prototype chain to the ApplicationV2 base that owns _onClose */
+    const superPrototype = (instance: any): any => {
+      let proto = Object.getPrototypeOf(Object.getPrototypeOf(instance));
+      while (proto && !Object.prototype.hasOwnProperty.call(proto, '_onClose')) {
+        proto = Object.getPrototypeOf(proto);
+      }
+      return proto;
+    };
+
+    it('should call super._onClose with the lifecycle options', () => {
+      const superSpy = jest.spyOn(superPrototype(dialog), '_onClose');
+
+      (dialog as any)._onClose({ closeKey: true });
+
+      expect(superSpy).toHaveBeenCalledWith({ closeKey: true });
+      superSpy.mockRestore();
+    });
+
+    it('should not re-enter close()', () => {
+      dialog.close = jest.fn();
+
+      (dialog as any)._onClose({});
+
+      expect(dialog.close).not.toHaveBeenCalled();
+    });
+
+    it('should stop and clear the preview manager', () => {
+      const mockPreviewManager = { stop: jest.fn() };
+      (dialog as any).previewManager = mockPreviewManager;
+
+      (dialog as any)._onClose({});
+
+      expect(mockPreviewManager.stop).toHaveBeenCalled();
+      expect((dialog as any).previewManager).toBeUndefined();
     });
 
     it('should maximize tile manager if it exists', () => {
       const mockTileManager = { maximize: jest.fn() };
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(mockTileManager);
 
-      dialog.close = jest.fn();
-      (dialog as any)._onClose();
+      (dialog as any)._onClose({});
 
       expect(mockTileManager.maximize).toHaveBeenCalled();
     });
@@ -563,9 +608,7 @@ describe('ResetTileConfigDialog', () => {
     it('should not throw if tile manager does not exist', () => {
       jest.spyOn(tileManagerState, 'getActiveTileManager').mockReturnValue(null);
 
-      dialog.close = jest.fn();
-
-      expect(() => (dialog as any)._onClose()).not.toThrow();
+      expect(() => (dialog as any)._onClose({})).not.toThrow();
     });
   });
 });
@@ -633,7 +676,7 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       } as any;
 
       const mockBrowse = jest.fn();
-      (global as any).FilePicker = jest.fn().mockImplementation(() => ({
+      (global as any).foundry.applications.apps.FilePicker = jest.fn().mockImplementation(() => ({
         browse: mockBrowse
       }));
 
@@ -653,10 +696,12 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       } as any;
 
       let capturedCallback: any;
-      (global as any).FilePicker = jest.fn().mockImplementation((options: any) => {
-        capturedCallback = options.callback;
-        return { browse: jest.fn() };
-      });
+      (global as any).foundry.applications.apps.FilePicker = jest
+        .fn()
+        .mockImplementation((options: any) => {
+          capturedCallback = options.callback;
+          return { browse: jest.fn() };
+        });
 
       await dialog._onFilePicker(mockEvent);
 
@@ -821,6 +866,202 @@ describe('ResetTileConfigDialog Extended Tests', () => {
       });
 
       expect((global as any).canvas.stage.on).toHaveBeenCalledWith('click', expect.any(Function));
+    });
+
+    /**
+     * Run the full submit flow and return the ResetTileConfig handed to
+     * createResetTile, by firing the placement click the preview registers.
+     */
+    const submitAndPlace = async (formData: Record<string, any>): Promise<any> => {
+      const handler = (ResetTileConfigDialog as any).DEFAULT_OPTIONS.form.handler;
+      await handler.call(dialog, {} as SubmitEvent, {} as HTMLFormElement, { object: formData });
+
+      const clickCall = ((global as any).canvas.stage.on as any).mock.calls.find(
+        (call: any[]) => call[0] === 'click'
+      );
+      await clickCall[1]({ data: { getLocalPosition: () => ({ x: 400, y: 400 }) } });
+
+      return (createResetTile as any).mock.calls[0][1];
+    };
+
+    const selectedTile = (overrides: any = {}) => ({
+      tileId: 'tile-1',
+      tileName: 'Test',
+      hidden: false,
+      image: 'test.png',
+      fileindex: 0,
+      active: true,
+      files: [],
+      variables: {},
+      rotation: 0,
+      x: 100,
+      y: 200,
+      currentRotation: 0,
+      currentX: 100,
+      currentY: 200,
+      wallDoorActions: [],
+      hasActivateAction: false,
+      hasMovementAction: false,
+      hasTileImageAction: false,
+      hasShowHideAction: false,
+      hasAnyActions: false,
+      resetTriggerHistory: false,
+      ...overrides
+    });
+
+    // Regression: variables used to be flattened into a single map on the
+    // config, which lost the owning tile and made the reset write every
+    // variable onto the reset tile itself.
+    it('should group variables under the tile that owns them', async () => {
+      dialog.selectedTiles.set('tile-1', selectedTile({ variables: { switch_1: true } }) as any);
+      dialog.selectedTiles.set(
+        'tile-2',
+        selectedTile({ tileId: 'tile-2', variables: { switch_1: false } }) as any
+      );
+
+      const config = await submitAndPlace({
+        resetTileImage: 'reset.png',
+        resetName: 'Reset',
+        'var_tile-1_switch_1': 'false',
+        'var_tile-2_switch_1': 'true'
+      });
+
+      expect((config as any).varsToReset).toBeUndefined();
+      expect(config.tilesToReset).toHaveLength(2);
+      expect(config.tilesToReset[0]).toMatchObject({
+        tileId: 'tile-1',
+        variables: { switch_1: false }
+      });
+      expect(config.tilesToReset[1]).toMatchObject({
+        tileId: 'tile-2',
+        variables: { switch_1: true }
+      });
+    });
+
+    it('should read wall/door states from the tile-scoped form field', async () => {
+      dialog.selectedTiles.set(
+        'tile-1',
+        selectedTile({
+          wallDoorActions: [{ entityId: 'Scene.s1.Wall.w1', entityName: 'Door', state: 'CLOSED' }]
+        }) as any
+      );
+
+      const config = await submitAndPlace({
+        resetTileImage: 'reset.png',
+        resetName: 'Reset',
+        'walldoor_tile-1_0': 'LOCKED'
+      });
+
+      expect(config.tilesToReset[0].wallDoorStates).toEqual([
+        { entityId: 'Scene.s1.Wall.w1', entityName: 'Door', state: 'LOCKED' }
+      ]);
+    });
+
+    it('should pass the selected image index through to the config', async () => {
+      dialog.selectedTiles.set(
+        'tile-1',
+        selectedTile({ hasTileImageAction: true, hasAnyActions: true }) as any
+      );
+
+      const config = await submitAndPlace({
+        resetTileImage: 'reset.png',
+        resetName: 'Reset',
+        'fileindex_tile-1': '1'
+      });
+
+      expect(config.tilesToReset[0].fileindex).toBe(1);
+    });
+  });
+
+  describe('_syncTilesToState', () => {
+    /** Minimal element stub that resolves `[name="..."]` selectors. */
+    const elementWithFields = (fields: Record<string, any>) => ({
+      querySelector: jest.fn((selector: string) => {
+        const match = /^\[name="(.*?)"\](:checked)?$/.exec(selector);
+        if (!match) return null;
+        const field = fields[match[1]];
+        if (!field) return null;
+        if (match[2] && !field.checked) return null;
+        return field;
+      })
+    });
+
+    it('should preserve the chosen image index across a re-render', async () => {
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [
+          { id: 'a', name: 'a.png' },
+          { id: 'b', name: 'b.png' }
+        ],
+        variables: {},
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: true,
+        hasShowHideAction: false,
+        hasAnyActions: true,
+        resetTriggerHistory: false
+      } as any);
+
+      // The user picked the second image; a re-render must not revert to 0.
+      dialog.element = elementWithFields({
+        'fileindex_tile-1': { value: '1', checked: true }
+      }) as any;
+
+      const context = await dialog._prepareContext({});
+
+      expect(dialog.selectedTiles.get('tile-1')?.fileindex).toBe(1);
+      expect(context.tiles[0].fileindex).toBe(1);
+    });
+
+    it('should preserve edited variable values across a re-render', async () => {
+      dialog.selectedTiles.set('tile-1', {
+        tileId: 'tile-1',
+        tileName: 'Test',
+        hidden: false,
+        image: 'test.png',
+        fileindex: 0,
+        active: true,
+        files: [],
+        variables: { switch_1: 'ON' },
+        rotation: 0,
+        x: 100,
+        y: 200,
+        currentRotation: 0,
+        currentX: 100,
+        currentY: 200,
+        wallDoorActions: [],
+        hasActivateAction: false,
+        hasMovementAction: false,
+        hasTileImageAction: false,
+        hasShowHideAction: false,
+        hasAnyActions: false,
+        resetTriggerHistory: false
+      } as any);
+
+      dialog.element = elementWithFields({
+        'var_tile-1_switch_1': { value: 'OFF' }
+      }) as any;
+
+      await dialog._prepareContext({});
+
+      expect(dialog.selectedTiles.get('tile-1')?.variables.switch_1).toBe('OFF');
+    });
+
+    it('should not throw when the per-tile fields are absent', async () => {
+      dialog.element = { querySelector: jest.fn().mockReturnValue(null) } as any;
+      await expect(dialog._prepareContext({})).resolves.toBeDefined();
     });
   });
 
@@ -1354,7 +1595,12 @@ describe('ResetTileConfigDialog Extended Tests', () => {
 
       await clickHandler(mockClickEvent);
 
-      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Tile', expect.any(Array));
+      expect(createResetTile).toHaveBeenCalledWith(
+        mockScene,
+        expect.objectContaining({ name: 'Test Reset' }),
+        expect.any(Number),
+        expect.any(Number)
+      );
     });
 
     it('should minimize dialog before canvas click', async () => {

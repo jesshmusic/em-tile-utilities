@@ -1,5 +1,28 @@
 /**
  * Monk's Active Tiles configuration builder
+ *
+ * Envelope re-verified against Monk's Active Tiles 14.01.
+ *
+ * MATT itself seeds only a subset when it creates a tile — `active`, `trigger`,
+ * `vision`, `chance`, `restriction`, `controlled`, `actions`
+ * (../monks-active-tiles/monks-active-tiles.js:2533-2546 and
+ * ../monks-active-tiles/apps/active-tile-config.js:29-40) — and reads every
+ * other field defensively. The full set of tile-level flags MATT 14.01 reads is
+ * `actions, active, allowpaused, chance, controlled, cooldown, fileindex, files,
+ * minrequired, pertoken, pointer, record, restriction, trigger, usealpha,
+ * variables` (plus the runtime-only `current`, `hidden`, `history`,
+ * `teleporting`, `triggerPt`, which MATT writes itself). Every one of those is
+ * written below, so nothing is missing, renamed or newly-defaulted in 14.01.
+ *
+ * Two deliberate notes:
+ *  - `name` is legacy. MATT 14.01 never reads it at trigger time; its
+ *    `fixTileNames` migration copies it onto `TileDocument#name` and leaves it
+ *    (monks-active-tiles.js:3284-3294). It is kept because this module's Tile
+ *    Manager still keys off it, but new tiles should also set `name` on the
+ *    tile document itself.
+ *  - `minrequired: null` vs MATT's own `0`: `triggerData.minrequired` is only
+ *    ever truthiness-tested (monks-active-tiles.js:4933), so null and 0 behave
+ *    identically. Left as-is rather than churned.
  */
 
 /**
