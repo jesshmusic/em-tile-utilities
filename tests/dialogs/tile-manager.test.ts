@@ -468,8 +468,12 @@ describe('TileManagerDialog', () => {
     it('should render when tile from current scene changes', () => {
       jest.useFakeTimers();
 
+      // A real `updateTile` diff names the fields that changed. It used to be
+      // enough to pass `{}` here because every update re-rendered; now the
+      // handler asks whether the diff touches anything the list shows, so the
+      // diff has to be a real one. See tile-manager-refresh.test.ts.
       const mockTile = { parent: { id: mockScene.id } };
-      dialog._onTileChange(mockTile, {}, {}, 'user-123');
+      dialog._onTileChange(mockTile, { _id: 'abc', name: 'Renamed' }, {}, 'user-123');
 
       jest.runAllTimers();
 

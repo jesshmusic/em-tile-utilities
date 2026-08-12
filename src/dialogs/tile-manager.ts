@@ -363,32 +363,45 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
         }
       };
 
-      // Function to filter tiles
+      // Filter rows, then hide any group whose rows have all been filtered out
+      // and correct the count in the headers that remain — a header reading
+      // "Switches (7)" above a single visible row is worse than no count.
+      //
+      // `query` is the raw text the user typed; it is lowercased here for the
+      // comparison only. Storing the lowercased form is what made the search
+      // box downcase itself: `searchQuery` is echoed back into the input on
+      // re-render, so "Lever" came back as "lever" mid-word.
       const filterTiles = (query: string) => {
-        const tileEntries = this.element.querySelectorAll('.tile-entry');
-        tileEntries.forEach((entry: Element) => {
-          const nameElement = entry.querySelector('.tile-name');
-          if (nameElement) {
-            const tileName = nameElement.textContent?.toLowerCase() || '';
-            if (query === '' || tileName.includes(query)) {
-              (entry as HTMLElement).style.display = '';
-            } else {
-              (entry as HTMLElement).style.display = 'none';
-            }
-          }
+        const needle = query.toLowerCase();
+        this.element.querySelectorAll('.tile-entry').forEach((entry: Element) => {
+          const tileName = entry.querySelector('.tile-name')?.textContent?.toLowerCase() ?? '';
+          const matches = needle === '' || tileName.includes(needle);
+          (entry as HTMLElement).style.display = matches ? '' : 'none';
+        });
+
+        this.element.querySelectorAll('.tile-group').forEach((group: Element) => {
+          const rows = Array.from(group.querySelectorAll('.tile-entry'));
+          // A collapsed group renders no rows, so there is nothing to filter
+          // and nothing to recount — leave it exactly as it is rather than
+          // hiding it or reporting a count of zero.
+          if (rows.length === 0) return;
+
+          const visible = rows.filter(r => (r as HTMLElement).style.display !== 'none');
+          (group as HTMLElement).style.display = visible.length === 0 ? 'none' : '';
+          const count = group.querySelector('.group-count');
+          if (count) count.textContent = `(${visible.length})`;
         });
       };
 
       // Apply existing search filter after render
       if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        filterTiles(query);
+        filterTiles(this.searchQuery);
         updateClearButton();
       }
 
       // Listen for input changes
       searchInput.addEventListener('input', (event: Event) => {
-        const value = (event.target as HTMLInputElement).value.toLowerCase();
+        const value = (event.target as HTMLInputElement).value;
         this.searchQuery = value;
         filterTiles(value);
         updateClearButton();
@@ -446,6 +459,10 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   _onClose(options: any): void {
     super._onClose(options);
 
+    // A debounced refresh may still be queued; a render on a closed
+    // application is at best wasted and at worst throws.
+    clearTimeout((this as any)._refreshTimer);
+
     // Clear active instance tracking
     if (getActiveTileManager() === this) {
       setActiveTileManager(null);
@@ -469,16 +486,66 @@ export class TileManagerDialog extends HandlebarsApplicationMixin(ApplicationV2)
   /**
    * Handle tile changes (create, update, delete)
    */
-  _onTileChange(tile: any, _data: any, _options: any, _userId: string): void {
+  _onTileChange(tile: any, data: any, _options: any, _userId: string): void {
     // Only refresh if the tile is from the current scene
-    if (tile.parent?.id === canvas.scene?.id) {
-      // Defer render to next tick to avoid conflicts with other hooks
-      setTimeout(() => {
-        if (this.rendered) {
-          this.render();
-        }
-      }, 0);
-    }
+    if (tile.parent?.id !== canvas.scene?.id) return;
+
+    // An update that changes nothing this list displays must not re-render it.
+    // Dragging a tile across the canvas fires a stream of `updateTile` with
+    // only x/y in the diff, and a full re-render on each one threw away scroll
+    // position, focus and whatever the GM was halfway through typing into the
+    // search box. `data` is undefined for create/delete, which always matter.
+    if (data && !TileManagerDialog.#affectsList(data)) return;
+
+    // Coalesce bursts: a single drag or a multi-document create still only
+    // produces one render.
+    clearTimeout((this as any)._refreshTimer);
+    (this as any)._refreshTimer = setTimeout(() => {
+      if (this.rendered) this.render();
+    }, TileManagerDialog.#REFRESH_DEBOUNCE_MS);
+  }
+
+  /** How long to coalesce a burst of document updates before re-rendering. */
+  static #REFRESH_DEBOUNCE_MS = 100;
+
+  /**
+   * Fields whose change cannot affect anything the tile list renders.
+   *
+   * Purely geometric: the list shows a name, an image, a type and tags, none
+   * of which move when a tile does. These are the fields a canvas drag emits,
+   * which is the whole problem being solved.
+   */
+  static #GEOMETRY_ONLY_KEYS = new Set([
+    '_id',
+    'x',
+    'y',
+    'width',
+    'height',
+    'rotation',
+    'elevation',
+    'sort',
+    'z',
+    'shapes',
+    'alpha',
+    'occlusion',
+    'video',
+    'restrictions'
+  ]);
+
+  /**
+   * Whether an update diff touches anything the tile list shows.
+   *
+   * This is a **deny**-list, and the direction matters: an unrecognised field
+   * refreshes the list. The opposite shape — naming the fields that *do*
+   * matter — would mean a field nobody thought of leaves the list silently
+   * stale, which is the same trap the trap-effect allow-list fell into.
+   * Refreshing needlessly is cheap; showing a GM a list that disagrees with
+   * their scene is not.
+   */
+  static #affectsList(data: Record<string, unknown>): boolean {
+    const keys = Object.keys(data);
+    if (keys.length === 0) return false;
+    return keys.some(key => !TileManagerDialog.#GEOMETRY_ONLY_KEYS.has(key.split('.')[0]));
   }
 
   /* -------------------------------------------- */
