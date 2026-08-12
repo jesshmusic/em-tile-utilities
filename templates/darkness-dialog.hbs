@@ -1,0 +1,46 @@
+{{! Magical Darkness Region Configuration }}
+<fieldset class="basic-info-section">
+  <legend>
+    {{localize "EMPUZZLES.BasicInfo"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="regionName">{{localize "EMPUZZLES.RegionName"}}</label>
+    <input type="text" id="regionName" name="regionName" value="{{regionName}}" />
+    <p class="hint">{{localize "EMPUZZLES.RegionNameHint"}}</p>
+  </div>
+</fieldset>
+
+{{! Darkness settings }}
+<fieldset class="darkness-settings-section">
+  <legend>
+    {{localize "EMPUZZLES.DarknessSettings"}}
+  </legend>
+
+  <div class="form-group">
+    <label for="mode">{{localize "EMPUZZLES.DarknessMode"}}</label>
+    <select id="mode" name="mode">
+      {{#each modeOptions as |option|}}
+        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+      {{/each}}
+    </select>
+    <p class="hint">{{localize "EMPUZZLES.DarknessModeHint"}}</p>
+  </div>
+
+  <ul class="darkness-mode-guide">
+    {{#each modeOptions as |option|}}
+      <li><strong>{{localize option.label}}</strong> — {{localize option.hint}}</li>
+    {{/each}}
+  </ul>
+
+  <div class="form-group">
+    <label for="modifier">{{localize "EMPUZZLES.DarknessModifier"}}</label>
+    <input type="number" id="modifier" name="modifier" value="{{modifier}}" min="0" max="1" step="0.01" />
+    <p class="hint">{{localize "EMPUZZLES.DarknessModifierHint"}}</p>
+  </div>
+
+  <p class="hint">{{localize "EMPUZZLES.DarknessStackingHint"}}</p>
+</fieldset>
+
+{{! Custom Tags Section }}
+{{> partials/custom-tags-section customTags=customTags}}

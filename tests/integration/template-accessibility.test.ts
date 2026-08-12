@@ -31,6 +31,9 @@ import { TeleportDialog } from '../../src/dialogs/teleport-dialog';
 import { SwitchConfigDialog } from '../../src/dialogs/switch-dialog';
 import { LightConfigDialog } from '../../src/dialogs/light-dialog';
 import { ElevationDialog } from '../../src/dialogs/elevation-dialog';
+import { DifficultTerrainDialog } from '../../src/dialogs/difficult-terrain-dialog';
+import { DarknessDialog } from '../../src/dialogs/darkness-dialog';
+import { SurfaceDialog } from '../../src/dialogs/surface-dialog';
 
 const TILE_A = 'aaaaAAAA11112222';
 const TILE_B = 'bbbbBBBB33334444';
@@ -177,7 +180,13 @@ async function renderedTemplates(): Promise<Array<{ name: string; html: string }
     { name: 'light-config.hbs', html: await renderDialogTemplate(LightConfigDialog) },
     { name: 'switch-config.hbs', html: await renderDialogTemplate(SwitchConfigDialog) },
     { name: 'teleport-dialog.hbs', html: await renderDialogTemplate(TeleportDialog) },
-    { name: 'elevation-dialog.hbs', html: await renderDialogTemplate(ElevationDialog) }
+    { name: 'elevation-dialog.hbs', html: await renderDialogTemplate(ElevationDialog) },
+    {
+      name: 'difficult-terrain-dialog.hbs',
+      html: await renderDialogTemplate(DifficultTerrainDialog)
+    },
+    { name: 'darkness-dialog.hbs', html: await renderDialogTemplate(DarknessDialog) },
+    { name: 'surface-dialog.hbs', html: await renderDialogTemplate(SurfaceDialog) }
   ];
 
   // The trap dialog swaps out most of its lower half per result type, and
