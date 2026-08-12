@@ -11,9 +11,14 @@ import {
   getItemActivities,
   extractTrapActivityData,
   getDamageTypeOptions,
-  DEFAULT_DAMAGE_TYPE
+  DEFAULT_DAMAGE_TYPE,
+  getDamagePropertyOptions,
+  normalizeDamageProperties,
+  getExhaustionLevelOptions,
+  EXHAUSTION_STATUS_ID,
+  DEFAULT_DURATION_UNIT
 } from '../utils/helpers';
-import type { TrapActivityData } from '../utils/helpers';
+import type { TrapActivityData, ConditionDurationUnit } from '../utils/helpers';
 import { getActiveTileManager } from './tile-manager-state';
 import { TagInputManager } from '../utils/tag-input-manager';
 import { DialogPositions } from '../types/dialog-positions';
@@ -88,6 +93,13 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
    * custom `em-tile-utilities.applydamage` action the trap creator emits.
    */
   protected damageType: string = DEFAULT_DAMAGE_TYPE;
+  /**
+   * Damage BYPASS properties (`mgc`, `sil`, `ada`, …) for TILE traps. dnd5e
+   * intersects these with a target's `dr`/`di`/`dv` bypasses, which is what
+   * lets a magical trap hurt a creature resistant to nonmagical weapons.
+   * Empty by default, matching the pre-2.3.0 behaviour.
+   */
+  protected damageProperties: string[] = [];
 
   // Heal Result Type
   protected healingAmount: string = '2d4+2';
@@ -96,6 +108,11 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
   // Active Effect Result Type
   protected effectId: string = '';
   protected addEffect: 'add' | 'remove' | 'toggle' | 'clear' = 'add';
+  /** Exhaustion level; only used when `effectId` is `exhaustion`. */
+  protected exhaustionLevel: number = 1;
+  /** Duration unit; `untilRemoved` reproduces the pre-2.3.0 behaviour. */
+  protected effectDurationUnit: ConditionDurationUnit = DEFAULT_DURATION_UNIT;
+  protected effectDurationValue: number = 1;
 
   // Additional Effects (shared across damage, heal, active effect)
   protected additionalEffects: string[] = [];
@@ -362,6 +379,31 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     // Active Tiles action — see src/utils/helpers/damage-types.ts.
     const damageTypeOptions = getDamageTypeOptions();
 
+    // Bypass properties are sourced from CONFIG.DND5E.itemProperties entries
+    // flagged `isPhysical`, so the list tracks the system (and any module that
+    // adds one) instead of drifting. Empty on non-dnd5e systems, where the
+    // template renders nothing at all.
+    const damagePropertyOptions = getDamagePropertyOptions().map(option => ({
+      ...option,
+      checked: this.damageProperties.includes(option.value)
+    }));
+
+    // Exhaustion ladder length comes from
+    // CONFIG.DND5E.conditionTypes.exhaustion.levels — 6 under the 2024 rules
+    // dnd5e 5.3.3 implements, but read rather than assumed.
+    const exhaustionLevelOptions = getExhaustionLevelOptions().map(level => ({
+      value: level,
+      selected: level === this.exhaustionLevel
+    }));
+
+    const effectDurationUnitOptions = [
+      { value: 'untilRemoved', label: 'EMPUZZLES.EffectDurationUntilRemoved' },
+      { value: 'rounds', label: 'EMPUZZLES.EffectDurationRounds' },
+      { value: 'turns', label: 'EMPUZZLES.EffectDurationTurns' },
+      { value: 'minutes', label: 'EMPUZZLES.EffectDurationMinutes' },
+      { value: 'hours', label: 'EMPUZZLES.EffectDurationHours' }
+    ].map(option => ({ ...option, selected: option.value === this.effectDurationUnit }));
+
     // Prepare DMG trap item data if active
     let dmgTrapData: any = null;
     let activityData: any = null;
@@ -481,6 +523,8 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       defaultDamageOnFail: useDamageOnFail,
       defaultHalfDamageOnSuccess: useHalfDamageOnSuccess,
       damageType: this.damageType,
+      damagePropertyOptions: damagePropertyOptions,
+      hasDamagePropertyOptions: damagePropertyOptions.length > 0,
       flavorText: this.flavorText,
 
       // Heal Result Type - use class properties
@@ -490,6 +534,15 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       // Active Effect Result Type - use class properties
       effectId: this.effectId,
       addEffect: this.addEffect,
+      exhaustionLevel: this.exhaustionLevel,
+      exhaustionLevelOptions: exhaustionLevelOptions,
+      exhaustionStatusId: EXHAUSTION_STATUS_ID,
+      // Exhaustion levels are a dnd5e concept; other systems get the plain
+      // effect selector they had before.
+      showExhaustionLevel: isDnd5eSystem() && exhaustionLevelOptions.length > 0,
+      effectDurationUnit: this.effectDurationUnit,
+      effectDurationUnitOptions: effectDurationUnitOptions,
+      effectDurationValue: this.effectDurationValue,
 
       // Additional Effects - use class property
       additionalEffects: this.additionalEffects,
@@ -679,6 +732,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     ) as HTMLSelectElement;
     if (damageTypeSelect?.value) this.damageType = damageTypeSelect.value;
 
+    // Bypass properties: one checkbox per id, all sharing the name
+    // `damageProperties`, so the captured value is the set of checked ones.
+    const damagePropertyBoxes = this.element.querySelectorAll(
+      'input[name="damageProperties"]'
+    ) as NodeListOf<HTMLInputElement>;
+    if (damagePropertyBoxes.length > 0) {
+      this.damageProperties = Array.from(damagePropertyBoxes)
+        .filter(box => box.checked)
+        .map(box => box.value);
+    }
+
     const flavorTextArea = this.element.querySelector('[name="flavorText"]') as HTMLTextAreaElement;
     if (flavorTextArea) this.flavorText = flavorTextArea.value;
 
@@ -700,6 +764,27 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
     const addEffectSelect = this.element.querySelector('[name="addEffect"]') as HTMLSelectElement;
     if (addEffectSelect)
       this.addEffect = addEffectSelect.value as 'add' | 'remove' | 'toggle' | 'clear';
+
+    const exhaustionLevelSelect = this.element.querySelector(
+      '[name="exhaustionLevel"]'
+    ) as HTMLSelectElement;
+    if (exhaustionLevelSelect?.value) {
+      this.exhaustionLevel = parseInt(exhaustionLevelSelect.value) || 1;
+    }
+
+    const effectDurationUnitSelect = this.element.querySelector(
+      '[name="effectDurationUnit"]'
+    ) as HTMLSelectElement;
+    if (effectDurationUnitSelect?.value) {
+      this.effectDurationUnit = effectDurationUnitSelect.value as ConditionDurationUnit;
+    }
+
+    const effectDurationValueInput = this.element.querySelector(
+      '[name="effectDurationValue"]'
+    ) as HTMLInputElement;
+    if (effectDurationValueInput) {
+      this.effectDurationValue = parseInt(effectDurationValueInput.value) || 1;
+    }
 
     // Additional Effects
     const additionalEffectsSelect = this.element.querySelector('[name="additionalEffects"]') as any;
@@ -1128,11 +1213,54 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
+    this._setupConditionListeners();
+
     // Update Setup Tasks list
     this._updateSetupTasks();
 
     // Set up form validation listener to update submit button state
     this._setupFormValidation();
+  }
+
+  /**
+   * Wire the two conditional controls in the Active Effect section.
+   *
+   * Both toggle visibility/enabled-ness only — no re-render. Re-rendering here
+   * would drop every other unsaved field in a 700-line form, and the captured
+   * state these controls feed is read at submit time from the DOM anyway.
+   */
+  protected _setupConditionListeners(): void {
+    if (!this.element) return;
+
+    // Exhaustion level is meaningless for any other condition, so it appears
+    // only when exhaustion is selected rather than sitting there greyed out.
+    const effectIdSelect = this.element.querySelector(
+      'select[name="effectId"]'
+    ) as HTMLSelectElement | null;
+    const exhaustionGroup = this.element.querySelector(
+      '.exhaustion-level-group'
+    ) as HTMLElement | null;
+    if (effectIdSelect && exhaustionGroup) {
+      effectIdSelect.addEventListener('change', () => {
+        this.effectId = effectIdSelect.value;
+        exhaustionGroup.style.display = effectIdSelect.value === EXHAUSTION_STATUS_ID ? '' : 'none';
+      });
+    }
+
+    // "Until removed" has no amount, so the number input is disabled rather
+    // than left accepting a value that would be silently ignored.
+    const durationUnitSelect = this.element.querySelector(
+      'select[name="effectDurationUnit"]'
+    ) as HTMLSelectElement | null;
+    const durationValueInput = this.element.querySelector(
+      'input[name="effectDurationValue"]'
+    ) as HTMLInputElement | null;
+    if (durationUnitSelect && durationValueInput) {
+      durationUnitSelect.addEventListener('change', () => {
+        this.effectDurationUnit = durationUnitSelect.value as ConditionDurationUnit;
+        durationValueInput.disabled = durationUnitSelect.value === DEFAULT_DURATION_UNIT;
+      });
+    }
   }
 
   /**
@@ -2323,6 +2451,17 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
           (form.querySelector('select[name="damageType"]') as HTMLSelectElement)?.value ||
           DEFAULT_DAMAGE_TYPE;
 
+        // Bypass properties. These end up in the emitted action's `data` as a
+        // plain ARRAY — Monk's Active Tiles stores action data as JSON in the
+        // tile flags, so the `Set` dnd5e needs is rebuilt at trigger time
+        // rather than persisted. See src/utils/helpers/damage-properties.ts.
+        const damagePropertyBoxes = form.querySelectorAll(
+          'input[name="damageProperties"]:checked'
+        ) as NodeListOf<HTMLInputElement>;
+        imageTrapConfig.damageProperties = normalizeDamageProperties(
+          Array.from(damagePropertyBoxes).map(box => box.value)
+        );
+
         // Extract half damage checkbox
         const halfDamageCheckbox = form.querySelector(
           'input[name="halfDamageOnSuccess"]'
@@ -2360,11 +2499,29 @@ export class TrapDialog extends HandlebarsApplicationMixin(ApplicationV2) {
         const addEffect =
           (form.querySelector('select[name="addEffect"]') as HTMLSelectElement)?.value || 'add';
 
+        // Duration defaults to "until removed", which is what every trap built
+        // before 2.3.0 did, so an untouched control changes nothing.
+        const durationUnit = ((
+          form.querySelector('select[name="effectDurationUnit"]') as HTMLSelectElement
+        )?.value || DEFAULT_DURATION_UNIT) as ConditionDurationUnit;
+        const durationValue = parseInt(
+          (form.querySelector('input[name="effectDurationValue"]') as HTMLInputElement)?.value ||
+            '1'
+        );
+        // Only meaningful for exhaustion; the creator ignores it otherwise, and
+        // level 1 keeps the trap on Monk's own action.
+        const exhaustionLevel = parseInt(
+          (form.querySelector('select[name="exhaustionLevel"]') as HTMLSelectElement)?.value || '1'
+        );
+
         // Note: altereffect is an optional field for PF2e effects with values (e.g., "+ 1")
         // Not currently exposed in UI but could be added in future for PF2e support
         imageTrapConfig.activeEffectConfig = {
           effectid: effectId,
-          addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear'
+          addeffect: addEffect as 'add' | 'remove' | 'toggle' | 'clear',
+          exhaustionLevel: Number.isFinite(exhaustionLevel) ? exhaustionLevel : 1,
+          durationUnit,
+          durationValue: Number.isFinite(durationValue) ? durationValue : 1
         };
       } else if (this.resultType === TrapResultType.HEAL) {
         imageTrapConfig.healingAmount =

@@ -22,7 +22,27 @@
         "DamageType": "Damage Type",
         "Automate": "Apply Automatically",
         "AutomateHelp": "Roll and post the damage but leave hit points alone when unchecked. When checked, damage is applied through midi-qol if it is installed, honouring your Auto Apply Damage setting; otherwise it goes straight to the actor.",
-        "RollFlavor": "Trap damage against {name}"
+        "RollFlavor": "Trap damage against {name}",
+        "Properties": "Damage Properties",
+        "PropertiesHelp": "Comma-separated bypass properties, used to punch through resistance to nonmagical or non-silvered attacks. Available: {properties}",
+        "PropertiesHelpEmpty": "Comma-separated bypass properties. The current game system does not define any."
+      },
+      "ApplyCondition": {
+        "Name": "Apply Condition",
+        "Effect": "Condition",
+        "Mode": "Action",
+        "ModeAdd": "Apply",
+        "ModeRemove": "Remove",
+        "ExhaustionLevel": "Exhaustion Level",
+        "ExhaustionLevelHelp": "Only used when the condition is Exhaustion. 1 to {max}.",
+        "DurationUnit": "Duration",
+        "UnitUntilRemoved": "Until removed",
+        "UnitRounds": "Rounds",
+        "UnitTurns": "Turns",
+        "UnitMinutes": "Minutes",
+        "UnitHours": "Hours",
+        "DurationValue": "Duration Amount",
+        "DurationValueHelp": "How many rounds, turns, minutes or hours the condition lasts. Ignored when the duration is \"Until removed\". Rounds and turns only tick during combat; minutes and hours tick with world time."
       }
     }
   },
@@ -553,6 +573,20 @@
     "TodoAddDmgTrapItem": "Add a DMG trap item for combat",
     "TodoSelectTeleportDestination": "Select teleport destination",
     "TodoAddTileToActivate": "Add at least one tile to activate",
-    "TodoAllFieldsComplete": "All required fields completed!"
+    "TodoAllFieldsComplete": "All required fields completed!",
+    "DamageTypeTempHP": "Temp HP",
+    "DamageTypeMaxHP": "Max HP",
+    "DamageProperties": "Damage Properties",
+    "DamagePropertiesHint": "Mark the damage as magical, silvered or adamantine so it bypasses a creature that resists nonmagical or non-silvered attacks. Leave all unchecked for ordinary damage.",
+    "ExhaustionLevel": "Exhaustion Level",
+    "ExhaustionLevelHint": "How many levels of exhaustion the trap inflicts. Setting a level replaces the creature’s current exhaustion rather than adding to it.",
+    "EffectDuration": "Duration",
+    "EffectDurationAmount": "Duration amount",
+    "EffectDurationHint": "How long the condition lasts. \"Until removed\" leaves it in place until someone clears it, which is how traps behaved before. Rounds and turns only count down during combat; minutes and hours count down with world time, so they also expire outside combat.",
+    "EffectDurationUntilRemoved": "Until removed",
+    "EffectDurationRounds": "Rounds",
+    "EffectDurationTurns": "Turns",
+    "EffectDurationMinutes": "Minutes",
+    "EffectDurationHours": "Hours"
   }
 }

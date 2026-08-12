@@ -141,6 +141,7 @@ describe('apply-damage-tile-action', () => {
         entity: { id: 'token', name: 'Triggering Token' },
         damage: '1d4',
         damagetype: 'acid',
+        properties: [],
         automate: false,
         chatmessage: false,
         rollmode: 'gmroll'
@@ -163,6 +164,7 @@ describe('apply-damage-tile-action', () => {
         'entity',
         'damage',
         'damagetype',
+        'properties',
         'automate',
         'chatmessage',
         'rollmode'
@@ -184,11 +186,25 @@ describe('apply-damage-tile-action', () => {
 
     it('sources the damage type list from the system when dnd5e is present', () => {
       (globalThis as any).CONFIG = {
-        DND5E: { damageTypes: { fire: { label: 'Feuer' }, ooze: { label: 'Ooze' } } }
+        DND5E: {
+          damageTypes: { fire: { label: 'Feuer' }, ooze: { label: 'Ooze' } },
+          // temphp/maximum live here, not in damageTypes — dnd5e.mjs:45870.
+          healingTypes: {
+            healing: { label: 'Hit Points', labelShort: 'Healing' },
+            temphp: { label: 'Temporary Hit Points', labelShort: 'Temp HP' },
+            maximum: { label: 'Maximum Hit Points', labelShort: 'Max HP' }
+          }
+        }
       };
       const ctrl = definition.ctrls.find((c: any) => c.id === 'damagetype');
 
-      expect(ctrl.list()).toEqual({ fire: 'Feuer', ooze: 'Ooze' });
+      // `healing` is deliberately excluded — the Heal result type owns it.
+      expect(ctrl.list()).toEqual({
+        fire: 'Feuer',
+        ooze: 'Ooze',
+        temphp: 'Temp HP',
+        maximum: 'Max HP'
+      });
     });
 
     it('localizes ctrl help lazily, because MATT renders help RAW', () => {
@@ -428,7 +444,7 @@ describe('apply-damage-tile-action', () => {
         await applyDamageActionFn(args());
 
         expect(midi.applyTokenDamage).toHaveBeenCalledWith(
-          [{ value: 8, damage: 8, type: 'fire' }],
+          [{ value: 8, damage: 8, type: 'fire', properties: new Set() }],
           8,
           new Set([document.object]),
           null,

@@ -401,6 +401,23 @@
         <p class="hint">{{localize "EMPUZZLES.TileDamageTypeHint"}}</p>
       </div>
 
+      {{! Damage Properties - bypasses for resistance/immunity (dnd5e only; the
+          option list comes from the system, so it is empty elsewhere) }}
+      {{#if hasDamagePropertyOptions}}
+        <div class="form-group tile-only-option">
+          <label>{{localize "EMPUZZLES.DamageProperties"}}</label>
+          <div class="checkbox-group damage-properties">
+            {{#each damagePropertyOptions as |option|}}
+              <label class="checkbox-label">
+                <input type="checkbox" name="damageProperties" value="{{option.value}}" {{#if option.checked}}checked{{/if}} />
+                <span>{{option.label}}</span>
+              </label>
+            {{/each}}
+          </div>
+          <p class="hint">{{localize "EMPUZZLES.DamagePropertiesHint"}}</p>
+        </div>
+      {{/if}}
+
       <div class="form-group">
         <label for="flavorText">{{localize "EMPUZZLES.FlavorText"}}</label>
         <textarea id="flavorText" name="flavorText" rows="3" placeholder="{{localize 'EMPUZZLES.FlavorTextPlaceholder'}}"></textarea>
@@ -488,7 +505,7 @@
         <label for="effectId">{{localize "EMPUZZLES.EffectSelect"}}</label>
         <select id="effectId" name="effectId">
           {{#each effectOptions as |option|}}
-            <option value="{{option.value}}">{{option.label}}</option>
+            <option value="{{option.value}}" {{#if (eq option.value ../effectId)}}selected{{/if}}>{{option.label}}</option>
           {{/each}}
         </select>
         <p class="hint">{{localize "EMPUZZLES.EffectSelectHint"}}</p>
@@ -497,11 +514,40 @@
       <div class="form-group">
         <label for="addEffect">{{localize "EMPUZZLES.EffectAction"}}</label>
         <select id="addEffect" name="addEffect">
-          <option value="add">{{localize "EMPUZZLES.EffectAdd"}}</option>
-          <option value="remove">{{localize "EMPUZZLES.EffectRemove"}}</option>
-          <option value="toggle">{{localize "EMPUZZLES.EffectToggle"}}</option>
+          <option value="add" {{#if (eq addEffect "add")}}selected{{/if}}>{{localize "EMPUZZLES.EffectAdd"}}</option>
+          <option value="remove" {{#if (eq addEffect "remove")}}selected{{/if}}>{{localize "EMPUZZLES.EffectRemove"}}</option>
+          <option value="toggle" {{#if (eq addEffect "toggle")}}selected{{/if}}>{{localize "EMPUZZLES.EffectToggle"}}</option>
         </select>
         <p class="hint">{{localize "EMPUZZLES.EffectActionHint"}}</p>
+      </div>
+
+      {{! Exhaustion level - only meaningful for the exhaustion condition, and
+          only on dnd5e, where the level lives on the actor rather than on the
+          effect. Shown whenever exhaustion is the selected effect. }}
+      {{#if showExhaustionLevel}}
+        <div class="form-group exhaustion-level-group" {{#unless (eq effectId exhaustionStatusId)}}style="display: none;"{{/unless}}>
+          <label for="exhaustionLevel">{{localize "EMPUZZLES.ExhaustionLevel"}}</label>
+          <select id="exhaustionLevel" name="exhaustionLevel">
+            {{#each exhaustionLevelOptions as |option|}}
+              <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.value}}</option>
+            {{/each}}
+          </select>
+          <p class="hint">{{localize "EMPUZZLES.ExhaustionLevelHint"}}</p>
+        </div>
+      {{/if}}
+
+      {{! Duration - defaults to "until removed", which is what traps did before }}
+      <div class="form-group effect-duration-group">
+        <label for="effectDurationUnit">{{localize "EMPUZZLES.EffectDuration"}}</label>
+        <div class="form-fields">
+          <input type="number" id="effectDurationValue" name="effectDurationValue" value="{{effectDurationValue}}" min="1" step="1" {{#if (eq effectDurationUnit "untilRemoved")}}disabled{{/if}} aria-label="{{localize 'EMPUZZLES.EffectDurationAmount'}}" />
+          <select id="effectDurationUnit" name="effectDurationUnit">
+            {{#each effectDurationUnitOptions as |option|}}
+              <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{localize option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <p class="hint">{{localize "EMPUZZLES.EffectDurationHint"}}</p>
       </div>
     {{/if}}
 
