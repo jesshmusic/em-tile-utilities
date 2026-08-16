@@ -570,6 +570,8 @@
     "SupportOnPatreon": "Support on Patreon",
     "DungeonMasterGuru": "Dungeon Master Guru",
     "DungeonMasterGuruTooltip": "SRD rules and DM tools at dungeonmaster.guru",
+    "ReportBug": "Report a Bug",
+    "ReportBugTooltip": "Report a bug or request a feature on GitHub",
     "CreationType": "Creation Type",
     "CreateAsTile": "Tile",
     "CreateAsRegion": "Region",

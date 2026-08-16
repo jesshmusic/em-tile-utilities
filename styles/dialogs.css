@@ -2290,6 +2290,36 @@
   font-family: monospace;
 }
 
+/* Deliberately quiet — it sits next to the version string because that is
+   the first thing a bug report asks for, not because it wants attention. */
+.em-puzzles .tile-manager-footer .version-sep {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.em-puzzles .tile-manager-footer .bug-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.em-puzzles .tile-manager-footer .bug-link:hover,
+.em-puzzles .tile-manager-footer .bug-link:focus-visible {
+  color: var(--dmguru-cream, #f3e9cd);
+  text-decoration: underline;
+  outline: none;
+}
+
+.em-puzzles .tile-manager-footer .bug-link:focus-visible {
+  outline: 2px solid var(--dmguru-taupe);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* Radio Group Styling for Trap Visibility */
 .visibility-section .form-group {
   margin-bottom: 1.5rem;

@@ -1,0 +1,10 @@
+# Forces reporters through the Bug Report / Feature Request forms above
+# rather than an empty issue body, and offers the non-issue routes first.
+blank_issues_enabled: false
+contact_links:
+  - name: Monk's Active Tiles Issues
+    url: https://github.com/ironmonk88/monks-active-tiles/issues
+    about: Problems with the underlying tile actions themselves belong on Monk's tracker.
+  - name: Support on Patreon
+    url: https://www.patreon.com/c/DormanLakely
+    about: Support development of Dorman Lakely's modules.
