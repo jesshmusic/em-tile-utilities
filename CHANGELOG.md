@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1] - 2026-08-16
+
+### Added
+
+- **A way to report a bug from inside the module.** The Tile Manager footer now carries a Report a Bug link next to the version number — which is where it belongs, because the version number is the first thing the report asks for. It opens the issue form on GitHub, which asks for the versions and the tile's exported JSON rather than leaving you to guess what would be useful.
+- **Bug report and changelog links in Module Management.** Foundry shows both against the module in the setup screen, so the tracker is reachable without loading a world.
+
 ## [3.0.0] - 2026-08-12
 
 The biggest release this module has had. Seven new things you can build, four new things a trap can do to a creature, and regions that finally understand *when* and *who*.
